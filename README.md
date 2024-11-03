@@ -17,7 +17,10 @@
 ## Anwendung
 - Es gibt 2 Möglichkeiten, einmal Ollama und einmal mit der OpenAI API
 - Meinen OPENAI_API_KEY werde ich nicht mit pushen, wer Zugriff haben möchte, kann mich gerne fragen
-
+- Da wir noch kein GUI haben, habe ich ein kleines programmiert um ein paar Funktionen zu testen
+- Wer IntelliJ benutzt kann einfach die `main.py` starten und dann einfach auf diesen Link gehen `http://127.0.0.1:5000/`
+- Dort kann man dann zwischen Ollama und OpenAI API auswählen
+- 
 #### Ollama
 - Ollama runterladen und starten -> https://ollama.com/
 - Hier ist eine Liste von Models die man benutzen kann https://ollama.com/library
@@ -27,10 +30,6 @@
   - Ich hab 4 GB VRAM, deswegen würde bei mir gerade noch das 8 Billionen Parameter Modell funktionieren
   - Dann Terminal öffnen und folgenden Befehl eingeben `ollama pull llama3.1:8b`
   - Ollama lädt dann das Model runter und man kann es mit dem Prototypen testen
-
-- Da wir noch kein GUI haben, habe ich ein kleines programmiert um ein paar Funktionen zu testen
-- Wer IntelliJ benutzt kann einfach die `main.py` starten und dann einfach auf diesen Link gehen `http://127.0.0.1:5000/`
-- Dort kann man dann zwischen Ollama und OpenAI API auswählen
 
 ### Chats
 - Chats und deren Kontext werden in Sessions gespeichert, da wir noch keine richtige DB zur Verfügung haben
