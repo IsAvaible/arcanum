@@ -6,10 +6,10 @@ system_prompt_json = """You are an intelligent assistant trained to respond base
 3. Decimal numbers are represented using a dot (.) as the decimal separator, not a comma (,).
 4. Strings are properly encoded, ensuring that any special characters are correctly handled.
 5. If you include an array in your response, every object within that array must have the same attributes.
-6. Always enclose the JSON in <pre> and </pre> HTML tags for proper formatting.
-7. Provide a brief explanation of the findings before presenting the JSON data.
+6. It is not necessary that all keys have a value. If you find no value, simple set null.
+7. Always enclose the JSON in <pre> and </pre> HTML tags for proper formatting.
+8. ALWAYS only OUTPUT JSON without any other explanation or something else!
 
-You must always respond with all found data; do not exclude any data or indicate that there is more data available. When generating your JSON response, ensure it adheres to these guidelines and is relevant to the context provided. Always validate the JSON format before returning your response.
 """
 
 
@@ -35,15 +35,19 @@ def get_system_prompt(which):
 
 
 def get_human_prompt(old_data, prompt, context):
+
     if context and old_data:
         print("context + old_data")
-        return f"\Please take this context as dataset where you look for data: \"{context}\". Respond to this queries: {old_data}"
+        return f"\Please take this input data: \"{context}\". And Respond to this queries: {old_data}"
     elif not old_data and not context:
         print("not old_data and not context")
         return f"Respond to this prompt: \"{prompt}\""
     elif old_data and not context:
         print("old_data and not context")
         return f"Please use these old messages for context: \"{old_data}\" Respond to this prompt: {prompt}"
+    elif not old_data and context:
+        print("not old_data and context")
+        return f"Please take this input data: \"{context}\". Respond to this prompt: {prompt}"
     else:
         print("prompt")
         return prompt

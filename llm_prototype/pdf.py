@@ -33,7 +33,7 @@ def create_text_chunks_pdfplumber(pdf_path):
                     # Konvertiere jede Tabellenzeile in eine durch Tabulatoren getrennte Zeichenfolge
                     row_text = "\t".join([str(cell) if cell is not None else "" for cell in row])
                     content += row_text + "\n"
-    print(content)
+
     return content
 
 

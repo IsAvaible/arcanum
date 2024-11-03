@@ -1,18 +1,20 @@
 import os
 
+from Demos.win32ts_logoff_disconnected import session
+from dotenv import load_dotenv
+from flask import sessions
+
 from app import app
-from ollama_local import ollama
-from openai_api import openai
+from llm import llm
 from routes import routes
 from upload import upload
 
 def init_flask():
     # start flask and make it available to the local network
-    os.environ['OLLAMA_HOST'] = os.environ.get("OLLAMA_HOST")
+    load_dotenv()
     app.register_blueprint(routes)
     app.register_blueprint(upload)
-    app.register_blueprint(ollama)
-    app.register_blueprint(openai)
+    app.register_blueprint(llm)
     app.run(debug=True)
     app.run(host='0.0.0.0')
 

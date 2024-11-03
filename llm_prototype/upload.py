@@ -18,17 +18,43 @@ def allowed_file(filename):
         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def upload_file_method(files, pdf_extractor, llm, vector_id):
+def upload_file_method(files, pdf_extractor):
     texts = ""
     for file in files:
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
+            path = app.root_path +"\\"+ os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(path)
+            mimetype = file.content_type
+            if mimetype == 'application/pdf':
+                #if store_hash(file) == True:
+                if pdf_extractor == "pypdfloader":
+                    texts += " " + create_text_chunks_pypdfloader(path)
+                if pdf_extractor == "pdfplumber":
+                    texts += " " + create_text_chunks_pdfplumber(path)
+                if pdf_extractor == "pdfreader":
+                    texts += " " + create_text_chunks_pdfreader(path)
+                if pdf_extractor == "ocr":
+                    texts += " " + create_text_chunks_ocr(path)
+
+
+    return texts
+
+
+
+
+# ZURZEIT KEINE FUNKTION
+def upload_file_method_vectordb(files, pdf_extractor, llm, vector_id):
+    texts = ""
+    for file in files:
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+
             path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(path)
             mimetype = file.content_type
             if mimetype == 'application/pdf':
                 if store_hash(file) == True:
-                    print("true")
                     if pdf_extractor == "pypdfloader":
                         texts = create_text_chunks_pypdfloader(path)
                     if pdf_extractor == "pdfplumber":
@@ -42,6 +68,9 @@ def upload_file_method(files, pdf_extractor, llm, vector_id):
                 else:
                     return get_embeddings(llm, vector_id)
 
+
+### FÜR SPÄTER EVTL
+### SORGT DAFÜR DAS DATEIEN NUR EINMAL HOCHGELADEN WERDEN
 def generate_file_hash(file_storage):
     """Generate SHA-256 hash for a file uploaded via Flask (FileStorage)."""
     sha256_hash = hashlib.sha256()

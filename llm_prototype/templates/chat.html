@@ -8,7 +8,9 @@
 <body>
 <h1>LLM Chat</h1>
 <div id="chat">
-
+    {% for message in old_messages %}
+        <div class="user_message">{{message | safe }}</div>
+    {% endfor %}
 </div>
 <form id="chatbox" method=post action="/prompt" enctype=multipart/form-data>
     <label for="file-upload" class="custom-file-upload">
@@ -20,12 +22,16 @@
     <br>
     <label>PDF Extractor: </label>
     <input type="hidden" name="llm" value="{{ llm }}">
+    <input type="hidden" name="chat_counter" value="{{ chat_counter }}">
     <select name="pdf_extractor">
         <option value="pdfplumber">PDFPlumber</option>
         <option value="pypdfLoader">PyPDFLoader</option>
         <option value="pdfreader">PdfReader</option>
         <option value="ocr">PDF2image With Tesseract (OCR)</option>
     </select>
+
+    <label>Chat Counter: {{ chat_counter }}</label>
+    <label>System Prompt:</label>
     <select name="system_prompt">
         <option value="json">Answer with JSON</option>
         <option value="normal">Answer in normal Text</option>
@@ -37,8 +43,7 @@
             <option value ="{{ model }}" >{{ model }}</option>
         {% endfor %}
     </select>
-    <label>Unique chat id for Vector store: </label>
-    <input type="text" placeholder="Needs to have a value" name="vector_id" value="main">
+    <!--<input type="checkbox" name="vector_store" value="true"> Use VectorDB </input<br>-->
     <br><br>
     <textarea placeholder="Please write a prompt" rows="10" cols="30" name="prompt" id="prompt"></textarea>
     <br>
