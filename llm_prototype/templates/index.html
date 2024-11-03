@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+<head>
+    <title>Ollama Chat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+    <script src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"></script>
+</head>
+<body>
+<h1>LLM Chat</h1>
+
+    <a href="/ollama">Chat with local Ollama</a>
+    <a href="/openai">Chat with OpenAI API</a>
+
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+<head>
+    <title>Ollama Chat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+    <script src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"></script>
+</head>
+<body>
+<h1>LLM Chat</h1>
+<div id="chat">
+
+</div>
+<form id="chatbox" method=post action="/prompt" enctype=multipart/form-data>
+    <label for="file-upload" class="custom-file-upload">
+        File Upload (only PDF)
+    </label>
+    <input id="file-upload" type="file" name="file" name="file" multiple/>
+    <span id="files-selected"></span>
+    <br>
+    <br>
+    <label>PDF Extractor: </label>
+    <input type="hidden" name="llm" value="{{ llm }}">
+    <select name="pdf_extractor">
+        <option value="pdfplumber">PDFPlumber</option>
+        <option value="pypdfLoader">PyPDFLoader</option>
+        <option value="pdfreader">PdfReader</option>
+        <option value="ocr">PDF2image With Tesseract (OCR)</option>
+    </select>
+    <select name="system_prompt">
+        <option value="json">Answer with JSON</option>
+        <option value="normal">Answer in normal Text</option>
+        <option value="nocontext">Answer with no context given</option>
+    </select>
+    <label>LLM Model: </label>
+    <select name="model">
+        {% for model in models %}
+            <option value ="{{ model }}" >{{ model }}</option>
+        {% endfor %}
+    </select>
+    <label>Unique chat id for Vector store: </label>
+    <input type="text" placeholder="Needs to have a value" name="vector_id" value="main">
+    <br><br>
+    <textarea placeholder="Please write a prompt" rows="10" cols="30" name="prompt" id="prompt"></textarea>
+    <br>
+    <br>
+    <input type="submit" value="Send"></input>
+</form>
+
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+</body>
+</html>

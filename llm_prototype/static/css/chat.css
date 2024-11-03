@@ -1,0 +1,62 @@
+body{
+    width:95%;
+    margin:0 auto;
+    display:block;
+    color:white;
+    background-color: #1C1D21;
+    font-family: "Lucinda Grande", "Lucinda Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+}
+
+input[type=button], input[type=submit], input[type=reset], input[type=text], select, a{
+    border: 1px solid #ccc;
+    display: inline-block;
+    padding: 6px 12px;
+    cursor: pointer;
+    background-color: #00000000;
+    color: #FFFFFF;
+}
+
+option{
+    background-color: #1C1D21;
+}
+
+#prompt::placeholder{
+    color: white;
+}
+#prompt{
+    background-color: #515360;
+    color: white;
+    font-size: 15px;
+}
+
+input[type="file"] {
+    display: none;
+}
+
+.custom-file-upload {
+    border: 1px solid #ccc;
+    display: inline-block;
+    padding: 6px 12px;
+    cursor: pointer;
+}
+
+#chat{
+    padding: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+#prompt{
+    width:100%;
+}
+
+.user_message{
+    border: 1px solid #636363;
+    padding:20px;
+}
+
+.llm_message{
+    border: 1px solid #636363;
+    padding:20px;
+}
+
