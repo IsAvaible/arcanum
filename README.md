@@ -34,10 +34,16 @@
 ### Chats
 - Chats und deren Kontext werden in Sessions gespeichert, da wir noch keine richtige DB zur Verfügung haben
 - Ich habe 3 System Prompts geschrieben, um ein paar Funktionalitäten zu testen
+  - eins soll immer JSON ausgeben
+  - eins soll immer einen normalen Text ausgeben
+  - eins hat keine Forderungen
 - Zurzeit werden erstmal nur PDF Dateien zum File Upload benutzt, man kann mehrere auf einmal auswählen.
+  - Ich habe 4 verschiedene PDF Bibliotheken implementiert, um zu schauen, welches am Besten ist
 - Die Chat Historie wird über den Chat ID Parameter gespeichert, so kann man ganz einfach einen neuen Chat starten
 - Wenn man keine Nachricht eingibt, dann wird standardmäßig folgende Nachricht benutzt:
   - `Please give me all data back and put them in JSON`
+
+
 
 
 

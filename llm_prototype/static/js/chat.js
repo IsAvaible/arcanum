@@ -1,4 +1,6 @@
 $(document).ready(function () {
+    $("#loader").hide();
+
     $('#file-upload').bind('change', function () {
         var files = ""
         for (var i = 0; i < this.files.length; i++)
@@ -15,7 +17,7 @@ $(document).ready(function () {
     console.log("ready");
     $("form").submit(function (e) {
         e.preventDefault(); // avoid to execute the actual submit of the form.
-
+        $("#loader").show();
         let userinput = $("#prompt").val();
         if(userinput === "")
         {
@@ -39,11 +41,16 @@ $(document).ready(function () {
             contentType: false,
             processData: false,
             success: function (data) {
+                $("#loader").hide();
                 let llm_msg = '<div class="llm_message">' + data + "</div>"
                 $("#chat").append(llm_msg);
                 var dateiInput = $('#file-upload');
                 dateiInput.replaceWith(dateiInput.clone(true));
                 $("#files-selected").html("");
+            },
+            error: function (data){
+                $("#loader").hide();
+                alert("Error");
             }
         });
     });

@@ -12,6 +12,7 @@
         <div class="user_message">{{message | safe }}</div>
     {% endfor %}
 </div>
+<div id="loader"></div>
 <div>
     {% if chat_counter | int > 1 %}
     <a href="{{ url_for(request.endpoint) }}?chat_id={{ chat_counter | int - 1 }}">Last Chat</a>
@@ -38,6 +39,7 @@
     </select>
     <label>System Prompt:</label>
     <select name="system_prompt">
+        <option value="json2">Answer with prestructured JSON</option>
         <option value="json">Answer with JSON</option>
         <option value="normal">Answer in normal Text</option>
         <option value="nocontext">Answer with no context given</option>
