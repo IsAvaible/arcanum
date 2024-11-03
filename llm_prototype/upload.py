@@ -10,7 +10,7 @@ from embeddings import create_embeddings, get_embeddings
 from pdf import *
 
 upload = Blueprint('upload', __name__)
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'html'}
 
 
 def allowed_file(filename):
@@ -21,22 +21,26 @@ def allowed_file(filename):
 def upload_file_method(files, pdf_extractor):
     texts = ""
     for file in files:
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            path = app.root_path +"\\"+ os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(path)
-            mimetype = file.content_type
-            if mimetype == 'application/pdf':
-                #if store_hash(file) == True:
-                if pdf_extractor == "pypdfloader":
-                    texts += " " + create_text_chunks_pypdfloader(path)
-                if pdf_extractor == "pdfplumber":
-                    texts += " " + create_text_chunks_pdfplumber(path)
-                if pdf_extractor == "pdfreader":
-                    texts += " " + create_text_chunks_pdfreader(path)
-                if pdf_extractor == "ocr":
-                    texts += " " + create_text_chunks_ocr(path)
-
+        if file:
+            if allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                path = app.root_path +"\\"+ os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(path)
+                mimetype = file.content_type
+                if mimetype == 'application/pdf':
+                    #if store_hash(file) == True:
+                    if pdf_extractor == "pypdfloader":
+                        texts += " " + create_text_chunks_pypdfloader(path)
+                    if pdf_extractor == "pdfplumber":
+                        texts += " " + create_text_chunks_pdfplumber(path)
+                    if pdf_extractor == "pdfreader":
+                        texts += " " + create_text_chunks_pdfreader(path)
+                    if pdf_extractor == "ocr":
+                        texts += " " + create_text_chunks_ocr(path)
+                elif mimetype == "text/html" or mimetype == "text/plain":
+                    with open(path, 'r') as file:
+                        contents = file.read()  # Read the entire file
+                        texts += contents
 
     return texts
 
