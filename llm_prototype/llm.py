@@ -13,7 +13,7 @@ from text import *
 from upload import upload_file_method_vectordb, upload_file_method
 
 vector_store = None
-openai_models = ['gpt-3.5-turbo-0125', 'gpt-4o-mini', 'gpt-3.5-turbo-1106', 'gpt-4o']
+openai_models = ['gpt-3.5-turbo-0125', 'gpt-4o-mini', 'gpt-3.5-turbo-1106']
 
 llm = Blueprint('llm', __name__)
 

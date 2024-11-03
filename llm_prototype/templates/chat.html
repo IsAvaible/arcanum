@@ -14,10 +14,10 @@
 </div>
 <div>
     {% if chat_counter | int > 1 %}
-    <a href="{{ url_for(request.endpoint) }}?chat_id={{ chat_counter | int - 1 }}">Letzter Chat</a>
+    <a href="{{ url_for(request.endpoint) }}?chat_id={{ chat_counter | int - 1 }}">Last Chat</a>
     {% endif %}
     <label>Chat ID: {{ chat_counter }}</label>
-    <a href="{{ url_for(request.endpoint) }}?chat_id={{ chat_counter | int + 1 }}">Nächster Chat</a>
+    <a href="{{ url_for(request.endpoint) }}?chat_id={{ chat_counter | int + 1 }}">Next Chat</a>
 </div>
 <br>
 <br>
