@@ -1,5 +1,5 @@
 import os
-
+from bs4 import BeautifulSoup
 from flask import Blueprint
 from werkzeug.utils import secure_filename
 
@@ -37,9 +37,15 @@ def upload_file_method(files, pdf_extractor):
                         texts += " " + create_text_chunks_pdfreader(path)
                     if pdf_extractor == "ocr":
                         texts += " " + create_text_chunks_ocr(path)
-                elif mimetype == "text/html" or mimetype == "text/plain":
-                    with open(path, 'r') as file:
-                        contents = file.read()  # Read the entire file
+                elif mimetype == "text/html":
+                    with open(path, 'r', encoding="utf-8") as file:
+                        contents = file.read()
+                        soup = BeautifulSoup(contents)
+                        print(soup.get_text())
+                        texts += soup.get_text()
+                elif mimetype == "text/plain":
+                    with open(path, 'r', encoding="utf-8") as file:
+                        contents = file.read()
                         texts += contents
 
     return texts
