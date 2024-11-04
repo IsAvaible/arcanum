@@ -1,3 +1,5 @@
+import os
+
 import pdfplumber
 import pytesseract
 from langchain_community.document_loaders import PyPDFLoader
@@ -5,7 +7,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pdf2image import convert_from_path
 from pypdf import PdfReader
 
-pytesseract.pytesseract.tesseract_cmd = r'/usr/bin/tesseract'
+pytesseract.pytesseract.tesseract_cmd = os.getenv("TESSERACT_BIN")
 
 
 def create_text_chunks_pdfreader(pdf_path):
@@ -48,7 +50,7 @@ def create_text_chunks_pypdfloader(pdf_path):
 
 
 def create_text_chunks_ocr(pdf_path):
-    pages = convert_from_path(pdf_path, 1200)
+    pages = convert_from_path(pdf_path, 600)
     content = ""
     for page in pages:
         text = pytesseract.image_to_string(page, lang='eng')
