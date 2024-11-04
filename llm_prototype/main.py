@@ -1,6 +1,5 @@
 import os
 
-from Demos.win32ts_logoff_disconnected import session
 from dotenv import load_dotenv
 from flask import sessions
 
