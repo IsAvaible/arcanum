@@ -47,7 +47,7 @@ $(document).ready(function () {
             processData: false,
             success: function (data) {
                 $("#loader").hide();
-                let llm_msg = '<div class="llm_message">' + data + "</div>"
+                let llm_msg = '<div class="llm_message"><pre>' + data + "</pre></div>"
                 $("#chat").append(llm_msg);
                 var dateiInput = $('#file-upload');
                 dateiInput.replaceWith(dateiInput.clone(true));
@@ -71,7 +71,7 @@ $(document).ready(function () {
             userinput = "Please give me all data back and put them in JSON"
         }
 
-        let user_msg = '<div class="user_message">' + userinput + "</div>"
+        let user_msg = '<div class="user_message"><pre>' + userinput + "</pre></div>"
         $("#chat").append(user_msg);
 
         let form = document.querySelector("#chatbox");
@@ -86,6 +86,7 @@ $(document).ready(function () {
             processData: false,
             beforeSend: function() {
                 let llm_msg = $("<div>", {"class": "llm_message"});
+                llm_msg.html('<pre class="llm_pre">'+"</pre>");
                 $("#chat").append(llm_msg)
                 var dateiInput = $('#file-upload');
                 dateiInput.replaceWith(dateiInput.clone(true));
@@ -112,17 +113,15 @@ $(document).ready(function () {
     let llm = $("input[name=llm]").val();
 
     socket.on(llm+'_stream'+chat_id, (data) => {
-        let messagesDiv = $(".llm_message").last();
+        let messagesDiv = $(".llm_pre").last();
         console.log(data.content)
         if(data.content === "START_LLM_MESSAGE")
         {
-            messagesDiv.append("<pre>");
+
         }else
         if(data.content === "END_LLM_MESSAGE")
         {
-            let output = messagesDiv.html();
-            let new_output = "<pre>"+output+"</pre>";
-            messagesDiv.html(new_output);
+
         }else
         {
             messagesDiv.append(data.content);
