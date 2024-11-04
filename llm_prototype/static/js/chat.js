@@ -18,8 +18,6 @@ $(document).ready(function () {
         obj.innerHTML=("<pre>"+html+"</pre>");
     })
 
-
-    console.log("ready");
     $('#send').on('click', function(event) {
         event.preventDefault(); // avoid to execute the actual submit of the form.
 
@@ -88,8 +86,8 @@ $(document).ready(function () {
                 let llm_msg = $("<div>", {"class": "llm_message"});
                 llm_msg.html('<pre class="llm_pre">'+"</pre>");
                 $("#chat").append(llm_msg)
-                var dateiInput = $('#file-upload');
-                dateiInput.replaceWith(dateiInput.clone(true));
+                var fileInput = $('#file-upload');
+                fileInput.replaceWith(fileInput.clone(true));
                 $("#files-selected").html("");
             },
             success: function (data) {
@@ -102,7 +100,7 @@ $(document).ready(function () {
         });
     });
 
-
+    //WEBSOCKETS
     const socket = io();
 
     socket.on('connect', () => {
@@ -117,11 +115,11 @@ $(document).ready(function () {
         console.log(data.content)
         if(data.content === "START_LLM_MESSAGE")
         {
-
+            //Evtl um den Anfang zu erkennen
         }else
         if(data.content === "END_LLM_MESSAGE")
         {
-
+            //Evtl um das Ende zu erkennen
         }else
         {
             messagesDiv.append(data.content);
@@ -129,33 +127,3 @@ $(document).ready(function () {
 
     });
 });
-
-
-function wrapJsonInPreTags(inputString) {
-    console.log(inputString)
-    // Suche nach möglichen JSON-Substring-Mustern
-    const jsonPattern = /\{([^}]+)\}/
-    const matches = inputString.match(jsonPattern);
-
-    if (matches) {
-        // Gehe durch alle gefundenen Übereinstimmungen
-        matches.forEach(match => {
-            try {
-                // Versuche, das Substring als JSON zu parsen
-                JSON.parse(match);
-                // Wenn das Parsen erfolgreich war, umschließe es mit <pre>-Tags
-                const wrappedJson = `<pre>${match}</pre>`;
-                inputString = inputString.replace(match, wrappedJson);
-            } catch (e) {
-                console.log(e)
-            }
-        });
-    }
-
-    return inputString; // Gibt den modifizierten String zurück
-}
-
-// Beispiel
-const text = "Hier ist ein Beispiel-Text mit JSON: {'name': 'John', 'age': 30} und mehr Text.";
-const result = wrapJsonInPreTags(text);
-console.log(result);
