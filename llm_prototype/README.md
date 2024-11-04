@@ -33,7 +33,8 @@
 
 ### Chats
 - Chats und deren Kontext werden in Sessions gespeichert, da wir noch keine richtige DB zur Verfügung haben
-- Ich habe 3 System Prompts geschrieben, um ein paar Funktionalitäten zu testen
+- Ich habe 4 System Prompts geschrieben, um ein paar Funktionalitäten zu testen
+  - eins soll immer vordefiniertes und strukturiertes JSON ausgeben
   - eins soll immer JSON ausgeben
   - eins soll immer einen normalen Text ausgeben
   - eins hat keine Forderungen

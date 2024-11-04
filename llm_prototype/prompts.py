@@ -7,7 +7,6 @@ system_prompt_json = """You are an intelligent assistant trained to respond base
 4. Strings are properly encoded, ensuring that any special characters are correctly handled.
 5. If you include an array in your response, every object within that array must have the same attributes.
 6. It is not necessary that all keys have a value. If you find no value, simple set null.
-7. Always enclose the JSON in <pre> and </pre> HTML tags for proper formatting.
 8. ALWAYS only OUTPUT JSON without any other explanation or something else!
 
 """
@@ -20,7 +19,6 @@ system_prompt_json2 = """You are an intelligent assistant trained to respond bas
 4. Strings are properly encoded, ensuring that any special characters are correctly handled.
 5. If you include an array in your response, every object within that array must have the same attributes.
 6. It is not necessary that all keys have a value. If you find no value, simple set null.
-7. Always enclose the JSON in <pre> and </pre> HTML tags for proper formatting.
 8. ALWAYS only OUTPUT JSON without any other explanation or something else!
 
 You should always put the data you found in this JSONObject:

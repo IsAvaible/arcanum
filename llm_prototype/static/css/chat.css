@@ -34,7 +34,7 @@ body{
     100%  {transform:scaleY(-1) rotate(-135deg)}
 }
 
-input[type=button], input[type=submit], input[type=reset], input[type=text], select, a{
+input[type=button], input[type=submit], input[type=reset], input[type=text], select, a, button{
     border: 1px solid #ccc;
     display: inline-block;
     padding: 6px 12px;
@@ -85,5 +85,12 @@ input[type="file"] {
 .llm_message{
     border: 1px solid #636363;
     padding:20px;
+    white-space: pre-wrap;
 }
+
+.string { color: rgba(0, 154, 0, 0.54); }
+.number { color: rgba(225, 126, 0, 0.43); }
+.boolean { color: #005288; }
+.null { color: #7a0000; }
+.key { color: #018e88; }
 

@@ -5,7 +5,7 @@ from flask import render_template, request, Blueprint, session
 from dotenv import load_dotenv
 from app import app
 
-from llm import openai_models, prompt_question
+from llm import openai_models, prompt_question, prompt_question_socket
 
 routes = Blueprint('routes', __name__)
 
@@ -14,6 +14,12 @@ def ask():
     if request.method == 'POST':
             llm = request.form.get("llm")
             return prompt_question(request, llm)
+
+@app.route('/promptsocket', methods=['POST'])
+def ask_socket():
+    if request.method == 'POST':
+            llm = request.form.get("llm")
+            return prompt_question_socket(request, llm)
 
 
 @app.route('/openai', methods=['GET'])
