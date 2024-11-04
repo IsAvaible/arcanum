@@ -94,7 +94,7 @@ def prompt_question(request, llm_selection):
                 "old_messages": session[llm_selection+"_old_messages" + str(chat_counter)],
                 "human_query": human_query,
             }
-            path = app.root_path +"\\"+ os.path.join("debug", llm_selection+"_chat_"+str(chat_counter)+".txt")
+            path = os.path.join(app.root_path, os.path.join("debug", llm_selection+"_chat_"+str(chat_counter)+".txt"))
             save_debug(path, debug)
 
 

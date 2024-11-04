@@ -24,7 +24,7 @@ def upload_file_method(files, pdf_extractor):
         if file:
             if allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                path = app.root_path +"\\"+ os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                path = os.path.join(app.root_path, os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 file.save(path)
                 mimetype = file.content_type
                 if mimetype == 'application/pdf':
