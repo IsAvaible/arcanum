@@ -31,7 +31,7 @@ $(document).ready(function () {
             userinput = "Please give me all data back and put them in JSON"
         }
 
-        let user_msg = '<div class="user_message">' + userinput + "</div>"
+        let user_msg = '<div class="user_message"><pre>' + userinput + "</pre></div>"
         $("#chat").append(user_msg);
 
         let form = document.querySelector("#chatbox");
