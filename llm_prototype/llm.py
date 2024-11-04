@@ -5,10 +5,10 @@ from langchain_chroma.vectorstores import Chroma
 from langchain_ollama import ChatOllama
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 
-from llm_prototype.app import app
-from llm_prototype.debug import save_debug
+from app import app
+from debug import save_debug
 from prompts import system_prompt_json, system_prompt_normal, get_system_prompt, get_human_prompt
-from llm_prototype.session import add_value_to_session_list
+from session import add_value_to_session_list
 from text import *
 from upload import upload_file_method_vectordb, upload_file_method
 
