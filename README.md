@@ -51,8 +51,11 @@ Follow these steps to set up and run the project locally for development.
    cd <project-directory>
    ```
 
-3. **Set Up Environment Variables** [Not Yet Implemented]
-    - Duplicate the `.env.development.example` file and rename it to `.env.development`.
+3. **Setup your IDE**
+    - If your IDE integrates a Git client, authorize it to be able to push and pull changes from the repository.
+
+4. **Set Up Environment Variables for a Subproject**
+    - Duplicate the `.env.development.example` file in the respective directory and rename it to `.env.development`.
     - Update the `.env.development` file with any required environment-specific variables (such as API URLs, keys, etc.).
    > Note: Ensure you don’t commit any sensitive information to version control by adding `.env.development` to your `.gitignore` file if it’s not already there.
 
