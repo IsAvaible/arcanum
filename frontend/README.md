@@ -43,36 +43,36 @@ Also consult with the team before adding any new libraries to the project.
 
 ### Building for Production
   To build the project for production, run:
-    ```bash
-    npm run build
-    ```
+  ```bash
+  npm run build
+  ```
   The production-ready files will be generated in the `dist` directory.
 
 ### Before Committing Changes
   Before committing any changes, ensure that the code passes all tests, follows the project's linting rules and is formatted correctly.
 
-    - **Run Tests**
-      To run all tests (unit & e2e), use the following command:
-      ```bash
-      npm test
-      ```
+ - **Run Tests**
+    To run all tests (unit & e2e), use the following command:
+    ```bash
+    npm test
+    ```
 
-    - **Linting**
-      To check for any linting issues, run:
-      ```bash
-      npm run lint
-      ```
+  - **Linting**
+    To check for any linting issues, run:
+    ```bash
+    npm run lint
+    ```
 
-      To automatically fix any linting issues, run:
-      ```bash
-      npm run lint:fix
-      ```
+    To automatically fix any linting issues, run:
+    ```bash
+    npm run lint:fix
+    ```
 
-    - **Code Formatting**
-      To format the code according to the project's style guide, run:
-      ```bash
-      npm run format
-      ```
+  - **Code Formatting**
+    To format the code according to the project's style guide, run:
+    ```bash
+    npm run format
+    ```
 
 ### Run Unit Tests with [Vitest](https://vitest.dev/)
 
