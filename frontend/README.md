@@ -1,36 +1,71 @@
-# oculavis-arcanum
+# Frontend
+This is the README file for the frontend of the oculavis ARCANUM project.
 
-This template should help get you started developing with Vue 3 in Vite.
+## Steps to Set Up and Run the Frontend
+1. **Navigate to the Frontend Directory**
+   ```bash
+   cd frontend
+   ```
 
-## Recommended IDE Setup
+2. **Install Dependencies**
+   Run the following command to install all necessary packages and dependencies:
+   ```bash
+   npm install
+   ```
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## Frontend Development Workflow
 
-## Type Support for `.vue` Imports in TS
+### Running, Hot-Reloading and Changes
+  To start the development server and view the application in your browser, run:
+    ```bash
+    npm run dev
+    ```
+  > The development server will start under the default URL `http://localhost:5173`.
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+  The development server supports hot-reloading, so any saved changes in the code will automatically update the browser view.
 
-## Customize configuration
+  **Note**: The default port may vary; check the terminal output to confirm the correct local URL.
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+### External Libraries
+Before adding any external libraries, ensure they are compatible with the project's existing libraries and licenses and do not introduce any security vulnerabilities.
+Also consult with the team before adding any new libraries to the project.
 
-## Project Setup
+### Using environment variables
+  To use environment variables in the project, add them to the `.env.development` file and access them in the code using `import.meta.env`.
+  See the [Vite documentation](https://vite.dev/guide/env-and-mode) for more information.
 
-```sh
-npm install
-```
+### Building for Production
+  To build the project for production, run:
+    ```bash
+    npm run build
+    ```
+  The production-ready files will be generated in the `dist` directory.
 
-### Compile and Hot-Reload for Development
+### Before Committing Changes
+  Before committing any changes, ensure that the code passes all tests, follows the project's linting rules and is formatted correctly.
 
-```sh
-npm run dev
-```
+    - **Run Tests**
+      To run all tests (unit & e2e), use the following command:
+      ```bash
+      npm test
+      ```
 
-### Type-Check, Compile and Minify for Production
+    - **Linting**
+      To check for any linting issues, run:
+      ```bash
+      npm run lint
+      ```
 
-```sh
-npm run build
-```
+      To automatically fix any linting issues, run:
+      ```bash
+      npm run lint:fix
+      ```
+
+    - **Code Formatting**
+      To format the code according to the project's style guide, run:
+      ```bash
+      npm run format
+      ```
 
 ### Run Unit Tests with [Vitest](https://vitest.dev/)
 
@@ -55,10 +90,4 @@ npm run test:e2e -- --project=chromium
 npm run test:e2e -- tests/example.spec.ts
 # Runs the tests in debug mode
 npm run test:e2e -- --debug
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
 ```
