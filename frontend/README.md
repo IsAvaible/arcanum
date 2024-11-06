@@ -15,10 +15,11 @@ This is the README file for the frontend of the oculavis ARCANUM project.
    ```
 
 3. **Setup your IDE**
-    - Install the recommended extensions (if applicable) for your IDE (e.g., ESLint, Prettier, etc.).
+    - We recommend using [PHPStorm](https://www.jetbrains.com/phpstorm/) or [WebStorm](https://www.jetbrains.com/webstorm/) as IDE for the frontend.
+    - If you want to use another IDE like VSCode you need to install necessary extensions like ESLint, Prettier, Vue etc.
     - Configure the IDE to use the project's ESLint and Prettier settings.
     - Set up the IDE to use the project's TypeScript version.
-    - We recommend using [PHPStorm](https://www.jetbrains.com/phpstorm/) or [WebStorm](https://www.jetbrains.com/webstorm/) as IDE for the frontend.
+
 
 ## Frontend Development Workflow
 
