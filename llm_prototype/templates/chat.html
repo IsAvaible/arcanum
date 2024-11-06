@@ -19,7 +19,7 @@
 </div>
 <div id="chat">
     {% for message in old_messages %}
-        <div class="user_message">{{message.content | safe }}</div>
+        <div class="user_message">{{message.content}}</div>
     {% endfor %}
 </div>
 <div id="loader"></div>

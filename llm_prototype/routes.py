@@ -43,6 +43,7 @@ def index_openai():
 
     if "openai_old_messages"+str(chat_counter) not in session:
         session["openai_old_messages"+str(chat_counter)] = []
+    print(old_messages)
 
     return render_template('chat.html', models=openai_models, llm="openai", old_messages=old_messages, chat_counter=chat_counter)
 

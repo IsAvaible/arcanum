@@ -57,19 +57,25 @@ def prompt_question_socket_llamaindex(request, llm_selection):
         old_messages_key = f"{llm_selection}_old_messages{chat_counter}"
         old_messages_json_key = f"{llm_selection}_old_messages_json_{chat_counter}"
 
+        human_msg_with_context = ChatMessage(role="user", content="Please take this as input data: " + context)
+        human_msg_without_context = ChatMessage(role="user", content=prompt)
+
         if not prompt:
             return jsonify({'error': 'No prompt provided'}), 400
 
         # System- und Human-Prompt generieren
         system_prompt = get_system_prompt(system_prompt)
-        human_query = get_human_prompt(prompt, context)
-        human_msg = ChatMessage(role="user", content=human_query)
-        add_value_to_session_list(old_messages_key, human_msg)
+
         messages = [
             ChatMessage(role="system", content=system_prompt),
+            human_msg_with_context
         ]
-        for msg in session.get(old_messages_key):
-            messages.append(msg)
+        if not session.get(old_messages_key):
+            for msg in session.get(old_messages_key):
+                messages.append(msg)
+
+        messages.append(human_msg_without_context)
+        add_value_to_session_list(old_messages_key, human_msg_without_context)
 
     # LLM-Response streamen
         result = ""
@@ -87,7 +93,7 @@ def prompt_question_socket_llamaindex(request, llm_selection):
             add_value_to_session_list(old_messages_json_key, chat_message_to_json(msg))
 
         debug = {
-            "messages": format_chat_messages(messages),
+            "messages": format_chat_messages(session.get(old_messages_key)),
             "context": context,
         }
 
@@ -102,8 +108,8 @@ def format_chat_messages(messages):
     for msg in messages:
         role = msg.role.value  # Zugriff auf den Rollenwert
         content = msg.content  # Zugriff auf den Nachrichteninhalt
-        formatted_messages.append(f"{role.capitalize()}: {content}")
-    return "\n------------------------------------------\n".join(formatted_messages)
+        formatted_messages.append(f"\n{role.capitalize()}:\n{content}")
+    return "\n------------------------------------------------\n".join(formatted_messages)
 
 def chat_messages_to_json(messages):
     messages_list = []
