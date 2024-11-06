@@ -10,7 +10,8 @@ This is the README file for the frontend of the oculavis ARCANUM project.
 2. **Install Dependencies**
    Run the following command to install all necessary packages and dependencies:
    ```bash
-   npm install
+   npm install # Install project dependencies
+   npx playwright install # Install browsers for end-to-end tests
    ```
 
 3. **Setup your IDE**
