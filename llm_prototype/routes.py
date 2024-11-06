@@ -1,25 +1,26 @@
+import json
 import os
 
 import requests
 from flask import render_template, request, Blueprint, session
-from dotenv import load_dotenv
 from app import app
 
-from llm import openai_models, prompt_question, prompt_question_socket
+from langchain_llm import openai_models, prompt_question_socket_langchain
+from llm_prototype.llamaindex_llm import prompt_question_socket_llamaindex
 
 routes = Blueprint('routes', __name__)
 
-@app.route('/prompt', methods=['POST'])
-def ask():
-    if request.method == 'POST':
-            llm = request.form.get("llm")
-            return prompt_question(request, llm)
 
 @app.route('/promptsocket', methods=['POST'])
 def ask_socket():
     if request.method == 'POST':
             llm = request.form.get("llm")
-            return prompt_question_socket(request, llm)
+            framework = request.form.get("llm_framework")
+            if framework == "langchain":
+                return prompt_question_socket_langchain(request, llm)
+            if framework == "llamaindex":
+                return prompt_question_socket_llamaindex(request, llm)
+
 
 
 @app.route('/openai', methods=['GET'])
@@ -34,10 +35,14 @@ def index_openai():
             chat_counter = session["openai_chat_counter"]
             session["openai_chat_counter"] = chat_counter+1
 
+    if "openai_old_messages_json_"+str(chat_counter) not in session:
+        session["openai_old_messages_json_"+str(chat_counter)] = []
+    else:
+        old_messages = session["openai_old_messages_json_"+str(chat_counter)]
+
+
     if "openai_old_messages"+str(chat_counter) not in session:
         session["openai_old_messages"+str(chat_counter)] = []
-    else:
-        old_messages = session["openai_old_messages"+str(chat_counter)]
 
     return render_template('chat.html', models=openai_models, llm="openai", old_messages=old_messages, chat_counter=chat_counter)
 
@@ -54,10 +59,15 @@ def index_local():
             chat_counter = session["ollama_chat_counter"]
             session["ollama_chat_counter"] = chat_counter+1
 
+    if "ollama_old_messages_json_"+str(chat_counter) not in session:
+        session["ollama_old_messages_json_"+str(chat_counter)] = []
+    else:
+        old_messages = session["ollama_old_messages_json_"+str(chat_counter)]
+
+
     if "ollama_old_messages"+str(chat_counter) not in session:
         session["ollama_old_messages"+str(chat_counter)] = []
-    else:
-        old_messages = session["ollama_old_messages"+str(chat_counter)]
+
     return render_template('chat.html', models=ollama_models, llm="ollama", old_messages=old_messages, chat_counter=chat_counter)
 
 

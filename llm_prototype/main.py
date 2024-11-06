@@ -1,10 +1,7 @@
-import os
-
 from dotenv import load_dotenv
-from flask import sessions
 
 from app import app
-from llm import llm
+from llm_prototype.langchain_llm import llm
 from routes import routes
 from upload import upload
 

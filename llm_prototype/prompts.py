@@ -59,20 +59,14 @@ def get_system_prompt(which):
         return system_prompt_no_context
 
 
-def get_human_prompt(old_data, prompt, context):
+def get_human_prompt(prompt, context):
 
-    if context and old_data:
+    if context:
         print("context + old_data")
-        return f"\Please take this input data: \"{context}\". And Respond to this queries: {old_data}"
-    elif not old_data and not context:
+        return f"\Please take this input data: \"{context}\". Respond to this prompt: \"{prompt}\""
+    elif not context:
         print("not old_data and not context")
-        return f"Respond to this prompt: \"{prompt}\""
-    elif old_data and not context:
-        print("old_data and not context")
-        return f"Please use these old messages for context: \"{old_data}\" Respond to this prompt: {prompt}"
-    elif not old_data and context:
-        print("not old_data and context")
-        return f"Please take this input data: \"{context}\". Respond to this prompt: {prompt}"
+        return f"\"{prompt}\""
     else:
         print("prompt")
         return prompt

@@ -1,3 +1,5 @@
+var file = null;
+
 $(document).ready(function () {
     $("#loader").hide();
 
@@ -18,46 +20,8 @@ $(document).ready(function () {
         obj.innerHTML=("<pre>"+html+"</pre>");
     })
 
-    $('#send').on('click', function(event) {
-        event.preventDefault(); // avoid to execute the actual submit of the form.
-
-        $("#loader").show();
-        let userinput = $("#prompt").val();
-        if(userinput === "")
-        {
-            $("#prompt").val("Please give me all data back and put them in JSON")
-            userinput = "Please give me all data back and put them in JSON"
-        }
-
-        let user_msg = '<div class="user_message"><pre>' + userinput + "</pre></div>"
-        $("#chat").append(user_msg);
-
-        let form = document.querySelector("#chatbox");
-        var formData = new FormData(form);
-        let actionUrl = form.getAttribute('action');
-        $("#prompt").val("");
-        $("")
-        $.ajax({
-            type: "POST",
-            url: actionUrl,
-            data: formData,
-            contentType: false,
-            processData: false,
-            success: function (data) {
-                $("#loader").hide();
-                let llm_msg = '<div class="llm_message"><pre>' + data + "</pre></div>"
-                $("#chat").append(llm_msg);
-                var dateiInput = $('#file-upload');
-                dateiInput.replaceWith(dateiInput.clone(true));
-                $("#files-selected").html("");
-            },
-            error: function (data){
-                $("#loader").hide();
-                alert("Error");
-            }
-        });
-    });
-
+    let framework;
+    var formData;
     $('#sendSocket').on('click', function(event) {
         event.preventDefault(); // avoid to execute the actual submit of the form.
 
@@ -73,8 +37,10 @@ $(document).ready(function () {
         $("#chat").append(user_msg);
 
         let form = document.querySelector("#chatbox");
-        var formData = new FormData(form);
-        let actionUrl = form.getAttribute('action')+"socket";
+        formData = new FormData(form);
+
+        let actionUrl = form.getAttribute('action');
+        framework = $("#llm_framework").find(":selected").val();
         $("#prompt").val("");
         $.ajax({
             type: "POST",
@@ -104,15 +70,14 @@ $(document).ready(function () {
     const socket = io();
 
     socket.on('connect', () => {
-        console.log('Verbunden mit dem Server');
+        console.log('Verbunden mit dem Server - ID '+ llm+'_stream'+chat_id);
     });
+
 
     let chat_id = $("input[name=chat_counter]").val();
     let llm = $("input[name=llm]").val();
-
     socket.on(llm+'_stream'+chat_id, (data) => {
         let messagesDiv = $(".llm_pre").last();
-        console.log(data.content)
         if(data.content === "START_LLM_MESSAGE")
         {
             //Evtl um den Anfang zu erkennen
@@ -122,7 +87,13 @@ $(document).ready(function () {
             //Evtl um das Ende zu erkennen
         }else
         {
-            messagesDiv.append(data.content);
+            if(framework === "llamaindex")
+            {
+                messagesDiv.html(data.content);
+            }else if(framework === "langchain"){
+                messagesDiv.append(data.content);
+            }
+
         }
 
     });
