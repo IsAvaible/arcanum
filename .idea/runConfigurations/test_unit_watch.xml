@@ -1,9 +1,9 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="serve frontend" type="js.build_tools.npm">
+  <configuration default="false" name="test:unit:watch" type="js.build_tools.npm" nameIsGenerated="true">
     <package-json value="$PROJECT_DIR$/frontend/package.json" />
     <command value="run" />
     <scripts>
-      <script value="dev" />
+      <script value="test:unit:watch" />
     </scripts>
     <node-interpreter value="project" />
     <envs />
