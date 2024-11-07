@@ -42,9 +42,7 @@ def prompt_question(request, llm_selection):
         elif llm_selection == llm_selection+"":
             llm = ChatOllama(
                 model=model,
-                num_threads=20,
-                temperature=0.2,
-                num_predict=4096,
+                temperature=0,
             )
 
         if files:
@@ -125,9 +123,7 @@ def prompt_question_socket(request, llm_selection):
         elif llm_selection == llm_selection:
             llm = ChatOllama(
                 model=model,
-                num_threads=20,
-                temperature=0.2,
-                num_predict=409,
+                temperature=0,
                 streaming=True
             )
 
