@@ -27,7 +27,7 @@ function checkFileType(file, cb) {
 
     // Function to scan file with VirusTotal
 async function scanFileWithVirusTotal(filePath) {
-    const apiKey = 'bd1595dd3b63031e3a0817a29bc1cad14b75f8f09a06aaeda23c5b47ab39fbb3';
+    const apiKey = 'INSERT HERE';
     const url = 'https://www.virustotal.com/vtapi/v2/file/scan';
 
     const formData = new FormData();
@@ -47,6 +47,10 @@ async function scanFileWithVirusTotal(filePath) {
         console.error('Error scanning file with VirusTotal:', error);
         throw error;
     }};
+
+    
+
+    module.exports = router;
 
 module.exports = { checkFileType, scanFileWithVirusTotal };
 
