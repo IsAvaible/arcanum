@@ -1,4 +1,5 @@
 const express = require('express');
+const multer = require('multer');
 const router = express.Router();
 const upload = multer({
     storage: multer.diskStorage({
@@ -16,10 +17,10 @@ const upload = multer({
 const exampleController = require('../controllers/exampleController');
 const fileUploadController = require('../controllers/fileuploadController');
 
-// Routen definieren
-router.get('/example', exampleController.getExample);
 
-router.get/('/upload', res.render('./frontend/fileupload'));
+router.get('/upload', (req, res) => {
+    res.render('./frontend/fileupload');
+});
 
 router.post('/upload', (req, res) => {
     upload(req, res, async (err) => {
