@@ -19,13 +19,13 @@
 </div>
 <div id="chat">
     {% for message in old_messages %}
-        <div class="user_message">{{message | safe }}</div>
+        <div class="user_message">{{message.content}}</div>
     {% endfor %}
 </div>
 <div id="loader"></div>
 <br>
 <br>
-<form id="chatbox" method=post action="/prompt" enctype=multipart/form-data>
+<form id="chatbox" method=post action="/promptsocket" enctype=multipart/form-data>
     <label for="file-upload" class="custom-file-upload">
         File Upload (.pdf, .html, .txt)
     </label>
@@ -36,15 +36,20 @@
     <input type="hidden" name="chat_counter" value="{{ chat_counter }}">
     <select name="pdf_extractor">
         <option value="pdfplumber">PDFPlumber</option>
-        <option value="pypdfLoader">PyPDFLoader</option>
+        <option value="pypdfloader">PyPDFLoader</option>
         <option value="pdfreader">PdfReader</option>
         <option value="ocr">PDF2image With Tesseract (OCR)</option>
     </select>
+    <label>LLM Framework</label>
+    <select name="llm_framework" id="llm_framework">
+        <option value="langchain">LangChain</option>
+        <option value="llamaindex">LlamaIndex</option>
+    </select>
     <label>System Prompt:</label>
     <select name="system_prompt">
-        <option value="normal">Answer in normal Text</option>
-        <option value="json2">Answer with prestructured JSON</option>
         <option value="json">Answer with JSON</option>
+        <option value="json2">Answer with prestructured JSON</option>
+        <option value="normal">Answer in normal Text</option>
         <option value="nocontext">Answer with no context given</option>
     </select>
     <label>LLM Model: </label>
@@ -58,8 +63,7 @@
     <textarea placeholder="Please write a prompt" rows="10" cols="30" name="prompt" id="prompt"></textarea>
     <br>
     <br>
-    <button id="send">Send</button>
-    <button id="sendSocket">Send and get via WebSocket</button>
+    <button id="sendSocket">Send</button>
 </form>
 
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>

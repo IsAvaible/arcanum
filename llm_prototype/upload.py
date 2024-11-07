@@ -23,6 +23,7 @@ def upload_file_method(files, pdf_extractor):
     for file in files:
         if file:
             if allowed_file(file.filename):
+                print(file.filename)
                 filename = secure_filename(file.filename)
                 path = os.path.join(app.root_path, os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 file.save(path)
