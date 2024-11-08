@@ -18,6 +18,14 @@ const uploadToNextcloud = async (file) => {
     await client.put(remotePath, file.buffer);
 };
 
+function checkFileName(file) {
+    const fileName = path.basename(file.originalname);
+    if (file.originalname !== fileName) {
+        throw new Error('File name should not contain a complete path');
+    }
+    return fileName;
+}
+
 // Check file type
 function checkFileType(file, cb) {
     // Allowed ext
@@ -63,6 +71,6 @@ async function scanFileWithAzure(filePath) {
     }
 };
 
-module.exports = { checkFileType, uploadToNextcloud, scanFileWithAzure, router };
+module.exports = { checkFileType, uploadToNextcloud, scanFileWithAzure, router, checkFileName };
 
 
