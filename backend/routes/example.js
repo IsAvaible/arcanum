@@ -1,6 +1,11 @@
+// Controller importieren
+const exampleController = require('../controllers/exampleController');
+const fileUploadController = require('../controllers/fileuploadController');
+const path = require('path');
 const express = require('express');
 const multer = require('multer');
 const router = express.Router();
+const env = require('dotenv').config();
 const upload = multer({
     storage: multer.diskStorage({
         destination: './uploads/',
@@ -8,21 +13,14 @@ const upload = multer({
             cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
         }
     }),
+    size: 1000000,
     fileFilter: function (req, file, cb) {
-        checkFileType(file, cb);
+        fileUploadController.checkFileType(file, cb);
     }
 }).single('file');
 
-// Controller importieren
-const exampleController = require('../controllers/exampleController');
-const fileUploadController = require('../controllers/fileuploadController');
-
-
-router.get('/upload', (req, res) => {
-    res.render('./frontend/fileupload');
-});
-
 router.post('/upload', (req, res) => {
+    console.log('File upload request received' + process.env.NEXTCLOUD_URL);
     upload(req, res, async (err) => {
         if (err) {
             return res.status(400).json({ message: err });
@@ -33,15 +31,21 @@ router.post('/upload', (req, res) => {
         }
 
         try {
-            const scanResult = await scanFileWithVirusTotal(req.file.path);
+            const scanResult = await fileUploadController.scanFileWithAzure(req.file.path);
             if (scanResult.positives > 0) {
                 return res.status(400).json({ message: 'File is infected with malware!' });
             }
-            res.status(200).json({ message: 'File uploaded and scanned successfully!', scanResult });
+
+            await fileUploadController.uploadToNextcloud(req.file);
+            res.status(200).json({ message: 'File uploaded to Nextcloud and scanned successfully!', scanResult });
         } catch (error) {
-            res.status(500).json({ message: 'Error scanning file for malware.', error });
+            res.status(500).json({ message: 'Error uploading file to Nextcloud or scanning for malware.', error });
         }
     });
 });
 
+
+router.get('/upload', (req, res) => {
+    res.render('./frontend/fileupload');    
+});
 module.exports = router;

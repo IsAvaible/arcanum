@@ -3,11 +3,20 @@ const multer = require('multer');
 const path = require('path');
 const axios = require('axios');
 const fs = require('fs');
-
+const env = require('dotenv').config();
 const router = express.Router();
 
+const uploadToNextcloud = async (file) => {
+    
+    const client = new nextcloudClient.Client({
+        url: process.env.NEXTCLOUD_URL,
+        username: process.env.NEXTCLOUD_USERNAME,
+        password: process.env.NEXTCLOUD_PASSWORD,
+    });
 
-
+    const remotePath = `/nextcloud/uploads/${file.originalname}`;
+    await client.put(remotePath, file.buffer);
+};
 
 // Check file type
 function checkFileType(file, cb) {
@@ -25,33 +34,35 @@ function checkFileType(file, cb) {
     }
 }
 
-    // Function to scan file with VirusTotal
-async function scanFileWithVirusTotal(filePath) {
-    const apiKey = 'INSERT HERE';
-    const url = 'https://www.virustotal.com/vtapi/v2/file/scan';
-
-    const formData = new FormData();
-    formData.append('apikey', apiKey);
-    console.log("Datei Pfad:"+  filePath);
-    formData.append('file', fs.createReadStream(filePath));
+// Function to scan file with Microsoft Azure
+async function scanFileWithAzure(filePath) {
+    console.log(process.env.AZURE_API_KEY);
+    const apiKey = process.env.AZURE_API_KEY;
+    const endpoint = process.env.AZURE_URL;
+    
+    const fileStream = fs.createReadStream(filePath);
+    const fileName = path.basename(filePath);
 
     try {
-        const response = await axios.post(url, formData, {
-            headers: formData.getHeaders()
+        const response = await axios.post(endpoint, fileStream, {
+            headers: {
+                'Content-Type': 'application/octet-stream',
+                'Ocp-Apim-Subscription-Key': apiKey,
+                'Content-Disposition': `attachment; filename=${fileName}`
+            }
         });
-        if (response.data.response_code !== 200) {
-            return response.data.verbose_msg;
+
+        if (response.status !== 200) {
+            throw new Error(`Error scanning file with Azure: ${response.statusText}`);
         }
+
         return response.data;
     } catch (error) {
-        console.error('Error scanning file with VirusTotal:', error);
+        console.error('Error scanning file with Azure:', error);
         throw error;
-    }};
+    }
+};
 
-    
-
-    module.exports = router;
-
-module.exports = { checkFileType, scanFileWithVirusTotal };
+module.exports = { checkFileType, uploadToNextcloud, scanFileWithAzure, router };
 
 
