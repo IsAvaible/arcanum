@@ -1,0 +1,4 @@
+cd frontend
+
+# Verify that commit messages meet the Conventional Commits spec.
+npx commitlint  --edit "$1"
