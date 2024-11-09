@@ -1,0 +1,138 @@
+name: Frontend CI Pipeline
+
+on:
+  push:
+    branches:
+      - "issue/**"
+      - "feature/**"
+  pull_request:
+    branches:
+      - "development"
+  paths:
+    - 'frontend/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: 0
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./frontend
+        cache:
+          key: node-modules-${{ hashFiles('frontend/package-lock.json') }}
+          path: frontend/node_modules
+
+      - name: Build Project with Vite
+        run: npm run build
+        working-directory: ./frontend
+
+  lint:
+    runs-on: ubuntu-latest
+    needs: [build]
+    env:
+      HUSKY: 0
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./frontend
+        cache:
+          key: node-modules-${{ hashFiles('frontend/package-lock.json') }}
+          path: frontend/node_modules
+
+      - name: Run Linting with ESLint and Prettier
+        run: npm run lint
+        working-directory: ./frontend
+        continue-on-error: false
+
+  tests:
+    runs-on: ubuntu-latest
+    needs: [build]
+    env:
+      HUSKY: 0
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./frontend
+        cache:
+          key: node-modules-${{ hashFiles('frontend/package-lock.json') }}
+          path: frontend/node_modules
+
+      - name: Run Unit Tests with Vitest
+        run: npm run test:unit
+        working-directory: ./frontend
+        env:
+          CI: true
+      - name: Upload Unit Test Coverage Report
+        uses: actions/upload-artifact@v2
+        with:
+          name: unit-test-coverage
+          path: frontend/coverage
+      - name: Fail if Coverage Below Threshold
+        run: |
+          COVERAGE=$(grep -oP '(?<=TOTAL\s+LINE\s+)\d+' frontend/coverage/summary.txt)
+          if [ "$COVERAGE" -lt 80 ]; then
+            echo "Code coverage below threshold: $COVERAGE%"
+            exit 1
+          fi
+
+      - name: Run End-to-End Tests with Playwright
+        run: npm run test:e2e
+        working-directory: ./frontend
+        env:
+          CI: true
+      - name: Upload Playwright Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: e2e-test-results
+          path: frontend/test-results
+          
+      - name: Save Testing Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: lint-results
+          path: frontend/.eslintcache
+
+      - name: Upload Screenshots for Failed E2E Tests
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: e2e-failure-screenshots
+          path: frontend/screenshots
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build, lint, tests]
+    env:
+      HUSKY: 0
+    steps:
+      - name: Update README with Status Badge
+        if: success()
+        run: |
+          echo "![CI Pipeline](https://github.com/NeugebauerITSecFHAachen/ip-oculavis-ws2425/actions/workflows/ci.yml/badge.svg)"
+
