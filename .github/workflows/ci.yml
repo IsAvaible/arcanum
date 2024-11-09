@@ -103,7 +103,7 @@ jobs:
 
       - name: Fail if Coverage Below Threshold
         run: |
-          COVERAGE=$(grep -oP '(?<=TOTAL\s+LINE\s+)\d+' frontend/coverage/summary.txt)
+          COVERAGE=$(awk '/TOTAL\s+LINE/ {print $NF}' frontend/coverage/summary.txt)
           if [ "$COVERAGE" -lt 80 ]; then
             echo "Code coverage below threshold: $COVERAGE%"
             exit 1
