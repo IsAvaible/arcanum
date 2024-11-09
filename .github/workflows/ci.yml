@@ -9,7 +9,7 @@ on:
     branches:
       - development
     paths:
-      - 'frontend/**'  
+      - 'frontend/**'
 
 jobs:
   build:
@@ -120,7 +120,7 @@ jobs:
         with:
           name: e2e-test-results
           path: frontend/test-results
-          
+
       - name: Save Testing Artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -144,5 +144,3 @@ jobs:
         if: success()
         run: |
           echo "![CI Pipeline](https://github.com/NeugebauerITSecFHAachen/ip-oculavis-ws2425/actions/workflows/ci.yml/badge.svg)" >> README.md
-
-
