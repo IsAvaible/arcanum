@@ -82,6 +82,11 @@ To bypass the pre-commit hooks and commit changes, use the `--no-verify` flag wi
 
 When commiting via a JetBrains IDE, the IDE will display the errors in a dialog box. You can see the full run under `Git` > `Console`.
 
+#### Commit Message Convention
+
+Commit messages should follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) specification.
+This helps in generating a changelog and versioning the project.
+
 #### Run Tests
 
 To run all tests (unit & e2e), use the following command:
