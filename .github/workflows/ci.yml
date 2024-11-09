@@ -28,9 +28,14 @@ jobs:
       - name: Install dependencies
         run: npm install
         working-directory: ./frontend
-        cache:
-          key: node-modules-${{ hashFiles('frontend/package-lock.json') }}
+      - name: Cache node_modules
+        uses: actions/cache@v2
+        with:
           path: frontend/node_modules
+          key: node-modules-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            node-modules-
+
 
       - name: Build Project with Vite
         run: npm run build
@@ -53,9 +58,14 @@ jobs:
       - name: Install dependencies
         run: npm install
         working-directory: ./frontend
-        cache:
-          key: node-modules-${{ hashFiles('frontend/package-lock.json') }}
+      - name: Cache node_modules
+        uses: actions/cache@v2
+        with:
           path: frontend/node_modules
+          key: node-modules-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            node-modules-
+
 
       - name: Run Linting with ESLint and Prettier
         run: npm run lint
@@ -79,9 +89,14 @@ jobs:
       - name: Install dependencies
         run: npm install
         working-directory: ./frontend
-        cache:
-          key: node-modules-${{ hashFiles('frontend/package-lock.json') }}
+      - name: Cache node_modules
+        uses: actions/cache@v2
+        with:
           path: frontend/node_modules
+          key: node-modules-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            node-modules-
+
 
       - name: Run Unit Tests with Vitest
         run: npm run test:unit
