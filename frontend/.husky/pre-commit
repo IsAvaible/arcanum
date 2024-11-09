@@ -1,0 +1,16 @@
+cd frontend
+
+# Type Checking with Vue’s TypeScript Compiler
+npx vue-tsc --noEmit
+
+# Detect vulnerable or outdated packages
+npm audit
+
+# Run lint-staged to check linting and formatting for staged files
+npx lint-staged --config .lintstagedrc --concurrent false
+
+# Run unit tests
+npx vitest --run --changed
+
+# For debugging, uncomment the following line [Reference](https://typicode.github.io/husky/how-to.html#testing-hooks-without-committing)
+# exit 1
