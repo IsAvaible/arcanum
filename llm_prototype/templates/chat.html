@@ -27,10 +27,11 @@
 <br>
 <form id="chatbox" method=post action="/promptsocket" enctype=multipart/form-data>
     <label for="file-upload" class="custom-file-upload">
-        File Upload (.pdf, .html, .txt)
+        File Upload (PDF, HTML/TXT, AUDIO)
     </label>
     <input id="file-upload" type="file" name="file" name="file" multiple/>
     <span id="files-selected"></span>
+    <br>
     <label>PDF Extractor: </label>
     <input type="hidden" name="llm" value="{{ llm }}">
     <input type="hidden" name="chat_counter" value="{{ chat_counter }}">
@@ -40,11 +41,19 @@
         <option value="pdfreader">PdfReader</option>
         <option value="ocr">PDF2image With Tesseract (OCR)</option>
     </select>
+    <br>
+    <label>Audio Transcription (Whisper): </label>
+    <select name="whisper">
+        <option value="local">Local</option>
+        <option value="api">OpenAI API</option>
+    </select>
+    <br>
     <label>LLM Framework</label>
     <select name="llm_framework" id="llm_framework">
         <option value="langchain">LangChain</option>
         <option value="llamaindex">LlamaIndex</option>
     </select>
+    <br>
     <label>System Prompt:</label>
     <select name="system_prompt">
         <option value="json">Answer with JSON</option>
@@ -52,6 +61,7 @@
         <option value="normal">Answer in normal Text</option>
         <option value="nocontext">Answer with no context given</option>
     </select>
+    <br>
     <label>LLM Model: </label>
     <select name="model">
         {% for model in models %}

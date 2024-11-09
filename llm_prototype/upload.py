@@ -1,16 +1,24 @@
 import os
+import re
+from pathlib import Path
+from openai import OpenAI
+
 from bs4 import BeautifulSoup
 from flask import Blueprint
+from langchain_community.document_loaders.parsers import OpenAIWhisperParser
+from langchain_core.document_loaders import BlobLoader
+from langchain_core.documents.base import Blob
 from werkzeug.utils import secure_filename
 
 import hashlib
 
 from app import app
 from embeddings import create_embeddings, get_embeddings
+from llm_prototype.audio import convert_mp3_to_wav, reduce_noise, whisper_local
 from pdf import *
 
 upload = Blueprint('upload', __name__)
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'html'}
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'html', 'mp3', "wav"}
 
 
 def allowed_file(filename):
@@ -18,18 +26,36 @@ def allowed_file(filename):
         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def upload_file_method(files, pdf_extractor):
+def upload_file_method(files, pdf_extractor, whisper):
     texts = ""
     for file in files:
         if file:
             if allowed_file(file.filename):
-                print(file.filename)
                 filename = secure_filename(file.filename)
                 path = os.path.join(app.root_path, os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                file.save(path)
                 mimetype = file.content_type
-                if mimetype == 'application/pdf':
+                file.save(path)
+
+                clean_filename_str = clean_filename(Path(path).stem)
+
+                if mimetype == "audio/mpeg":
+                    texts += "Content of "+clean_filename_str+": "
+                    if whisper == "local":
+                        texts += whisper_local(path)
+                    elif whisper == "api":
+                        client = OpenAI()
+                        audio_file = open(path, "rb")
+                        transcription = client.audio.transcriptions.create(
+                            model="whisper-1",
+                            file=audio_file,
+                            response_format="verbose_json"
+                        )
+                        texts += transcription.text
+
+
+                elif mimetype == 'application/pdf':
                     #if store_hash(file) == True:
+                    texts = "Content of "+clean_filename_str+": "
                     if pdf_extractor == "pypdfloader":
                         texts += " " + create_text_chunks_pypdfloader(path)
                     if pdf_extractor == "pdfplumber":
@@ -39,19 +65,19 @@ def upload_file_method(files, pdf_extractor):
                     if pdf_extractor == "ocr":
                         texts += " " + create_text_chunks_ocr(path)
                 elif mimetype == "text/html":
+                    texts = "Content of "+clean_filename_str+": "
                     with open(path, 'r', encoding="utf-8") as file:
                         contents = file.read()
                         soup = BeautifulSoup(contents)
                         print(soup.get_text())
                         texts += soup.get_text()
                 elif mimetype == "text/plain":
+                    texts = "Content of "+clean_filename_str+": "
                     with open(path, 'r', encoding="utf-8") as file:
                         contents = file.read()
                         texts += contents
 
     return texts
-
-
 
 
 # ZURZEIT KEINE FUNKTION
@@ -78,6 +104,13 @@ def upload_file_method_vectordb(files, pdf_extractor, llm, vector_id):
                     return create_embeddings(chunks, llm, vector_id)
                 else:
                     return get_embeddings(llm, vector_id)
+
+def clean_filename(filepath):
+    # Get the filename without the path
+    filename = os.path.basename(filepath)
+    # Replace disallowed special characters with blanks
+    clean_name = re.sub(r'[^a-zA-Z0-9]', ' ', filename)
+    return clean_name
 
 
 ### FÜR SPÄTER EVTL
@@ -110,3 +143,4 @@ def store_hash(file_storage):
         return True
     else:
         return False
+

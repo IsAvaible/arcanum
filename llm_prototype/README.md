@@ -2,11 +2,13 @@
 ### auf Basis von Flask und Langchain
 
 ### Requirements
-- Getestet mit Python 3.9 und 3.10
-  - Es könnte sein, dass höhere Versionen zurzeit nicht funktionieren
+- Getestet mit Python 3.11.9, am besten genau diese benutzen
+  - Es könnte sein, dass höhere/niedrige Versionen zurzeit nicht funktionieren
 - Um PDF2Image (OCR) zu benutzen, wird "Poppler" und "PyTesseract" benötigt
   - Tesseract -> https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-5.4.0.20240606.exe
   - Poppler -> https://github.com/oschwartz10612/poppler-windows/releases/tag/v24.08.0-0
+  - In der .env Datei dann den Pfad der Tesseract Exe hinterlegen
+    - Oft `C:\Program Files\Tesseract-OCR\tesseract.exe`
 
 - Für die Dependencies muss "pip" installiert sein
   - https://phoenixnap.com/kb/install-pip-windows 
@@ -14,13 +16,21 @@
   - `pip install -r .\requirements.txt`
   - damit sollten alle benötigten Dependencies installiert werden
 
+#### OpenAI Whisper (Lokal)
+- Damit Whisper die GPU benutzt, nach Installieren aller Dependencies folgenden Befehl ausführen:
+  - `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118`
+  - `pip install -U openai-whisper`
+  - Wichtig ist, dass das Model zurzeit auf "large" eingestellt ist, man kann es aber auch auf andere Größen setzen
+    - https://github.com/openai/whisper?tab=readme-ov-file#available-models-and-languages
+
 ## Anwendung
 - Es gibt 2 Möglichkeiten, einmal Ollama und einmal mit der OpenAI API
 - Meinen OPENAI_API_KEY werde ich nicht mit pushen, wer Zugriff haben möchte, kann mich gerne fragen
 - Da wir noch kein GUI haben, habe ich ein kleines programmiert um ein paar Funktionen zu testen
 - Wer IntelliJ benutzt kann einfach die `main.py` starten und dann einfach auf diesen Link gehen `http://127.0.0.1:5000/`
 - Dort kann man dann zwischen Ollama und OpenAI API auswählen
-- 
+
+
 #### Ollama
 - Ollama runterladen und starten -> https://ollama.com/
 - Hier ist eine Liste von Models die man benutzen kann https://ollama.com/library
@@ -38,11 +48,12 @@
   - eins soll immer JSON ausgeben
   - eins soll immer einen normalen Text ausgeben
   - eins hat keine Forderungen
-- Zurzeit können PDF, HTML und Text Dateien benutzt werden, man kann mehrere auf einmal auswählen.
+- Zurzeit können PDF, HTML und Text und Audio Dateien benutzt werden, man kann mehrere auf einmal auswählen.
   - Ich habe 4 verschiedene PDF Bibliotheken implementiert, um zu schauen, welche am Besten ist
+    - Meine Empfehlung PDF Plumber
 - Die Chat Historie wird über den Chat ID Parameter gespeichert, so kann man ganz einfach einen neuen Chat starten
 - Wenn man keine Nachricht eingibt, dann wird standardmäßig folgende Nachricht benutzt:
-  - `Please give me all data back and put them in JSON`
+  - `Please create metadata for a new case based on the information provided!`
 
 
 

@@ -24,13 +24,14 @@ def prompt_question_socket_langchain(request, llm_selection):
         chat_counter = request.form.get("chat_counter")
         system_prompt = request.form.get("system_prompt")
         pdf_extractor = request.form.get("pdf_extractor")
+        whisper = request.form.get("whisper")
 
         # Initialisiere das LLM
         llm = None
         if llm_selection == "openai":
             llm = ChatOpenAI(
                 model=model,
-                temperature=0,
+                temperature=0.3,
                 max_tokens=None,
                 timeout=None,
                 max_retries=2,
@@ -46,7 +47,7 @@ def prompt_question_socket_langchain(request, llm_selection):
 
         # Kontext sammeln und in der Session speichern
         if files:
-            context = upload_file_method(files, pdf_extractor)
+            context = upload_file_method(files, pdf_extractor, whisper)
             session_key = f"{llm_selection}_context{chat_counter}"
             session[session_key] = session.get(session_key, "") + context
         else:

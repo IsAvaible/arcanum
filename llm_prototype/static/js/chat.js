@@ -29,8 +29,8 @@ $(document).ready(function () {
         let userinput = $("#prompt").val();
         if(userinput === "")
         {
-            $("#prompt").val("Please give me all data back and put them in JSON")
-            userinput = "Please give me all data back and put them in JSON"
+            $("#prompt").val("Please create metadata for a new case based on the information provided!")
+            userinput = "Please create metadata for a new case based on the information provided!"
         }
 
         let user_msg = '<div class="user_message"><pre>' + userinput + "</pre></div>"

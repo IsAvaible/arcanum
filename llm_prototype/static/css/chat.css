@@ -41,6 +41,13 @@ input[type=button], input[type=submit], input[type=reset], input[type=text], sel
     cursor: pointer;
     background-color: #00000000;
     color: #FFFFFF;
+
+}
+
+form input, form select{
+    float: none;
+    width: 300px;
+    overflow: hidden;
 }
 
 option{
@@ -73,16 +80,17 @@ input[type="file"] {
     margin-bottom: 20px;
 }
 
+form label{
+    padding:12px;
+    display:inline-block;
+    width:280px;
+}
+
 #prompt{
     width:100%;
 }
 
-.user_message{
-    border: 1px solid #636363;
-    padding:20px;
-}
-
-.llm_message{
+pre{
     border: 1px solid #636363;
     padding:20px;
     white-space: pre-wrap;
