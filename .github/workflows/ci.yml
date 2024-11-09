@@ -18,24 +18,24 @@ jobs:
       HUSKY: 0
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: '16'
 
-      - name: Install dependencies
-        run: npm install
-        working-directory: ./frontend
       - name: Cache node_modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: frontend/node_modules
           key: node-modules-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: |
             node-modules-
 
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./frontend
 
       - name: Build Project with Vite
         run: npm run build
@@ -48,24 +48,20 @@ jobs:
       HUSKY: 0
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: '16'
 
-      - name: Install dependencies
-        run: npm install
-        working-directory: ./frontend
       - name: Cache node_modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: frontend/node_modules
           key: node-modules-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: |
             node-modules-
-
 
       - name: Run Linting with ESLint and Prettier
         run: npm run lint
@@ -79,24 +75,20 @@ jobs:
       HUSKY: 0
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: '16'
 
-      - name: Install dependencies
-        run: npm install
-        working-directory: ./frontend
       - name: Cache node_modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: frontend/node_modules
           key: node-modules-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: |
             node-modules-
-
 
       - name: Run Unit Tests with Vitest
         run: npm run test:unit
@@ -104,7 +96,7 @@ jobs:
         env:
           CI: true
       - name: Upload Unit Test Coverage Report
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: unit-test-coverage
           path: frontend/coverage
@@ -122,20 +114,20 @@ jobs:
         env:
           CI: true
       - name: Upload Playwright Artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: e2e-test-results
           path: frontend/test-results
           
       - name: Save Testing Artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: lint-results
           path: frontend/.eslintcache
 
       - name: Upload Screenshots for Failed E2E Tests
         if: failure()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: e2e-failure-screenshots
           path: frontend/screenshots
