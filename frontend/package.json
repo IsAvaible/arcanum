@@ -19,6 +19,7 @@
     "prepare": "node .husky/install.mjs && cd .. && husky frontend/.husky"
   },
   "dependencies": {
+    "@iconoir/vue": "^7.9.0",
     "axios": "^1.7.7",
     "pinia": "^2.2.6",
     "primevue": "^4.2.1",
