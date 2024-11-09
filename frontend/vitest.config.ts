@@ -10,6 +10,7 @@ export default mergeConfig(
       exclude: [...configDefaults.exclude, 'e2e/**'],
       root: fileURLToPath(new URL('./', import.meta.url)),
       coverage: {
+        enabled: true,
         reporter: ['text', 'lcov'],
         reportsDirectory: './frontend/coverage',  // coverage output directory
       },
