@@ -1,5 +1,5 @@
 {
   "./**/*.{js,ts,jsx,tsx,vue,json,md}": ["eslint --fix"],
-  "src/**/*.{vue,css,scss}": ["stylelint --fix"],
+  "src/**/*.{vue,css,scss}": ["stylelint --fix --allow-empty-input"],
   "./**/*": ["prettier --write --ignore-unknown "]
 }
