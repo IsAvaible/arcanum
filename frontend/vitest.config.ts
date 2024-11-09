@@ -12,7 +12,7 @@ export default mergeConfig(
       coverage: {
         enabled: true,
         reporter: ['text', 'lcov'],
-        reportsDirectory: './frontend/coverage',  // coverage output directory
+        reportsDirectory: './frontend/e2e',  // coverage output directory schoulb be created
       },
     },
   })
