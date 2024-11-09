@@ -66,7 +66,6 @@ jobs:
       - name: Run Linting with ESLint and Prettier
         run: npm run lint
         working-directory: ./frontend
-        continue-on-error: false
 
   tests:
     runs-on: ubuntu-latest
@@ -95,11 +94,13 @@ jobs:
         working-directory: ./frontend
         env:
           CI: true
+
       - name: Upload Unit Test Coverage Report
         uses: actions/upload-artifact@v3
         with:
           name: unit-test-coverage
           path: frontend/coverage
+
       - name: Fail if Coverage Below Threshold
         run: |
           COVERAGE=$(grep -oP '(?<=TOTAL\s+LINE\s+)\d+' frontend/coverage/summary.txt)
@@ -113,6 +114,7 @@ jobs:
         working-directory: ./frontend
         env:
           CI: true
+
       - name: Upload Playwright Artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -141,6 +143,6 @@ jobs:
       - name: Update README with Status Badge
         if: success()
         run: |
-          echo "![CI Pipeline](https://github.com/NeugebauerITSecFHAachen/ip-oculavis-ws2425/actions/workflows/ci.yml/badge.svg)"
+          echo "![CI Pipeline](https://github.com/NeugebauerITSecFHAachen/ip-oculavis-ws2425/actions/workflows/ci.yml/badge.svg)" >> README.md
 
 
