@@ -1,18 +1,17 @@
 import json
 import os
 
-from flask import jsonify, Blueprint, render_template, session
+from flask import jsonify, Blueprint, session
 from llama_index.core.base.llms.types import ChatMessage
 
 from llama_index.legacy.llms import Ollama
 
 from app import app, socketio
 from debug import save_debug
-from prompts import system_prompt_json, system_prompt_normal, get_system_prompt, get_human_prompt
+from prompts import get_system_prompt
 from session import add_value_to_session_list
-from upload import upload_file_method_vectordb, upload_file_method
+from upload import upload_file_method
 from llama_index.llms.openai import OpenAI
-from llama_index.core import Settings
 
 vector_store = None
 openai_models = ['gpt-3.5-turbo-0125', 'gpt-4o-mini', 'gpt-3.5-turbo-1106']
@@ -47,7 +46,7 @@ def prompt_question_socket_llamaindex(request, llm_selection):
 
         # Kontext sammeln und in der Session speichern
         if files:
-            context = upload_file_method(files, pdf_extractor)
+            context = upload_file_method(files, pdf_extractor, llm_selection, f"{llm_selection}_context{chat_counter}")
             session_key = f"{llm_selection}_context{chat_counter}"
             session[session_key] = session.get(session_key, "") + context
         else:

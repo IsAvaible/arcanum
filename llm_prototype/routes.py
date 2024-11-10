@@ -5,21 +5,42 @@ import requests
 from flask import render_template, request, Blueprint, session
 from app import app
 
-from langchain_llm import openai_models, prompt_question_socket_langchain
+from langchain_llm import openai_models, generate_case_langchain, chat
 from llm_prototype.llamaindex_llm import prompt_question_socket_llamaindex
 
 routes = Blueprint('routes', __name__)
 
 
-@app.route('/promptsocket', methods=['POST'])
+@app.route('/generate', methods=['POST'])
+def generate():
+    if request.method == 'POST':
+        llm = request.form.get("llm")
+        framework = request.form.get("llm_framework")
+        if framework == "langchain":
+            return generate_case_langchain(request, llm)
+        if framework == "llamaindex":
+            return prompt_question_socket_llamaindex(request, llm)
+
+@app.route('/chat', methods=['POST'])
+def chat_langchain():
+    if request.method == 'POST':
+        llm = request.form.get("llm")
+        framework = request.form.get("llm_framework")
+        if framework == "langchain":
+            return chat(request, llm)
+        if framework == "llamaindex":
+            return prompt_question_socket_llamaindex(request, llm)
+
+
+@app.route('/chatbot', methods=['POST'])
 def ask_socket():
     if request.method == 'POST':
-            llm = request.form.get("llm")
-            framework = request.form.get("llm_framework")
-            if framework == "langchain":
-                return prompt_question_socket_langchain(request, llm)
-            if framework == "llamaindex":
-                return prompt_question_socket_llamaindex(request, llm)
+        llm = request.form.get("llm")
+        framework = request.form.get("llm_framework")
+        if framework == "langchain":
+            return generate_case_langchain(request, llm)
+        if framework == "llamaindex":
+            return prompt_question_socket_llamaindex(request, llm)
 
 
 

@@ -22,7 +22,7 @@ $(document).ready(function () {
 
     let framework;
     var formData;
-    $('#sendSocket').on('click', function(event) {
+    $('#generate').on('click', function(event) {
         event.preventDefault(); // avoid to execute the actual submit of the form.
 
         $("#loader").show();
@@ -44,7 +44,7 @@ $(document).ready(function () {
         $("#prompt").val("");
         $.ajax({
             type: "POST",
-            url: actionUrl,
+            url: "/generate",
             data: formData,
             contentType: false,
             processData: false,
@@ -65,6 +65,51 @@ $(document).ready(function () {
             }
         });
     });
+
+
+    $('#chat_btn').on('click', function(event) {
+        event.preventDefault(); // avoid to execute the actual submit of the form.
+
+        $("#loader").show();
+        let userinput = $("#prompt").val();
+        if(userinput === "")
+        {
+            userinput = "Please create metadata for a new case based on the information provided and return them in JSON!"
+            $("#prompt").val(userinput)
+        }
+
+        let user_msg = '<div class="user_message"><pre>' + userinput + "</pre></div>"
+        $("#chat").append(user_msg);
+
+        let form = document.querySelector("#chatbox");
+        formData = new FormData(form);
+
+        framework = $("#llm_framework").find(":selected").val();
+        $("#prompt").val("");
+        $.ajax({
+            type: "POST",
+            url: "/chat",
+            data: formData,
+            contentType: false,
+            processData: false,
+            beforeSend: function() {
+                let llm_msg = $("<div>", {"class": "llm_message"});
+                llm_msg.html('<pre class="llm_pre">'+"</pre>");
+                $("#chat").append(llm_msg)
+                var fileInput = $('#file-upload');
+                fileInput.replaceWith(fileInput.clone(true));
+                $("#files-selected").html("");
+            },
+            success: function (data) {
+                $("#loader").hide();
+            },
+            error: function (data){
+                $("#loader").hide();
+                alert("Error");
+            }
+        });
+    });
+
 
     //WEBSOCKETS
     const socket = io();

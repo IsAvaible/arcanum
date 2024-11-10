@@ -13,7 +13,7 @@ from werkzeug.utils import secure_filename
 import hashlib
 
 from app import app
-from embeddings import create_embeddings, get_embeddings
+from embeddings import create_embeddings
 from llm_prototype.audio import convert_mp3_to_wav, reduce_noise, whisper_local
 from pdf import *
 
@@ -26,8 +26,9 @@ def allowed_file(filename):
         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def upload_file_method(files, pdf_extractor, whisper):
+def upload_file_method(files, pdf_extractor, whisper, llm, chat_id):
     texts = ""
+    single_text = ""
     for file in files:
         if file:
             if allowed_file(file.filename):
@@ -35,13 +36,12 @@ def upload_file_method(files, pdf_extractor, whisper):
                 path = os.path.join(app.root_path, os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 mimetype = file.content_type
                 file.save(path)
-
                 clean_filename_str = clean_filename(Path(path).stem)
-
                 if mimetype == "audio/mpeg":
-                    texts += "Content of "+clean_filename_str+": "
+                    texts += "Content of " + clean_filename_str + ": "
                     if whisper == "local":
                         texts += whisper_local(path)
+                        single_text = whisper_local(path)
                     elif whisper == "api":
                         client = OpenAI()
                         audio_file = open(path, "rb")
@@ -51,59 +51,40 @@ def upload_file_method(files, pdf_extractor, whisper):
                             response_format="verbose_json"
                         )
                         texts += transcription.text
+                        single_text = transcription.text
 
 
                 elif mimetype == 'application/pdf':
-                    #if store_hash(file) == True:
-                    texts = "Content of "+clean_filename_str+": "
+                    # if store_hash(file) == True:
+                    texts = "Content of " + clean_filename_str + ": "
                     if pdf_extractor == "pypdfloader":
-                        texts += " " + create_text_chunks_pypdfloader(path)
+                        single_text = create_text_chunks_pypdfloader(path)
+                        texts += " " + single_text
                     if pdf_extractor == "pdfplumber":
-                        texts += " " + create_text_chunks_pdfplumber(path)
+                        single_text = create_text_chunks_pdfplumber(path)
+                        texts += " " + single_text
                     if pdf_extractor == "pdfreader":
-                        texts += " " + create_text_chunks_pdfreader(path)
+                        single_text = create_text_chunks_pdfreader(path)
+                        texts += " " + single_text
                     if pdf_extractor == "ocr":
-                        texts += " " + create_text_chunks_ocr(path)
+                        single_text = create_text_chunks_ocr(path)
+                        texts += " " + single_text
                 elif mimetype == "text/html":
-                    texts = "Content of "+clean_filename_str+": "
+                    texts = "Content of " + clean_filename_str + ": "
                     with open(path, 'r', encoding="utf-8") as file:
                         contents = file.read()
                         soup = BeautifulSoup(contents)
-                        print(soup.get_text())
                         texts += soup.get_text()
+                        single_text = soup.get_text()
                 elif mimetype == "text/plain":
-                    texts = "Content of "+clean_filename_str+": "
+                    texts = "Content of " + clean_filename_str + ": "
                     with open(path, 'r', encoding="utf-8") as file:
                         contents = file.read()
                         texts += contents
-
+                        single_text = contents
+                create_embeddings(single_text, llm, filename,chat_id)
     return texts
 
-
-# ZURZEIT KEINE FUNKTION
-def upload_file_method_vectordb(files, pdf_extractor, llm, vector_id):
-    texts = ""
-    for file in files:
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-
-            path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(path)
-            mimetype = file.content_type
-            if mimetype == 'application/pdf':
-                if store_hash(file) == True:
-                    if pdf_extractor == "pypdfloader":
-                        texts = create_text_chunks_pypdfloader(path)
-                    if pdf_extractor == "pdfplumber":
-                        texts = create_text_chunks_pdfplumber(path)
-                    if pdf_extractor == "pdfreader":
-                        texts = create_text_chunks_pdfreader(path)
-                    if pdf_extractor == "ocr":
-                        texts = create_text_chunks_ocr(path)
-                    chunks = (process_pdf(texts, llm))
-                    return create_embeddings(chunks, llm, vector_id)
-                else:
-                    return get_embeddings(llm, vector_id)
 
 def clean_filename(filepath):
     # Get the filename without the path
@@ -143,4 +124,3 @@ def store_hash(file_storage):
         return True
     else:
         return False
-

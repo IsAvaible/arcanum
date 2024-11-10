@@ -25,7 +25,7 @@
 <div id="loader"></div>
 <br>
 <br>
-<form id="chatbox" method=post action="/promptsocket" enctype=multipart/form-data>
+<form id="chatbox" method=post action="/generate" enctype=multipart/form-data>
     <label for="file-upload" class="custom-file-upload">
         File Upload (PDF, HTML/TXT, AUDIO)
     </label>
@@ -73,7 +73,8 @@
     <textarea placeholder="Please write a prompt" rows="10" cols="30" name="prompt" id="prompt"></textarea>
     <br>
     <br>
-    <button id="sendSocket">Send</button>
+    <button id="generate">Generate</button>
+    <button id="chat_btn">Chat</button>
 </form>
 
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>

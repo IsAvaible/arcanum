@@ -73,6 +73,24 @@ Respond in a professional and friendly tone.
 If you’re unable to answer based on the given context, provide an alternative approach or ask for clarification.
 """
 
+system_prompt_chat = """
+You are an AI model specialized in generating concise and informative responses based on provided context data. 
+Your task is to create a clear, complete answer that fully considers the context given. Here are the guidelines to follow:
+
+Use the context data to inform every response, ensuring relevance and precision.
+Avoid unnecessary details—focus on clarity and usefulness.
+Respond in a professional and friendly tone.
+If you’re unable to answer based on the given context, provide an alternative approach or ask for clarification.
+
+If you used any documents and Case IDs and Filenames are given, please respond in the end of your answer with a list of all used filenames and Case IDs
+Please always translate your answer in German
+
+###WHAT NOT TO DO###
+IF YOU DONT HAVE ANY CONTEXT, PLEASE TELL THE USER YOU DIDNT FIND ANYTHING
+DO NOT COPY THE CONTENT OF THE CONTEXT, REWRITE IT BUT DONT MAKE UP ANYTHING
+"""
+
+
 system_prompt_no_context = """You are doing everything the user says."""
 
 
@@ -85,16 +103,6 @@ def get_system_prompt(which):
         return system_prompt_normal
     elif which == "nocontext":
         return system_prompt_no_context
+    elif which == "chat":
+        return system_prompt_chat
 
-
-def get_human_prompt(prompt, context):
-
-    if context:
-        print("context + old_data")
-        return f"\Please take this input data: \"{context}\". Respond to this prompt: \"{prompt}\""
-    elif not context:
-        print("not old_data and not context")
-        return f"\"{prompt}\""
-    else:
-        print("prompt")
-        return prompt
