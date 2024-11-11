@@ -2,3 +2,4 @@
 @import url('tailwindcss/components');
 @import url('./assets/primevue/tailwind.css');
 @import url('tailwindcss/utilities');
+@import url('primeicons/primeicons.css');

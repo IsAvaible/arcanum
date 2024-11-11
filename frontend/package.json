@@ -22,6 +22,7 @@
     "@iconoir/vue": "^7.9.0",
     "axios": "^1.7.7",
     "pinia": "^2.2.6",
+    "primeicons": "^7.0.0",
     "primevue": "^4.2.1",
     "tailwindcss-primeui": "^0.3.4",
     "vue": "^3.5.12",

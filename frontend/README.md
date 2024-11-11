@@ -44,7 +44,7 @@ The development server supports hot-reloading, so any saved changes in the code 
 To run the unit tests in watch mode, use the following command:
 
 ```bash
-npm run test:unit -- --watch
+npm run test:unit:watch
 ```
 
 This will run the unit tests in watch mode, so any changes in the code will trigger the tests to run automatically.
