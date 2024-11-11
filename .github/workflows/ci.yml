@@ -101,14 +101,6 @@ jobs:
           name: unit-test-coverage
           path: frontend/coverage
 
-      - name: Fail if Coverage Below Threshold
-        run: |
-          COVERAGE=$(awk '/TOTAL\s+LINE/ {print $NF}' frontend/coverage/summary.txt)
-          if [ "$COVERAGE" -lt 80 ]; then
-            echo "Code coverage below threshold: $COVERAGE%"
-            exit 1
-          fi
-
       - name: Run End-to-End Tests with Playwright
         run: npm run test:e2e
         working-directory: ./frontend
@@ -133,6 +125,14 @@ jobs:
         with:
           name: e2e-failure-screenshots
           path: frontend/screenshots
+
+      - name: Fail if Coverage Below Threshold
+        run: |
+          COVERAGE=$(awk '/TOTAL\s+LINE/ {print $NF}' frontend/coverage/summary.txt)
+          if [ "$COVERAGE" -lt 80 ]; then
+            echo "Code coverage below threshold: $COVERAGE%"
+            exit 1
+          fi
 
   deploy:
     runs-on: ubuntu-latest
