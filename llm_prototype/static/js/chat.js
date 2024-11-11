@@ -132,13 +132,7 @@ $(document).ready(function () {
             //Evtl um das Ende zu erkennen
         }else
         {
-            if(framework === "llamaindex")
-            {
-                messagesDiv.html(data.content);
-            }else if(framework === "langchain"){
-                messagesDiv.append(data.content);
-            }
-
+            messagesDiv.append(data.content);
         }
 
     });
