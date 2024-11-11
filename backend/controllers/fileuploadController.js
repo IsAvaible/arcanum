@@ -31,13 +31,13 @@ function checkFileType(file, cb) {
 }
 
 // Function to scan file with Microsoft Azure
-async function scanFileWithAzure(filePath) {
+async function scanFileWithAzure(file) {
     console.log(process.env.AZURE_API_KEY);
     const apiKey = process.env.AZURE_API_KEY;
     const endpoint = process.env.AZURE_URL;
     
-    const fileStream = fs.createReadStream(filePath);
-    const fileName = path.basename(filePath);
+    const fileStream = fs.createReadStream(file);
+    const fileName = path.basename(file);
 
     try {
         const response = await axios.post(endpoint, fileStream, {
