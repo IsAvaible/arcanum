@@ -27,7 +27,6 @@ def generate_case_langchain(request, llm_selection):
 
         # Initialisiere das LLM
         llm = None
-        print(llm_selection)
         if llm_selection == "openai":
             llm = ChatOpenAI(
                 model=model,
@@ -44,7 +43,6 @@ def generate_case_langchain(request, llm_selection):
                 num_predict=-1,
                 streaming=True
             )
-        print(llm)
         # Kontext sammeln und in der Session speichern
         if files:
             context = upload_file_method(files, pdf_extractor, llm_selection, chat_counter)
