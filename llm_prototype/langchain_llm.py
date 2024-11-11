@@ -23,12 +23,12 @@ def generate_case_langchain(request, llm_selection):
         model = request.form.get("model")
         prompt = request.form.get("prompt")
         chat_counter = request.form.get("chat_counter")
-        system_prompt = request.form.get("system_prompt")
         pdf_extractor = request.form.get("pdf_extractor")
         whisper = request.form.get("whisper")
 
         # Initialisiere das LLM
         llm = None
+        print(llm_selection)
         if llm_selection == "openai":
             llm = ChatOpenAI(
                 model=model,
@@ -45,7 +45,7 @@ def generate_case_langchain(request, llm_selection):
                 num_predict=-1,
                 streaming=True
             )
-
+        print(llm)
         # Kontext sammeln und in der Session speichern
         if files:
             context = upload_file_method(files, pdf_extractor, whisper, llm_selection, chat_counter)
@@ -65,7 +65,7 @@ def generate_case_langchain(request, llm_selection):
             return jsonify({'error': 'No prompt provided'}), 400
 
         # System- und Human-Prompt generieren und alte Nachrichten dranhängen
-        system_prompt = get_system_prompt(system_prompt)
+        system_prompt = get_system_prompt("json")
         messages = [
             ("system", system_prompt),
             human_query_tup_with_context
@@ -174,20 +174,24 @@ def chat(request, llm_selection):
         system_prompt = get_system_prompt("chat")
         messages = [
             ("system", system_prompt),
-            human_query_tup_with_context
         ]
         # Alle Nachrichten hinzufügen
         if not session.get(old_messages_key):
             for msg in session.get(old_messages_key):
+                print(msg)
                 messages.append(msg)
 
+        messages.append(human_query_tup_with_context)
         messages.append(human_query_tup_without_context)
+
+        print(messages)
         add_value_to_session_list(old_messages_key, human_query_tup_without_context)
         # LLM-Response streamen
         result = ""
         response_generator = llm.stream(messages)
         socketio.emit(f"{llm_selection}_stream{chat_counter}", {'content': "START_LLM_MESSAGE"})
 
+        print(f"{llm_selection}_stream{chat_counter}")
         for response_chunk in response_generator:
             result_chunk = response_chunk.content
             result += result_chunk

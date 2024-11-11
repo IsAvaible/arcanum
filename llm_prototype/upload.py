@@ -1,20 +1,15 @@
-import os
 import re
 from pathlib import Path
 from openai import OpenAI
 
 from bs4 import BeautifulSoup
 from flask import Blueprint
-from langchain_community.document_loaders.parsers import OpenAIWhisperParser
-from langchain_core.document_loaders import BlobLoader
-from langchain_core.documents.base import Blob
 from werkzeug.utils import secure_filename
 
 import hashlib
 
 from app import app
 from embeddings import create_embeddings
-from llm_prototype.audio import convert_mp3_to_wav, reduce_noise, whisper_local
 from pdf import *
 
 upload = Blueprint('upload', __name__)
@@ -39,19 +34,15 @@ def upload_file_method(files, pdf_extractor, whisper, llm, chat_id):
                 clean_filename_str = clean_filename(Path(path).stem)
                 if mimetype == "audio/mpeg":
                     texts += "Content of " + clean_filename_str + ": "
-                    if whisper == "local":
-                        texts += whisper_local(path)
-                        single_text = whisper_local(path)
-                    elif whisper == "api":
-                        client = OpenAI()
-                        audio_file = open(path, "rb")
-                        transcription = client.audio.transcriptions.create(
-                            model="whisper-1",
-                            file=audio_file,
-                            response_format="verbose_json"
-                        )
-                        texts += transcription.text
-                        single_text = transcription.text
+                    client = OpenAI()
+                    audio_file = open(path, "rb")
+                    transcription = client.audio.transcriptions.create(
+                        model="whisper-1",
+                        file=audio_file,
+                        response_format="verbose_json"
+                    )
+                    texts += transcription.text
+                    single_text = transcription.text
 
 
                 elif mimetype == 'application/pdf':

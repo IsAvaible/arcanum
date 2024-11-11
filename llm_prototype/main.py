@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 
 from app import app
-from llm_prototype.langchain_llm import llm
+from langchain_llm import llm
 from routes import routes
 from upload import upload
 

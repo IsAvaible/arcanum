@@ -42,33 +42,12 @@
         <option value="ocr">PDF2image With Tesseract (OCR)</option>
     </select>
     <br>
-    <label>Audio Transcription (Whisper): </label>
-    <select name="whisper">
-        <option value="local">Local</option>
-        <option value="api">OpenAI API</option>
-    </select>
-    <br>
-    <label>LLM Framework</label>
-    <select name="llm_framework" id="llm_framework">
-        <option value="langchain">LangChain</option>
-        <option value="llamaindex">LlamaIndex</option>
-    </select>
-    <br>
-    <label>System Prompt:</label>
-    <select name="system_prompt">
-        <option value="json">Answer with JSON</option>
-        <option value="json2">Answer with prestructured JSON</option>
-        <option value="normal">Answer in normal Text</option>
-        <option value="nocontext">Answer with no context given</option>
-    </select>
-    <br>
     <label>LLM Model: </label>
     <select name="model">
         {% for model in models %}
             <option value ="{{ model }}" >{{ model }}</option>
         {% endfor %}
     </select>
-    <!--<input type="checkbox" name="vector_store" value="true"> Use VectorDB </input<br>-->
     <br><br>
     <textarea placeholder="Please write a prompt" rows="10" cols="30" name="prompt" id="prompt"></textarea>
     <br>

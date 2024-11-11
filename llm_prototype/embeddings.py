@@ -1,14 +1,11 @@
 from langchain_chroma.vectorstores import Chroma
-from langchain_ollama.embeddings import OllamaEmbeddings
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from regex import split
 from langchain.docstore.document import Document
-from sqlalchemy.testing.suite.test_reflection import metadata
 
 
 def split_texts(content, llm):
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=500)
     texts = text_splitter.split_text(content)
 
     return texts
