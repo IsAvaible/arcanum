@@ -16,6 +16,7 @@ const upload = multer({
         }
     }),
     size: 1000000,
+    limits: { fileSize: 1000000 },
     fileFilter: function (req, file, cb) {
         fileUploadController.checkFileName(file);
         fileUploadController.checkFileType(file, cb);
