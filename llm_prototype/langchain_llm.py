@@ -24,7 +24,6 @@ def generate_case_langchain(request, llm_selection):
         prompt = request.form.get("prompt")
         chat_counter = request.form.get("chat_counter")
         pdf_extractor = request.form.get("pdf_extractor")
-        whisper = request.form.get("whisper")
 
         # Initialisiere das LLM
         llm = None
@@ -48,12 +47,11 @@ def generate_case_langchain(request, llm_selection):
         print(llm)
         # Kontext sammeln und in der Session speichern
         if files:
-            context = upload_file_method(files, pdf_extractor, whisper, llm_selection, chat_counter)
+            context = upload_file_method(files, pdf_extractor, llm_selection, chat_counter)
             session_key = f"{llm_selection}_context{chat_counter}"
             session[session_key] = session.get(session_key, "") + context
         else:
             context = session.get(f"{llm_selection}_context{chat_counter}", "")
-
 
         # Alte Nachrichten sammeln und in der Session speichern
         old_messages_key = f"{llm_selection}_old_messages{chat_counter}"
@@ -77,17 +75,8 @@ def generate_case_langchain(request, llm_selection):
 
         messages.append(human_query_tup_without_context)
         add_value_to_session_list(old_messages_key, human_query_tup_without_context)
-        # LLM-Response streamen
         result = ""
-        response_generator = llm.stream(messages)
-        socketio.emit(f"{llm_selection}_stream{chat_counter}", {'content': "START_LLM_MESSAGE"})
-
-        for response_chunk in response_generator:
-            result_chunk = response_chunk.content
-            result += result_chunk
-            socketio.emit(f"{llm_selection}_stream{chat_counter}", {'content': result_chunk})
-
-        socketio.emit(f"{llm_selection}_stream{chat_counter}", {'content': "END_LLM_MESSAGE"})
+        response = llm.invoke(messages)
 
         add_value_to_session_list(old_messages_key, ("assistant", result))
 
@@ -102,7 +91,7 @@ def generate_case_langchain(request, llm_selection):
         debug_path = os.path.join(app.root_path, "debug", f"{llm_selection}_chat_{chat_counter}.txt")
         save_debug(debug_path, debug)
 
-        return '', 200
+        return response.content, 200
 
 
 def chat(request, llm_selection):

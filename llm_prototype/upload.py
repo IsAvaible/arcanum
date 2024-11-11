@@ -21,7 +21,7 @@ def allowed_file(filename):
         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def upload_file_method(files, pdf_extractor, whisper, llm, chat_id):
+def upload_file_method(files, pdf_extractor, llm, chat_id):
     texts = ""
     single_text = ""
     for file in files:

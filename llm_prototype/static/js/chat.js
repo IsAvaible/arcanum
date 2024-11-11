@@ -58,6 +58,7 @@ $(document).ready(function () {
             },
             success: function (data) {
                 $("#loader").hide();
+                $(".llm_pre").last().html(data);
             },
             error: function (data){
                 $("#loader").hide();
