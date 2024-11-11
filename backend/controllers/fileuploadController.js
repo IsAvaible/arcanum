@@ -6,18 +6,6 @@ const fs = require('fs');
 const env = require('dotenv').config();
 const router = express.Router();
 
-const uploadToNextcloud = async (file) => {
-    
-    const client = new nextcloudClient.Client({
-        url: process.env.NEXTCLOUD_URL,
-        username: process.env.NEXTCLOUD_USERNAME,
-        password: process.env.NEXTCLOUD_PASSWORD,
-    });
-
-    const remotePath = `/nextcloud/uploads/${file.originalname}`;
-    await client.put(remotePath, file.buffer);
-};
-
 function checkFileName(file) {
     const fileName = path.basename(file.originalname);
     if (file.originalname !== fileName) {
@@ -71,6 +59,6 @@ async function scanFileWithAzure(filePath) {
     }
 };
 
-module.exports = { checkFileType, uploadToNextcloud, scanFileWithAzure, router, checkFileName };
+module.exports = { checkFileType, scanFileWithAzure, router, checkFileName };
 
 
