@@ -73,10 +73,9 @@ def generate_case_langchain(request, llm_selection):
 
         messages.append(human_query_tup_without_context)
         add_value_to_session_list(old_messages_key, human_query_tup_without_context)
-        result = ""
         response = llm.invoke(messages)
 
-        add_value_to_session_list(old_messages_key, ("assistant", result))
+        add_value_to_session_list(old_messages_key, ("assistant", response.content))
 
         for msg in session.get(old_messages_key):
             add_value_to_session_list(old_messages_json_key, chat_message_to_json(msg))
