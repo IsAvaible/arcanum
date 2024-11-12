@@ -60,6 +60,11 @@ system_prompt_old_msgs="Given a chat history and the latest user question \
                         which can be understood without the chat history. Do NOT answer the question, \
                         just reformulate it if needed and otherwise return it as is. Please respond in GERMAN"
 
+system_prompt_langchain_parser = """Fill out the information about the case given from the users QUERY and its CONTEXT. 
+DO NOT include any names and personal data except for the assignee (the assignee should be the name or names of the responsible people).
+ENSURE your answer is in GERMAN.
+DO NOT use other languages than german except for when its really needed to understand the context.
+"""
 
 def get_system_prompt(which):
     if which == "json":
@@ -68,4 +73,6 @@ def get_system_prompt(which):
         return system_prompt_chat
     elif which == "old_msgs":
         return system_prompt_old_msgs
+    elif which == "langchain_parser":
+        return system_prompt_langchain_parser
 

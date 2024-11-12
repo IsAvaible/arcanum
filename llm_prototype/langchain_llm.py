@@ -12,12 +12,130 @@ from prompts import get_system_prompt
 from session import add_value_to_session_list, set_value_to_session_list
 from upload import upload_file_method
 
+from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.prompts import PromptTemplate
+from langchain_openai import ChatOpenAI
+from pydantic import BaseModel, Field
+from langchain_core.prompts import ChatPromptTemplate
+from pydantic import ValidationError
+
 vector_store = None
-openai_models = ['gpt-3.5-turbo-0125', 'gpt-4o-mini', 'gpt-3.5-turbo-1106']
+openai_models = ['gpt-4o-mini', 'gpt-3.5-turbo-0125', 'gpt-3.5-turbo-1106']
 llm = Blueprint('llm', __name__)
+
+# defining the desired output of the llm
+class Case(BaseModel):
+    title: str = Field(...,description="A short, clear summary of the case. This should provide a concise idea of the issue at hand.")
+    description: str = Field(...,description="A detailed explanation of the case, including relevant background information and context necessary for understanding the problem. This field should focus on the issue itself and should not include the solution.")
+    solution: str = Field(...,description="A proposed or implemented solution to address the case. If not yet resolved, this can include potential steps or approaches to consider.")
+    assignee: list[str] = Field(...,description="The name or identifier of the person responsible for handling or resolving the case.")
+    status: str = Field(...,description="The current state of the case, such as 'open' or 'resolved' to track its progression.")
+
+def check_if_output_is_valid(chain_output):
+    try:
+        # This will validate the output and raise an error if any required field is missing
+        Case.model_validate(chain_output)
+
+        return True
+    except ValidationError as e:
+        print("Validation error", e.json())
+
+        return False
+
+def start_quering_llm(invokedPrompt,llm,parser,max_tries=3) -> dict :
+    """
+    Queries the LLM with the given prompt template, LLM, and parser to generate a valid case.
+    If the output is invalid (i.e., not in JSON format or missing some required parameters),
+    the function re-queries the LLM until it gets a valid output or reaches the maximum number of retries.
+    
+    Returns:
+        dict: The output case formatted as a Python dictionary if valid, otherwise returning an empty dict.
+    """
+    chain = llm | parser
+    chain_output = chain.invoke(invokedPrompt)
+
+    is_valid = False
+    for try_number in range(1,max_tries+1):
+        is_valid = check_if_output_is_valid(chain_output)
+        if is_valid:
+            break
+        else:
+            llm.temperature += 0.1
+            chain_output = chain.invoke(invokedPrompt)
+            pass
+
+    if not is_valid:
+        print(f"Couldn't get valid output in {try_number} tries")
+        return {}
+    else:
+        print(f"Generated valid ouput with {try_number} tries: {chain_output}")
+
+    return chain_output
 
 
 def generate_case_langchain(request, llm_selection):
+    if request.method == 'POST':
+        files = request.files.getlist("file")
+        model = request.form.get("model")
+        prompt = request.form.get("prompt")
+        chat_counter = request.form.get("chat_counter")
+        pdf_extractor = request.form.get("pdf_extractor")
+
+        # Initialisiere das LLM
+        llm = None
+        if llm_selection == "openai":
+            llm = ChatOpenAI(
+                model=model,
+                temperature=0.3,
+                max_tokens=None,
+                timeout=None,
+                max_retries=2,
+                streaming=True
+            )
+        elif llm_selection == llm_selection:
+            llm = ChatOllama(
+                model=model,
+                temperature=0,
+                num_predict=-1,
+                streaming=True
+            )
+        
+        if not prompt:
+            return jsonify({'error': 'No prompt provided'}), 400
+        
+        # Kontext sammeln und in der Session speichern
+        session_key = f"{llm_selection}_context{chat_counter}"
+        if files:
+            context = upload_file_method(files, pdf_extractor, llm_selection, chat_counter)
+            session[session_key] = session.get(session_key, "") + context
+        else:
+            context = session.get(f"{llm_selection}_context{chat_counter}", "")
+
+        # history = []
+        # if session.get(session_key):
+        #     for msg in session.get(session_key):
+        #         history.append(msg)
+
+        system_prompt_langchain_parser = get_system_prompt("langchain_parser")
+        # Set up a parser + inject instructions into the prompt template.
+        case_parser_json = JsonOutputParser(pydantic_object=Case)
+        messages = [
+            ("system","{system_prompt}\n{format_instructions}"),
+            #*history, # unpacking each message from the history
+            ("human", "CONTEXT: {context}\n\nQUERY: {query}")
+        ]
+        promptLangchain = ChatPromptTemplate.from_messages(messages).partial(system_prompt=system_prompt_langchain_parser,format_instructions=case_parser_json.get_format_instructions())
+        promptLangchainInvoked = promptLangchain.invoke({"context": context, "query": prompt})
+
+        response_dict = start_quering_llm(promptLangchainInvoked,llm,case_parser_json,max_tries=3)
+        response_json_string = json.dumps(response_dict, indent=2, ensure_ascii=False) # makes the dict print out more readable for the user
+
+        # add_value_to_session_list(session_key,("human", f"CONTEXT: {context}\n\nQUERY: {prompt}"))
+        # add_value_to_session_list(session_key,("ai", response_dict))
+
+        return response_json_string, 200
+    
+def generate_case_langchain_old(request, llm_selection):
     if request.method == 'POST':
         files = request.files.getlist("file")
         model = request.form.get("model")
