@@ -45,16 +45,20 @@ Your task is to create a clear, complete answer that fully considers the context
 Use the context data to inform every response, ensuring relevance and precision.
 Avoid unnecessary details—focus on clarity and usefulness.
 Respond in a professional and friendly tone.
+Never repeat yourself!
 If you’re unable to answer based on the given context, provide an alternative approach or ask for clarification.
 
 If you used any documents and Case IDs and Filenames are given, please respond in the end of your answer with a list of all used filenames and Case IDs
-Please always translate your answer in German
 
 ###WHAT NOT TO DO###
 IF YOU DONT HAVE ANY CONTEXT, PLEASE TELL THE USER YOU DIDNT FIND ANYTHING
 DO NOT COPY THE CONTENT OF THE CONTEXT, REWRITE IT BUT DONT MAKE UP ANYTHING
 """
 
+system_prompt_old_msgs="Given a chat history and the latest user question \
+                        which might reference context in the chat history, formulate a standalone question \
+                        which can be understood without the chat history. Do NOT answer the question, \
+                        just reformulate it if needed and otherwise return it as is. Please respond in GERMAN"
 
 
 def get_system_prompt(which):
@@ -62,4 +66,6 @@ def get_system_prompt(which):
         return system_prompt_json
     elif which == "chat":
         return system_prompt_chat
+    elif which == "old_msgs":
+        return system_prompt_old_msgs
 

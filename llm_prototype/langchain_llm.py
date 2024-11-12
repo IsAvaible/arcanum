@@ -9,7 +9,7 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from app import app, socketio
 from debug import save_debug
 from prompts import get_system_prompt
-from session import add_value_to_session_list
+from session import add_value_to_session_list, set_value_to_session_list
 from upload import upload_file_method
 
 vector_store = None
@@ -95,6 +95,10 @@ def chat(request, llm_selection):
     if request.method == 'POST':
         model = request.form.get("model")
         prompt = request.form.get("prompt")
+
+        if not prompt:
+            return jsonify({'error': 'No prompt provided'}), 400
+
         chat_counter = request.form.get("chat_counter")
 
         # Initialisiere das LLM
@@ -105,7 +109,6 @@ def chat(request, llm_selection):
                 temperature=0,
                 max_tokens=None,
                 timeout=None,
-                max_retries=2,
                 streaming=True
             )
         elif llm_selection == llm_selection:
@@ -121,12 +124,21 @@ def chat(request, llm_selection):
             persist_directory=".chromadb/",
             embedding_function=embedding_function
         )
+        # GET OLD MSGS
         old_messages_key = f"{llm_selection}_old_messages{chat_counter}"
-        if session.get(old_messages_key):
-            all_msgs = "\n".join(x[1] for x in session.get(old_messages_key))
-            embedding_vector = embedding_function.embed_query(all_msgs)
+        old_messages_json_key = f"{llm_selection}_old_messages_json_{chat_counter}"
+
+        old_messages = session.get(old_messages_key)
+
+        if old_messages:
+            all_msgs = "\n".join(x[1] for x in old_messages)
+            old_msgs = [("system", get_system_prompt("old_msgs")),("human", all_msgs + "That is the latest user query: " + prompt)]
+            new_prompt = llm.invoke(old_msgs).content
+            print("NEW PROMPT " + new_prompt)
+            embedding_vector = embedding_function.embed_query(new_prompt)
         else:
-            embedding_vector = embedding_function.embed_query(prompt)
+            new_prompt = prompt
+            embedding_vector = embedding_function.embed_query(new_prompt)
         matched_docs = vector_store.similarity_search_by_vector(embedding_vector)
         unique_metadata = set()
 
@@ -141,43 +153,34 @@ def chat(request, llm_selection):
             if metadata_tuple not in unique_metadata:
                 unique_metadata.add(metadata_tuple)
 
-        print(unique_metadata)
-
         context = ""
         for result in matched_docs:
             context += f"Document Case-ID: {result.metadata.get('case_id')} Filename: {result.metadata.get('filename')} : {result.page_content}\n\n"
 
         # Alte Nachrichten sammeln und in der Session speichern
 
-        old_messages_json_key = f"{llm_selection}_old_messages_json_{chat_counter}"
-        human_query_tup_without_context = ("human", prompt)
+        human_query_tup_without_context = ("human", new_prompt)
         human_query_tup_with_context = ("human", "Please take this as input data: " + context)
 
-        if not prompt:
-            return jsonify({'error': 'No prompt provided'}), 400
 
-        # System- und Human-Prompt generieren und alte Nachrichten dranhängen
-        system_prompt = get_system_prompt("chat")
         messages = [
-            ("system", system_prompt),
+            ("system", get_system_prompt("chat")),
         ]
         # Alle Nachrichten hinzufügen
-        if not session.get(old_messages_key):
-            for msg in session.get(old_messages_key):
-                print(msg)
+        if old_messages:
+            for msg in old_messages:
+                print("MSG: "+ str(msg))
                 messages.append(msg)
 
         messages.append(human_query_tup_with_context)
         messages.append(human_query_tup_without_context)
 
-        print(messages)
         add_value_to_session_list(old_messages_key, human_query_tup_without_context)
         # LLM-Response streamen
         result = ""
         response_generator = llm.stream(messages)
         socketio.emit(f"{llm_selection}_stream{chat_counter}", {'content': "START_LLM_MESSAGE"})
 
-        print(f"{llm_selection}_stream{chat_counter}")
         for response_chunk in response_generator:
             result_chunk = response_chunk.content
             result += result_chunk
@@ -188,7 +191,10 @@ def chat(request, llm_selection):
 
         add_value_to_session_list(old_messages_key, ("assistant", result))
 
-        for msg in session.get(old_messages_key):
+        old_msgs = session[old_messages_key]
+        session[old_messages_key] = []
+        for msg in old_msgs:
+            print("ALL MSG IN JSON: "+str(msg))
             add_value_to_session_list(old_messages_json_key, chat_message_to_json(msg))
 
         return '', 200

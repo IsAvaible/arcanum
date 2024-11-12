@@ -5,7 +5,10 @@ from langchain.docstore.document import Document
 
 
 def split_texts(content, llm):
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=500)
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=500,
+        separators=["\n\n", "\n", ".", "?", "!"])
     texts = text_splitter.split_text(content)
 
     return texts
