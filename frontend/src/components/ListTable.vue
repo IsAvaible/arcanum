@@ -215,7 +215,6 @@ const cases = [
     },
     updatedOn: 'Oct 25, 2024 5:09 PM',
   },
-  // Add more cases as needed...
 ]
 
 const getStatusBadgeColor = (status) => {
