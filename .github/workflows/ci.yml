@@ -89,6 +89,10 @@ jobs:
           restore-keys: |
             node-modules-
 
+      - name: Install Playwright Browsers
+        run: npx playwright install
+        working-directory: ./frontend
+
       - name: Run Unit Tests with Vitest
         run: npm run test:unit
         working-directory: ./frontend
