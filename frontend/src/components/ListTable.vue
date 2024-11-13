@@ -1,7 +1,16 @@
 <template>
-  <div class="w-full p-6 space-y-6">
-    <div class="flex justify-between items-center">
-      <h1 class="text-3xl font-bold">Cases</h1>
+  <div class="p-6 space-y-6 mx-64">
+    <div class="flex items-center justify-between">
+      <div class="flex gap-4">
+        <button
+          @click="toggleSidebar"
+          class="rounded-full bg-black p-2 text-white hover:bg-gray-800"
+        >
+          <ChevronsLeft v-if="!isCollapsed" class="h-6 w-6" />
+          <ChevronsRight v-else class="h-6 w-6" />
+        </button>
+        <h1 class="text-3xl font-bold">Cases</h1>
+      </div>
       <button class="px-4 py-2 bg-green-400 hover:bg-green-500 text-black rounded-md">
         + New Case
       </button>
@@ -19,25 +28,29 @@
         </button>
       </div>
 
-      <input class="max-w-[200px] bg-green-100 px-3 py-2 rounded-md" placeholder="Search.." />
+      <input
+        v-model="filters.search"
+        class="max-w-[200px] bg-green-100 px-3 py-2 rounded-md"
+        placeholder="Search.."
+      />
 
       <select v-model="filters.caseType" class="w-[160px] bg-green-100 px-3 py-2 rounded-md">
         <option value="">Case Type</option>
-        <option value="servicecase">Servicecase</option>
-        <option value="testcase">Testcase</option>
+        <option value="Servicecase">Servicecase</option>
+        <option value="Testcase">Testcase</option>
       </select>
 
       <select v-model="filters.status" class="w-[160px] bg-green-100 px-3 py-2 rounded-md">
         <option value="">Status</option>
-        <option value="open">Open</option>
-        <option value="closed">Closed</option>
-        <option value="in-progress">In Progress</option>
+        <option value="Open">Open</option>
+        <option value="Closed">Closed</option>
+        <option value="In-progress">In Progress</option>
       </select>
 
       <select v-model="filters.assignedTo" class="w-[160px] bg-green-100 px-3 py-2 rounded-md">
         <option value="">Assigned to</option>
-        <option value="unassigned">Unassigned</option>
-        <option value="assigned">Assigned</option>
+        <option value="Unassigned">Unassigned</option>
+        <option value="Assigned">Assigned</option>
       </select>
 
       <button class="px-4 py-2 bg-green-100 border border-gray-300 rounded-md">Last Updated</button>
@@ -60,7 +73,7 @@
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="caseItem in cases" :key="caseItem.id">
+            <tr v-for="caseItem in filteredCases" :key="caseItem.id">
               <td class="px-6 py-4 whitespace-nowrap">{{ caseItem.id }}</td>
               <td class="px-6 py-4 whitespace-nowrap">{{ caseItem.titleId }}</td>
               <td class="px-6 py-4 whitespace-nowrap">{{ caseItem.caseType }}</td>
@@ -102,7 +115,7 @@
                 </button>
                 <div
                   v-if="activeMenu === caseItem.id"
-                  class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5"
+                  class="absolute right-72 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5"
                 >
                   <div
                     class="py-1"
@@ -114,13 +127,13 @@
                       href="#"
                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       role="menuitem"
-                      >Edit</a
+                      >Archieved Item</a
                     >
                     <a
                       href="#"
                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       role="menuitem"
-                      >Delete</a
+                      >Delete Item</a
                     >
                   </div>
                 </div>
@@ -157,25 +170,102 @@
       </button>
     </div>
   </div>
+
+  <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+  <div class="relative">
+    <!-- Main Sidebar -->
+    <div
+      :class="[
+        'fixed left-0 top-0 z-30 flex h-screen w-64 flex-col bg-black text-white transition-all duration-300',
+        isCollapsed ? '-translate-x-48' : 'translate-x-0',
+      ]"
+    >
+      <!-- Logo -->
+      <div class="p-6">
+        <h1 class="text-2xl font-bold text-green-500">ARCANUM</h1>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 space-y-2 p-4">
+        <a
+          v-for="item in menuItems"
+          :key="item.name"
+          :href="item.href"
+          class="flex items-center space-x-4 rounded-lg px-4 py-3 text-lg hover:bg-white/10"
+        >
+          <component :is="item.icon" class="h-6 w-6" />
+          <span :class="{ 'opacity-0': isCollapsed }">{{ item.name }}</span>
+        </a>
+      </nav>
+
+      <!-- User Profile -->
+      <div class="border-t border-white/20 p-4">
+        <div class="flex items-center space-x-4">
+          <div class="h-10 w-10 rounded-full bg-gray-600"></div>
+          <span :class="{ 'opacity-0': isCollapsed }">Name</span>
+        </div>
+        <button
+          class="mt-4 flex w-full items-center space-x-4 rounded-lg border border-white/20 px-4 py-2 hover:bg-white/10"
+        >
+          <LogOut class="h-6 w-6" />
+          <span :class="{ 'opacity-0': isCollapsed }">Logout</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Collapsed Sidebar -->
+    <div
+      :class="[
+        'fixed right-0 top-0 z-20 flex h-screen w-16 flex-col items-center bg-black text-white',
+        isCollapsed ? 'translate-x-0' : 'translate-x-full',
+      ]"
+    >
+      <div class="flex-1 space-y-2 py-20">
+        <button
+          v-for="item in menuItems"
+          :key="item.name"
+          class="flex h-12 w-12 items-center justify-center rounded-lg hover:bg-white/10"
+        >
+          <component :is="item.icon" class="h-6 w-6" />
+        </button>
+      </div>
+      <div class="mb-8 flex flex-col items-center space-y-4">
+        <div class="h-10 w-10 rounded-full bg-gray-600"></div>
+        <LogOut class="h-6 w-6" />
+      </div>
+    </div>
+
+    <!-- Toggle Button -->
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import {
   MoreVerticalIcon,
   ChevronFirstIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronLastIcon,
+  LayoutDashboard,
+  Bell,
+  MessageCircle,
+  Archive,
+  Settings,
+  LogOut,
+  ChevronsLeft,
+  ChevronsRight,
 } from 'lucide-vue-next'
 
 const activeTab = ref('all')
 const currentPage = ref(1)
-const activeMenu = ref(null)
+const activeMenu = ref<number | null>(null)
 const filters = reactive({
   caseType: '',
   status: '',
   assignedTo: '',
+  search: '', // Add a search filter
 })
 
 const tableHeaders = [
@@ -183,7 +273,7 @@ const tableHeaders = [
   'Title ID',
   'Case Type',
   'Status',
-  'Assigne',
+  'Assignee',
   'Created by',
   'Updated on',
 ]
@@ -217,7 +307,21 @@ const cases = [
   },
 ]
 
-const getStatusBadgeColor = (status) => {
+const isCollapsed = ref(false)
+
+const menuItems = [
+  { name: 'Dashboard', icon: LayoutDashboard, href: '#' },
+  { name: 'Notifications', icon: Bell, href: '#' },
+  { name: 'Chat-Bot', icon: MessageCircle, href: '#' },
+  { name: 'Call-Archiv', icon: Archive, href: '#' },
+  { name: 'Settings', icon: Settings, href: '#' },
+]
+
+const toggleSidebar = () => {
+  isCollapsed.value = !isCollapsed.value
+}
+
+const getStatusBadgeColor = (status: string) => {
   switch (status) {
     case 'Open':
       return 'bg-gray-200 text-gray-900'
@@ -230,11 +334,32 @@ const getStatusBadgeColor = (status) => {
   }
 }
 
-const setPage = (page) => {
+const setPage = (page: number) => {
   currentPage.value = page
 }
 
-const openMenu = (id) => {
+const openMenu = (id: number | null) => {
   activeMenu.value = activeMenu.value === id ? null : id
 }
+
+// Filtered cases based on filters and search
+const filteredCases = computed(() => {
+  return cases.filter((caseItem) => {
+    const matchCaseType = filters.caseType ? caseItem.caseType === filters.caseType : true
+    const matchStatus = filters.status ? caseItem.status === filters.status : true
+    const matchAssignedTo = filters.assignedTo
+      ? filters.assignedTo === 'Unassigned'
+        ? caseItem.assignee === 'Unassigned'
+        : caseItem.assignee !== 'Unassigned'
+      : true
+
+    // Check if the caseItem matches the search term in any key fields (titleId or assignee, for example)
+    const matchSearch = filters.search
+      ? caseItem.titleId.toLowerCase().includes(filters.search.toLowerCase()) ||
+        caseItem.assignee.toLowerCase().includes(filters.search.toLowerCase())
+      : true
+
+    return matchCaseType && matchStatus && matchAssignedTo && matchSearch
+  })
+})
 </script>
