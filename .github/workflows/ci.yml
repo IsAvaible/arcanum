@@ -9,7 +9,7 @@ on:
     branches:
       - development
     paths:
-      - 'frontend/**'  
+      - 'frontend/**'
 
 jobs:
   build:
@@ -43,7 +43,7 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
-    needs: build  
+    needs: build
     env:
       HUSKY: 0
     steps:
@@ -69,7 +69,7 @@ jobs:
 
   tests:
     runs-on: ubuntu-latest
-    needs: build  
+    needs: build
     env:
       HUSKY: 0
     steps:
@@ -88,6 +88,30 @@ jobs:
           key: node-modules-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: |
             node-modules-
+
+      - name: Install missing dependencies for WebKit
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwoff2dec0 \
+            libvpx7 \
+            libevent-2.1-7 \
+            libopus0 \
+            libgstallocators-1.0-0 \
+            libgstapp-1.0-0 \
+            libgstpbutils-1.0-0 \
+            libgstaudio-1.0-0 \
+            libgstgl-1.0-0 \
+            libgsttag-1.0-0 \
+            libgstvideo-1.0-0 \
+            libgstcodecparsers-1.0-0 \
+            libgstfft-1.0-0 \
+            libharfbuzz-icu0 \
+            libhyphen0 \
+            libmanette-0.2-0 \
+            libflite1 \
+            libGLESv2-2 \
+            libx264-160
 
       - name: Install Playwright Browsers
         run: npx playwright install
