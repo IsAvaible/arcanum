@@ -89,34 +89,6 @@ jobs:
           restore-keys: |
             node-modules-
 
-      - name: Install missing dependencies for WebKit
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwoff2dec0 \
-            libvpx7 \
-            libevent-2.1-7 \
-            libopus0 \
-            libgstallocators-1.0-0 \
-            libgstapp-1.0-0 \
-            libgstpbutils-1.0-0 \
-            libgstaudio-1.0-0 \
-            libgstgl-1.0-0 \
-            libgsttag-1.0-0 \
-            libgstvideo-1.0-0 \
-            libgstcodecparsers-1.0-0 \
-            libgstfft-1.0-0 \
-            libharfbuzz-icu0 \
-            libhyphen0 \
-            libmanette-0.2-0 \
-            libflite1 \
-            libGLESv2-2 \
-            libx264-160
-
-      - name: Install Playwright Browsers
-        run: npx playwright install
-        working-directory: ./frontend
-
       - name: Run Unit Tests with Vitest
         run: npm run test:unit
         working-directory: ./frontend
@@ -128,6 +100,10 @@ jobs:
         with:
           name: unit-test-coverage
           path: frontend/coverage
+          
+      - name: Install Playwright Browsers
+        run: npx playwright install
+        working-directory: ./frontend
 
       - name: Run End-to-End Tests with Playwright
         run: npm run test:e2e
