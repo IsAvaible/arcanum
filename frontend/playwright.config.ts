@@ -41,6 +41,9 @@ export default defineConfig({
 
     /* Only on CI systems run the tests headless */
     headless: !!process.env.CI,
+
+    /* Screenshot on failure. */
+    screenshot: "only-on-failure",
   },
 
   /* Configure projects for major browsers */
@@ -94,7 +97,7 @@ export default defineConfig({
   ],
 
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
-   outputDir: 'frontend/screenshots',  // screenshot output directory Specify 
+  outputDir: 'playwright-report/artifacts',  // screenshot output directory Specify
 
   /* Run your local dev server before starting the tests */
   webServer: {

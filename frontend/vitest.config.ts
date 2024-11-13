@@ -10,9 +10,8 @@ export default mergeConfig(
       exclude: [...configDefaults.exclude, 'e2e/**'],
       root: fileURLToPath(new URL('./', import.meta.url)),
       coverage: {
-        enabled: true,
-        reporter: ['text', 'lcov'],
-        reportsDirectory: './frontend/e2e',  // coverage output directory schoulb be created
+        reporter: ['text', 'clover', 'lcov'],
+        reportsDirectory: './coverage',
       },
     },
   })

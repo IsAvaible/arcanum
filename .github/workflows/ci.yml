@@ -5,6 +5,8 @@ on:
     branches:
       - "issue/**"
       - "feature/**"
+    paths:
+      - 'frontend/**'
   pull_request:
     branches:
       - development
@@ -74,15 +76,15 @@ jobs:
       HUSKY: 0
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: lts/*
 
       - name: Cache node_modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: frontend/node_modules
           key: node-modules-${{ hashFiles('frontend/package-lock.json') }}
@@ -96,13 +98,13 @@ jobs:
           CI: true
 
       - name: Upload Unit Test Coverage Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: unit-test-coverage
           path: frontend/coverage
-          
+
       - name: Install Playwright Browsers
-        run: npx playwright install
+        run: npx playwright install --with-deps
         working-directory: ./frontend
 
       - name: Run End-to-End Tests with Playwright
@@ -112,31 +114,29 @@ jobs:
           CI: true
 
       - name: Upload Playwright Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: e2e-test-results
-          path: frontend/test-results
+          path: frontend/playwright-report
 
       - name: Save Testing Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: lint-results
-          path: frontend/.eslintcache
+          path: frontend/node_modules/.cache/.eslintcache
 
       - name: Upload Screenshots for Failed E2E Tests
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: e2e-failure-screenshots
           path: frontend/screenshots
 
       - name: Fail if Coverage Below Threshold
-        run: |
-          COVERAGE=$(awk '/TOTAL\s+LINE/ {print $NF}' frontend/coverage/summary.txt)
-          if [ "$COVERAGE" -lt 80 ]; then
-            echo "Code coverage below threshold: $COVERAGE%"
-            exit 1
-          fi
+        uses: themichaelhall/check-code-coverage@v2
+        with:
+          report: frontend/coverage/coverage.xml
+          required-percentage: 80
 
   deploy:
     runs-on: ubuntu-latest

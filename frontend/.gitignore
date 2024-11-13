@@ -35,3 +35,6 @@ playwright-report/
 # Environment Files
 .env.development
 .env.production
+
+# test coverage reports
+coverage/
