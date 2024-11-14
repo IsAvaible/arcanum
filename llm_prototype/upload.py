@@ -12,6 +12,8 @@ from app import app
 from embeddings import create_embeddings
 from pdf import *
 
+import json
+
 upload = Blueprint('upload', __name__)
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'html', 'mp3', "wav"}
 
@@ -22,6 +24,7 @@ def allowed_file(filename):
 
 
 def upload_file_method(files, pdf_extractor, llm, chat_id):
+    files_as_dicts = []
     texts = ""
     single_text = ""
     for file in files:
@@ -73,8 +76,18 @@ def upload_file_method(files, pdf_extractor, llm, chat_id):
                         contents = file.read()
                         texts += contents
                         single_text = contents
+                
+                file_as_dict = {
+                    "filename": filename,
+                    "mimetype": mimetype,
+                    "content": single_text,
+                }
+                
                 create_embeddings(single_text, llm, filename,chat_id)
-    return texts
+        files_as_dicts.append(file_as_dict)
+        files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False)
+            
+    return files_as_dicts_json
 
 
 def clean_filename(filepath):
