@@ -1,0 +1,5 @@
+@import url('tailwindcss/base.css');
+@import url('tailwindcss/components.css');
+@import url('./assets/primevue/tailwind.css');
+@import url('tailwindcss/utilities.css');
+@import url('primeicons/primeicons.css');
