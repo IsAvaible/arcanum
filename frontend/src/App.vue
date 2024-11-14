@@ -1,6 +1,18 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import HelloWorld from './components/HelloWorld.vue'
+import Select from 'primevue/select'
+
+import { ref } from 'vue'
+
+const selectedCity = ref()
+const cities = ref([
+  { name: 'New York', code: 'NY' },
+  { name: 'Rome', code: 'RM' },
+  { name: 'London', code: 'LDN' },
+  { name: 'Istanbul', code: 'IST' },
+  { name: 'Paris', code: 'PRS' },
+])
 </script>
 
 <template>
@@ -14,6 +26,16 @@ import HelloWorld from './components/HelloWorld.vue'
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/about">About</RouterLink>
       </nav>
+
+      <div class="card flex justify-center">
+        <Select
+          v-model="selectedCity"
+          :options="cities"
+          optionLabel="name"
+          placeholder="Select a City"
+          class="w-full md:w-56"
+        />
+      </div>
     </div>
   </header>
 
@@ -56,7 +78,7 @@ nav a:first-of-type {
   border: 0;
 }
 
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   header {
     display: flex;
     place-items: center;
@@ -77,7 +99,6 @@ nav a:first-of-type {
     text-align: left;
     margin-left: -1rem;
     font-size: 1rem;
-
     padding: 1rem 0;
     margin-top: 1rem;
   }
