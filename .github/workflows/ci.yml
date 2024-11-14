@@ -131,7 +131,7 @@ jobs:
       - name: Fail if Coverage Below Threshold
         uses: themichaelhall/check-code-coverage@v2
         with:
-          report: frontend/coverage/coverage.xml
+          report: frontend/coverage/clover.xml
           required-percentage: 80
 
   deploy:
