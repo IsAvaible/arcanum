@@ -113,18 +113,18 @@ jobs:
         env:
           CI: true
 
-      - name: Upload Playwright Artifacts
+      - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
         with:
           name: e2e-test-results
-          path: frontend/playwright-report
+          path: frontend/playwright-report/index.html
 
-      - name: Upload Screenshots for Failed E2E Tests
+      - name: Upload Playwright Artifacts on Failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-failure-screenshots
-          path: frontend/playwright-artifacts/**/*.png
+          name: e2e-failure-artifacts
+          path: frontend/playwright-artifacts
 
       - name: Fail if Coverage Below Threshold
         uses: themichaelhall/check-code-coverage@v2
