@@ -60,10 +60,17 @@ system_prompt_old_msgs="Given a chat history and the latest user question \
                         which can be understood without the chat history. Do NOT answer the question, \
                         just reformulate it if needed and otherwise return it as is. Please respond in GERMAN"
 
-system_prompt_langchain_parser = """Fill out the information about the case given from the users QUERY and its CONTEXT. 
-DO NOT include any names and personal data except for the assignee (the assignee should be the name or names of the responsible people).
-ENSURE your answer is in GERMAN.
-DO NOT use other languages than german except for when its really needed to understand the context.
+system_prompt_langchain_parser = """
+Fill out the information about a case based on the user's QUERY and related documents (CONTEXT), which may include text files and audio files.
+
+If you find multiple cases please make a Array of cases instead of a single Case Object!
+
+If audio files are present, be aware that proper nouns, model names, or technical terms may not be transcribed accurately. 
+When encountering these terms, compare them across the files, and if similar terms appear (e.g., model names or proper nouns), 
+consolidate them into a single, consistent term or refer only to the most frequently used term. Avoid listing similar terms multiple times.
+
+DO NOT include any names or personal data except for the assignee (the assignee should be the name or names of the responsible person(s)). 
+ENSURE your response is in GERMAN and refrain from using other languages unless necessary for understanding the context.
 """
 
 def get_system_prompt(which):

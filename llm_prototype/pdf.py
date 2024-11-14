@@ -6,7 +6,6 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pdf2image import convert_from_path
 from pypdf import PdfReader
-from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai.embeddings import OpenAIEmbeddings
 pytesseract.pytesseract.tesseract_cmd = os.getenv("TESSERACT_BIN")
 
@@ -60,9 +59,3 @@ def create_text_chunks_ocr(pdf_path):
     return content
 
 
-def process_pdf(content, llm):
-    text_splitter = SemanticChunker(OpenAIEmbeddings())
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
-    texts = text_splitter.split_text(content)
-
-    return texts

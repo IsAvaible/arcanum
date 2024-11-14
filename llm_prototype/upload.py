@@ -33,7 +33,7 @@ def upload_file_method(files, pdf_extractor, llm, chat_id):
                 file.save(path)
                 clean_filename_str = clean_filename(Path(path).stem)
                 if mimetype == "audio/mpeg":
-                    texts += "Content of " + clean_filename_str + ": "
+                    texts += "Content of Audio File: " + clean_filename_str + ": "
                     client = OpenAI()
                     audio_file = open(path, "rb")
                     transcription = client.audio.transcriptions.create(
@@ -47,7 +47,7 @@ def upload_file_method(files, pdf_extractor, llm, chat_id):
 
                 elif mimetype == 'application/pdf':
                     # if store_hash(file) == True:
-                    texts = "Content of " + clean_filename_str + ": "
+                    texts = "Content of PDF File: " + clean_filename_str + ": "
                     if pdf_extractor == "pypdfloader":
                         single_text = create_text_chunks_pypdfloader(path)
                         texts += " " + single_text
@@ -61,14 +61,14 @@ def upload_file_method(files, pdf_extractor, llm, chat_id):
                         single_text = create_text_chunks_ocr(path)
                         texts += " " + single_text
                 elif mimetype == "text/html":
-                    texts = "Content of " + clean_filename_str + ": "
+                    texts = "Content of HTML File: " + clean_filename_str + ": "
                     with open(path, 'r', encoding="utf-8") as file:
                         contents = file.read()
                         soup = BeautifulSoup(contents)
                         texts += soup.get_text()
                         single_text = soup.get_text()
                 elif mimetype == "text/plain":
-                    texts = "Content of " + clean_filename_str + ": "
+                    texts = "Content of Text File: " + clean_filename_str + ": "
                     with open(path, 'r', encoding="utf-8") as file:
                         contents = file.read()
                         texts += contents

@@ -23,6 +23,7 @@ vector_store = None
 openai_models = ['gpt-4o-mini', 'gpt-3.5-turbo-0125', 'gpt-3.5-turbo-1106']
 llm = Blueprint('llm', __name__)
 
+
 # defining the desired output of the llm
 class Case(BaseModel):
     title: str = Field(...,description="A short, clear summary of the case. This should provide a concise idea of the issue at hand.")
@@ -31,10 +32,14 @@ class Case(BaseModel):
     assignee: list[str] = Field(...,description="The name or identifier of the person responsible for handling or resolving the case.")
     status: str = Field(...,description="The current state of the case, such as 'open' or 'resolved' to track its progression.")
 
+
+class CaseArray(BaseModel):
+    cases: list[Case]
+
 def check_if_output_is_valid(chain_output):
     try:
         # This will validate the output and raise an error if any required field is missing
-        Case.model_validate(chain_output)
+        CaseArray.model_validate(chain_output)
 
         return True
     except ValidationError as e:
@@ -86,11 +91,11 @@ def generate_case_langchain(request, llm_selection):
         if llm_selection == "openai":
             llm = ChatOpenAI(
                 model=model,
-                temperature=0.3,
+                temperature=0,
                 max_tokens=None,
                 timeout=None,
                 max_retries=2,
-                streaming=True
+                streaming=False
             )
         elif llm_selection == llm_selection:
             llm = ChatOllama(
@@ -111,6 +116,8 @@ def generate_case_langchain(request, llm_selection):
         else:
             context = session.get(f"{llm_selection}_context{chat_counter}", "")
 
+        print(context)
+
         # history = []
         # if session.get(session_key):
         #     for msg in session.get(session_key):
@@ -118,7 +125,7 @@ def generate_case_langchain(request, llm_selection):
 
         system_prompt_langchain_parser = get_system_prompt("langchain_parser")
         # Set up a parser + inject instructions into the prompt template.
-        case_parser_json = JsonOutputParser(pydantic_object=Case)
+        case_parser_json = JsonOutputParser(pydantic_object=CaseArray)
         messages = [
             ("system","{system_prompt}\n{format_instructions}"),
             #*history, # unpacking each message from the history
@@ -130,8 +137,13 @@ def generate_case_langchain(request, llm_selection):
         response_dict = start_quering_llm(promptLangchainInvoked,llm,case_parser_json,max_tries=3)
         response_json_string = json.dumps(response_dict, indent=2, ensure_ascii=False) # makes the dict print out more readable for the user
 
-        # add_value_to_session_list(session_key,("human", f"CONTEXT: {context}\n\nQUERY: {prompt}"))
-        # add_value_to_session_list(session_key,("ai", response_dict))
+        old_messages_key = f"{llm_selection}_old_messages{chat_counter}"
+        add_value_to_session_list(old_messages_key,("human", prompt))
+        add_value_to_session_list(old_messages_key,("assistant", response_json_string))
+
+        old_messages_json_key = f"{llm_selection}_old_messages_json_{chat_counter}"
+        add_value_to_session_list(old_messages_json_key, chat_message_to_json(("human", prompt)))
+        add_value_to_session_list(old_messages_json_key, chat_message_to_json(("assistant", response_json_string)))
 
         return response_json_string, 200
     
@@ -159,7 +171,7 @@ def generate_case_langchain_old(request, llm_selection):
                 model=model,
                 temperature=0,
                 num_predict=-1,
-                streaming=True
+                streaming=False
             )
         # Kontext sammeln und in der Session speichern
         if files:
