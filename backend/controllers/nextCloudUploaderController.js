@@ -71,9 +71,20 @@ async function downloadFileAndReturn(remoteFilePath) {
     
 }
 
+async function deleteFile(remoteFilePath) {
+    try {
+        await nextcloudClient.deleteFile(remoteFilePath);
+        console.log('File deleted successfully');
+    } catch (error) {
+        console.error('Error deleting file:', error);
+    }
+}
+
+
 module.exports = {
     downloadFileAndReturn,
     listFiles,
     uploadFile,
-    downloadFile
+    downloadFile,
+    deleteFile
 };

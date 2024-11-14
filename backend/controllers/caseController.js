@@ -68,6 +68,25 @@ exports.showCaseList = async (req, res) => {
 exports.deleteCase = async (req, res) => {
     const caseId = parseInt(req.params.id, 10);
     try {
+
+        const caseItemToDelete = await Cases.findByPk(caseId);
+
+        if (!caseItemToDelete) {
+          return res.status(404).json({ message: 'Case not found' });
+      }
+
+      const attachments = caseItemToDelete.attachment;
+      if (Array.isArray(attachments)) {
+          for (const remoteFilePath of attachments) {
+              try {
+                  await nextCloud.deleteFile(remoteFilePath);
+                  console.log(`File deleted: ${remoteFilePath}`);
+              } catch (error) {
+                  console.error(`Error deleting file ${remoteFilePath}:`, error);
+              }
+          }
+      }
+
         const deleted = await Cases.destroy({
             where: { id: caseId }
         });
