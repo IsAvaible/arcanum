@@ -119,18 +119,12 @@ jobs:
           name: e2e-test-results
           path: frontend/playwright-report
 
-      - name: Save Testing Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: lint-results
-          path: frontend/node_modules/.cache/.eslintcache
-
       - name: Upload Screenshots for Failed E2E Tests
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: e2e-failure-screenshots
-          path: frontend/screenshots
+          path: frontend/playwright-artifacts/**/*.png
 
       - name: Fail if Coverage Below Threshold
         uses: themichaelhall/check-code-coverage@v2
