@@ -218,7 +218,7 @@ const cases = [
   // Add more cases as needed...
 ]
 
-const getStatusBadgeColor = (status) => {
+const getStatusBadgeColor = (status: string) => {
   switch (status) {
     case 'Open':
       return 'bg-gray-200 text-gray-900'
@@ -231,11 +231,11 @@ const getStatusBadgeColor = (status) => {
   }
 }
 
-const setPage = (page) => {
+const setPage = (page: number) => {
   currentPage.value = page
 }
 
-const openMenu = (id) => {
+const openMenu = (id: number | null) => {
   activeMenu.value = activeMenu.value === id ? null : id
 }
 </script>
