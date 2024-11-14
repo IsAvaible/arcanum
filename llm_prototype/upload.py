@@ -25,6 +25,8 @@ def allowed_file(filename):
 
 def upload_file_method(files, pdf_extractor, llm, chat_id):
     files_as_dicts = []
+    file_as_dict = {}
+    files_as_dicts_json = ""
     texts = ""
     single_text = ""
     for file in files:
