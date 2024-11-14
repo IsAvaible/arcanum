@@ -67,8 +67,12 @@ jobs:
           restore-keys: |
             node-modules-
 
-      - name: Run Linting with ESLint and Prettier
+      - name: Run Linting with ESLint
         run: npm run lint
+        working-directory: ./frontend
+
+      - name: Run Linting with Stylelint
+        run: npm run lint:styles
         working-directory: ./frontend
 
   tests:
