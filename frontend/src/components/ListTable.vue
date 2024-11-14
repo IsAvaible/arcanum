@@ -7,7 +7,6 @@
         isCollapsed ? 'w-0' : 'w-64',
       ]"
     >
-      <!-- Sidebar content (Logo, Navigation, User Profile, etc.) -->
       <div v-if="!isCollapsed">
         <!-- Logo -->
         <div class="p-6">
@@ -45,7 +44,6 @@
 
     <!-- Main Content -->
     <div :class="['transition-all duration-300 p-6 space-y-6', isCollapsed ? 'w-full' : 'ml-64']">
-      <!-- Header -->
       <div class="flex items-center justify-between">
         <div class="flex gap-4">
           <button
@@ -94,7 +92,7 @@
           <option value="">Status</option>
           <option value="Open">Open</option>
           <option value="Closed">Closed</option>
-          <option value="In-progress">In Progress</option>
+          <option value="In-Progress">In Progress</option>
         </select>
 
         <select v-model="filters.assignedTo" class="w-[160px] bg-green-100 px-3 py-2 rounded-md">
@@ -201,9 +199,9 @@
                         href="#"
                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         role="menuitem"
-                        @click.prevent="archiveCase(caseItem.id)"
+                        @click.prevent="toggleArchive(caseItem.id)"
                       >
-                        Archive Item
+                        {{ caseItem.isArchived ? 'Unarchive Item' : 'Archive Item' }}
                       </a>
                       <a
                         href="#"
@@ -385,10 +383,10 @@ const openMenu = (id: number | null) => {
   activeMenu.value = activeMenu.value === id ? null : id
 }
 
-const archiveCase = (id: number) => {
+const toggleArchive = (id: number) => {
   const caseItem = cases.find((item) => item.id === id)
   if (caseItem) {
-    caseItem.isArchived = true
+    caseItem.isArchived = !caseItem.isArchived
     activeMenu.value = null
   }
 }
@@ -398,33 +396,6 @@ const deleteCase = (id: number) => {
   if (index !== -1) {
     cases.splice(index, 1)
     activeMenu.value = null
-  }
-}
-
-const isWithinRange = (date: string, range: string) => {
-  const caseDate = new Date(date),
-    now = new Date()
-  switch (range) {
-    case 'Last 24 hours':
-      return caseDate >= new Date(now.getTime() - 24 * 60 * 60 * 1000)
-    case 'Last 7 days':
-      return caseDate >= new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-    case 'Last 30 days':
-      return caseDate >= new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-    case 'Q4 (Oct - Dec 2024)':
-      return caseDate >= new Date('2024-10-01') && caseDate <= new Date('2024-12-31')
-    case 'Q3 (Jul - Sep 2024)':
-      return caseDate >= new Date('2024-07-01') && caseDate <= new Date('2024-09-30')
-    case 'Q2 (Apr - Jun 2024)':
-      return caseDate >= new Date('2024-04-01') && caseDate <= new Date('2024-06-30')
-    case 'Q1 (Jan - Mar 2024)':
-      return caseDate >= new Date('2024-01-01') && caseDate <= new Date('2024-03-31')
-    case '2024':
-      return caseDate.getFullYear() === 2024
-    case '2023':
-      return caseDate.getFullYear() === 2023
-    default:
-      return true
   }
 }
 
@@ -441,19 +412,9 @@ const filteredCases = computed(() => {
       ? caseItem.titleId.toLowerCase().includes(filters.search.toLowerCase()) ||
         caseItem.assignee.toLowerCase().includes(filters.search.toLowerCase())
       : true
-    const matchLastUpdated = filters.lastUpdated
-      ? isWithinRange(caseItem.updatedOn, filters.lastUpdated)
-      : true
     const matchArchived =
       activeTab.value === 'archived' ? caseItem.isArchived : !caseItem.isArchived
-    return (
-      matchCaseType &&
-      matchStatus &&
-      matchAssignedTo &&
-      matchSearch &&
-      matchLastUpdated &&
-      matchArchived
-    )
+    return matchCaseType && matchStatus && matchAssignedTo && matchSearch && matchArchived
   })
 })
 </script>
