@@ -18,6 +18,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import ValidationError
+from langchain_core.prompts import MessagesPlaceholder
 
 vector_store = None
 openai_models = ['gpt-4o-mini', 'gpt-3.5-turbo-0125', 'gpt-3.5-turbo-1106']
@@ -30,7 +31,7 @@ class Case(BaseModel):
     description: str = Field(...,description="A detailed explanation of the case, including relevant background information and context necessary for understanding the problem. This field should focus on the issue itself and should not include the solution.")
     solution: str = Field(...,description="A proposed or implemented solution to address the case. If not yet resolved, this can include potential steps or approaches to consider.")
     assignee: list[str] = Field(...,description="The name or identifier of the person responsible for handling or resolving the case.")
-    status: str = Field(...,description="The current state of the case, such as 'open' or 'resolved' to track its progression.")
+    status: str = Field(...,description="The current state of the case, such as 'open', 'in progress' or 'resolved' to track its progression.")
 
 
 class CaseArray(BaseModel):
@@ -110,34 +111,34 @@ def generate_case_langchain(request, llm_selection):
         
         # Kontext sammeln und in der Session speichern
         session_key = f"{llm_selection}_context{chat_counter}"
+        old_messages_key = f"{llm_selection}_old_messages{chat_counter}"
         if files:
             context = upload_file_method(files, pdf_extractor, llm_selection, chat_counter)
             session[session_key] = session.get(session_key, "") + context
         else:
             context = session.get(f"{llm_selection}_context{chat_counter}", "")
 
-        print(context)
-
-        # history = []
-        # if session.get(session_key):
-        #     for msg in session.get(session_key):
-        #         history.append(msg)
+        history = []
+        if session.get(old_messages_key):
+            for msg in session.get(old_messages_key):
+                history.append(msg)
 
         system_prompt_langchain_parser = get_system_prompt("langchain_parser")
         # Set up a parser + inject instructions into the prompt template.
         case_parser_json = JsonOutputParser(pydantic_object=CaseArray)
         messages = [
             ("system","{system_prompt}\n{format_instructions}"),
-            #*history, # unpacking each message from the history
+            MessagesPlaceholder("history"),
             ("human", "CONTEXT: {context}\n\nQUERY: {query}")
         ]
         promptLangchain = ChatPromptTemplate.from_messages(messages).partial(system_prompt=system_prompt_langchain_parser,format_instructions=case_parser_json.get_format_instructions())
-        promptLangchainInvoked = promptLangchain.invoke({"context": context, "query": prompt})
+        promptLangchainInvoked = promptLangchain.invoke({"context": context, "query": prompt, "history":history})
+        print(promptLangchainInvoked)
 
         response_dict = start_quering_llm(promptLangchainInvoked,llm,case_parser_json,max_tries=3)
         response_json_string = json.dumps(response_dict, indent=2, ensure_ascii=False) # makes the dict print out more readable for the user
 
-        old_messages_key = f"{llm_selection}_old_messages{chat_counter}"
+        
         add_value_to_session_list(old_messages_key,("human", prompt))
         add_value_to_session_list(old_messages_key,("assistant", response_json_string))
 
