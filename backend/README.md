@@ -1,4 +1,4 @@
-# README
+README
 
 Prerequisites Node.js (version 16.14.2 or higher) npm (version 9.6.2 or higher)
 
