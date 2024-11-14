@@ -28,11 +28,11 @@ import ProductSelector from '@/components/case-create-form/ProductSelector.vue'
 const dialogVisible = ref(true)
 const activeStep = ref(0)
 const steps = [
-  { label: 'Basics' },
-  { label: 'People' },
-  { label: 'Details' },
-  { label: 'Products' },
-  { label: 'Review' },
+  { label: 'Basics', icon: 'pi-info-circle' },
+  { label: 'People', icon: 'pi-user' },
+  { label: 'Details', icon: 'pi-pen-to-square' },
+  { label: 'Products', icon: 'pi-warehouse' },
+  { label: 'Review', icon: 'pi-star' },
 ]
 
 const caseTypes = [
@@ -67,8 +67,8 @@ const selectedCaseType = ref('')
 const details = ref('')
 const selectedPeople = ref([])
 const peopleOptions = Array.from({ length: 15 }, (_, i) => ({
-  label: `Person ${i + 1}`,
-  value: `person${i + 1}`,
+  id: i + 1,
+  name: `Cat ${i + 1}`,
   image: `https://placecats.com/${50 + i}/${50 + i}`,
 }))
 
@@ -126,7 +126,7 @@ const prevStep = () => {
                       },
                     ]"
                   >
-                    <i :class="['pi', +value < activeStep ? 'pi-check' : 'pi-user']" />
+                    <i :class="['pi', +value < activeStep ? 'pi-check' : step.icon]" />
                   </span>
                   <p class="text-nowrap text-sm font-semibold">{{ step.label }}</p>
                 </button>
@@ -156,6 +156,7 @@ const prevStep = () => {
       <Accordion
         :value="activeStep"
         class="bg-white flex-1 h-full md-h:max-h-[calc(100%-3.25rem)] flex flex-col"
+        :select-on-focus="true"
       >
         <AccordionPanel :value="0">
           <AccordionHeader>
@@ -165,23 +166,18 @@ const prevStep = () => {
             </div>
           </AccordionHeader>
           <AccordionContent>
-            <div class="flex flex-col gap-y-6">
-              <div class="flex flex-col gap-y-3">
-                <Label for="title" label="Case Title" description="The title of your new case" />
-                <InputText id="title" v-model="title" placeholder="Enter case title" />
-              </div>
+            <div class="flex flex-col gap-y-4">
+              <Label for="title" label="Case Title" description="The title of your new case" />
+              <InputText id="title" v-model="title" placeholder="Enter case title" />
 
-              <hr class="border-t border-slate-300" />
+              <Divider />
 
-              <div class="flex flex-col gap-y-3">
-                <Label
-                  for="case-type"
-                  label="Case Type"
-                  description="The kind of case you are creating"
-                />
-
-                <CaseTypeSelector :caseTypes="caseTypes" v-model="selectedCaseType" />
-              </div>
+              <Label
+                for="case-type"
+                label="Case Type"
+                description="The kind of case you are creating"
+              />
+              <CaseTypeSelector :caseTypes="caseTypes" v-model="selectedCaseType" />
             </div>
           </AccordionContent>
         </AccordionPanel>
@@ -203,9 +199,23 @@ const prevStep = () => {
               />
               <UserSelector
                 assigneeLabel="Assignees"
-                :peopleOptions="peopleOptions"
-                v-model:selectedPeople="selectedPeople"
+                :userOptions="peopleOptions"
+                v-model:selectedUsers="selectedPeople"
+                multi-select
               />
+              <Divider />
+              <Label
+                for="participants"
+                label="Participants"
+                description="The people who are involved in this case"
+              />
+              <UserSelector
+                assigneeLabel="Participants"
+                :userOptions="peopleOptions"
+                v-model:selectedUsers="selectedPeople"
+                multi-select
+              />
+              <Label for="team" label="Team" description="The team responsible for this case" />
             </div>
           </AccordionContent>
         </AccordionPanel>
@@ -217,7 +227,6 @@ const prevStep = () => {
               <span class="font-semibold">Details</span>
             </div>
           </AccordionHeader>
-          <!-- Content for Details using Editor, InputText, etc. -->
           <AccordionContent>
             <div class="h-full flex flex-col gap-y-3">
               <Label
@@ -297,6 +306,10 @@ const prevStep = () => {
 
 .p-accordionpanel-active {
   @apply flex-1 lg-h:overflow-auto scrollbar-thin;
+}
+
+.p-accordionpanel-active > .p-accordionheader {
+  @apply pointer-events-none;
 }
 
 .p-accordioncontent {

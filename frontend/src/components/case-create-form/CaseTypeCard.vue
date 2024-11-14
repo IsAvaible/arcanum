@@ -7,17 +7,20 @@ const props = defineProps<{
 </script>
 
 <template>
-  <article
-    class="flex gap-x-6 group border-none border-0 flex-1 min-w-60 hover:cursor-pointer"
+  <div
+    class="flex gap-x-6 group border-none border-0 flex-1 min-w-60 hover:cursor-pointer outline-none"
     @click="$emit('click')"
+    @keyup.enter="$emit('click')"
     role="button"
+    tabindex="0"
+    :aria-selected="props.selected"
   >
     <div
       :class="[
         'flex flex-col justify-between p-4 gap-y-4 bg-white rounded-lg ring-[1.5px] ring-inset transition-colors',
         props.selected
-          ? 'ring-blue-500 group-hover:ring-blue-700'
-          : 'ring-slate-200 group-hover:ring-slate-300',
+          ? 'ring-blue-500 group-hover:ring-blue-700 group-focus-within:ring-blue-700'
+          : 'ring-slate-200 group-hover:ring-slate-300 group-focus-within:ring-slate-500',
       ]"
     >
       <header class="flex items-start justify-between w-full">
@@ -36,8 +39,8 @@ const props = defineProps<{
           :class="[
             'rounded-full ring-1 size-6 p-0.5 transition-colors',
             props.selected
-              ? 'ring-blue-500 group-hover:ring-blue-600'
-              : 'ring-slate-200 group-hover:ring-slate-300',
+              ? 'ring-blue-500 group-hover:ring-blue-600 group-focus-within:ring-blue-600'
+              : 'ring-slate-200 group-hover:ring-slate-300 group-focus-within:ring-slate-300',
           ]"
         >
           <div
@@ -58,7 +61,7 @@ const props = defineProps<{
         </p>
       </div>
     </div>
-  </article>
+  </div>
 </template>
 
 <style scoped></style>
