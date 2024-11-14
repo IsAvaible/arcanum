@@ -65,6 +65,10 @@ Fill out the information about a case based on the user's QUERY and related docu
 
 If you find multiple cases please make a Array of cases instead of a single Case Object!
 
+If you find terms that are similar in spelling but slightly different , 
+treat them as potentially referring to the same entity and use the most frequent or contextually appropriate term across all cases.
+You should always prefer the TEXT FILES OVER AUDIO FILES WHEN IT COMES TO similar terms
+
 If audio files are present, be aware that proper nouns, model names, or technical terms may not be transcribed accurately. 
 When encountering these terms, compare them across the files, and if similar terms appear (e.g., model names or proper nouns), 
 consolidate them into a single, consistent term or refer only to the most frequently used term. Avoid listing similar terms multiple times.
