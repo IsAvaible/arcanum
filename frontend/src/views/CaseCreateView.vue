@@ -24,6 +24,7 @@ import CaseTypeSelector from '@/components/case-create-form/CaseTypeSelector.vue
 import UserSelector from '@/components/case-create-form/UserSelector.vue'
 import TempEditor from '@/components/case-create-form/TempEditor.vue'
 import ProductSelector from '@/components/case-create-form/ProductSelector.vue'
+import TeamSelector from '@/components/case-create-form/TeamSelector.vue'
 
 const dialogVisible = ref(true)
 const activeStep = ref(0)
@@ -71,6 +72,7 @@ const peopleOptions = Array.from({ length: 15 }, (_, i) => ({
   name: `Cat ${i + 1}`,
   image: `https://placecats.com/${50 + i}/${50 + i}`,
 }))
+const selectedTeam = ref(null)
 
 const nextStep = () => {
   if (activeStep.value < steps.length - 1) {
@@ -204,18 +206,21 @@ const prevStep = () => {
                 multi-select
               />
               <Divider />
-              <Label
-                for="participants"
-                label="Participants"
-                description="The people who are involved in this case"
-              />
-              <UserSelector
-                assigneeLabel="Participants"
-                :userOptions="peopleOptions"
-                v-model:selectedUsers="selectedPeople"
-                multi-select
-              />
-              <Label for="team" label="Team" description="The team responsible for this case" />
+              <div class="grid sm:grid-flow-col sm:grid-rows-2 gap-y-3 gap-x-5">
+                <Label for="team" label="Team" description="The team responsible for this case" />
+                <TeamSelector v-model:selected-team="selectedTeam" />
+                <Label
+                  for="participants"
+                  label="Participants"
+                  description="The people who are involved in this case"
+                />
+                <UserSelector
+                  assigneeLabel="Participants"
+                  :userOptions="peopleOptions"
+                  v-model:selectedUsers="selectedPeople"
+                  multi-select
+                />
+              </div>
             </div>
           </AccordionContent>
         </AccordionPanel>
