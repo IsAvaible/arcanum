@@ -8,8 +8,6 @@ PostgreSQL (version 17 or higher)
 
 Installation and Starting the Backend
 
-
-
 1. Navigate to the backend directory:
 cd backend
 

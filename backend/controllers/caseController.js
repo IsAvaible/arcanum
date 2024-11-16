@@ -91,7 +91,7 @@ exports.deleteCase = async (req, res) => {
         });
 
         if (deleted) {
-            res.redirect('/api/cases');
+            res.status(204).send();
         } else {
             res.status(404).json({ message: 'Case not found' });
         }
