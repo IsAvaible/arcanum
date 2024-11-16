@@ -17,17 +17,16 @@ const upload = multer({
         }
     }),
     limits: { fileSize: 1000000 }, // Dateigrößenbeschränkung pro Datei
-    //fileFilter: function (req, file, cb) {
-        //fileUploadController.checkFileName(file);
-        //fileUploadController.checkFileType(file, cb);
-
+    fileFilter: function (req, file, cb) {
+        fileUploadController.checkFileName(file);
+        fileUploadController.checkFileType(file, cb);
         //try {
         //    fileUploadController.scanFileWithAzure(file);
         //    cb(null, true);
         //} catch (error) {
         //    cb(error);
         //}
-    //}
+    }
 }).array('files', 10); // 'files' ist der Feldname, bis zu 10 Dateien
 
 
