@@ -29,8 +29,12 @@ coverage
 
 *.tsbuildinfo
 
-test-results/
+# Test Files
 playwright-report/
+playwright-artifacts/
+
+# test coverage reports
+coverage/
 
 # Environment Files
 .env.development
