@@ -99,7 +99,12 @@ const hidePopover = () => {
       </div>
     </template>
 
-    <template #chip="slotProps: { value: User; removeCallback: (e: Event) => void }">
+    f
+    <!-- @vue-ignore Only the MultiSelect component has the chip slot -->
+    <template
+      v-if="multiSelect"
+      #chip="slotProps: { value: User; removeCallback: (e: Event) => void }"
+    >
       <Chip removable :label="slotProps.value.name" @remove="slotProps.removeCallback($event)">
         <img
           :alt="`Profile image of ${slotProps.value.name}`"

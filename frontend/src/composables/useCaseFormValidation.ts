@@ -1,37 +1,9 @@
-import { toTypedSchema } from '@vee-validate/zod'
-import { useForm, useField } from 'vee-validate'
-import * as zod from 'zod'
+import { useField } from 'vee-validate'
 import type { User } from '@/components/case-create-form/UserSelector.vue'
 import type { Team } from '@/components/case-create-form/TeamSelector.vue'
+import type { ComputedRef } from 'vue'
 
-export const useCaseFormValidation = () => {
-  const schema = toTypedSchema(
-    zod.object({
-      title: zod
-        .string({ required_error: 'Please provide a title' })
-        .min(1, 'Please provide a title'),
-      selectedCaseType: zod
-        .string({ required_error: 'Please select at least one case type' })
-        .min(1, 'Please select at least one case type'),
-      selectedAssignees: zod
-        .array(zod.any(), { required_error: 'Please select at least one assignee' })
-        .nonempty('Please select at least one assignee'),
-      selectedParticipants: zod.array(zod.any()).optional(),
-      selectedTeam: zod.any().optional(),
-      details: zod.string().optional(),
-      selectedProducts: zod.array(zod.number()).default([]),
-    }),
-  )
-
-  const {
-    handleSubmit,
-    errors,
-    meta: form,
-    isFieldDirty,
-  } = useForm({
-    validationSchema: schema,
-  })
-
+export const useCaseFormValidation = (errors: ComputedRef<Partial<Record<string, string>>>) => {
   const fields = {
     title: useField<string>('title'),
     selectedCaseType: useField<string>('selectedCaseType'),
@@ -85,10 +57,6 @@ export const useCaseFormValidation = () => {
   }
 
   return {
-    handleSubmit,
-    errors,
-    form,
-    isFieldDirty,
     fields,
     stepValid,
     validateStep,

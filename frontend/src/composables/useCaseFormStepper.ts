@@ -3,7 +3,8 @@ import { ref, watch } from 'vue'
 export const useCaseFormStepper = (
   validateStep: (step: number) => Promise<void>,
   stepValid: (step: number) => boolean,
-  isFieldDirty: (path: string) => boolean,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  isFieldDirty: (path: string | any) => boolean,
 ) => {
   const activeStep = ref(0)
   const maxStep = ref(0)

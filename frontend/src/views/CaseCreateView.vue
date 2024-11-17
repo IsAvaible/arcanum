@@ -27,6 +27,9 @@ import { useCaseFormValidation } from '@/composables/useCaseFormValidation'
 import { useCaseFormStepper } from '@/composables/useCaseFormStepper'
 import StepHeader from '@/components/case-create-form/StepHeader.vue'
 import CaseCreateStepper from '@/components/case-create-form/CaseCreateStepper.vue'
+import { toTypedSchema } from '@vee-validate/zod'
+import * as zod from 'zod'
+import { useForm } from 'vee-validate'
 
 const toast = useToast()
 
@@ -66,15 +69,40 @@ const peopleOptions: User[] = Array.from({ length: 15 }, (_, i) => ({
 }))
 
 // Form validation setup
+// Couldn't move to composable because of https://github.com/microsoft/TypeScript/pull/58176#issuecomment-2052698294
+const schema = toTypedSchema(
+  zod.object({
+    title: zod
+      .string({ required_error: 'Please provide a title' })
+      .min(1, 'Please provide a title'),
+    selectedCaseType: zod
+      .string({ required_error: 'Please select at least one case type' })
+      .min(1, 'Please select at least one case type'),
+    selectedAssignees: zod
+      .array(zod.any(), { required_error: 'Please select at least one assignee' })
+      .nonempty('Please select at least one assignee'),
+    selectedParticipants: zod.array(zod.any()).optional(),
+    selectedTeam: zod.any().optional(),
+    details: zod.string().optional(),
+    selectedProducts: zod.array(zod.number()).default([]),
+  }),
+)
+
 const {
   handleSubmit,
   errors,
-  form,
+  meta: form,
   isFieldDirty,
+} = useForm({
+  validationSchema: schema,
+})
+
+// Form validation composable
+const {
   fields,
   stepValid: stepValidInner,
   validateStep: validateStepInner,
-} = useCaseFormValidation()
+} = useCaseFormValidation(errors)
 
 const stepValid = (step: number = activeStep.value): boolean => {
   return stepValidInner(step)
