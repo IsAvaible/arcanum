@@ -23,7 +23,7 @@ def allowed_file(filename):
         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def upload_file_method(files, pdf_extractor, llm, chat_id):
+def upload_file_method(files, pdf_extractor, chat_id):
     files_as_dicts = []
     file_as_dict = {}
     files_as_dicts_json = ""
@@ -85,7 +85,7 @@ def upload_file_method(files, pdf_extractor, llm, chat_id):
                     "content": single_text,
                 }
                 
-                create_embeddings(single_text, llm, filename,chat_id)
+                create_embeddings(single_text, filename,chat_id)
         files_as_dicts.append(file_as_dict)
         files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False)
             

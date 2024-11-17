@@ -4,7 +4,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
 
 
-def split_texts(content, llm):
+def split_texts(content):
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
         chunk_overlap=500,
@@ -13,8 +13,8 @@ def split_texts(content, llm):
 
     return texts
 
-def create_embeddings(texts, llm, filename, id):
-    texts = split_texts(texts, llm)
+def create_embeddings(texts, filename, id):
+    texts = split_texts(texts)
     i = 0
     docs = []
     for text in texts:
