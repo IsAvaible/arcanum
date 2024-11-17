@@ -11,6 +11,7 @@ import DataView from 'primevue/dataview'
 import SelectButton from 'primevue/selectbutton'
 
 import { ArrowArchery, CubeCutWithCurve, Cut, FireFlame, ReportColumns, Sparks } from '@iconoir/vue'
+import { useVModel } from '@vueuse/core'
 
 type Category = {
   name: string
@@ -19,13 +20,23 @@ type Category = {
   icon: any
 }
 
-type Item = {
+type Product = {
   id: number
   name: string
   category: string
   price: number
   image: string
 }
+
+const props = defineProps<{
+  modelValue: Product['id'][]
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: Product['id'][]): void
+}>()
+
+const selectedProducts = useVModel(props, 'modelValue', emit)
 
 const categories = ref<Category[]>([
   { name: 'All Products', count: 110, icon: ReportColumns },
@@ -37,7 +48,7 @@ const categories = ref<Category[]>([
 ])
 
 // Sample data for items
-const items = ref<Item[]>([
+const products = ref<Product[]>([
   {
     id: 1,
     name: 'Brownie Sandwich',
@@ -76,16 +87,14 @@ const items = ref<Item[]>([
   // Add other items...
 ])
 
-const selectedItems = ref<number[]>([])
-
 const searchQuery = ref('')
 const selectedCategory = ref('All Products')
 
 const filteredItems = computed(() => {
   if (!searchQuery.value && selectedCategory.value == 'All Products') {
-    return items.value
+    return products.value
   }
-  return items.value.filter(
+  return products.value.filter(
     (item) =>
       item.name.toLowerCase().includes(searchQuery.value.toLowerCase()) &&
       (selectedCategory.value === 'All Products' || item.category === selectedCategory.value),
@@ -93,10 +102,10 @@ const filteredItems = computed(() => {
 })
 
 const selectItem = (id: number) => {
-  if (selectedItems.value.includes(id)) {
-    selectedItems.value = selectedItems.value.filter((itemId) => itemId !== id)
+  if (selectedProducts.value.includes(id)) {
+    selectedProducts.value = selectedProducts.value.filter((itemId) => itemId !== id)
   } else {
-    selectedItems.value = [...selectedItems.value, id]
+    selectedProducts.value = [...selectedProducts.value, id]
   }
 }
 </script>
@@ -170,12 +179,12 @@ const selectItem = (id: number) => {
             @click="selectItem(item.id)"
             class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 cursor-pointer ring-2 rounded-lg p-4 transition-all outline-none"
             :class="[
-              selectedItems.includes(item.id)
+              selectedProducts.includes(item.id)
                 ? 'bg-primary-50 ring-primary-400 hover:bg-primary-50 hover:ring-primary-600 focus-visible:ring-primary-600'
                 : 'bg-white ring-transparent hover:ring-slate-200 focus-visible:ring-slate-400',
             ]"
             role="button"
-            :aria-selected="selectedItems.includes(item.id)"
+            :aria-selected="selectedProducts.includes(item.id)"
             tabindex="0"
           >
             <div class="flex flex-col gap-y-2">

@@ -10,7 +10,7 @@ const props = defineProps<{
     title: string
     description: string
   }[]
-  modelValue: string
+  modelValue: string | undefined
 }>()
 
 // emit selected case type

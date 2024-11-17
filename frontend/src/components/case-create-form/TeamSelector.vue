@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import CascadeSelect from 'primevue/cascadeselect'
 
-type Team = {
+export type Team = {
   id: number
   name: string
 }

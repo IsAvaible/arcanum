@@ -6,7 +6,7 @@ import Chip from 'primevue/chip'
 import Popover from 'primevue/popover'
 import { computed, nextTick, ref } from 'vue'
 
-type User = { id: number; name: string; image: string }
+export type User = { id: number; name: string; image: string }
 
 const props = defineProps<{
   assigneeLabel: string
