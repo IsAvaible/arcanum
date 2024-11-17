@@ -5,10 +5,18 @@ import StepList from 'primevue/steplist'
 import Divider from 'primevue/divider'
 import { useVModel } from '@vueuse/core'
 
-const props = defineProps<{
+interface Props {
+  /** The current step */
   modelValue: number
+  /** The list of steps to display */
   steps: { icon: string; label: string }[]
-}>()
+  /** Function to check if the step is valid */
+  stepValid: (step: number) => boolean
+  /** Function to check if the step has been interacted with */
+  stepInteracted: (step: number) => boolean
+}
+
+const props = defineProps<Props>()
 const emit = defineEmits(['update:modelValue'])
 
 const activeStep = useVModel(props, 'modelValue', emit)
@@ -29,9 +37,10 @@ const activeStep = useVModel(props, 'modelValue', emit)
             class="bg-transparent border-0 inline-flex flex-col gap-2 items-center w-16"
             :class="[
               {
-                'text-green-500': +value < activeStep,
-                'text-primary-500': +value == activeStep,
-                'text-surface-400': +value > activeStep,
+                'text-green-500': props.stepInteracted(+value) && props.stepValid(+value),
+                'text-red-500': props.stepInteracted(+value) && !props.stepValid(+value),
+                'text-primary-500': +value === activeStep && !props.stepInteracted(+value),
+                'text-surface-400': +value > activeStep && !props.stepInteracted(+value),
               },
             ]"
             @click="activateCallback"
@@ -41,13 +50,24 @@ const activeStep = useVModel(props, 'modelValue', emit)
               :class="[
                 'rounded-full size-8 p-2 inline-flex items-center justify-center ring-inset',
                 {
-                  'bg-green-500 text-white': +value < activeStep,
-                  'ring-2 ring-primary-500 text-primary-500': +value == activeStep,
-                  'ring-1 ring-surface-400': +value > activeStep,
+                  'bg-green-500 text-white':
+                    props.stepInteracted(+value) && props.stepValid(+value),
+                  'ring-2 ring-red-500 text-red-500':
+                    props.stepInteracted(+value) && !props.stepValid(+value),
+                  'ring-2 ring-primary-500 text-primary-500':
+                    +value === activeStep && !props.stepInteracted(+value),
+                  'ring-1 ring-surface-400': +value > activeStep && !props.stepInteracted(+value),
                 },
               ]"
             >
-              <i :class="['pi', +value < activeStep ? 'pi-check' : step.icon]" />
+              <i
+                :class="[
+                  'pi',
+                  props.stepInteracted(+value) && props.stepValid(+value) && +value !== activeStep
+                    ? 'pi-check'
+                    : step.icon,
+                ]"
+              />
             </span>
             <p class="text-nowrap text-sm font-semibold">{{ step.label }}</p>
           </button>
@@ -56,10 +76,18 @@ const activeStep = useVModel(props, 'modelValue', emit)
             :class="[
               '-mt-4 mx-4 w-20 before:!border-none before:h-[1.5px] before:bg-gradient-to-r',
               {
-                'before:from-green-500 before:to-green-500': +value < activeStep - 1,
-                'before:from-green-500 before:to-primary-500': +value == activeStep - 1,
-                'before:from-primary-500 before:to-50% before:to-surface-400': value == activeStep,
-                'before:from-surface-400 before:to-surface-400': +value > activeStep - 1,
+                'before:from-green-500': props.stepInteracted(+value) && props.stepValid(+value),
+                'before:from-red-500': props.stepInteracted(+value) && !props.stepValid(+value),
+                'before:from-primary-500': +value === activeStep && !props.stepInteracted(+value),
+                'before:from-surface-400': +value > activeStep && !props.stepInteracted(+value),
+                'before:to-green-500':
+                  props.stepInteracted(+value + 1) && props.stepValid(+value + 1),
+                'before:to-red-500':
+                  props.stepInteracted(+value + 1) && !props.stepValid(+value + 1),
+                'before:to-primary-500':
+                  +value + 1 === activeStep && !props.stepInteracted(+value + 1),
+                'before:to-50% before:to-surface-400':
+                  +value + 1 > activeStep && !props.stepInteracted(+value + 1),
               },
             ]"
           />

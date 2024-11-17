@@ -14,7 +14,7 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "lint": "eslint . --fix",
-    "lint:style": "stylelint \"src/**/*.{vue,css,scss}\" --fix",
+    "lint:style": "stylelint \"src/**/*.{vue,css,scss}\" --fix --ignore-path .gitignore --ignore-path .stylelintignore",
     "format": "prettier --write src/",
     "prepare": "node .husky/install.mjs && cd .. && husky frontend/.husky"
   },
