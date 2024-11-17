@@ -2,8 +2,12 @@ const express = require('express')
 const app = express()
 const port = 3000
 
+
+
+app.set("view engine", "ejs");
+
 //Routen importieren
-const exampleRoutes = require('./routes/example');
+const exampleRoutes = require('./routes/exampleFileUpload');
 
 // Middleware (optional)
 const exampleMiddleware = require('./middlewares/exampleLogger');
