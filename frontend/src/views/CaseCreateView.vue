@@ -343,13 +343,13 @@ const onSubmit = handleSubmit((_values) => {
           <Button
             label="Previous"
             @click="prevStep"
-            :disabled="activeStep === 0"
+            :disabled="!stepValid(activeStep) || activeStep === 0"
             variant="outlined"
           />
           <Button
             label="Continue"
             @click="nextStep(steps.length)"
-            :disabled="activeStep == steps.length - 1"
+            :disabled="!stepValid(activeStep) || activeStep == steps.length - 1"
           />
           <Button
             label="Submit"
