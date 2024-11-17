@@ -23,6 +23,11 @@ const router = createRouter({
       name: 'case-create',
       component: CreateCaseView,
     },
+    {
+      path: '/case-delete',
+      name: 'case-delete',
+      component: () => import('../views/CaseDeleteView.vue'),
+    },
   ],
 })
 

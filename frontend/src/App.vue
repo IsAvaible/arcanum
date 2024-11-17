@@ -29,6 +29,7 @@ const cities = ref([
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/about">About</RouterLink>
         <RouterLink to="/case-create">Case Create</RouterLink>
+        <RouterLink to="/case-delete">Case Delete</RouterLink>
       </nav>
 
       <div class="card flex justify-center">
