@@ -1,37 +1,79 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
+import { ref } from 'vue'
+
+// Components from PrimeVue
+import Menubar from 'primevue/menubar'
 import Select from 'primevue/select'
 import Toast from 'primevue/toast'
 
-import { ref } from 'vue'
+// Custom components
+import HelloWorld from './components/HelloWorld.vue'
 
-const selectedCity = ref()
-const cities = ref([
-  { name: 'New York', code: 'NY' },
-  { name: 'Rome', code: 'RM' },
-  { name: 'London', code: 'LDN' },
-  { name: 'Istanbul', code: 'IST' },
-  { name: 'Paris', code: 'PRS' },
+// Menu items for Menubar
+const items = ref([
+  {
+    label: 'Home',
+    icon: 'pi pi-home',
+    to: '/',
+  },
+  {
+    label: 'About',
+    icon: 'pi pi-info-circle',
+    to: '/about',
+  },
+  {
+    label: 'Case',
+    icon: 'pi pi-folder',
+    items: [
+      {
+        label: 'Create New Case',
+        icon: 'pi pi-plus',
+        to: '/case-detail',
+      },
+    ],
+  },
 ])
+
+// Select options for dropdown
+const cities = [
+  { name: 'New York', code: 'NY' },
+  { name: 'London', code: 'LDN' },
+  { name: 'Paris', code: 'PRS' },
+  { name: 'Tokyo', code: 'TKY' },
+]
+const selectedCity = ref(null)
 </script>
 
 <template>
+  <!-- Toast notification -->
   <Toast />
 
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
+  <!-- Header -->
+  <header class="bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
+
+      <div>
+        <!-- Menubar -->
+        <Menubar :model="items" class="border-none bg-transparent" />
+      </div>
+    </div>
 
     <div class="wrapper">
+      <!-- HelloWorld Component -->
       <HelloWorld msg="You did it!" />
 
+      <!-- Navigation Links -->
       <nav>
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/about">About</RouterLink>
         <RouterLink to="/case-create">Case Create</RouterLink>
         <RouterLink to="/case-delete">Case Delete</RouterLink>
+        <RouterLink to="/case-detail">Case Create</RouterLink>
       </nav>
 
+      <!-- Dropdown for Select -->
       <div class="card flex justify-center">
         <Select
           v-model="selectedCity"
@@ -44,68 +86,34 @@ const cities = ref([
     </div>
   </header>
 
-  <RouterView />
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <RouterView />
+  </main>
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
+@import url('primeicons/primeicons.css');
+
+/* Custom styles for PrimeVue Menubar */
+:deep(.p-menubar) {
+  padding: 1rem 0;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+:deep(.p-menubar-root-list) {
+  gap: 0.5rem;
 }
 
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
+:deep(.p-menuitem-link) {
+  padding: 0.5rem 1rem !important;
+  border-radius: 0.375rem;
 }
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
+:deep(.p-menuitem-link:hover) {
+  background-color: #f3f4f6 !important;
 }
 
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (width >= 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
+:deep(.p-menuitem-icon) {
+  margin-right: 0.5rem;
 }
 </style>

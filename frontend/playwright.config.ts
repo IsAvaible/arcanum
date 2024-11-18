@@ -43,7 +43,7 @@ export default defineConfig({
     headless: !!process.env.CI,
 
     /* Screenshot on failure. */
-    screenshot: "only-on-failure",
+    screenshot: 'only-on-failure',
   },
 
   /* Configure projects for major browsers */
