@@ -14,6 +14,8 @@ interface Props {
   stepValid: (step: number) => boolean
   /** Function to check if the step has been interacted with */
   stepInteracted: (step: number) => boolean
+  /** Function to check if the step is clickable */
+  isClickable: (step: number) => boolean
 }
 
 const props = defineProps<Props>()
@@ -30,11 +32,12 @@ const activeStep = useVModel(props, 'modelValue', emit)
         :key="index"
         :value="index"
         v-slot="{ activateCallback, value, a11yAttrs }"
+        :disabled="!props.isClickable(index)"
         asChild
       >
         <div class="flex flex-row flex-auto gap-2" v-bind="a11yAttrs.root">
           <button
-            class="bg-transparent border-0 inline-flex flex-col gap-2 items-center w-16"
+            class="bg-transparent border-0 inline-flex flex-col gap-2 items-center w-16 transition-colors"
             :class="[
               {
                 'text-green-500': props.stepInteracted(+value) && props.stepValid(+value),
@@ -48,7 +51,7 @@ const activeStep = useVModel(props, 'modelValue', emit)
           >
             <span
               :class="[
-                'rounded-full size-8 p-2 inline-flex items-center justify-center ring-inset',
+                'rounded-full size-8 p-2 inline-flex items-center justify-center ring-inset transition-all',
                 {
                   'bg-green-500 text-white':
                     props.stepInteracted(+value) && props.stepValid(+value),
@@ -74,7 +77,7 @@ const activeStep = useVModel(props, 'modelValue', emit)
           <Divider
             v-if="+value < steps.length - 1"
             :class="[
-              '-mt-4 mx-4 w-20 before:!border-none before:h-[1.5px] before:bg-gradient-to-r',
+              '-mt-4 mx-4 w-20 before:transition-colors before:!border-none before:h-[1.5px] before:bg-gradient-to-r',
               {
                 'before:from-green-500': props.stepInteracted(+value) && props.stepValid(+value),
                 'before:from-red-500': props.stepInteracted(+value) && !props.stepValid(+value),
