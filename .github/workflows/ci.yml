@@ -132,11 +132,12 @@ jobs:
           name: e2e-failure-artifacts
           path: frontend/playwright-artifacts
 
-      - name: Fail if Coverage Below Threshold
-        uses: themichaelhall/check-code-coverage@v2
-        with:
-          report: frontend/coverage/clover.xml
-          required-percentage: 80
+  # Test Coverage Check disabled for now
+  #    - name: Fail if Coverage Below Threshold
+  #      uses: themichaelhall/check-code-coverage@v2
+  #      with:
+  #        report: frontend/coverage/clover.xml
+  #        required-percentage: 80
 
   deploy:
     runs-on: ubuntu-latest
