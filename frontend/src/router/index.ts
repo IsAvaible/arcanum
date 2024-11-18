@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import CaseDetail from '../views/CaseDetail.vue'
+import CreateCaseView from '../views/CaseCreateView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -22,6 +23,16 @@ const router = createRouter({
       path: '/case-detail',
       name: '/case-detail',
       component: CaseDetail,
+    },
+    {
+      path: '/case-create',
+      name: 'case-create',
+      component: CreateCaseView,
+    },
+    {
+      path: '/case-delete',
+      name: 'case-delete',
+      component: () => import('../views/CaseDeleteView.vue'),
     },
   ],
 })

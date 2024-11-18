@@ -19,7 +19,7 @@ export default defineConfig({
      * Maximum time expect() should wait for the condition to be met.
      * For example in `await expect(locator).toHaveText();`
      */
-    timeout: 5000,
+    timeout: process.env.CI ? 10000 : 5000,
   },
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
@@ -28,7 +28,7 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
+  reporter: [['github'], ['list'], ['html']],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
@@ -41,6 +41,9 @@ export default defineConfig({
 
     /* Only on CI systems run the tests headless */
     headless: !!process.env.CI,
+
+    /* Screenshot on failure. */
+    screenshot: 'only-on-failure',
   },
 
   /* Configure projects for major browsers */
@@ -94,7 +97,7 @@ export default defineConfig({
   ],
 
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
-  // outputDir: 'test-results/',
+  outputDir: 'playwright-artifacts',
 
   /* Run your local dev server before starting the tests */
   webServer: {
@@ -103,7 +106,7 @@ export default defineConfig({
      * Use the preview server on CI for more realistic testing.
      * Playwright will re-use the local server if there is already a dev-server running.
      */
-    command: process.env.CI ? 'npm run preview' : 'npm run dev',
+    command: process.env.CI ? 'npm run build && npm run preview' : 'npm run dev',
     port: process.env.CI ? 4173 : 5173,
     reuseExistingServer: !process.env.CI,
   },

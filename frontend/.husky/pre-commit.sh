@@ -1,3 +1,11 @@
+if git diff --cached --name-only | grep -q '^frontend/'; then
+  echo "Changes detected in /frontend folder. Running checks..."
+else
+  echo "No changes in /frontend folder. Skipping checks."
+  exit
+fi
+
+# Navigate to the frontend folder
 cd frontend
 
 # Type Checking with Vue’s TypeScript Compiler
@@ -8,6 +16,9 @@ npm audit
 
 # Run lint-staged to check linting and formatting for staged files
 npx lint-staged --config .lintstagedrc --concurrent false
+
+# Build the project
+npm run build
 
 # Run unit tests
 npx vitest --run --changed

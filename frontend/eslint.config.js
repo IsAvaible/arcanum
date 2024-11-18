@@ -45,6 +45,7 @@ export default [
     },
   },
 
+  // lint Vue files
   {
     plugins: {
       ...pluginVue.configs['flat/essential'],
@@ -52,7 +53,25 @@ export default [
     files: ['**/*.vue'],
   },
 
+  // lint TypeScript files
   ...vueTsEslintConfig(),
+
+  {
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          args: 'all',
+          argsIgnorePattern: '^_',
+          caughtErrors: 'all',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+        },
+      ],
+    },
+  },
 
   {
     ...pluginVitest.configs.recommended,
@@ -63,5 +82,6 @@ export default [
     ...pluginPlaywright.configs['flat/recommended'],
     files: ['e2e/**/*.{test,spec}.{js,ts,jsx,tsx}'],
   },
+
   skipFormatting,
 ]
