@@ -26,19 +26,19 @@ const details = ref<CaseDetails>({
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div class="field">
         <label class="block text-sm font-medium text-gray-700 mb-1">Case Type</label>
-        <InputText v-model="details.type" class="w-full" />
+        <InputText v-model="details.type" class="w-full" readonly />
       </div>
       <div class="field">
         <label class="block text-sm font-medium text-gray-700 mb-1">Created by</label>
-        <InputText v-model="details.createdBy" class="w-full" />
+        <InputText v-model="details.createdBy" class="w-full" readonly />
       </div>
       <div class="field">
         <label class="block text-sm font-medium text-gray-700 mb-1">Created on</label>
-        <Calendar v-model="details.createdOn" showTime hourFormat="24" class="w-full" />
+        <Calendar v-model="details.createdOn" showTime hourFormat="24" class="w-full" readonly />
       </div>
       <div class="field">
         <label class="block text-sm font-medium text-gray-700 mb-1">Updated on</label>
-        <Calendar v-model="details.updatedOn" showTime hourFormat="24" class="w-full" />
+        <Calendar v-model="details.updatedOn" showTime hourFormat="24" class="w-full" readonly />
       </div>
       <div class="field">
         <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
@@ -55,5 +55,10 @@ const details = ref<CaseDetails>({
 
 :deep(.p-calendar) {
   width: 100%;
+}
+
+:deep(.p-inputtext[readonly]) {
+  background-color: #f3f4f6;
+  cursor: default;
 }
 </style>
