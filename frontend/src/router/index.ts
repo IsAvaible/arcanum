@@ -19,8 +19,8 @@ const router = createRouter({
       component: () => import('../views/AboutView.vue'),
     },
     {
-      path: '/case-create',
-      name: 'case-create',
+      path: '/case-detail',
+      name: '/case-detail',
       component: CaseDetail,
     },
   ],

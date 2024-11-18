@@ -1,8 +1,16 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
-import Menubar from 'primevue/menubar'
+import { RouterLink, RouterView } from 'vue-router'
 import { ref } from 'vue'
 
+// Components from PrimeVue
+import Menubar from 'primevue/menubar'
+import Select from 'primevue/select'
+import Toast from 'primevue/toast'
+
+// Custom components
+import HelloWorld from './components/HelloWorld.vue'
+
+// Menu items for Menubar
 const items = ref([
   {
     label: 'Home',
@@ -21,32 +29,70 @@ const items = ref([
       {
         label: 'Create New Case',
         icon: 'pi pi-plus',
-        to: '/case-create',
+        to: '/case-detail',
       },
     ],
   },
 ])
+
+// Select options for dropdown
+const cities = [
+  { name: 'New York', code: 'NY' },
+  { name: 'London', code: 'LDN' },
+  { name: 'Paris', code: 'PRS' },
+  { name: 'Tokyo', code: 'TKY' },
+]
+const selectedCity = ref(null)
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <header class="bg-white shadow-sm">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <!-- Toast notification -->
+  <Toast />
+
+  <!-- Header -->
+  <header class="bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
+
+      <div>
+        <!-- Menubar -->
         <Menubar :model="items" class="border-none bg-transparent" />
       </div>
-    </header>
+    </div>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <RouterView />
-    </main>
-  </div>
+    <div class="wrapper">
+      <!-- HelloWorld Component -->
+      <HelloWorld msg="You did it!" />
+
+      <!-- Navigation Links -->
+      <nav>
+        <RouterLink to="/">Home</RouterLink>
+        <RouterLink to="/about">About</RouterLink>
+        <RouterLink to="/case-create">Case Create</RouterLink>
+        <RouterLink to="/case-delete">Case Delete</RouterLink>
+        <RouterLink to="/case-detail">Case Create</RouterLink>
+      </nav>
+
+      <!-- Dropdown for Select -->
+      <div class="card flex justify-center">
+        <Select
+          v-model="selectedCity"
+          :options="cities"
+          optionLabel="name"
+          placeholder="Select a City"
+          class="w-full md:w-56"
+        />
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <RouterView />
+  </main>
 </template>
 
-<style>
-@import url('primevue/resources/themes/lara-light-blue/theme.css');
-@import url('primevue/resources/primevue.min.css');
+<style scoped>
 @import url('primeicons/primeicons.css');
 
 /* Custom styles for PrimeVue Menubar */
