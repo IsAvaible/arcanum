@@ -1,4 +1,6 @@
 <template>
+  <RouterLink to="/case-create">Case Create</RouterLink>
+
   <div class="flex">
     <!-- Sidebar -->
     <div
@@ -56,7 +58,7 @@
           <h1 class="text-3xl font-bold">Cases</h1>
         </div>
         <button class="px-4 py-2 bg-green-400 hover:bg-green-500 text-black rounded-md">
-          + New Case
+          <RouterLink to="/case-create">Case Create</RouterLink>
         </button>
       </div>
 

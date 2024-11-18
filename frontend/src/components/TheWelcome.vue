@@ -169,15 +169,17 @@ import {
   ChevronLastIcon,
 } from 'lucide-vue-next'
 
+// Reactive states
 const activeTab = ref('all')
 const currentPage = ref(1)
-const activeMenu = ref(null)
+const activeMenu = ref<number | null>(null)
 const filters = reactive({
   caseType: '',
   status: '',
   assignedTo: '',
 })
 
+// Table headers and case data
 const tableHeaders = [
   'Case ID',
   'Title ID',
@@ -215,9 +217,9 @@ const cases = [
     },
     updatedOn: 'Oct 25, 2024 5:09 PM',
   },
-  // Add more cases as needed...
 ]
 
+// Utility functions
 const getStatusBadgeColor = (status: string) => {
   switch (status) {
     case 'Open':

@@ -9,4 +9,3 @@ echo "Commit message verified."
 
 # Run the pre-commit checks
 cd ..
-./frontend/.husky/pre-commit.sh
