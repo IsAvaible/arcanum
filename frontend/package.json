@@ -24,7 +24,6 @@
     "@vueuse/core": "^11.2.0",
     "axios": "^1.7.7",
     "pinia": "^2.2.6",
-    "primeflex": "^3.3.1",
     "primeicons": "^7.0.0",
     "primevue": "^4.2.2",
     "quill": "^2.0.2",
