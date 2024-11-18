@@ -102,3 +102,6 @@
 @import './skeleton';
 @import './tag';
 @import './terminal';
+
+/* Editor */
+@import './editor';

@@ -2,6 +2,7 @@
 import { RouterLink, RouterView } from 'vue-router'
 import HelloWorld from './components/HelloWorld.vue'
 import Select from 'primevue/select'
+import Toast from 'primevue/toast'
 
 import { ref } from 'vue'
 
@@ -16,6 +17,8 @@ const cities = ref([
 </script>
 
 <template>
+  <Toast />
+
   <header>
     <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
 
@@ -25,6 +28,8 @@ const cities = ref([
       <nav>
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/about">About</RouterLink>
+        <RouterLink to="/case-create">Case Create</RouterLink>
+        <RouterLink to="/case-delete">Case Delete</RouterLink>
       </nav>
 
       <div class="card flex justify-center">

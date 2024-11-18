@@ -14,20 +14,25 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "lint": "npx eslint . --fix --cache --cache-location node_modules/.cache/.eslintcache",
-    "lint:style": "stylelint \"src/**/*.{vue,css,scss}\" --fix",
+    "lint:style": "stylelint \"src/**/*.{vue,css,scss}\" --fix --ignore-path .gitignore --ignore-path .stylelintignore",
     "format": "prettier --write src/",
     "prepare": "node .husky/install.mjs && cd .. && husky frontend/.husky"
   },
   "dependencies": {
     "@iconoir/vue": "^7.9.0",
+    "@vee-validate/zod": "^4.14.7",
+    "@vueuse/core": "^11.2.0",
     "axios": "^1.7.7",
     "pinia": "^2.2.6",
     "primeicons": "^7.0.0",
-    "primevue": "^4.2.1",
+    "primevue": "^4.2.2",
+    "quill": "^2.0.2",
     "tailwindcss-primeui": "^0.3.4",
+    "vee-validate": "^4.14.7",
     "vue": "^3.5.12",
     "vue-i18n": "^10.0.4",
-    "vue-router": "^4.4.5"
+    "vue-router": "^4.4.5",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.5.0",
@@ -60,6 +65,7 @@
     "stylelint-config-standard": "^36.0.1",
     "stylelint-config-standard-scss": "^13.1.0",
     "stylelint-config-standard-vue": "^1.0.0",
+    "tailwind-scrollbar": "^3.1.0",
     "tailwindcss": "^3.4.14",
     "typescript": "~5.6.3",
     "vite": "^5.4.10",
