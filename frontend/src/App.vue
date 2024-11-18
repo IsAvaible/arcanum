@@ -46,6 +46,7 @@ const selectedCity = ref(null)
 </script>
 
 <template>
+
   <!-- Toast notification -->
   <Toast />
 
@@ -60,6 +61,7 @@ const selectedCity = ref(null)
       </div>
     </div>
 
+
     <div class="wrapper">
       <!-- HelloWorld Component -->
       <HelloWorld msg="You did it!" />
@@ -71,6 +73,7 @@ const selectedCity = ref(null)
         <RouterLink to="/case-create">Case Create</RouterLink>
         <RouterLink to="/case-delete">Case Delete</RouterLink>
         <RouterLink to="/case-detail">Case Create</RouterLink>
+
       </nav>
 
       <!-- Dropdown for Select -->
