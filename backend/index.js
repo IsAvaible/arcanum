@@ -5,6 +5,7 @@ const caseRoutes = require('./routes/caseRoutes');
 
 
 
+
 // Middleware (optional)
 const exampleMiddleware = require('./middlewares/exampleLogger');
 app.use(exampleMiddleware);
