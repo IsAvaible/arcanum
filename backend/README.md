@@ -3,6 +3,7 @@ README
 Prerequisites
 Node.js (version 16.14.2 or higher)
 npm (version 9.6.2 or higher)
+PostgreSQL (version 17 or higher)
 
 
 Installation and Starting the Backend
@@ -13,8 +14,13 @@ cd backend
 2. Install dependencies:
 npm install
 
-3. Start the backend:
+3. run Migrations:
+npx sequelize-cli db:migrate --config ./configs/config.js
+
+4. Start the backend:
 npm run start-backend
+
+
 
 
 Test the application:
@@ -36,3 +42,20 @@ backend/
 Note on the .env file:
 
 The application uses a .env file in combination with dotenv to securely manage environment variables. For security reasons, the .env file is stored locally and not included in the version control system (e.g., GitHub). This keeps sensitive information like API keys and passwords protected. The variables from the .env file are only accessible within the application and cannot be directly retrieved from outside.
+
+
+.env should be configured like this: 
+DB_NAME=cases
+DB_HOST=localhost
+DB_PASSWORD=...
+DB_USER=...
+DB_DIALECT=postgres
+DB_PORT=...
+
+AZURE_API_KEY= 123
+AZURE_URL= 123
+
+
+NEXTCLOUD_USERNAME = FH-Kennung@fh-aachen.de
+NEXTCLOUD_PASSWORD = ....
+NEXTCLOUD_URL = https://fh-aachen.sciebo.de/remote.php/webdav/
