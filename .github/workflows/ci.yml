@@ -1,0 +1,151 @@
+name: Frontend CI Pipeline
+
+on:
+  push:
+    branches:
+      - "issue/**"
+      - "feature/**"
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches:
+      - development
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: 0
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: node-modules-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            node-modules-
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./frontend
+
+      - name: Build Project with Vite
+        run: npm run build
+        working-directory: ./frontend
+
+  lint:
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      HUSKY: 0
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: node-modules-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            node-modules-
+
+      - name: Run Linting with ESLint
+        run: npm run lint
+        working-directory: ./frontend
+
+      - name: Run Linting with Stylelint
+        run: npm run lint:style
+        working-directory: ./frontend
+
+  tests:
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      HUSKY: 0
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: node-modules-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            node-modules-
+
+      - name: Run Unit Tests with Vitest
+        run: npm run test:unit
+        working-directory: ./frontend
+        env:
+          CI: true
+
+      - name: Upload Unit Test Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-coverage
+          path: frontend/coverage
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+        working-directory: ./frontend
+
+      - name: Run End-to-End Tests with Playwright
+        run: npm run test:e2e
+        working-directory: ./frontend
+        env:
+          CI: true
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: frontend/playwright-report/index.html
+
+      - name: Upload Playwright Artifacts on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure-artifacts
+          path: frontend/playwright-artifacts
+
+  # Test Coverage Check disabled for now
+  #    - name: Fail if Coverage Below Threshold
+  #      uses: themichaelhall/check-code-coverage@v2
+  #      with:
+  #        report: frontend/coverage/clover.xml
+  #        required-percentage: 80
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build, lint, tests]
+    env:
+      HUSKY: 0
+    steps:
+      - name: Update README with Status Badge
+        if: success()
+        run: |
+          echo "![CI Pipeline](https://github.com/NeugebauerITSecFHAachen/ip-oculavis-ws2425/actions/workflows/ci.yml/badge.svg)" >> README.md

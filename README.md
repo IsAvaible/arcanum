@@ -22,6 +22,7 @@ The project uses the following technologies:
   - **Vue Router**: Vue library for routing.
   - **Playwright**: End-to-end testing library.
   - **PrimeVue**: Vue UI component library.
+  - **Iconoir**: Icon pack for icons.
   - **Vue-i18n**: Vue internationalization library.
   - **Axios**: Promise-based HTTP client for making API requests.
   - **ESLint**: JavaScript linter for identifying and reporting patterns in code.

@@ -1,16 +1,22 @@
-const express = require('express')
-const app = express()
-const port = 3000
+const express = require('express');
+const app = express();
+const port = 3000;
+const caseRoutes = require('./routes/caseRoutes');
 
-//Routen importieren
-const exampleRoutes = require('./routes/example');
+
+
 
 // Middleware (optional)
 const exampleMiddleware = require('./middlewares/exampleLogger');
 app.use(exampleMiddleware);
 
+
+app.use(express.json()); // Fügt die JSON-Parsing-Middleware hinzu
+app.use(express.urlencoded({ extended: true })); 
+
 //Routen verwenden
-app.use('/', exampleRoutes);
+
+app.use('/api/cases', caseRoutes);
 
 
 app.get('/', (req, res) => {
