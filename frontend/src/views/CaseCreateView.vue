@@ -138,7 +138,20 @@ const steps = [
  * Determine if this header should be clickable
  */
 const isClickable = (step: number) => {
-  return activeStep.value != step && (!stepInteracted(step) || hasErrors())
+  if (activeStep.value === step) {
+    return true
+  } else {
+    if (hasErrors()) {
+      return false
+    }
+    // Check if all previous steps where interacted with
+    for (let i = 0; i < step; i++) {
+      if (!stepInteracted(i)) {
+        return false
+      }
+    }
+    return true
+  }
 }
 
 // Form submission
@@ -166,6 +179,7 @@ const onSubmit = handleSubmit((_values) => {
           :steps="steps"
           :stepValid="stepValid"
           :stepInteracted="stepInteracted"
+          :isClickable="isClickable"
         />
       </div>
     </template>
@@ -179,7 +193,7 @@ const onSubmit = handleSubmit((_values) => {
         class="bg-white h-full md-h:max-h-[calc(100%-3.25rem)] flex flex-col"
         :select-on-focus="true"
       >
-        <AccordionPanel :value="0" :disabled="isClickable(0)">
+        <AccordionPanel :value="0" :disabled="!isClickable(0)">
           <StepHeader
             :step="0"
             :activeStep="activeStep"
@@ -228,7 +242,7 @@ const onSubmit = handleSubmit((_values) => {
           </AccordionContent>
         </AccordionPanel>
 
-        <AccordionPanel :value="1" :disabled="isClickable(1)">
+        <AccordionPanel :value="1" :disabled="!isClickable(1)">
           <StepHeader
             :step="1"
             :activeStep="activeStep"
@@ -303,7 +317,7 @@ const onSubmit = handleSubmit((_values) => {
           </AccordionContent>
         </AccordionPanel>
 
-        <AccordionPanel :value="2" :disabled="isClickable(2)">
+        <AccordionPanel :value="2" :disabled="!isClickable(2)">
           <StepHeader
             :step="2"
             :activeStep="activeStep"
@@ -327,7 +341,7 @@ const onSubmit = handleSubmit((_values) => {
           </AccordionContent>
         </AccordionPanel>
 
-        <AccordionPanel :value="3" :disabled="isClickable(3)">
+        <AccordionPanel :value="3" :disabled="!isClickable(3)">
           <StepHeader
             :step="3"
             :activeStep="activeStep"
@@ -348,7 +362,7 @@ const onSubmit = handleSubmit((_values) => {
           </AccordionContent>
         </AccordionPanel>
 
-        <AccordionPanel :value="4" :disabled="isClickable(4)">
+        <AccordionPanel :value="4" :disabled="!isClickable(4)">
           <StepHeader
             :step="4"
             :activeStep="activeStep"
