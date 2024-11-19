@@ -147,10 +147,32 @@
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="caseItem in filteredCases" :key="caseItem.id">
-                <td class="px-6 py-4 whitespace-nowrap">{{ caseItem.id }}</td>
+              <tr
+                v-for="caseItem in filteredCases"
+                :key="caseItem.id"
+                :class="hoveredRow === caseItem.id ? 'bg-green-100 cursor-pointer' : ''"
+                @mouseenter="hoveredRow = caseItem.id"
+                @mouseleave="hoveredRow = null"
+                @click="$router.push({ name: 'case-create', params: { id: caseItem.id } })"
+              >
+                <!-- Case ID -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <RouterLink
+                    :to="{ name: 'case-create', params: { id: caseItem.id } }"
+                    class="text-blue-500 hover:underline"
+                    @click.stop
+                  >
+                    {{ caseItem.id }}
+                  </RouterLink>
+                </td>
+
+                <!-- Title -->
                 <td class="px-6 py-4 whitespace-nowrap">{{ caseItem.titleId }}</td>
+
+                <!-- Case Type -->
                 <td class="px-6 py-4 whitespace-nowrap">{{ caseItem.caseType }}</td>
+
+                <!-- Status -->
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span
                     :class="[
@@ -161,59 +183,42 @@
                     {{ caseItem.status }}
                   </span>
                 </td>
+
+                <!-- Assignee -->
                 <td class="px-6 py-4 whitespace-nowrap">{{ caseItem.assignee }}</td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center">
-                    <div class="flex-shrink-0 h-10 w-10">
-                      <div
-                        class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center"
-                      >
-                        {{ caseItem.createdBy.initials }}
-                      </div>
-                    </div>
-                    <div class="ml-4">
-                      <div class="text-sm font-medium text-gray-900">
-                        {{ caseItem.createdBy.name }}
-                      </div>
-                      <div class="text-sm text-gray-500">{{ caseItem.createdBy.email }}</div>
-                    </div>
-                  </div>
-                </td>
+
+                <!-- Created By -->
+                <td class="px-6 py-4 whitespace-nowrap">{{ caseItem.createdBy.name }}</td>
+
+                <!-- Updated On -->
                 <td class="px-6 py-4 whitespace-nowrap">{{ caseItem.updatedOn }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+
+                <!-- Dropdown for Archive/Delete -->
+                <td class="px-6 py-4 whitespace-nowrap text-right">
                   <button
-                    @click="openMenu(caseItem.id)"
+                    @click.stop="openMenu(caseItem.id)"
                     class="text-indigo-600 hover:text-indigo-900"
                   >
                     <MoreVerticalIcon class="h-5 w-5" />
                   </button>
                   <div
                     v-if="activeMenu === caseItem.id"
-                    class="absolute right-72 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5"
+                    class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5"
                   >
-                    <div
-                      class="py-1"
-                      role="menu"
-                      aria-orientation="vertical"
-                      aria-labelledby="options-menu"
+                    <a
+                      href="#"
+                      class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      @click.stop.prevent="toggleArchive(caseItem.id)"
                     >
-                      <a
-                        href="#"
-                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        role="menuitem"
-                        @click.prevent="toggleArchive(caseItem.id)"
-                      >
-                        {{ caseItem.isArchived ? 'Unarchive Item' : 'Archive Item' }}
-                      </a>
-                      <a
-                        href="#"
-                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        role="menuitem"
-                        @click.prevent="deleteCase(caseItem.id)"
-                      >
-                        Delete Item
-                      </a>
-                    </div>
+                      {{ caseItem.isArchived ? 'Unarchive Item' : 'Archive Item' }}
+                    </a>
+                    <a
+                      href="#"
+                      class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      @click.stop.prevent="deleteCase(caseItem.id)"
+                    >
+                      Delete Item
+                    </a>
                   </div>
                 </td>
               </tr>
@@ -270,6 +275,7 @@ import {
   ChevronsRight,
 } from 'lucide-vue-next'
 
+const hoveredRow = ref<number | null>(null)
 const activeTab = ref('all')
 const currentPage = ref(1)
 const activeMenu = ref<number | null>(null)
@@ -401,6 +407,33 @@ const deleteCase = (id: number) => {
   }
 }
 
+const isWithinRange = (date: string, range: string) => {
+  const caseDate = new Date(date),
+    now = new Date()
+  switch (range) {
+    case 'Last 24 hours':
+      return caseDate >= new Date(now.getTime() - 24 * 60 * 60 * 1000)
+    case 'Last 7 days':
+      return caseDate >= new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    case 'Last 30 days':
+      return caseDate >= new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+    case 'Q4 (Oct - Dec 2024)':
+      return caseDate >= new Date('2024-10-01') && caseDate <= new Date('2024-12-31')
+    case 'Q3 (Jul - Sep 2024)':
+      return caseDate >= new Date('2024-07-01') && caseDate <= new Date('2024-09-30')
+    case 'Q2 (Apr - Jun 2024)':
+      return caseDate >= new Date('2024-04-01') && caseDate <= new Date('2024-06-30')
+    case 'Q1 (Jan - Mar 2024)':
+      return caseDate >= new Date('2024-01-01') && caseDate <= new Date('2024-03-31')
+    case '2024':
+      return caseDate.getFullYear() === 2024
+    case '2023':
+      return caseDate.getFullYear() === 2023
+    default:
+      return true
+  }
+}
+
 const filteredCases = computed(() => {
   return cases.filter((caseItem) => {
     const matchCaseType = filters.caseType ? caseItem.caseType === filters.caseType : true
@@ -414,9 +447,19 @@ const filteredCases = computed(() => {
       ? caseItem.titleId.toLowerCase().includes(filters.search.toLowerCase()) ||
         caseItem.assignee.toLowerCase().includes(filters.search.toLowerCase())
       : true
+    const matchLastUpdated = filters.lastUpdated
+      ? isWithinRange(caseItem.updatedOn, filters.lastUpdated)
+      : true
     const matchArchived =
       activeTab.value === 'archived' ? caseItem.isArchived : !caseItem.isArchived
-    return matchCaseType && matchStatus && matchAssignedTo && matchSearch && matchArchived
+    return (
+      matchCaseType &&
+      matchStatus &&
+      matchAssignedTo &&
+      matchSearch &&
+      matchLastUpdated &&
+      matchArchived
+    )
   })
 })
 </script>
