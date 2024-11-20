@@ -38,10 +38,9 @@ jobs:
         working-directory: ./llm_backend
         run: ruff check --output-format=github --target-version=py311
 
-      - name: Check code formatting with Ruff
+      - name: Format code with Ruff
         working-directory: ./llm_backend
-        run: ruff format --diff --target-version=py311
-        continue-on-error: true
+        run: ruff format --exit-zero --target-version=py311
 
       - name: Commit and Push Changes (Formatting)
         if: success() || failure()
