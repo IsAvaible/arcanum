@@ -16,10 +16,6 @@ options = {
 client = Client(options)
 client.verify = True
 
-def get_files():
-    files = client.list()
-    print(files)
-
 def download_file_webdav(filepath, filename):
     path = os.path.join(app.root_path, os.path.join(app.config['UPLOAD_FOLDER'], filename))
     client.download_sync(remote_path=filepath, local_path=path)
