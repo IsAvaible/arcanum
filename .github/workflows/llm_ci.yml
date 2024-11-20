@@ -23,6 +23,7 @@ jobs:
 
       - name: Setup Python + Dependencies
         uses: actions/setup-python@v5
+        working-directory: ./llm_backend
         with:
           python-version: '3.11'
           cache: 'pip'
