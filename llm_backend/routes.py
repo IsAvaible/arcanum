@@ -1,8 +1,3 @@
-import json
-import os
-
-import requests
-from flasgger import swag_from
 from flask import render_template, request, Blueprint, session
 from app import app
 

@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 from openai import OpenAI
-
+import os
 from bs4 import BeautifulSoup
 from flask import Blueprint
 from werkzeug.utils import secure_filename
@@ -10,7 +10,7 @@ import hashlib
 
 from app import app
 from embeddings import create_embeddings
-from pdf import *
+from pdf import create_text_chunks_ocr, create_text_chunks_pdfreader, create_text_chunks_pdfplumber, create_text_chunks_pypdfloader
 
 import json
 

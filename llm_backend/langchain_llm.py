@@ -1,5 +1,4 @@
 import json
-import os
 
 from flask import jsonify, Blueprint, session
 from langchain_chroma import Chroma

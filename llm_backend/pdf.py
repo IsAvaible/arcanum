@@ -3,10 +3,8 @@ import os
 import pdfplumber
 import pytesseract
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pdf2image import convert_from_path
 from pypdf import PdfReader
-from langchain_openai.embeddings import OpenAIEmbeddings
 pytesseract.pytesseract.tesseract_cmd = os.getenv("TESSERACT_BIN")
 
 
