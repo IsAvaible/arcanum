@@ -22,13 +22,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Python + Dependencies
-        working-directory: ./llm_backend
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
       - run: python -m pip install --upgrade pip
       - run: pip install -r requirements.txt
+        working-directory: ./llm_backend
 
       - name: Install the code linting and formatting tool Ruff
         working-directory: ./llm_backend
