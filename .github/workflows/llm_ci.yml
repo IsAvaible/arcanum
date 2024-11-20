@@ -38,17 +38,8 @@ jobs:
         working-directory: ./llm_backend
         run: ruff check --output-format=github --target-version=py311
 
-      - name: Format code with Ruff
+      - name: Check code formatting with Ruff
         working-directory: ./llm_backend
-        run: ruff format --exit-zero --target-version=py311
+        run: ruff format --diff --target-version=py311
+        continue-on-error: true
 
-      - name: Commit and Push Changes (Formatting)
-        if: success() || failure()
-        run: |
-          git config user.name "GitHub Action"
-          git config user.email "action@github.com"
-          git add .
-          git commit -m "ci: Format code using Ruff" || echo "No changes to commit"
-          git push origin HEAD
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
