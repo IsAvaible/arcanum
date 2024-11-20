@@ -70,7 +70,7 @@ const selectedCity = ref(null)
         <RouterLink to="/about">About</RouterLink>
         <RouterLink to="/case-create">Case Create</RouterLink>
         <RouterLink to="/case-delete">Case Delete</RouterLink>
-        <RouterLink to="/case-detail">Case Create</RouterLink>
+        <RouterLink to="/case-detail">Case Detail</RouterLink>
       </nav>
 
       <!-- Dropdown for Select -->

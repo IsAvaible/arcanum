@@ -1,64 +1,92 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+// Import necessary Vue composition API functions and PrimeVue components
+import { defineProps, defineEmits } from 'vue'
+import Card from 'primevue/card'
 import InputText from 'primevue/inputtext'
 import Calendar from 'primevue/calendar'
 
-interface CaseDetails {
-  type: string
-  createdBy: string
-  createdOn: Date
-  updatedOn: Date
-  priority: string
-}
+// Define props for the component
+const props = defineProps<{
+  modelValue: {
+    type: string
+    reference: string
+    createdBy: string
+    createdOn: Date
+    updatedOn: Date
+  }
+}>()
 
-const details = ref<CaseDetails>({
-  type: 'Servicecase',
-  createdBy: 'Jason Nicholas Arifin',
-  createdOn: new Date('2024-10-25T10:28:00'),
-  updatedOn: new Date('2024-10-25T10:28:00'),
-  priority: 'High',
-})
+// Define emits for the component
+const emit = defineEmits(['update:modelValue'])
+
+// Function to update a specific field in the modelValue
+const updateField = (field: keyof typeof props.modelValue, value: any) => {
+  if (value instanceof Event && value.target instanceof HTMLInputElement) {
+    value = value.target.value // Typisieren von `value.target`
+  }
+  emit('update:modelValue', { ...props.modelValue, [field]: value })
+}
 </script>
 
 <template>
-  <div class="bg-white rounded-lg shadow p-6 mb-6">
-    <h2 class="text-xl font-semibold mb-6">Details</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div class="field">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Case Type</label>
-        <InputText v-model="details.type" class="w-full" readonly />
+  <Card>
+    <template #title>
+      <!-- Card title -->
+      <h2 class="text-xl font-semibold mb-4">Details</h2>
+    </template>
+    <template #content>
+      <!-- Grid layout for form fields -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Case Type field -->
+        <div class="field">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Case Type</label>
+          <InputText
+            :value="modelValue.type"
+            @input="updateField('type', $event)"
+            class="w-full"
+          />
+        </div>
+
+        <!-- Reference field -->
+        <div class="field">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Reference</label>
+          <InputText
+            :value="modelValue.reference"
+            @input="updateField('reference', $event)"
+            class="w-full"
+          />
+        </div>
+
+        <!-- Created by field (read-only) -->
+        <div class="field">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Created by</label>
+          <InputText :value="modelValue.createdBy" class="w-full" readonly />
+        </div>
+
+        <!-- Created on field -->
+        <div class="field">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Created on</label>
+          <Calendar
+            :modelValue="modelValue.createdOn"
+            @update:modelValue="updateField('createdOn', $event)"
+            showTime
+            hourFormat="24"
+            class="w-full"
+          />
+        </div>
+
+        <!-- Updated on field -->
+        <div class="field">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Updated on</label>
+          <Calendar
+            :modelValue="modelValue.updatedOn"
+            @update:modelValue="updateField('updatedOn', $event)"
+            showTime
+            hourFormat="24"
+            class="w-full"
+          />
+        </div>
       </div>
-      <div class="field">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Created by</label>
-        <InputText v-model="details.createdBy" class="w-full" readonly />
-      </div>
-      <div class="field">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Created on</label>
-        <Calendar v-model="details.createdOn" showTime hourFormat="24" class="w-full" readonly />
-      </div>
-      <div class="field">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Updated on</label>
-        <Calendar v-model="details.updatedOn" showTime hourFormat="24" class="w-full" readonly />
-      </div>
-      <div class="field">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-        <InputText v-model="details.priority" class="w-full" />
-      </div>
-    </div>
-  </div>
+    </template>
+  </Card>
 </template>
-
-<style scoped>
-:deep(.p-inputtext) {
-  width: 100%;
-}
-
-:deep(.p-calendar) {
-  width: 100%;
-}
-
-:deep(.p-inputtext[readonly]) {
-  background-color: #f3f4f6;
-  cursor: default;
-}
-</style>

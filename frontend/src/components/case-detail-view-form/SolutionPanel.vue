@@ -6,7 +6,7 @@ import Textarea from 'primevue/textarea'
 
 // Define props for the component
 const props = defineProps<{
-  modelValue: string  // The description text
+  modelValue: string  // The solution text
 }>()
 
 // Define emits for the component
@@ -17,10 +17,10 @@ const emit = defineEmits(['update:modelValue'])
   <Card class="mb-6">
     <template #title>
       <!-- Card title -->
-      <h2 class="text-xl font-semibold mb-4">Description</h2>
+      <h2 class="text-xl font-semibold mb-4">Solution</h2>
     </template>
     <template #content>
-      <!-- Textarea for description input -->
+      <!-- Textarea for solution input -->
       <Textarea
         :modelValue="modelValue"
         @update:modelValue="emit('update:modelValue', $event)"
