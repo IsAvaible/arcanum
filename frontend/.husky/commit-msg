@@ -7,6 +7,8 @@ npx commitlint  --edit "$1"
 
 echo "Commit message verified."
 
-# Run the pre-commit checks
 cd ..
+# Make the pre-commit script executable
+chmod +x ./frontend/.husky/pre-commit.sh
+# Run the pre-commit checks
 ./frontend/.husky/pre-commit.sh
