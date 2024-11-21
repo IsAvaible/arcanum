@@ -17,21 +17,37 @@ from pydantic import ValidationError
 from langchain_core.prompts import MessagesPlaceholder
 
 vector_store = None
-openai_models = ['gpt-4o-mini', 'gpt-3.5-turbo-0125', 'gpt-3.5-turbo-1106']
-llm = Blueprint('llm', __name__)
+openai_models = ["gpt-4o-mini", "gpt-3.5-turbo-0125", "gpt-3.5-turbo-1106"]
+llm = Blueprint("llm", __name__)
 
 
 # defining the desired output of the llm
 class Case(BaseModel):
-    title: str = Field(...,description="A short, clear summary of the case. This should provide a concise idea of the issue at hand.")
-    description: str = Field(...,description="A detailed explanation of the case, including relevant background information and context necessary for understanding the problem. This field should focus on the issue itself and should not include the solution.")
-    solution: str = Field(...,description="A proposed or implemented solution to address the case. If not yet resolved, this can include potential steps or approaches to consider.")
-    assignee: list[str] = Field(...,description="The name or identifier of the person responsible for handling or resolving the case.")
-    status: str = Field(...,description="The current state of the case, such as 'open', 'in progress' or 'resolved' to track its progression.")
+    title: str = Field(
+        ...,
+        description="A short, clear summary of the case. This should provide a concise idea of the issue at hand.",
+    )
+    description: str = Field(
+        ...,
+        description="A detailed explanation of the case, including relevant background information and context necessary for understanding the problem. This field should focus on the issue itself and should not include the solution.",
+    )
+    solution: str = Field(
+        ...,
+        description="A proposed or implemented solution to address the case. If not yet resolved, this can include potential steps or approaches to consider.",
+    )
+    assignee: list[str] = Field(
+        ...,
+        description="The name or identifier of the person responsible for handling or resolving the case.",
+    )
+    status: str = Field(
+        ...,
+        description="The current state of the case, such as 'open', 'in progress' or 'resolved' to track its progression.",
+    )
 
 
 class CaseArray(BaseModel):
-    cases: list[Case] = Field(...,description="A list of one or multiple cases.")
+    cases: list[Case] = Field(..., description="A list of one or multiple cases.")
+
 
 def check_if_output_is_valid(chain_output):
     try:
@@ -44,12 +60,13 @@ def check_if_output_is_valid(chain_output):
 
         return False
 
-def start_quering_llm(invokedPrompt,llm,parser,max_tries=3) -> dict :
+
+def start_quering_llm(invokedPrompt, llm, parser, max_tries=3) -> dict:
     """
     Queries the LLM with the given prompt template, LLM, and parser to generate a valid case.
     If the output is invalid (i.e., not in JSON format or missing some required parameters),
     the function re-queries the LLM until it gets a valid output or reaches the maximum number of retries.
-    
+
     Returns:
         dict: The output case formatted as a Python dictionary if valid, otherwise returning an empty dict.
     """
@@ -57,7 +74,7 @@ def start_quering_llm(invokedPrompt,llm,parser,max_tries=3) -> dict :
     chain_output = chain.invoke(invokedPrompt)
 
     is_valid = False
-    for try_number in range(1,max_tries+1):
+    for try_number in range(1, max_tries + 1):
         is_valid = check_if_output_is_valid(chain_output)
         if is_valid:
             break
@@ -76,7 +93,7 @@ def start_quering_llm(invokedPrompt,llm,parser,max_tries=3) -> dict :
 
 
 def generate_case_langchain(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         files = request.files.getlist("file")
         model = request.form.get("model")
         prompt = request.form.get("prompt")
@@ -89,11 +106,11 @@ def generate_case_langchain(request):
             max_tokens=None,
             timeout=None,
             max_retries=2,
-            streaming=False
+            streaming=False,
         )
         if not prompt:
-            return jsonify({'error': 'No prompt provided'}), 400
-        
+            return jsonify({"error": "No prompt provided"}), 400
+
         # Kontext sammeln und in der Session speichern
         session_key = f"context{chat_counter}"
         old_messages_key = f"old_messages{chat_counter}"
@@ -112,49 +129,58 @@ def generate_case_langchain(request):
         # Set up a parser + inject instructions into the prompt template.
         case_parser_json = JsonOutputParser(pydantic_object=CaseArray)
         messages = [
-            ("system","{system_prompt}\n{format_instructions}"),
+            ("system", "{system_prompt}\n{format_instructions}"),
             MessagesPlaceholder("history"),
-            ("human", "CONTEXT: {context}\n\nQUERY: {query}")
+            ("human", "CONTEXT: {context}\n\nQUERY: {query}"),
         ]
-        promptLangchain = ChatPromptTemplate.from_messages(messages).partial(system_prompt=system_prompt_langchain_parser,format_instructions=case_parser_json.get_format_instructions())
-        promptLangchainInvoked = promptLangchain.invoke({"context": context, "query": prompt, "history":history})
+        promptLangchain = ChatPromptTemplate.from_messages(messages).partial(
+            system_prompt=system_prompt_langchain_parser,
+            format_instructions=case_parser_json.get_format_instructions(),
+        )
+        promptLangchainInvoked = promptLangchain.invoke(
+            {"context": context, "query": prompt, "history": history}
+        )
         print(promptLangchainInvoked)
 
-        response_dict = start_quering_llm(promptLangchainInvoked,llm,case_parser_json,max_tries=3)
-        response_json_string = json.dumps(response_dict, indent=2, ensure_ascii=False) # makes the dict print out more readable for the user
+        response_dict = start_quering_llm(
+            promptLangchainInvoked, llm, case_parser_json, max_tries=3
+        )
+        response_json_string = json.dumps(
+            response_dict, indent=2, ensure_ascii=False
+        )  # makes the dict print out more readable for the user
 
-        
-        add_value_to_session_list(old_messages_key,("human", prompt))
-        add_value_to_session_list(old_messages_key,("assistant", response_json_string))
+        add_value_to_session_list(old_messages_key, ("human", prompt))
+        add_value_to_session_list(old_messages_key, ("assistant", response_json_string))
 
         old_messages_json_key = f"old_messages_json_{chat_counter}"
-        add_value_to_session_list(old_messages_json_key, chat_message_to_json(("human", prompt)))
-        add_value_to_session_list(old_messages_json_key, chat_message_to_json(("assistant", response_json_string)))
+        add_value_to_session_list(
+            old_messages_json_key, chat_message_to_json(("human", prompt))
+        )
+        add_value_to_session_list(
+            old_messages_json_key,
+            chat_message_to_json(("assistant", response_json_string)),
+        )
 
         return response_json_string, 200
 
+
 def chat(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         model = request.form.get("model")
         prompt = request.form.get("prompt")
 
         if not prompt:
-            return jsonify({'error': 'No prompt provided'}), 400
+            return jsonify({"error": "No prompt provided"}), 400
 
         chat_counter = request.form.get("chat_counter")
 
         llm = ChatOpenAI(
-            model=model,
-            temperature=0,
-            max_tokens=None,
-            timeout=None,
-            streaming=True
+            model=model, temperature=0, max_tokens=None, timeout=None, streaming=True
         )
 
-        embedding_function = OpenAIEmbeddings(model='text-embedding-3-large')
+        embedding_function = OpenAIEmbeddings(model="text-embedding-3-large")
         vector_store = Chroma(
-            persist_directory=".chromadb/",
-            embedding_function=embedding_function
+            persist_directory=".chromadb/", embedding_function=embedding_function
         )
         # GET OLD MSGS
         old_messages_key = f"old_messages{chat_counter}"
@@ -163,7 +189,10 @@ def chat(request):
 
         if old_messages:
             all_msgs = "\n".join(x[1] for x in old_messages)
-            old_msgs = [("system", get_system_prompt("old_msgs")),("human", all_msgs + "That is the latest user query: " + prompt)]
+            old_msgs = [
+                ("system", get_system_prompt("old_msgs")),
+                ("human", all_msgs + "That is the latest user query: " + prompt),
+            ]
             new_prompt = llm.invoke(old_msgs).content
             embedding_vector = embedding_function.embed_query(new_prompt)
         else:
@@ -190,8 +219,10 @@ def chat(request):
         # Alte Nachrichten sammeln und in der Session speichern
 
         human_query_tup_without_context = ("human", new_prompt)
-        human_query_tup_with_context = ("human", "Please take this as input data: " + context)
-
+        human_query_tup_with_context = (
+            "human",
+            "Please take this as input data: " + context,
+        )
 
         messages = [
             ("system", get_system_prompt("chat")),
@@ -208,15 +239,14 @@ def chat(request):
         # LLM-Response streamen
         result = ""
         response_generator = llm.stream(messages)
-        socketio.emit(f"stream{chat_counter}", {'content': "START_LLM_MESSAGE"})
+        socketio.emit(f"stream{chat_counter}", {"content": "START_LLM_MESSAGE"})
 
         for response_chunk in response_generator:
             result_chunk = response_chunk.content
             result += result_chunk
-            socketio.emit(f"stream{chat_counter}", {'content': result_chunk})
+            socketio.emit(f"stream{chat_counter}", {"content": result_chunk})
 
-
-        socketio.emit(f"stream{chat_counter}", {'content': "END_LLM_MESSAGE"})
+        socketio.emit(f"stream{chat_counter}", {"content": "END_LLM_MESSAGE"})
 
         add_value_to_session_list(old_messages_key, ("assistant", result))
 
@@ -225,31 +255,27 @@ def chat(request):
         for msg in old_msgs:
             add_value_to_session_list(old_messages_json_key, chat_message_to_json(msg))
 
-        return '', 200
-
+        return "", 200
 
 
 def format_chat_messages(messages):
     formatted_messages = []
     for role, content in messages:
         formatted_messages.append(f"{role.capitalize()}: {content}")
-    return "\n------------------------------------------------\n".join(formatted_messages)
+    return "\n------------------------------------------------\n".join(
+        formatted_messages
+    )
 
 
 def chat_messages_to_json(messages):
     messages_list = []
     for role, content in messages:
-        messages_list.append({
-            "role": role,
-            "content": content
-        })
+        messages_list.append({"role": role, "content": content})
     return json.dumps(messages_list, indent=4)
+
 
 def chat_message_to_json(message):
     role, content = message
     content = content.strip('"')
-    msg = {
-            "role": role,
-            "content": content
-        }
+    msg = {"role": role, "content": content}
     return msg

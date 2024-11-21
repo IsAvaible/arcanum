@@ -5,6 +5,7 @@ import pytesseract
 from langchain_community.document_loaders import PyPDFLoader
 from pdf2image import convert_from_path
 from pypdf import PdfReader
+
 pytesseract.pytesseract.tesseract_cmd = os.getenv("TESSERACT_BIN")
 
 
@@ -31,7 +32,9 @@ def create_text_chunks_pdfplumber(pdf_path):
             for table in tables:
                 for row in table:
                     # Konvertiere jede Tabellenzeile in eine durch Tabulatoren getrennte Zeichenfolge
-                    row_text = "\t".join([str(cell) if cell is not None else "" for cell in row])
+                    row_text = "\t".join(
+                        [str(cell) if cell is not None else "" for cell in row]
+                    )
                     content += row_text + "\n"
 
     return content
@@ -51,9 +54,7 @@ def create_text_chunks_ocr(pdf_path):
     pages = convert_from_path(pdf_path, 600)
     content = ""
     for page in pages:
-        text = pytesseract.image_to_string(page, lang='eng')
-        content += text + '\n'
+        text = pytesseract.image_to_string(page, lang="eng")
+        content += text + "\n"
 
     return content
-
-

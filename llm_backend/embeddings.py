@@ -6,12 +6,12 @@ from langchain.docstore.document import Document
 
 def split_texts(content):
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=500,
-        separators=["\n\n", "\n", ".", "?", "!"])
+        chunk_size=1000, chunk_overlap=500, separators=["\n\n", "\n", ".", "?", "!"]
+    )
     texts = text_splitter.split_text(content)
 
     return texts
+
 
 def create_embeddings(texts, filename, id):
     texts = split_texts(texts)
@@ -24,6 +24,9 @@ def create_embeddings(texts, filename, id):
             metadata_doc = {"case_id": id, "filename": filename}
             doc = Document(page_content=text, metadata=metadata_doc)
             docs.append(doc)
-    Chroma.from_documents(docs, OpenAIEmbeddings(model='text-embedding-3-large'), persist_directory=".chromadb/")
+    Chroma.from_documents(
+        docs,
+        OpenAIEmbeddings(model="text-embedding-3-large"),
+        persist_directory=".chromadb/",
+    )
     return
-

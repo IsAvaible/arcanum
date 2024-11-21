@@ -1,4 +1,3 @@
-
 system_prompt_json = """
 YOU ARE AN EXPERT METADATA EXTRACTION AGENT SPECIALIZED IN PARSING TEXT TO IDENTIFY AND EXTRACT SPECIFIC FIELDS. 
 
@@ -55,7 +54,7 @@ IF YOU DONT HAVE ANY CONTEXT, PLEASE TELL THE USER YOU DIDNT FIND ANYTHING
 DO NOT COPY THE CONTENT OF THE CONTEXT, REWRITE IT BUT DONT MAKE UP ANYTHING
 """
 
-system_prompt_old_msgs="Given a chat history and the latest user question \
+system_prompt_old_msgs = "Given a chat history and the latest user question \
                         which might reference context in the chat history, formulate a standalone question \
                         which can be understood without the chat history. Do NOT answer the question, \
                         just reformulate it if needed and otherwise return it as is. Please respond in GERMAN"
@@ -72,6 +71,7 @@ DO NOT include any names or personal data except for the assignee (the assignee 
 ENSURE your response is in GERMAN and refrain from using other languages unless necessary for understanding the context.
 """
 
+
 def get_system_prompt(which):
     if which == "json":
         return system_prompt_json
@@ -81,4 +81,3 @@ def get_system_prompt(which):
         return system_prompt_old_msgs
     elif which == "langchain_parser":
         return system_prompt_langchain_parser
-

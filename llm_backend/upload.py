@@ -10,17 +10,21 @@ import hashlib
 
 from app import app
 from embeddings import create_embeddings
-from pdf import create_text_chunks_ocr, create_text_chunks_pdfreader, create_text_chunks_pdfplumber, create_text_chunks_pypdfloader
+from pdf import (
+    create_text_chunks_ocr,
+    create_text_chunks_pdfreader,
+    create_text_chunks_pdfplumber,
+    create_text_chunks_pypdfloader,
+)
 
 import json
 
-upload = Blueprint('upload', __name__)
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'html', 'mp3', "wav"}
+upload = Blueprint("upload", __name__)
+ALLOWED_EXTENSIONS = {"txt", "pdf", "html", "mp3", "wav"}
 
 
 def allowed_file(filename):
-    return '.' in filename and \
-        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def upload_file_method(files, pdf_extractor, chat_id):
@@ -33,7 +37,9 @@ def upload_file_method(files, pdf_extractor, chat_id):
         if file:
             if allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                path = os.path.join(app.root_path, os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                path = os.path.join(
+                    app.root_path, os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                )
                 mimetype = file.content_type
                 file.save(path)
                 clean_filename_str = clean_filename(Path(path).stem)
@@ -44,13 +50,12 @@ def upload_file_method(files, pdf_extractor, chat_id):
                     transcription = client.audio.transcriptions.create(
                         model="whisper-1",
                         file=audio_file,
-                        response_format="verbose_json"
+                        response_format="verbose_json",
                     )
                     texts += transcription.text
                     single_text = transcription.text
 
-
-                elif mimetype == 'application/pdf':
+                elif mimetype == "application/pdf":
                     # if store_hash(file) == True:
                     texts = "Content of PDF File: " + clean_filename_str + ": "
                     if pdf_extractor == "pypdfloader":
@@ -67,28 +72,28 @@ def upload_file_method(files, pdf_extractor, chat_id):
                         texts += " " + single_text
                 elif mimetype == "text/html":
                     texts = "Content of HTML File: " + clean_filename_str + ": "
-                    with open(path, 'r', encoding="utf-8") as file:
+                    with open(path, "r", encoding="utf-8") as file:
                         contents = file.read()
                         soup = BeautifulSoup(contents)
                         texts += soup.get_text()
                         single_text = soup.get_text()
                 elif mimetype == "text/plain":
                     texts = "Content of Text File: " + clean_filename_str + ": "
-                    with open(path, 'r', encoding="utf-8") as file:
+                    with open(path, "r", encoding="utf-8") as file:
                         contents = file.read()
                         texts += contents
                         single_text = contents
-                
+
                 file_as_dict = {
                     "filename": filename,
                     "mimetype": mimetype,
                     "content": single_text,
                 }
-                
-                create_embeddings(single_text, filename,chat_id)
+
+                create_embeddings(single_text, filename, chat_id)
         files_as_dicts.append(file_as_dict)
         files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False)
-            
+
     return files_as_dicts_json
 
 
@@ -96,7 +101,7 @@ def clean_filename(filepath):
     # Get the filename without the path
     filename = os.path.basename(filepath)
     # Replace disallowed special characters with blanks
-    clean_name = re.sub(r'[^a-zA-Z0-9]', ' ', filename)
+    clean_name = re.sub(r"[^a-zA-Z0-9]", " ", filename)
     return clean_name
 
 
@@ -115,7 +120,7 @@ def generate_file_hash(file_storage):
 def store_hash(file_storage):
     """Check if hash exists in file, otherwise add it to the list."""
     hash_value = generate_file_hash(file_storage)
-    hash_file_path = os.path.join(app.config['UPLOAD_FOLDER'], "hashvalues.txt")
+    hash_file_path = os.path.join(app.config["UPLOAD_FOLDER"], "hashvalues.txt")
     # Read existing hashes if the file exists
     try:
         with open(hash_file_path, "r") as hash_file:
