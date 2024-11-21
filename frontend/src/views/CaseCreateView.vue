@@ -380,7 +380,10 @@ const onSubmit = handleSubmit((_values) => {
 
     <template #footer>
       <div class="w-full -m-5 p-5 box-content bg-white flex justify-between rounded-b-xl">
-        <Button label="Cancel" @click="dialogVisible = false" variant="text" />
+        <!-- Cancel Button with RouterLink -->
+        <RouterLink to="/">
+          <Button label="Cancel" variant="text" />
+        </RouterLink>
         <div class="flex gap-x-5">
           <Button
             label="Previous"
@@ -406,6 +409,7 @@ const onSubmit = handleSubmit((_values) => {
 </template>
 
 <style>
+/*
 .p-dialog-footer {
   @apply mt-auto;
 }
@@ -433,4 +437,5 @@ const onSubmit = handleSubmit((_values) => {
 .p-dialog-footer {
   @apply pt-5;
 }
+ */
 </style>

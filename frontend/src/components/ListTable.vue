@@ -103,30 +103,13 @@
           <option value="Assigned">Assigned</option>
         </select>
 
-        <div class="relative">
-          <button
-            @click="showDropdown = !showDropdown"
-            class="px-4 py-2 bg-green-100 text-black rounded-md"
-          >
-            Last Updated
-          </button>
-
-          <div
-            v-if="showDropdown"
-            class="absolute mt-2 w-48 rounded-md shadow-lg bg-white border border-gray-300 z-10"
-          >
-            <ul class="py-2">
-              <li
-                v-for="option in lastUpdatedOptions"
-                :key="option"
-                class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                @click="selectLastUpdated(option)"
-              >
-                {{ option }}
-              </li>
-            </ul>
-          </div>
-        </div>
+        <!-- Last Updated Dropdown -->
+        <select v-model="filters.lastUpdated" class="w-[160px] bg-green-100 px-3 py-2 rounded-md">
+          <option value="">Last Updated</option>
+          <option v-for="option in lastUpdatedOptions" :key="option" :value="option">
+            {{ option }}
+          </option>
+        </select>
       </div>
 
       <!-- Cases Table -->
@@ -153,18 +136,10 @@
                 :class="hoveredRow === caseItem.id ? 'bg-green-100 cursor-pointer' : ''"
                 @mouseenter="hoveredRow = caseItem.id"
                 @mouseleave="hoveredRow = null"
-                @click="$router.push({ name: 'case-create', params: { id: caseItem.id } })"
+                @click="$router.push({ name: 'case-detail' })"
               >
                 <!-- Case ID -->
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <RouterLink
-                    :to="{ name: 'case-create', params: { id: caseItem.id } }"
-                    class="text-blue-500 hover:underline"
-                    @click.stop
-                  >
-                    {{ caseItem.id }}
-                  </RouterLink>
-                </td>
+                <td class="px-6 py-4 whitespace-nowrap">{{ caseItem.id }}</td>
 
                 <!-- Title -->
                 <td class="px-6 py-4 whitespace-nowrap">{{ caseItem.titleId }}</td>
@@ -279,7 +254,6 @@ const hoveredRow = ref<number | null>(null)
 const activeTab = ref('all')
 const currentPage = ref(1)
 const activeMenu = ref<number | null>(null)
-const showDropdown = ref(false)
 const isCollapsed = ref(false)
 
 const menuItems = [
@@ -365,10 +339,6 @@ const tableHeaders = [
 
 const toggleSidebar = () => {
   isCollapsed.value = !isCollapsed.value
-}
-const selectLastUpdated = (option: string) => {
-  filters.lastUpdated = option
-  showDropdown.value = false
 }
 
 const getStatusBadgeColor = (status: string) => {

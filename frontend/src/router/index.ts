@@ -21,7 +21,7 @@ const router = createRouter({
     },
     {
       path: '/case-detail',
-      name: '/case-detail',
+      name: 'case-detail',
       component: CaseDetail,
     },
     {
