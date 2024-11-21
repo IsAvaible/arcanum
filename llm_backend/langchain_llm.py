@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+
 import json
 import os
 
@@ -16,6 +18,15 @@ from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import ValidationError
 from langchain_core.prompts import MessagesPlaceholder
+
+from langchain_openai import AzureChatOpenAI
+
+# Load environment variables from .env file
+load_dotenv()
+
+AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
+AZURE_DEPLOYMENT = os.getenv("AZURE_DEPLOYMENT")
+OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
 
 vector_store = None
 openai_models = ['gpt-4o-mini', 'gpt-3.5-turbo-0125', 'gpt-3.5-turbo-1106']
@@ -84,8 +95,10 @@ def generate_case_langchain(request):
         chat_counter = request.form.get("chat_counter")
         pdf_extractor = request.form.get("pdf_extractor")
 
-        llm = ChatOpenAI(
-            model=model,
+        llm = AzureChatOpenAI(
+            azure_endpoint=AZURE_ENDPOINT,
+            azure_deployment=AZURE_DEPLOYMENT,
+            openai_api_version=OPENAI_API_VERSION,
             temperature=0,
             max_tokens=None,
             timeout=None,
