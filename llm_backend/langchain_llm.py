@@ -7,7 +7,7 @@ from langchain_openai import OpenAIEmbeddings
 from app import socketio
 from prompts import get_system_prompt
 from session import add_value_to_session_list
-from upload import upload_file_method
+from upload import upload_file_method, upload_file_method_final
 
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_openai import ChatOpenAI
@@ -90,6 +90,52 @@ def start_quering_llm(invokedPrompt, llm, parser, max_tries=3) -> dict:
         print(f"Generated valid ouput with {try_number} tries: {chain_output}")
 
     return chain_output
+
+
+
+def generate_case_langchain_final(request):
+    if request.method == "POST":
+        json_str = request.get_json(force=True)
+        attachments = json_str["attachments"]
+        socket_id = json_str["socket_id"]
+        prompt = "Please create metadata for a new case based on the information provided and return them in JSON!"
+
+        llm = ChatOpenAI(
+            model="gpt-4o-mini",
+            temperature=0,
+            max_tokens=None,
+            timeout=None,
+            max_retries=2,
+            streaming=False,
+        )
+
+        context = upload_file_method_final(attachments, socket_id)
+
+        system_prompt_langchain_parser = get_system_prompt("langchain_parser")
+        case_parser_json = JsonOutputParser(pydantic_object=CaseArray)
+
+        messages = [
+            ("system", "{system_prompt}\n{format_instructions}"),
+            ("human", "CONTEXT: {context}\n\nQUERY: {query}"),
+        ]
+
+        promptLangchain = ChatPromptTemplate.from_messages(messages).partial(
+            system_prompt=system_prompt_langchain_parser,
+            format_instructions=case_parser_json.get_format_instructions(),
+        )
+        promptLangchainInvoked = promptLangchain.invoke(
+            {"context": context, "query": prompt}
+        )
+
+        response_dict = start_quering_llm(
+            promptLangchainInvoked, llm, case_parser_json, max_tries=3
+        )
+        response_json_string = json.dumps(
+            response_dict,  ensure_ascii=False
+        )
+
+        return jsonify(response_dict), 200
+
 
 
 def generate_case_langchain(request):

@@ -30,3 +30,22 @@ def create_embeddings(texts, filename, id):
         persist_directory=".chromadb/",
     )
     return
+
+
+def create_embeddings(texts, filename, id):
+    texts = split_texts(texts)
+    i = 0
+    docs = []
+    for text in texts:
+        if text:
+            print("embeddings:" + str(i) + "/" + str(len(texts)))
+            i = i + 1
+            metadata_doc = {"case_id": id, "filename": filename}
+            doc = Document(page_content=text, metadata=metadata_doc)
+            docs.append(doc)
+    Chroma.from_documents(
+        docs,
+        OpenAIEmbeddings(model="text-embedding-3-large"),
+        persist_directory=".chromadb/",
+    )
+    return

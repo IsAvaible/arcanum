@@ -5,11 +5,13 @@ import os
 from bs4 import BeautifulSoup
 from flask import Blueprint
 from werkzeug.utils import secure_filename
+import mimetypes
 
 import hashlib
 
 from app import app
 from embeddings import create_embeddings
+from llm_backend.webdav import download_file_webdav
 from pdf import (
     create_text_chunks_ocr,
     create_text_chunks_pdfreader,
@@ -26,6 +28,71 @@ ALLOWED_EXTENSIONS = {"txt", "pdf", "html", "mp3", "wav"}
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
+def upload_file_method_final(files, pdf_extractor):
+    files_as_dicts = []
+    file_as_dict = {}
+    files_as_dicts_json = ""
+    texts = ""
+    single_text = ""
+
+
+    for file in files:
+        filepath = file["filepath"]
+        filename = file["filename"]
+        path = download_file_webdav(filepath, filename)
+        mimetype = mimetypes.guess_type(filepath)
+        print(mimetype)
+        if allowed_file(filename):
+            filename = secure_filename(filename)
+            #path = os.path.join(
+            #    app.root_path, os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            #)
+            #file.save(path)
+            clean_filename_str = clean_filename(Path(path).stem)
+            if mimetype == "audio/mpeg":
+                texts += "Content of Audio File: " + clean_filename_str + ": "
+                client = OpenAI()
+                audio_file = open(path, "rb")
+                transcription = client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio_file,
+                    response_format="verbose_json",
+                )
+                texts += transcription.text
+                single_text = transcription.text
+            elif mimetype == "application/pdf":
+                # if store_hash(file) == True:
+                texts = "Content of PDF File: " + clean_filename_str + ": "
+                single_text = create_text_chunks_pdfplumber(path)
+                texts += " " + single_text
+            elif mimetype == "text/html":
+                texts = "Content of HTML File: " + clean_filename_str + ": "
+                with open(path, "r", encoding="utf-8") as file:
+                    contents = file.read()
+                    soup = BeautifulSoup(contents)
+                    texts += soup.get_text()
+                    single_text = soup.get_text()
+            elif mimetype == "text/plain":
+                texts = "Content of Text File: " + clean_filename_str + ": "
+                with open(path, "r", encoding="utf-8") as file:
+                    contents = file.read()
+                    texts += contents
+                    single_text = contents
+
+            file_as_dict = {
+                "filename": filename,
+                "mimetype": mimetype,
+                "content": single_text,
+            }
+
+            #create_embeddings(single_text, filename, 0)
+            # HIER: CONTENT VON DATEIEN -> IN DATEI TEMPORÄR SPEICHERN
+
+        files_as_dicts.append(file_as_dict)
+        files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False)
+
+    return files_as_dicts_json
 
 def upload_file_method(files, pdf_extractor, chat_id):
     files_as_dicts = []
