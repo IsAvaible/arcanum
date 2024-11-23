@@ -18,14 +18,13 @@ from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import ValidationError
 from langchain_core.prompts import MessagesPlaceholder
-
 from langchain_openai import AzureChatOpenAI
 
 # Load environment variables from .env file
 load_dotenv()
 
 AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
-AZURE_DEPLOYMENT = os.getenv("AZURE_DEPLOYMENT")
+AZURE_DEPLOYMENT = os.getenv("AZURE_DEPLOYMENT_GPT")
 OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
 
 vector_store = None
