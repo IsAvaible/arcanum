@@ -1,7 +1,7 @@
 from flask import render_template, request, Blueprint, session
 from app import app
 
-from langchain_llm import openai_models, generate_case_langchain, chat, generate_case_langchain_final
+from langchain_llm import openai_models, generate_case_langchain, chat, generate_case_langchain_production
 
 routes = Blueprint("routes", __name__)
 
@@ -9,7 +9,7 @@ routes = Blueprint("routes", __name__)
 @app.route("/generate_case", methods=["POST"])
 def generate_case():
     if request.method == "POST":
-        return generate_case_langchain_final(request)
+        return generate_case_langchain_production(request)
 
 @app.route("/generate", methods=["POST"])
 def generate():
