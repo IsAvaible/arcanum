@@ -125,7 +125,6 @@ def generate_case_langchain_production(request):
         response_dict = start_quering_llm(
             promptLangchainInvoked, llm, case_parser_json, max_tries=3
         )
-        response_json_string = json.dumps(response_dict,  ensure_ascii=False)
 
         return jsonify(response_dict), 200
 
@@ -192,7 +191,6 @@ def generate_case_langchain(request):
 
 def chat(request):
     if request.method == 'POST':
-        model = request.form.get("model")
         prompt = request.form.get("prompt")
 
         if not prompt:
