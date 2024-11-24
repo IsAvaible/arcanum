@@ -131,7 +131,6 @@ def generate_case_langchain_production(request):
 def generate_case_langchain(request):
     if request.method == 'POST':
         files = request.files.getlist("file")
-        model = request.form.get("model")
         prompt = request.form.get("prompt")
         chat_counter = request.form.get("chat_counter")
         pdf_extractor = request.form.get("pdf_extractor")
