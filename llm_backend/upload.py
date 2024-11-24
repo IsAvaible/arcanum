@@ -13,16 +13,20 @@ import hashlib
 
 from app import app
 from embeddings import create_embeddings
-from llm_backend.pdf import create_text_chunks_pdfplumber, create_text_chunks_pypdfloader, create_text_chunks_pdfreader, \
-    create_text_chunks_ocr
+from llm_backend.pdf import (
+    create_text_chunks_pdfplumber,
+    create_text_chunks_pypdfloader,
+    create_text_chunks_pdfreader,
+    create_text_chunks_ocr,
+)
 from llm_backend.webdav import download_file_webdav
 from langchain_core.documents.base import Blob
 from langchain_community.document_loaders.parsers.audio import AzureOpenAIWhisperParser
 
 import json
 
-upload = Blueprint('upload', __name__)
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'html', 'mp3', "wav"}
+upload = Blueprint("upload", __name__)
+ALLOWED_EXTENSIONS = {"txt", "pdf", "html", "mp3", "wav"}
 
 load_dotenv()
 
@@ -30,9 +34,9 @@ AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
 AZURE_DEPLOYMENT = os.getenv("AZURE_DEPLOYMENT_WHISPER")
 OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
 
+
 def allowed_file(filename):
-    return '.' in filename and \
-        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def upload_file_method_production(files, pdf_extractor):
@@ -42,7 +46,6 @@ def upload_file_method_production(files, pdf_extractor):
     texts = ""
     single_text = ""
 
-
     for file in files:
         filepath = file["filepath"]
         filename = file["filename"]
@@ -51,10 +54,10 @@ def upload_file_method_production(files, pdf_extractor):
         print(mimetype)
         if allowed_file(filename):
             filename = secure_filename(filename)
-            #path = os.path.join(
+            # path = os.path.join(
             #    app.root_path, os.path.join(app.config["UPLOAD_FOLDER"], filename)
-            #)
-            #file.save(path)
+            # )
+            # file.save(path)
             clean_filename_str = clean_filename(Path(path).stem)
             if mimetype[0] == "audio/mpeg":
                 texts += "Content of Audio File: " + clean_filename_str + ": "
@@ -93,13 +96,14 @@ def upload_file_method_production(files, pdf_extractor):
                 "content": single_text,
             }
 
-            #create_embeddings(single_text, filename, 0)
+            # create_embeddings(single_text, filename, 0)
             # HIER: CONTENT VON DATEIEN -> IN DATEI TEMPORÄR SPEICHERN
 
         files_as_dicts.append(file_as_dict)
         files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False)
 
     return files_as_dicts_json
+
 
 def upload_file_method(files, pdf_extractor, chat_id):
     files_as_dicts = []
@@ -111,29 +115,30 @@ def upload_file_method(files, pdf_extractor, chat_id):
         if file:
             if allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                path = os.path.join(app.root_path, os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                path = os.path.join(
+                    app.root_path, os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                )
                 mimetype = file.content_type
                 file.save(path)
                 clean_filename_str = clean_filename(Path(path).stem)
                 if mimetype == "audio/mpeg":
                     texts += "Content of Audio File: " + clean_filename_str + ": "
-                    #audio_file = open(path, "rb")
+                    # audio_file = open(path, "rb")
                     audio_blob = Blob(path=path)
 
                     # Set up AzureChatOpenAI with the required configurations
-                    parser  = AzureOpenAIWhisperParser(
+                    parser = AzureOpenAIWhisperParser(
                         azure_endpoint=AZURE_ENDPOINT,
                         deployment_name=AZURE_DEPLOYMENT,
-                        api_version=OPENAI_API_VERSION
+                        api_version=OPENAI_API_VERSION,
                     )
 
                     # Assuming the client has a method to handle audio transcription similar to the OpenAI client
                     transcription_documents = parser.parse(blob=audio_blob)
-                    #texts += transcription['text']
+                    # texts += transcription['text']
                     single_text = transcription_documents[0].page_content
 
-
-                elif mimetype == 'application/pdf':
+                elif mimetype == "application/pdf":
                     # if store_hash(file) == True:
                     texts = "Content of PDF File: " + clean_filename_str + ": "
                     if pdf_extractor == "pypdfloader":
@@ -150,28 +155,28 @@ def upload_file_method(files, pdf_extractor, chat_id):
                         texts += " " + single_text
                 elif mimetype == "text/html":
                     texts = "Content of HTML File: " + clean_filename_str + ": "
-                    with open(path, 'r', encoding="utf-8") as file:
+                    with open(path, "r", encoding="utf-8") as file:
                         contents = file.read()
                         soup = BeautifulSoup(contents)
                         texts += soup.get_text()
                         single_text = soup.get_text()
                 elif mimetype == "text/plain":
                     texts = "Content of Text File: " + clean_filename_str + ": "
-                    with open(path, 'r', encoding="utf-8") as file:
+                    with open(path, "r", encoding="utf-8") as file:
                         contents = file.read()
                         texts += contents
                         single_text = contents
-                
+
                 file_as_dict = {
                     "filename": filename,
                     "mimetype": mimetype,
                     "content": single_text,
                 }
-                
-                create_embeddings(single_text, filename,chat_id)
+
+                create_embeddings(single_text, filename, chat_id)
         files_as_dicts.append(file_as_dict)
         files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False)
-            
+
     return files_as_dicts_json
 
 
@@ -179,7 +184,7 @@ def clean_filename(filepath):
     # Get the filename without the path
     filename = os.path.basename(filepath)
     # Replace disallowed special characters with blanks
-    clean_name = re.sub(r'[^a-zA-Z0-9]', ' ', filename)
+    clean_name = re.sub(r"[^a-zA-Z0-9]", " ", filename)
     return clean_name
 
 
@@ -198,7 +203,7 @@ def generate_file_hash(file_storage):
 def store_hash(file_storage):
     """Check if hash exists in file, otherwise add it to the list."""
     hash_value = generate_file_hash(file_storage)
-    hash_file_path = os.path.join(app.config['UPLOAD_FOLDER'], "hashvalues.txt")
+    hash_file_path = os.path.join(app.config["UPLOAD_FOLDER"], "hashvalues.txt")
     # Read existing hashes if the file exists
     try:
         with open(hash_file_path, "r") as hash_file:
