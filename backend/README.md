@@ -17,6 +17,8 @@ npm install
 3. run Migrations:
 npx sequelize-cli db:migrate --config ./configs/config.js
 
+(npx sequelize-cli db:migrate:undo --config ./configs/config.js)
+
 4. Start the backend:
 npm run start-backend
 
