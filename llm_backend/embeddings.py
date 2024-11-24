@@ -10,12 +10,12 @@ from langchain_openai import AzureOpenAIEmbeddings
 load_dotenv()
 
 AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
-AZURE_DEPLOYMENT = os.getenv("AZURE_DEPLOYMENT_EMBEDDING")
+AZURE_DEPLOYMENT_EMBEDDING = os.getenv("AZURE_DEPLOYMENT_EMBEDDING")
 OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
 
 embedding_model = AzureOpenAIEmbeddings(
     azure_endpoint=AZURE_ENDPOINT,
-    azure_deployment=AZURE_DEPLOYMENT,
+    azure_deployment=AZURE_DEPLOYMENT_EMBEDDING,
     api_version=OPENAI_API_VERSION)
 
 def split_texts(content):
