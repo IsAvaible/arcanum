@@ -45,14 +45,3 @@ jobs:
         working-directory: ./llm_backend
         run: ruff format --target-version=py311
         continue-on-error: true
-
-      - name: Commit and Push Changes
-        if: success() || failure()
-        run: |
-          git config user.name "GitHub Action"
-          git config user.email "action@github.com"
-          git add .
-          git commit -m "ci: Format code using Ruff" || echo "No changes to commit"
-          git push origin HEAD
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
