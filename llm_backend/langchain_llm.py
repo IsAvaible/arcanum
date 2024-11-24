@@ -1,9 +1,10 @@
+from dotenv import load_dotenv
+
 import json
 import os
 
 from flask import jsonify, Blueprint, session
 from langchain_chroma import Chroma
-from langchain_openai import OpenAIEmbeddings
 
 from app import socketio
 from prompts import get_system_prompt
@@ -16,6 +17,16 @@ from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import ValidationError
 from langchain_core.prompts import MessagesPlaceholder
+from langchain_openai import AzureChatOpenAI
+from langchain_openai import AzureOpenAIEmbeddings
+
+# Load environment variables from .env file
+load_dotenv()
+
+AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
+AZURE_DEPLOYMENT_GPT = os.getenv("AZURE_DEPLOYMENT_GPT")
+AZURE_DEPLOYMENT_EMBEDDING = os.getenv("AZURE_DEPLOYMENT_EMBEDDING")
+OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
 
 vector_store = None
 openai_models = ['gpt-4o-mini', 'gpt-3.5-turbo-0125', 'gpt-3.5-turbo-1106']
@@ -84,8 +95,10 @@ def generate_case_langchain(request):
         chat_counter = request.form.get("chat_counter")
         pdf_extractor = request.form.get("pdf_extractor")
 
-        llm = ChatOpenAI(
-            model=model,
+        llm = AzureChatOpenAI(
+            azure_endpoint=AZURE_ENDPOINT,
+            azure_deployment=AZURE_DEPLOYMENT_GPT,
+            openai_api_version=OPENAI_API_VERSION,
             temperature=0,
             max_tokens=None,
             timeout=None,
@@ -144,15 +157,22 @@ def chat(request):
 
         chat_counter = request.form.get("chat_counter")
 
-        llm = ChatOpenAI(
-            model=model,
+        llm = AzureChatOpenAI(
+            azure_endpoint=AZURE_ENDPOINT,
+            azure_deployment=AZURE_DEPLOYMENT_GPT,
+            openai_api_version=OPENAI_API_VERSION,
             temperature=0,
             max_tokens=None,
             timeout=None,
+            max_retries=2,
             streaming=True
         )
 
-        embedding_function = OpenAIEmbeddings(model='text-embedding-3-large')
+        embedding_function = AzureOpenAIEmbeddings(
+            azure_endpoint=AZURE_ENDPOINT,
+            azure_deployment=AZURE_DEPLOYMENT_EMBEDDING,
+            api_version=OPENAI_API_VERSION
+        )
         vector_store = Chroma(
             persist_directory=".chromadb/",
             embedding_function=embedding_function

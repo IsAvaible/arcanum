@@ -1,6 +1,9 @@
+from dotenv import load_dotenv
+
 import re
 from pathlib import Path
 from openai import OpenAI
+from langchain_openai import AzureChatOpenAI
 
 from bs4 import BeautifulSoup
 from flask import Blueprint
@@ -13,10 +16,19 @@ from embeddings import create_embeddings
 from pdf import *
 
 import json
+from langchain_core.documents.base import Blob
+from langchain_community.document_loaders.parsers.audio import AzureOpenAIWhisperParser
+
 
 upload = Blueprint('upload', __name__)
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'html', 'mp3', "wav"}
 
+# Load environment variables from .env file
+load_dotenv()
+
+AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
+AZURE_DEPLOYMENT = os.getenv("AZURE_DEPLOYMENT_WHISPER")
+OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -39,15 +51,20 @@ def upload_file_method(files, pdf_extractor, chat_id):
                 clean_filename_str = clean_filename(Path(path).stem)
                 if mimetype == "audio/mpeg":
                     texts += "Content of Audio File: " + clean_filename_str + ": "
-                    client = OpenAI()
-                    audio_file = open(path, "rb")
-                    transcription = client.audio.transcriptions.create(
-                        model="whisper-1",
-                        file=audio_file,
-                        response_format="verbose_json"
+                    #audio_file = open(path, "rb")
+                    audio_blob = Blob(path=path)
+                    
+                    # Set up AzureChatOpenAI with the required configurations
+                    parser  = AzureOpenAIWhisperParser(
+                        azure_endpoint=AZURE_ENDPOINT,
+                        deployment_name=AZURE_DEPLOYMENT,
+                        api_version=OPENAI_API_VERSION
                     )
-                    texts += transcription.text
-                    single_text = transcription.text
+                    
+                    # Assuming the client has a method to handle audio transcription similar to the OpenAI client
+                    transcription_documents = parser.parse(blob=audio_blob)
+                    #texts += transcription['text']
+                    single_text = transcription_documents[0].page_content
 
 
                 elif mimetype == 'application/pdf':
