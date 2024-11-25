@@ -1,8 +1,22 @@
+from dotenv import load_dotenv
+
+import os
 from langchain_chroma.vectorstores import Chroma
-from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
+from langchain_openai import AzureOpenAIEmbeddings
 
+# Load environment variables from .env file
+load_dotenv()
+
+AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
+AZURE_DEPLOYMENT_EMBEDDING = os.getenv("AZURE_DEPLOYMENT_EMBEDDING")
+OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
+
+embedding_model = AzureOpenAIEmbeddings(
+    azure_endpoint=AZURE_ENDPOINT,
+    azure_deployment=AZURE_DEPLOYMENT_EMBEDDING,
+    api_version=OPENAI_API_VERSION)
 
 def split_texts(content):
     text_splitter = RecursiveCharacterTextSplitter(
@@ -24,6 +38,7 @@ def create_embeddings(texts, filename, id):
             metadata_doc = {"case_id": id, "filename": filename}
             doc = Document(page_content=text, metadata=metadata_doc)
             docs.append(doc)
-    Chroma.from_documents(docs, OpenAIEmbeddings(model='text-embedding-3-large'), persist_directory=".chromadb/")
+    
+    Chroma.from_documents(docs, embedding_model, persist_directory=".chromadb/")
     return
 

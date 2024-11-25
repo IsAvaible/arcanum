@@ -1,0 +1,14 @@
+services:
+  llm-backend:
+    build: llm_backend
+    container_name: llm_backend
+    image: "python:3.11-slim"
+    ports:
+      - "5001:5001"
+    env_file:
+      - ./llm_backend/.env
+    volumes:
+      - ./:/llm_backend
+    working_dir: /llm_backend
+    command: >
+      sh -c "pip install --no-cache-dir -r requirements.txt && python main.py"

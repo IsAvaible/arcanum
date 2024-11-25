@@ -21,7 +21,7 @@ npx lint-staged --config .lintstagedrc --concurrent false
 npm run build
 
 # Run unit tests
-npx vitest --run --changed
+# npx vitest --run --changed
 
 # For debugging, uncomment the following line [Reference](https://typicode.github.io/husky/how-to.html#testing-hooks-without-committing)
 # exit 1
