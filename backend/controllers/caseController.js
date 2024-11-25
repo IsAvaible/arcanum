@@ -4,7 +4,6 @@ const multer = require('multer');
 const nextCloud = require('./nextCloudUploaderController.js');
 const path = require('path');
 const fileUploadController = require('../controllers/fileuploadController');
-const fs = require('fs');
 
 
 

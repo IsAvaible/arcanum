@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const port = 3000;
 const caseRoutes = require('./routes/caseRoutes');
+const chatBotRoutes = require('./routes/chatBotRoutes');
 
 
 
@@ -17,6 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 //Routen verwenden
 
 app.use('/api/cases', caseRoutes);
+app.use('/api/chatBot', chatBotRoutes);
 
 
 app.get('/', (req, res) => {
