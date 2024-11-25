@@ -5,7 +5,7 @@
         <div class="flex gap-4">
           <h1 class="text-3xl font-bold">Cases</h1>
         </div>
-        <Button label="Case Create" icon="pi pi-plus" @click="$router.push('/case-create')" />
+        <Button label="Case Create" icon="pi pi-plus" @click="$router.push('/cases/create')" />
       </div>
 
       <!-- KPI Widgets Row -->
@@ -75,7 +75,7 @@
         scrollable
         scrollHeight="600px"
         responsiveLayout="scroll"
-        @row-click="$router.push({ name: 'case-detail' })"
+        @row-click="$router.push({ path: '/cases/' + $event.data.id })"
         dataKey="id"
         :loading="loading"
         filterDisplay="menu"
@@ -211,6 +211,14 @@
         </template>
       </DataTable>
     </div>
+
+    <CaseDeleteDialog
+      v-if="deleteDialogVisible"
+      v-model:visible="deleteDialogVisible"
+      :titles="selectedCase?.titleId || ''"
+      :on-delete="deleteCase"
+      @update:visible="onDeleteDialogClose()"
+    />
   </div>
 </template>
 
@@ -218,6 +226,7 @@
 import { ref, reactive, computed } from 'vue'
 import { FilterMatchMode } from '@primevue/core/api'
 import { useTimeAgo } from '@vueuse/core'
+import { useToast } from 'primevue'
 
 // PrimeVue imports
 import DataTable from 'primevue/datatable'
@@ -231,6 +240,9 @@ import DatePicker from 'primevue/datepicker'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import Card from 'primevue/card'
+import CaseDeleteDialog from '@/components/CaseDeleteDialog.vue'
+import router from '@/router'
+import { useRoute } from 'vue-router'
 
 type Case = {
   id: number
@@ -245,8 +257,11 @@ type Case = {
 
 const menu = ref()
 const loading = ref(false)
+const toast = useToast()
 
 const filters = ref()
+
+const route = useRoute()
 
 const initFilter = () => {
   filters.value = {
@@ -263,6 +278,8 @@ const initFilter = () => {
 initFilter()
 
 const cases = reactive<Case[]>([])
+const selectedCase = ref<Case | null>(null)
+const deleteDialogVisible = ref(false)
 
 const caseTypes = ['Servicecase', 'Testcase']
 const statuses = ['Open', 'Closed', 'In-Progress']
@@ -299,6 +316,11 @@ for (let i = 1; i <= 20; i++) {
   cases.push(caseItem)
 }
 
+if (route.path.match(/^\/cases\/\d+\/delete\/?$/g)) {
+  selectedCase.value = cases.find((item) => item.id == Number(route.params.id)) || null
+  deleteDialogVisible.value = true
+}
+
 const getStatusSeverity = (status: string) => {
   switch (status) {
     case 'Open':
@@ -326,7 +348,7 @@ const getMenuItems = (caseItem: Case) => {
     {
       label: 'Delete Item',
       icon: 'pi pi-trash',
-      command: () => deleteCase(caseItem.id),
+      command: () => openDeleteDialog(caseItem),
     },
   ]
 }
@@ -338,10 +360,38 @@ const toggleArchive = (id: number) => {
   }
 }
 
-const deleteCase = (id: number) => {
-  const index = cases.findIndex((item) => item.id === id)
-  if (index !== -1) {
-    cases.splice(index, 1)
+const openDeleteDialog = (caseItem: Case) => {
+  selectedCase.value = caseItem
+  deleteDialogVisible.value = true
+  router.push('/cases/' + caseItem.id + '/delete')
+}
+
+const onDeleteDialogClose = () => {
+  router.push('/cases')
+}
+
+const deleteCase = async (titles: string[]) => {
+  try {
+    const index = cases.findIndex((item) => titles.includes(item.titleId))
+    if (index !== -1) {
+      cases.splice(index, 1)
+    }
+    toast.add({
+      severity: 'success',
+      summary: 'Case Deleted',
+      detail: 'The case has been successfully deleted.',
+      life: 3000,
+    })
+  } catch (_error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Deletion Failed',
+      detail: 'Failed to delete the case.',
+      life: 3000,
+    })
+  } finally {
+    deleteDialogVisible.value = false
+    selectedCase.value = null
   }
 }
 

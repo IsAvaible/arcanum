@@ -38,7 +38,7 @@ const menuItems: { label: string; items: MenuItem[] }[] = [
 ]
 
 // Active route check
-const isActive = (path: string) => route.path === path
+const isActive = (path: string) => route.path === path || route.path.startsWith(`${path}/`)
 </script>
 
 <template>

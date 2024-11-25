@@ -5,6 +5,7 @@ import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
 import { WarningTriangleSolid } from '@iconoir/vue'
+import { useVModel } from '@vueuse/core'
 
 const toast = useToast()
 const dialog = ref()
@@ -14,11 +15,16 @@ interface Props {
   titles: string | string[]
   /** The function to call when the case is deleted */
   onDelete: (title: string[]) => Promise<void>
+  /** The visibility of the dialog */
+  visible?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  visible: true,
+})
+const emit = defineEmits(['update:visible'])
 
-const dialogVisible = ref(true)
+const dialogVisible = useVModel(props, 'visible', emit)
 const titles = ref<string[]>(Array.isArray(props.titles) ? props.titles : [props.titles])
 const confirm = ref(false)
 const confirmMissing = ref(false)

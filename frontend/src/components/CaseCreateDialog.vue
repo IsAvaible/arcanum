@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-
 import Dialog from 'primevue/dialog'
 
 import Accordion from 'primevue/accordion'
@@ -30,10 +28,17 @@ import CaseCreateStepper from '@/components/case-create-form/CaseCreateStepper.v
 import { toTypedSchema } from '@vee-validate/zod'
 import * as zod from 'zod'
 import { useForm } from 'vee-validate'
+import { useVModel } from '@vueuse/core'
 
 const toast = useToast()
 
-const dialogVisible = ref(true)
+const props = defineProps<{
+  visible: boolean
+}>()
+
+const emit = defineEmits(['update:visible'])
+
+const dialogVisible = useVModel(props, 'visible', emit)
 
 const caseTypes = [
   {
@@ -391,9 +396,7 @@ const dialogPT = {
     <template #footer>
       <div class="w-full -m-5 p-5 box-content bg-white flex justify-between rounded-b-xl">
         <!-- Cancel Button with RouterLink -->
-        <RouterLink to="/">
-          <Button label="Cancel" variant="text" />
-        </RouterLink>
+        <Button label="Cancel" variant="text" @click="dialogVisible = false" />
         <div class="flex gap-x-5">
           <Button
             label="Previous"
