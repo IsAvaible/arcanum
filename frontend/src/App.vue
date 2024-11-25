@@ -6,7 +6,7 @@ import Sidebar from '@/components/site-structure/Sidebar.vue'
 
 <template>
   <Toast />
-  <div class="flex flex-row">
+  <div class="flex flex-row min-h-screen">
     <Sidebar />
     <RouterView class="flex-1 ml-20 lg:ml-64" />
   </div>

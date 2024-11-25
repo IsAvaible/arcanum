@@ -1,11 +1,68 @@
 <template>
-  <div class="flex flex-1">
+  <div class="flex flex-1 my-auto">
     <div class="transition-all duration-300 p-6 space-y-6 mx-auto">
       <div class="flex items-center justify-between">
         <div class="flex gap-4">
           <h1 class="text-3xl font-bold">Cases</h1>
         </div>
         <Button label="Case Create" icon="pi pi-plus" @click="$router.push('/case-create')" />
+      </div>
+
+      <!-- KPI Widgets Row -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Card>
+          <template #content>
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-600">Total Cases</h3>
+                <p class="text-3xl font-bold text-primary-600">{{ totalCases }}</p>
+              </div>
+              <i class="pi pi-file text-4xl text-primary-600"></i>
+            </div>
+            <div class="mt-2 text-sm text-gray-500">
+              <span :class="totalCasesTrend > 0 ? 'text-green-500' : 'text-red-500'">
+                {{ totalCasesTrend > 0 ? '▲' : '▼' }} {{ Math.abs(totalCasesTrend) }}%
+              </span>
+              from last month
+            </div>
+          </template>
+        </Card>
+
+        <Card>
+          <template #content>
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-600">Resolved Cases</h3>
+                <p class="text-3xl font-bold text-primary-600">{{ resolvedCases }}</p>
+              </div>
+              <i class="pi pi-check-circle text-4xl text-primary-600"></i>
+            </div>
+            <div class="mt-2 text-sm text-gray-500">
+              <span :class="resolvedCasesTrend > 0 ? 'text-green-500' : 'text-red-500'">
+                {{ resolvedCasesTrend > 0 ? '▲' : '▼' }} {{ Math.abs(resolvedCasesTrend) }}%
+              </span>
+              resolution rate this month
+            </div>
+          </template>
+        </Card>
+
+        <Card>
+          <template #content>
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-600">Avg. Resolution Time</h3>
+                <p class="text-3xl font-bold text-primary-600">{{ averageResolutionTime }} hrs</p>
+              </div>
+              <i class="pi pi-clock text-4xl text-primary-600"></i>
+            </div>
+            <div class="mt-2 text-sm text-gray-500">
+              <span :class="resolutionTimeTrend > 0 ? 'text-red-500' : 'text-green-500'">
+                {{ resolutionTimeTrend > 0 ? '▲' : '▼' }} {{ Math.abs(resolutionTimeTrend) }}%
+              </span>
+              from previous period
+            </div>
+          </template>
+        </Card>
       </div>
 
       <DataTable
@@ -31,14 +88,14 @@
               type="button"
               icon="pi pi-filter-slash"
               label="Clear"
-              outlined
+              severity="secondary"
               @click="clearFilters()"
             />
             <IconField>
               <InputIcon>
                 <i class="pi pi-search" />
               </InputIcon>
-              <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
+              <InputText v-model="filters['global'].value" placeholder="Global Search" />
             </IconField>
           </div>
         </template>
@@ -52,6 +109,9 @@
         </Column>
 
         <Column field="caseType" header="Case Type" sortable>
+          <template #body="slotProps">
+            <Tag :value="slotProps.data.caseType" :severity="'secondary'" />
+          </template>
           <template #filter="{ filterModel }">
             <Select
               v-model="filterModel.value"
@@ -65,43 +125,6 @@
             />
           </template>
         </Column>
-
-        <Column field="status" header="Status" sortable>
-          <template #body="slotProps">
-            <Tag
-              :severity="getStatusSeverity(slotProps.data.status)"
-              :value="slotProps.data.status"
-            />
-          </template>
-          <template #filter="{ filterModel }">
-            <Select
-              v-model="filterModel.value"
-              :options="[
-                { label: 'Open', value: 'Open' },
-                { label: 'Closed', value: 'Closed' },
-                { label: 'In-Progress', value: 'In-Progress' },
-              ]"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Select Status"
-            />
-          </template>
-        </Column>
-
-        <!--        <Column field="assignee" header="Assignee" sortable>-->
-        <!--          <template #filter="{ filterModel }">-->
-        <!--            <Select-->
-        <!--              v-model="filterModel.value"-->
-        <!--              :options="[-->
-        <!--                { label: 'Unassigned', value: 'Unassigned' },-->
-        <!--                { label: 'Assigned', value: 'Assigned' },-->
-        <!--              ]"-->
-        <!--              optionLabel="label"-->
-        <!--              optionValue="value"-->
-        <!--              placeholder="Select Assignee"-->
-        <!--            />-->
-        <!--          </template>-->
-        <!--        </Column>-->
 
         <Column field="createdBy.name" header="Created by" sortable>
           <template #body="{ data }">
@@ -124,6 +147,28 @@
               optionLabel="label"
               optionValue="value"
               placeholder="Select Creator"
+            />
+          </template>
+        </Column>
+
+        <Column field="status" header="Status" sortable>
+          <template #body="slotProps">
+            <Tag
+              :severity="getStatusSeverity(slotProps.data.status)"
+              :value="slotProps.data.status"
+            />
+          </template>
+          <template #filter="{ filterModel }">
+            <Select
+              v-model="filterModel.value"
+              :options="[
+                { label: 'Open', value: 'Open' },
+                { label: 'Closed', value: 'Closed' },
+                { label: 'In-Progress', value: 'In-Progress' },
+              ]"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select Status"
             />
           </template>
         </Column>
@@ -170,7 +215,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { FilterMatchMode } from '@primevue/core/api'
 import { useTimeAgo } from '@vueuse/core'
 
@@ -185,6 +230,7 @@ import Menu from 'primevue/menu'
 import DatePicker from 'primevue/datepicker'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
+import Card from 'primevue/card'
 
 type Case = {
   id: number
@@ -306,4 +352,12 @@ const clearFilters = () => {
 const formatDate = (date: Date, ago: boolean = false) => {
   return ago ? useTimeAgo(date) : date.toLocaleDateString()
 }
+
+// KPI Computed Properties
+const totalCases = computed(() => cases.length)
+const resolvedCases = computed(() => cases.filter((c) => c.status === 'Closed').length)
+const totalCasesTrend = ref(15) // 15% increase example
+const resolvedCasesTrend = ref(10) // 10% increase example
+const averageResolutionTime = ref(24) // 24 hours example
+const resolutionTimeTrend = ref(-5) // 5% decrease example
 </script>
