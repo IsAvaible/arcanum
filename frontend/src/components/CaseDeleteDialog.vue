@@ -102,16 +102,16 @@ const deleteCase = async () => {
   </Dialog>
 </template>
 
-<style>
-.p-checkbox-checked .p-checkbox-box {
+<style scoped>
+:deep(.p-checkbox-checked) .p-checkbox-box {
   @apply bg-red-700 border-red-700;
 }
 
-.p-checkbox-checked:not(.p-disabled):has(.p-checkbox-input:hover) .p-checkbox-box {
+:deep(.p-checkbox-checked:not(.p-disabled):has(.p-checkbox-input:hover)) .p-checkbox-box {
   @apply bg-red-700 border-red-800;
 }
 
-.p-checkbox:not(.p-disabled):has(.p-checkbox-input:focus-visible) .p-checkbox-box {
+:deep(.p-checkbox:not(.p-disabled):has(.p-checkbox-input:focus-visible)) .p-checkbox-box {
   @apply outline-red-700;
 }
 </style>
