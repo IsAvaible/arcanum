@@ -25,7 +25,7 @@ const features = ref([
 
 <template>
   <div class="flex h-screen">
-    <div class="m-auto flex flex-col items-center">
+    <div class="m-auto flex flex-col items-center py-8">
       <img alt="Logo" class="h-24 w-24" src="@/assets/logo/LogoGradient.png" />
       <h1 class="text-4xl font-bold text-primary-800">Welcome to Arcanum</h1>
       <p class="text-lg text-gray-600 mt-4">The ultimate case management system</p>
