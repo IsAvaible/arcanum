@@ -2,48 +2,6 @@
   <RouterLink to="/case-create">Case Create</RouterLink>
 
   <div class="flex">
-    <!-- Sidebar -->
-    <div
-      :class="[
-        'fixed left-0 top-0 z-30 flex h-screen flex-col bg-black text-white transition-all duration-300',
-        isCollapsed ? 'w-0' : 'w-64',
-      ]"
-    >
-      <div v-if="!isCollapsed">
-        <!-- Logo -->
-        <div class="p-6">
-          <h1 class="text-2xl font-bold text-green-500">ARCANUM</h1>
-        </div>
-
-        <!-- Navigation -->
-        <nav class="flex-1 space-y-2 p-4">
-          <a
-            v-for="item in menuItems"
-            :key="item.name"
-            :href="item.href"
-            class="flex items-center space-x-4 rounded-lg px-4 py-3 text-lg hover:bg-white/10"
-          >
-            <component :is="item.icon" class="h-6 w-6" />
-            <span>{{ item.name }}</span>
-          </a>
-        </nav>
-
-        <!-- User Profile -->
-        <div class="border-t border-white/20 p-4">
-          <div class="flex items-center space-x-4">
-            <div class="h-10 w-10 rounded-full bg-gray-600"></div>
-            <span>Name</span>
-          </div>
-          <button
-            class="mt-4 flex w-full items-center space-x-4 rounded-lg border border-white/20 px-4 py-2 hover:bg-white/10"
-          >
-            <LogOut class="h-6 w-6" />
-            <span>Logout</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
     <!-- Main Content -->
     <div :class="['transition-all duration-300 p-6 space-y-6', isCollapsed ? 'w-full' : 'ml-64']">
       <div class="flex items-center justify-between">
@@ -240,12 +198,6 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronLastIcon,
-  LayoutDashboard,
-  Bell,
-  MessageCircle,
-  Archive,
-  Settings,
-  LogOut,
   ChevronsLeft,
   ChevronsRight,
 } from 'lucide-vue-next'
@@ -255,14 +207,6 @@ const activeTab = ref('all')
 const currentPage = ref(1)
 const activeMenu = ref<number | null>(null)
 const isCollapsed = ref(false)
-
-const menuItems = [
-  { name: 'Dashboard', icon: LayoutDashboard, href: '#' },
-  { name: 'Notifications', icon: Bell, href: '#' },
-  { name: 'Chat-Bot', icon: MessageCircle, href: '#' },
-  { name: 'Call-Archiv', icon: Archive, href: '#' },
-  { name: 'Settings', icon: Settings, href: '#' },
-]
 
 const filters = reactive({
   caseType: '',
