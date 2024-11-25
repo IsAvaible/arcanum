@@ -206,15 +206,15 @@
         </template>
       </DataTable>
     </div>
-
-    <CaseDeleteDialog
-      v-if="deleteDialogVisible"
-      v-model:visible="deleteDialogVisible"
-      :titles="selectedCase?.titleId || ''"
-      :on-delete="deleteCase"
-      @update:visible="onDeleteDialogClose()"
-    />
   </div>
+
+  <CaseDeleteDialog
+    v-if="deleteDialogVisible"
+    v-model:visible="deleteDialogVisible"
+    :titles="selectedCase?.titleId || ''"
+    :on-delete="deleteCase"
+    @update:visible="onDeleteDialogClose()"
+  />
 </template>
 
 <script setup lang="ts">

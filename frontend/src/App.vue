@@ -8,6 +8,10 @@ import Sidebar from '@/components/site-structure/Sidebar.vue'
   <Toast />
   <div class="flex flex-row min-h-screen">
     <Sidebar />
-    <RouterView class="flex-1 ml-20 lg:ml-64" />
+    <div class="flex-1 ml-20 lg:ml-64 min-h-screen flex">
+      <div class="m-auto">
+        <RouterView />
+      </div>
+    </div>
   </div>
 </template>
