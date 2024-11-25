@@ -189,12 +189,7 @@
         <Column :exportable="false" style="min-width: 4rem">
           <template #body="slotProps">
             <Menu ref="menu" :model="getMenuItems(slotProps.data)" :popup="true" appendTo="body" />
-            <Button
-              icon="pi pi-ellipsis-v"
-              @click="toggleMenu($event, slotProps.data.id)"
-              text
-              rounded
-            />
+            <Button icon="pi pi-ellipsis-v" @click="toggleMenu($event)" text rounded />
           </template>
         </Column>
 
@@ -223,12 +218,15 @@
 </template>
 
 <script setup lang="ts">
+// Vue and PrimeVue imports
 import { ref, reactive, computed } from 'vue'
 import { FilterMatchMode } from '@primevue/core/api'
 import { useTimeAgo } from '@vueuse/core'
 import { useToast } from 'primevue'
+import { useRoute } from 'vue-router'
+import router from '@/router'
 
-// PrimeVue imports
+// PrimeVue Component Imports
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
@@ -240,10 +238,11 @@ import DatePicker from 'primevue/datepicker'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import Card from 'primevue/card'
-import CaseDeleteDialog from '@/components/CaseDeleteDialog.vue'
-import router from '@/router'
-import { useRoute } from 'vue-router'
 
+// Custom Components
+import CaseDeleteDialog from '@/components/CaseDeleteDialog.vue'
+
+// Type Definitions
 type Case = {
   id: number
   titleId: string
@@ -255,32 +254,17 @@ type Case = {
   isArchived: boolean
 }
 
+// Reactive State and References
 const menu = ref()
 const loading = ref(false)
 const toast = useToast()
-
-const filters = ref()
-
 const route = useRoute()
-
-const initFilter = () => {
-  filters.value = {
-    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    titleId: { constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }] },
-    caseType: { constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
-    status: { constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
-    assignee: { constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
-    'createdBy.name': { constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }] },
-    updatedOn: { constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
-  }
-}
-
-initFilter()
-
+const filters = ref()
 const cases = reactive<Case[]>([])
 const selectedCase = ref<Case | null>(null)
 const deleteDialogVisible = ref(false)
 
+// Constants
 const caseTypes = ['Servicecase', 'Testcase']
 const statuses = ['Open', 'Closed', 'In-Progress']
 const assignees = ['Unassigned', 'Assigned']
@@ -297,9 +281,29 @@ const names = [
   'Casey',
 ]
 
+// Utility Functions
+/**
+ * Initializes the filter configuration.
+ */
+const initFilter = () => {
+  filters.value = {
+    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    titleId: { constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }] },
+    caseType: { constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
+    status: { constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
+    assignee: { constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
+    'createdBy.name': { constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }] },
+    updatedOn: { constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
+  }
+}
+initFilter()
+
+/**
+ * Populates the cases array with mock data.
+ */
 for (let i = 1; i <= 20; i++) {
   const randomName = names[Math.floor(Math.random() * names.length)]
-  const caseItem = {
+  cases.push({
     id: i,
     titleId: `Test ${i}`,
     caseType: caseTypes[Math.floor(Math.random() * caseTypes.length)],
@@ -312,15 +316,21 @@ for (let i = 1; i <= 20; i++) {
     },
     updatedOn: new Date(Date.now() - Math.floor(Math.random() * 10000000000)),
     isArchived: Math.random() < 0.5,
-  }
-  cases.push(caseItem)
+  })
 }
 
+// Route Initialization for Case Deletion Dialog
 if (route.path.match(/^\/cases\/\d+\/delete\/?$/g)) {
-  selectedCase.value = cases.find((item) => item.id == Number(route.params.id)) || null
+  selectedCase.value = cases.find((item) => item.id === Number(route.params.id)) || null
   deleteDialogVisible.value = true
 }
 
+// Helper Functions
+/**
+ * Determines the severity for a case status.
+ * @param status - The status string.
+ * @returns - The severity level.
+ */
 const getStatusSeverity = (status: string) => {
   switch (status) {
     case 'Open':
@@ -334,25 +344,36 @@ const getStatusSeverity = (status: string) => {
   }
 }
 
-const toggleMenu = (event: Event, _id: number) => {
-  menu.value.toggle(event)
+/**
+ * Toggles the menu visibility.
+ * @param event - The DOM event.
+ */
+const toggleMenu = (event: Event) => {
+  menu.value?.toggle(event)
 }
 
-const getMenuItems = (caseItem: Case) => {
-  return [
-    {
-      label: caseItem.isArchived ? 'Unarchive Item' : 'Archive Item',
-      icon: 'pi pi-inbox',
-      command: () => toggleArchive(caseItem.id),
-    },
-    {
-      label: 'Delete Item',
-      icon: 'pi pi-trash',
-      command: () => openDeleteDialog(caseItem),
-    },
-  ]
-}
+/**
+ * Retrieves menu items for a case.
+ * @param caseItem - The case object.
+ * @returns - Menu item configuration.
+ */
+const getMenuItems = (caseItem: Case) => [
+  {
+    label: caseItem.isArchived ? 'Unarchive Item' : 'Archive Item',
+    icon: 'pi pi-inbox',
+    command: () => toggleArchive(caseItem.id),
+  },
+  {
+    label: 'Delete Item',
+    icon: 'pi pi-trash',
+    command: () => openDeleteDialog(caseItem),
+  },
+]
 
+/**
+ * Toggles the archived status of a case.
+ * @param id - The case ID.
+ */
 const toggleArchive = (id: number) => {
   const caseItem = cases.find((item) => item.id === id)
   if (caseItem) {
@@ -360,29 +381,38 @@ const toggleArchive = (id: number) => {
   }
 }
 
+/**
+ * Opens the delete dialog for a case.
+ * @param caseItem - The case to delete.
+ */
 const openDeleteDialog = (caseItem: Case) => {
   selectedCase.value = caseItem
   deleteDialogVisible.value = true
-  router.push('/cases/' + caseItem.id + '/delete')
+  router.push(`/cases/${caseItem.id}/delete`)
 }
 
+/**
+ * Closes the delete dialog and navigates back.
+ */
 const onDeleteDialogClose = () => {
   router.push('/cases')
 }
 
+/**
+ * Deletes a case by title IDs.
+ * @param titles - The list of title IDs to delete.
+ */
 const deleteCase = async (titles: string[]) => {
   try {
     const index = cases.findIndex((item) => titles.includes(item.titleId))
-    if (index !== -1) {
-      cases.splice(index, 1)
-    }
+    if (index !== -1) cases.splice(index, 1)
     toast.add({
       severity: 'success',
       summary: 'Case Deleted',
       detail: 'The case has been successfully deleted.',
       life: 3000,
     })
-  } catch (_error) {
+  } catch {
     toast.add({
       severity: 'error',
       summary: 'Deletion Failed',
@@ -395,19 +425,28 @@ const deleteCase = async (titles: string[]) => {
   }
 }
 
+/**
+ * Clears all filters.
+ */
 const clearFilters = () => {
   initFilter()
 }
 
+/**
+ * Formats a date.
+ * @param date - The date to format.
+ * @param ago - Whether to use "time ago" formatting.
+ * @returns - The formatted date.
+ */
 const formatDate = (date: Date, ago: boolean = false) => {
   return ago ? useTimeAgo(date) : date.toLocaleDateString()
 }
 
-// KPI Computed Properties
+// Computed Properties for KPI Metrics
 const totalCases = computed(() => cases.length)
 const resolvedCases = computed(() => cases.filter((c) => c.status === 'Closed').length)
-const totalCasesTrend = ref(15) // 15% increase example
-const resolvedCasesTrend = ref(10) // 10% increase example
-const averageResolutionTime = ref(24) // 24 hours example
-const resolutionTimeTrend = ref(-5) // 5% decrease example
+const totalCasesTrend = ref(15) // Example: 15% increase
+const resolvedCasesTrend = ref(10) // Example: 10% increase
+const averageResolutionTime = ref(24) // Example: 24 hours
+const resolutionTimeTrend = ref(-5) // Example: 5% decrease
 </script>
