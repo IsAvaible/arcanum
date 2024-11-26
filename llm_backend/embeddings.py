@@ -35,7 +35,6 @@ def create_embeddings(texts, filename, id):
     docs = []
     for text in texts:
         if text:
-            print("embeddings:" + str(i) + "/" + str(len(texts)))
             i = i + 1
             metadata_doc = {"case_id": id, "filename": filename}
             doc = Document(page_content=text, metadata=metadata_doc)

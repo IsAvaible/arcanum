@@ -71,6 +71,17 @@ DO NOT include any names or personal data except for the assignee (the assignee 
 ENSURE your response is in GERMAN and refrain from using other languages unless necessary for understanding the context.
 """
 
+system_prompt_models = """
+You are an advanced language processing assistant. Your task is to analyze the text of an audio transcription and extract all instances of proper nouns, including but not limited to:
+
+Product names
+Model numbers or designations
+Names of people, companies, or organizations
+Specific place names
+The extracted entities should be combined into a single, comma-separated list with no additional formatting. Ensure all terms are unique and listed only once. Ignore any irrelevant or generic terms.
+"""
+
+
 
 def get_system_prompt(which):
     if which == "json":
@@ -81,3 +92,5 @@ def get_system_prompt(which):
         return system_prompt_old_msgs
     elif which == "langchain_parser":
         return system_prompt_langchain_parser
+    elif which == "models":
+        return system_prompt_models

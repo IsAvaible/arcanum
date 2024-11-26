@@ -5,6 +5,8 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 from flask import Blueprint
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_openai import AzureChatOpenAI
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 
@@ -18,6 +20,7 @@ from llm_backend.pdf import (
     create_text_chunks_pdfreader,
     create_text_chunks_ocr,
 )
+from llm_backend.prompts import get_system_prompt
 from llm_backend.webdav import download_file_webdav
 from langchain_core.documents.base import Blob
 from langchain_community.document_loaders.parsers.audio import AzureOpenAIWhisperParser
@@ -30,8 +33,11 @@ ALLOWED_EXTENSIONS = {"txt", "pdf", "html", "mp3", "wav"}
 load_dotenv()
 
 AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
+AZURE_DEPLOYMENT_GPT = os.getenv("AZURE_DEPLOYMENT_GPT")
+AZURE_DEPLOYMENT_EMBEDDING = os.getenv("AZURE_DEPLOYMENT_EMBEDDING")
 AZURE_DEPLOYMENT = os.getenv("AZURE_DEPLOYMENT_WHISPER")
 OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
+
 
 
 def allowed_file(filename):
@@ -44,14 +50,24 @@ def sort_attachments(item):
         return 2
     return 1
 
+llm = AzureChatOpenAI(
+    azure_endpoint=AZURE_ENDPOINT,
+    azure_deployment=AZURE_DEPLOYMENT_GPT,
+    openai_api_version=OPENAI_API_VERSION,
+    temperature=0,
+    max_tokens=None,
+    timeout=None,
+    max_retries=2,
+    streaming=False,
+)
+
 def upload_file_method_production(files, pdf_extractor):
     files_as_dicts = []
     file_as_dict = {}
     files_as_dicts_json = ""
     texts = ""
     single_text = ""
-
-    print(files)
+    whisper_prompt = ""
 
     for file in files:
         filepath = file["filepath"]
@@ -59,19 +75,34 @@ def upload_file_method_production(files, pdf_extractor):
         file["mimetype"] = mimetype[0]
 
     sorted_attachments = sorted(files, key=sort_attachments)
-
+    print(sorted_attachments)
 
     for file in sorted_attachments:
         filepath = file["filepath"]
         filename = file["filename"]
         path = download_file_webdav(filepath, filename)
-        mimetype = mimetypes.guess_type(filepath)
-        print(mimetype)
+        mimetype = file["mimetype"]
+
         if allowed_file(filename):
-            filename = secure_filename(filename)
-            clean_filename_str = clean_filename(Path(path).stem)
             if mimetype == "audio/mpeg":
-                texts += "Content of Audio File: " + clean_filename_str + ": "
+                #texts not empty, try to get model numbers etc.
+                if texts != "":
+                    system_prompt_langchain_parser = get_system_prompt("models")
+                    messages = [
+                        ("system", "{system_prompt}"),
+                        ("human", "CONTEXT: {context}"),
+                    ]
+                    promptLangchain = ChatPromptTemplate.from_messages(messages).partial(
+                        system_prompt=system_prompt_langchain_parser
+                    )
+                    promptLangchainInvoked = promptLangchain.invoke(
+                        {"context": texts, "query": "Please give me the list back!"}
+                    )
+                    chain = llm
+                    response = chain.invoke(promptLangchainInvoked)
+                    whisper_prompt = response.content
+
+                texts += " Content of Audio File: " + filename + ": "
                 # audio_file = open(path, "rb")
                 audio_blob = Blob(path=path)
 
@@ -80,25 +111,26 @@ def upload_file_method_production(files, pdf_extractor):
                     azure_endpoint=AZURE_ENDPOINT,
                     deployment_name=AZURE_DEPLOYMENT,
                     api_version=OPENAI_API_VERSION,
+                    prompt=whisper_prompt
                 )
                 # Assuming the client has a method to handle audio transcription similar to the OpenAI client
                 transcription_documents = parser.parse(blob=audio_blob)
                 # texts += transcription['text']
                 single_text = transcription_documents[0].page_content
-            elif mimetype[0] == "application/pdf":
+            elif mimetype == "application/pdf":
                 # if store_hash(file) == True:
-                texts = "Content of PDF File: " + clean_filename_str + ": "
+                texts += " Content of PDF File: " + filename + ": "
                 single_text = create_text_chunks_pdfplumber(path)
                 texts += " " + single_text
-            elif mimetype[0] == "text/html":
-                texts = "Content of HTML File: " + clean_filename_str + ": "
+            elif mimetype == "text/html":
+                texts += " Content of HTML File: " + filename + ": "
                 with open(path, "r", encoding="utf-8") as file:
                     contents = file.read()
                     soup = BeautifulSoup(contents)
                     texts += soup.get_text()
                     single_text = soup.get_text()
-            elif mimetype[0] == "text/plain":
-                texts = "Content of Text File: " + clean_filename_str + ": "
+            elif mimetype == "text/plain":
+                texts += " Content of Text File: " + filename + ": "
                 with open(path, "r", encoding="utf-8") as file:
                     contents = file.read()
                     texts += contents

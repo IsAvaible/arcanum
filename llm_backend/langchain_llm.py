@@ -195,8 +195,6 @@ def generate_case_langchain(request):
         promptLangchainInvoked = promptLangchain.invoke(
             {"context": context, "query": prompt, "history": history}
         )
-        print(promptLangchainInvoked)
-
         response_dict = start_quering_llm(
             promptLangchainInvoked, llm, case_parser_json, max_tries=3
         )
