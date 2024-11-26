@@ -2,7 +2,6 @@ import mimetypes
 import os
 import re
 from pathlib import Path
-from openai import OpenAI
 
 from bs4 import BeautifulSoup
 from flask import Blueprint
