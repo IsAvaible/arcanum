@@ -1,16 +1,17 @@
 services:
   node_backend:
     image: node:20
-    working_dir: /app
+    container_name: node_backend
+    working_dir: /node_backend
     command: sh -c "npm install && npm run start-backend"
     ports:
       - "3000:3000"
     depends_on:
       - db
     env_file:
-      - .env
+      - ./backend/.env
     volumes:
-      - .:/app
+      - ./backend:/node_backend
   llm-backend:
     build: llm_backend
     container_name: llm_backend
@@ -20,12 +21,15 @@ services:
     env_file:
       - ./llm_backend/.env
     volumes:
-      - ./:/llm_backend
+      - ./llm_backend:/llm_backend
+    depends_on:
+      - node_backend
     working_dir: /llm_backend
     command: >
-      sh -c "pip install --no-cache-dir -r requirements.txt && python main.py"
+      sh -c "pip install --no-cache-dir -r ./requirements.txt && python main.py"
   db:
     image: postgres:15
+    container_name: postgres_db
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
