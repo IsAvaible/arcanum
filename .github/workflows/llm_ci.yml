@@ -1,0 +1,47 @@
+name: LLM CI Pipeline
+on:
+  push:
+    branches:
+      - "issue/**"
+      - "feature/**"
+    paths:
+      - 'llm_backend/**'
+      - '.github/workflows/llm_ci.yml'
+  pull_request:
+    branches:
+      - development
+    paths:
+      - 'llm_backend/**'
+      - '.github/workflows/ci.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python + Dependencies
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: python -m pip install --upgrade pip
+      - run: pip install -r requirements.txt --quiet
+        working-directory: ./llm_backend
+
+      - name: Install the code linting and formatting tool Ruff
+        working-directory: ./llm_backend
+        run: pipx install ruff
+
+      - name: Lint code with Ruff
+        working-directory: ./llm_backend
+        run: ruff check --output-format=github --target-version=py311
+
+      - name: Check code formatting with Ruff
+        working-directory: ./llm_backend
+        run: ruff format --target-version=py311
+        continue-on-error: true

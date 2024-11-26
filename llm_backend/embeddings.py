@@ -16,16 +16,18 @@ OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
 embedding_model = AzureOpenAIEmbeddings(
     azure_endpoint=AZURE_ENDPOINT,
     azure_deployment=AZURE_DEPLOYMENT_EMBEDDING,
-    api_version=OPENAI_API_VERSION)
+    api_version=OPENAI_API_VERSION,
+)
+
 
 def split_texts(content):
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=500,
-        separators=["\n\n", "\n", ".", "?", "!"])
+        chunk_size=1000, chunk_overlap=500, separators=["\n\n", "\n", ".", "?", "!"]
+    )
     texts = text_splitter.split_text(content)
 
     return texts
+
 
 def create_embeddings(texts, filename, id):
     texts = split_texts(texts)
@@ -38,7 +40,6 @@ def create_embeddings(texts, filename, id):
             metadata_doc = {"case_id": id, "filename": filename}
             doc = Document(page_content=text, metadata=metadata_doc)
             docs.append(doc)
-    
+
     Chroma.from_documents(docs, embedding_model, persist_directory=".chromadb/")
     return
-
