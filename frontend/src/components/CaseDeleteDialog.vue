@@ -5,6 +5,7 @@ import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
 import { WarningTriangleSolid } from '@iconoir/vue'
+import { useVModel } from '@vueuse/core'
 
 const toast = useToast()
 const dialog = ref()
@@ -14,11 +15,16 @@ interface Props {
   titles: string | string[]
   /** The function to call when the case is deleted */
   onDelete: (title: string[]) => Promise<void>
+  /** The visibility of the dialog */
+  visible?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  visible: true,
+})
+const emit = defineEmits(['update:visible'])
 
-const dialogVisible = ref(true)
+const dialogVisible = useVModel(props, 'visible', emit)
 const titles = ref<string[]>(Array.isArray(props.titles) ? props.titles : [props.titles])
 const confirm = ref(false)
 const confirmMissing = ref(false)
@@ -96,16 +102,16 @@ const deleteCase = async () => {
   </Dialog>
 </template>
 
-<style>
-.p-checkbox-checked .p-checkbox-box {
+<style scoped>
+:deep(.p-checkbox-checked) .p-checkbox-box {
   @apply bg-red-700 border-red-700;
 }
 
-.p-checkbox-checked:not(.p-disabled):has(.p-checkbox-input:hover) .p-checkbox-box {
+:deep(.p-checkbox-checked:not(.p-disabled):has(.p-checkbox-input:hover)) .p-checkbox-box {
   @apply bg-red-700 border-red-800;
 }
 
-.p-checkbox:not(.p-disabled):has(.p-checkbox-input:focus-visible) .p-checkbox-box {
+:deep(.p-checkbox:not(.p-disabled):has(.p-checkbox-input:focus-visible)) .p-checkbox-box {
   @apply outline-red-700;
 }
 </style>
