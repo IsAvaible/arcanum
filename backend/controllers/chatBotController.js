@@ -5,6 +5,7 @@ const fileUploadController = require('../controllers/fileuploadController');
 const fs = require('fs');
 const multer = require('multer');
 const { body, validationResult } = require('express-validator');
+const { updateCase } = require('./caseController.js');
 
 
 const upload = multer({
@@ -30,7 +31,7 @@ const upload = multer({
 
 
 exports.createCaseFromFiles = [
-    // **Validierungsregeln**
+
 
 
     // **Multer-Middleware**
@@ -55,7 +56,8 @@ exports.createCaseFromFiles = [
       //}
 
         const files = req.files;
-        const socket_id = req.body.socket_id;
+        //const socket_id = req.body.socket_id;
+        const socket_id = 123;
 
         // **Array zum Speichern der Attachment Objects**
         const attachmentInstances = [];
@@ -103,24 +105,78 @@ exports.createCaseFromFiles = [
         attachments: attachmentInstances,
       };
 
+      console.log( "Sende ans LLM: ",JSON.stringify(llmRequestData));
       //Daten an das LLM senden 
       try{
-        const llmResponse = await axios.post('URL_ZUM_LLM_ENDPOINT', llmRequestData);
-        
-        const responseData = llmResponse.data;
+        //const llmResponse = await axios.post('URL_ZUM_LLM_ENDPOINT', llmRequestData);    
 
-        const newCases = [];
+        const llmResponse = testLLMResponse;
+        const responseData = llmResponse;
+        console.log( "Empange vom LLM: ", llmResponse);
 
 
-        if(responseData.cases){
-            for(const caseData of responseData.cases){
+        const allowedFields = [
+          'title',
+          'description',
+          'solution',
+          'assignee',
+          'status',
+          'case_type',
+          'priority',
+          'attachments'
+        ];
 
-                const newCase = await Cases.create(caseData);
-                newCases.push(newCase);
-            }
+
+        if (responseData.cases) {
+          // Sicherstellen, dass cases ein Array ist
+          const casesArray = Array.isArray(responseData.cases) ? responseData.cases : [responseData.cases];
+          let newIds = [];
+          for (const caseData of casesArray) {
+            // Attachments aus caseData extrahieren
+            let attachments = [];
+            let extrCase = {};
+            allowedFields.forEach((field) => {
+              if (caseData[field] !== undefined) {
+                if(field === 'attachments'){
+                  attachments = caseData[field];
+                }else{
+                  extrCase[field] = caseData[field];
+                }
+              }
+            });
+
+            extrCase['draft'] = true;
+            // Neuen Case erstellen
+            const newCase = await Cases.create(extrCase);
+            newIds.push(newCase.id);
+  
+            // Attachments zuordnen
+            if (attachments && attachments.length > 0) {
+
+              const attachmentInstances = await Attachments.findAll({
+                where: {
+                  id: attachments
+                }
+              });
             
+              await newCase.addAttachments(attachmentInstances)
+            }  
+          }
+          
+          const casesAll = await Cases.findAll({
+            where: {
+              id: newIds
+            },
+            include: [{
+              model: Attachments,
+              as: 'attachments',
+              through: { attributes: [] }
+            }]
+          });
+
+          console.log( "ERstellter Case: ", JSON.stringify(casesAll));
             // Antwort an das Frontend senden
-            res.status(200).json(newCases);
+            res.status(200).json(casesAll);
         } else if(responseData.message){
             res.status(200).json({ message: responseData.message });
         } else {
@@ -177,12 +233,34 @@ exports.createCaseFromFiles = [
       // **Aktualisierten Case abrufen**
       const updatedCase = await Cases.findByPk(caseId);
 
-      const llmResponse = await axios.post('URL_ZUM_LLM_ENDPOINT', { cases: [updatedCase] });
-
-      res.json(llmResponse);
+      //const llmResponse = await axios.post('URL_ZUM_LLM_ENDPOINT', { cases: [updatedCase] });
+      res.json(updatedCase);
+      //res.json(llmResponse);
     } catch (error) {
       console.error('Error updating case:', error);
       res.status(500).json({ message: 'Error updating case' });
     }
   }
   ];
+
+
+  const testLLMResponse = 
+  { 
+    "cases":
+      {
+        "title": "TestLLMREsponse",
+        "description": "(bei Audio z.b) wichtige stelle bei 4:35min in filename.mp4...",
+        "solution": "TestLLMSolution",
+        "status": "TestLLMStatus",
+        "attachments": [ 
+          40,
+          41
+        ], 
+      }
+  };
+
+  const testLLMResponse2 = 
+  {
+    "message": "Die von ihnen zu verfügung gestellten Datein konnte ich keinen case erstellen, weil..."
+  
+  };
