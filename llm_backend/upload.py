@@ -38,6 +38,12 @@ OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def sort_attachments(item):
+    if item["mimetype"] == "application/pdf":
+        return 0
+    elif item["mimetype"] == "audio/mpeg":
+        return 2
+    return 1
 
 def upload_file_method_production(files, pdf_extractor):
     files_as_dicts = []
@@ -46,7 +52,17 @@ def upload_file_method_production(files, pdf_extractor):
     texts = ""
     single_text = ""
 
+    print(files)
+
     for file in files:
+        filepath = file["filepath"]
+        mimetype = mimetypes.guess_type(filepath)
+        file["mimetype"] = mimetype[0]
+
+    sorted_attachments = sorted(files, key=sort_attachments)
+
+
+    for file in sorted_attachments:
         filepath = file["filepath"]
         filename = file["filename"]
         path = download_file_webdav(filepath, filename)
@@ -54,23 +70,22 @@ def upload_file_method_production(files, pdf_extractor):
         print(mimetype)
         if allowed_file(filename):
             filename = secure_filename(filename)
-            # path = os.path.join(
-            #    app.root_path, os.path.join(app.config["UPLOAD_FOLDER"], filename)
-            # )
-            # file.save(path)
             clean_filename_str = clean_filename(Path(path).stem)
-            if mimetype[0] == "audio/mpeg":
+            if mimetype == "audio/mpeg":
                 texts += "Content of Audio File: " + clean_filename_str + ": "
-                client = OpenAI()
-                audio_file = open(path, "rb")
-                transcription = client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=audio_file,
-                    response_format="verbose_json",
+                # audio_file = open(path, "rb")
+                audio_blob = Blob(path=path)
+
+                # Set up AzureChatOpenAI with the required configurations
+                parser = AzureOpenAIWhisperParser(
+                    azure_endpoint=AZURE_ENDPOINT,
+                    deployment_name=AZURE_DEPLOYMENT,
+                    api_version=OPENAI_API_VERSION,
                 )
-                texts += transcription.text
-                single_text = transcription.text
-                print(single_text)
+                # Assuming the client has a method to handle audio transcription similar to the OpenAI client
+                transcription_documents = parser.parse(blob=audio_blob)
+                # texts += transcription['text']
+                single_text = transcription_documents[0].page_content
             elif mimetype[0] == "application/pdf":
                 # if store_hash(file) == True:
                 texts = "Content of PDF File: " + clean_filename_str + ": "
