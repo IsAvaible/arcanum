@@ -100,15 +100,15 @@
           </div>
         </template>
 
-        <Column field="id" header="Case ID" sortable />
+        <Column field="id" header="Case ID" :sortable="true" />
 
-        <Column field="titleId" header="Title ID" sortable>
+        <Column field="titleId" header="Title ID" :sortable="true">
           <template #filter="{ filterModel }">
             <InputText v-model="filterModel.value" type="text" placeholder="Search Title ID" />
           </template>
         </Column>
 
-        <Column field="caseType" header="Case Type" sortable>
+        <Column field="caseType" header="Case Type" :sortable="true">
           <template #body="slotProps">
             <Tag :value="slotProps.data.caseType" :severity="'secondary'" />
           </template>
@@ -126,7 +126,12 @@
           </template>
         </Column>
 
-        <Column field="createdBy.name" header="Created by" sortable>
+        <Column
+          field="createdBy.name"
+          header="Created by"
+          :showFilterMatchModes="false"
+          :sortable="true"
+        >
           <template #body="{ data }">
             <div class="flex items-center gap-2">
               <img
@@ -151,7 +156,7 @@
           </template>
         </Column>
 
-        <Column field="status" header="Status" sortable>
+        <Column field="status" header="Status" :sortable="true">
           <template #body="slotProps">
             <Tag
               :severity="getStatusSeverity(slotProps.data.status)"
@@ -173,7 +178,13 @@
           </template>
         </Column>
 
-        <Column field="updatedOn" header="Updated" data-type="date" sortable>
+        <Column
+          field="updatedOn"
+          header="Updated"
+          data-type="date"
+          :sortable="true"
+          :show-filter-operator="false"
+        >
           <template #body="slotProps">
             {{ formatDate(slotProps.data.updatedOn, true) }}
           </template>
@@ -220,7 +231,7 @@
 <script setup lang="ts">
 // Vue and PrimeVue imports
 import { ref, reactive, computed } from 'vue'
-import { FilterMatchMode } from '@primevue/core/api'
+import { FilterMatchMode, FilterOperator } from '@primevue/core/api'
 import { useTimeAgo } from '@vueuse/core'
 import { useToast } from 'primevue'
 import { useRoute } from 'vue-router'
@@ -288,12 +299,30 @@ const names = [
 const initFilter = () => {
   filters.value = {
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    titleId: { constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }] },
-    caseType: { constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
-    status: { constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
-    assignee: { constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
-    'createdBy.name': { constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }] },
-    updatedOn: { constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
+    titleId: {
+      operator: FilterOperator.AND,
+      constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }],
+    },
+    caseType: {
+      operator: FilterOperator.OR,
+      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+    },
+    status: {
+      operator: FilterOperator.OR,
+      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+    },
+    assignee: {
+      operator: FilterOperator.AND,
+      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+    },
+    'createdBy.name': { value: null, matchMode: FilterMatchMode.CONTAINS },
+    updatedOn: {
+      operator: FilterOperator.AND,
+      constraints: [
+        { value: null, matchMode: FilterMatchMode.DATE_AFTER },
+        { value: null, matchMode: FilterMatchMode.DATE_BEFORE },
+      ],
+    },
   }
 }
 initFilter()
