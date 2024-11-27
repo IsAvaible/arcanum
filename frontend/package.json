@@ -17,7 +17,7 @@
     "lint:style": "stylelint \"src/**/*.{vue,css,scss}\" --fix --ignore-path .gitignore --ignore-path .stylelintignore",
     "format": "prettier --write src/",
     "prepare": "node .husky/install.mjs && cd .. && husky frontend/.husky",
-    "generate:api": "openapi-generator-cli generate -i ./src/api/OpenAPI.yaml -g typescript-axios -o ./src/api"
+    "generate:api": "openapi-generator-cli generate -i ./src/api/OpenAPI.yaml -g typescript-axios -o ./src/api --additional-properties=useSingleRequestParameter=true"
   },
   "dependencies": {
     "@iconoir/vue": "^7.9.0",

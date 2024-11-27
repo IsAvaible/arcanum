@@ -51,12 +51,25 @@ paths:
                 status:
                   type: string
                   description: Status of the case.
+                  enum:
+                    - Open
+                    - In Progress
+                    - Closed
                 case_type:
                   type: string
                   description: Type of the case.
+                  enum:
+                    - Problem
+                    - Incident
+                    - Change
+                    - FAQ
                 priority:
                   type: string
                   description: Priority level of the case.
+                  enum:
+                    - Low
+                    - Medium
+                    - High
                 files:
                   type: array
                   items:
@@ -83,6 +96,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   /cases/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Unique identifier of the case.
+        schema:
+          type: integer
     get:
       summary: Retrieve a case by ID
       description: Retrieve a specific case by its ID.
@@ -151,7 +171,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Case'
         404:
-          description: Case not found.
+          description: Case with specified ID not found.
           content:
             application/json:
               schema:
@@ -176,13 +196,65 @@ paths:
         204:
           description: Case successfully deleted.
         404:
-          description: Case not found.
+          description: Case with specified ID not found.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         500:
           description: Error deleting the case.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cases/{id}/attachments:
+    post:
+      summary: Upload attachments for a case
+      description: Upload one or more files as attachments for a specific case.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case to which the files will be attached.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Files to upload.
+      responses:
+        200:
+          description: Files successfully uploaded and associated with the case.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: ID of the case.
+                  uploadedFiles:
+                    type: array
+                    items:
+                      type: string
+                      description: List of successfully uploaded file names.
+        400:
+          description: Validation error or unsupported file type.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error uploading the files.
           content:
             application/json:
               schema:
@@ -267,3 +339,6 @@ components:
         message:
           type: string
           description: Error message.
+        code:
+          type: integer
+          description: HTTP status code for the error.
