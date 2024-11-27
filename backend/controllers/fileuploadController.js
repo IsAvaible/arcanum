@@ -24,6 +24,7 @@ function checkFileType(file, cb) {
     const mimetypes = /image\/jpeg|image\/jpg|image\/png|image\/gif|text\/plain|application\/pdf/; 
     // Check mime
     const mimetype = mimetypes.test(file.mimetype);
+   
 
     if (mimetype && extname) {
         console.log("File type check succsessfull")

@@ -20,12 +20,12 @@ const upload = multer({
     fileFilter: function (req, file, cb) {
         fileUploadController.checkFileName(file);
         fileUploadController.checkFileType(file, cb);
-        try {
+       /*  try {
             fileUploadController.scanFileWithAzure(file);
             cb(null, true);
         } catch (error) {
             cb(error);
-        }
+        } */
 
         
     }
@@ -38,9 +38,8 @@ router.post('/upload', (req, res) => {
         }
         
         try {
-           
             console.log('File path: ' + req.file.path);
-            await nextCloudUploader.uploadFile(req.file.path, "/test-folder/", req.file.filename);
+            await nextCloudUploader.uploadFile(req.file.path, "/IP_WKS/", req.file.filename);
             res.status(200).json({ message: 'File uploaded to Nextcloud and scanned successfully!', scanResult });
          } catch (error) {
              res.status(500).json({ message: 'Error uploading file to Nextcloud or scanning for malware.', error });

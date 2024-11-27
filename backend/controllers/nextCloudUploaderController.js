@@ -1,4 +1,4 @@
-const { hash } = require('crypto');
+const crypto = require('crypto');
 const fs = require('fs');
 
 let nextcloudClient;
@@ -28,12 +28,21 @@ async function listFiles() {
 async function uploadFile(localFilePath, remoteFilePath, fileName) {
     await nextcloudClientPromise;
     const fileContent = fs.readFileSync(localFilePath);
-    const hashedFileContent = hash('sha256').update(fileContent).digest('hex');
+    
+    try{
+        const hashedFileContent = crypto.createHash('sha256').update(fileContent).digest('hex');
+        console.log('Hashed file content:', hashedFileContent);
+    } catch (error) {   
+        console.error('Error hashing file content:', error);
+    }
+    
+    
     
     const folder = ["Audio/", "Bilder/","Text/" ];
     const fileExtension = fileName.split('.').pop().toLowerCase();
     let folderPath = '';
 
+    console.log("Fieltype: " + fileExtension);
     switch (fileExtension) {
         case 'mp3':
         case 'wav':
