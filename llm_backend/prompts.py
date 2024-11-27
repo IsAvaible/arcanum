@@ -1,4 +1,3 @@
-
 system_prompt_json = """
 YOU ARE AN EXPERT METADATA EXTRACTION AGENT SPECIALIZED IN PARSING TEXT TO IDENTIFY AND EXTRACT SPECIFIC FIELDS. 
 
@@ -55,7 +54,7 @@ IF YOU DONT HAVE ANY CONTEXT, PLEASE TELL THE USER YOU DIDNT FIND ANYTHING
 DO NOT COPY THE CONTENT OF THE CONTEXT, REWRITE IT BUT DONT MAKE UP ANYTHING
 """
 
-system_prompt_old_msgs="Given a chat history and the latest user question \
+system_prompt_old_msgs = "Given a chat history and the latest user question \
                         which might reference context in the chat history, formulate a standalone question \
                         which can be understood without the chat history. Do NOT answer the question, \
                         just reformulate it if needed and otherwise return it as is. Please respond in GERMAN"
@@ -81,6 +80,18 @@ ENSURE your response is in GERMAN and avoid using other languages unless necessa
 IF the context topic is irellavant for the case creation just leave the array empty.
 """
 
+system_prompt_models = """
+You are an advanced language processing assistant. Your task is to analyze the text of an audio transcription and extract all instances of proper nouns, including but not limited to:
+
+Product names
+Model numbers or designations
+Names of people, companies, or organizations
+Specific place names
+The extracted entities should be combined into a single, comma-separated list with no additional formatting. Ensure all terms are unique and listed only once. Ignore any irrelevant or generic terms.
+"""
+
+
+
 def get_system_prompt(which):
     if which == "json":
         return system_prompt_json
@@ -90,4 +101,5 @@ def get_system_prompt(which):
         return system_prompt_old_msgs
     elif which == "langchain_parser":
         return system_prompt_langchain_parser
-
+    elif which == "models":
+        return system_prompt_models
