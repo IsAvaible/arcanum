@@ -14,15 +14,15 @@ import hashlib
 
 from app import app
 from embeddings import create_embeddings
-from llm_backend.audio import split_audio_with_overlap
-from llm_backend.pdf import (
+from audio import split_audio_with_overlap
+from pdf import (
     create_text_chunks_pdfplumber,
     create_text_chunks_pypdfloader,
     create_text_chunks_pdfreader,
     create_text_chunks_ocr,
 )
-from llm_backend.prompts import get_system_prompt
-from llm_backend.webdav import download_file_webdav
+from prompts import get_system_prompt
+from webdav import download_file_webdav
 from langchain_core.documents.base import Blob
 from langchain_community.document_loaders.parsers.audio import AzureOpenAIWhisperParser
 
@@ -115,12 +115,16 @@ def upload_file_method_production(files, pdf_extractor):
                 # split if 24mb or greater
 
                 partialTranscription = []
+                partial_transcript_to_context = ""
 
                 if float(file_size_mb) > 24.0:
                     # split files
-                    segments = split_audio_with_overlap(path, segment_length_ms=300000, overlap_ms=10000)
+                    segments = split_audio_with_overlap(path, segment_length_ms=300000, overlap_ms=500)
                     # save segments to filesystem
                     for idx, segment in enumerate(segments):
+                        if partialTranscription:
+                            partial_transcript_to_context = partialTranscription[-1][-200:]
+                            print("partialTranscription:"+str(partial_transcript_to_context)+"\n\n")
                         print(f"segment {idx}")
                         path = os.path.join(
                             app.root_path, os.path.join(app.config["UPLOAD_FOLDER"], f"{filename}_{idx}.mp3")
@@ -132,7 +136,7 @@ def upload_file_method_production(files, pdf_extractor):
                             azure_endpoint=AZURE_ENDPOINT,
                             deployment_name=AZURE_DEPLOYMENT,
                             api_version=OPENAI_API_VERSION,
-                            prompt=whisper_prompt
+                            prompt=whisper_prompt#+" Text: "+ partial_transcript_to_context
                         )
                         # Assuming the client has a method to handle audio transcription similar to the OpenAI client
                         transcription_documents = parser.parse(blob=audio_blob)
@@ -152,7 +156,7 @@ def upload_file_method_production(files, pdf_extractor):
                     transcription_documents = parser.parse(blob=audio_blob)
                     partialTranscription.append(transcription_documents[0].page_content)
 
-                single_text = "\n".join(partialTranscription)
+                single_text = "".join(partialTranscription)
                 texts += " " + single_text
             elif mimetype == "application/pdf":
                 texts += f" Content of PDF File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
