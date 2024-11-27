@@ -38,11 +38,15 @@ router.post('/upload', (req, res) => {
         }
         
         try {
-            console.log('File path: ' + req.file.path);
-            await nextCloudUploader.uploadFile(req.file.path, "/IP_WKS/", req.file.filename);
-            res.status(200).json({ message: 'File uploaded to Nextcloud and scanned successfully!', scanResult });
+            console.log('File path: ' + req.file.path); 
+            const remoteFilePath = "/IP_WKS/";
+            const result = await nextCloudUploader.uploadFile(req.file.path, remoteFilePath, req.file.filename);
+            console.log('File uploaded to Nextcloud:', result);
+            res.status(200).json({ message: 'File uploaded to Nextcloud and scanned successfully!' });
          } catch (error) {
-             res.status(500).json({ message: 'Error uploading file to Nextcloud or scanning for malware.', error });
+            console.log('Error uploading file:', error); 
+            res.status(500).json({ message: 'Error uploading file to Nextcloud or scanning for malware.', error });
+           
          } 
     });
 
