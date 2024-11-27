@@ -31,6 +31,25 @@ openai_models = ["gpt-4o-mini", "gpt-3.5-turbo-0125", "gpt-3.5-turbo-1106"]
 llm = Blueprint("llm", __name__)
 
 
+
+class CaseAttachment(BaseModel):
+    file_id: int = Field(
+        ...,
+        description="A unique numeric identifier for the file within the system."
+    )
+    filename: str = Field(
+        ...,
+        description="The name of the file, including its extension (e.g., 'document.pdf'), as stored in the system."
+    )
+    filepath: str = Field(
+        ...,
+        description="The full path to the file's location on the system, specifying where the file is stored."
+    )
+    filehash: str = Field(
+        ...,
+        description="A unique hash generated for the file to verify its integrity and identify its contents."
+    )
+
 # defining the desired output of the llm
 class Case(BaseModel):
     title: str = Field(
@@ -52,6 +71,10 @@ class Case(BaseModel):
     status: str = Field(
         ...,
         description="The current state of the case, such as 'open', 'in progress' or 'resolved' to track its progression.",
+    )
+    attachment: list[CaseAttachment] = Field(
+        ...,
+        description="All the files that were used to generate this Case.",
     )
 
 
