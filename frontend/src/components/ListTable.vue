@@ -1,233 +1,3 @@
-<template>
-  <div class="flex flex-1 my-auto">
-    <div class="transition-all duration-300 p-6 space-y-6 mx-auto">
-      <div class="flex items-center justify-between">
-        <div class="flex gap-4">
-          <h1 class="text-3xl font-bold">Cases</h1>
-        </div>
-        <Button label="Case Create" icon="pi pi-plus" @click="$router.push('/cases/create')" />
-      </div>
-
-      <!-- KPI Widgets Row -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card>
-          <template #content>
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="text-lg font-semibold text-gray-600">Total Cases</h3>
-                <p class="text-3xl font-bold text-primary-600">{{ totalCases }}</p>
-              </div>
-              <i class="pi pi-file text-4xl text-primary-600"></i>
-            </div>
-            <div class="mt-2 text-sm text-gray-500">
-              <span :class="totalCasesTrend > 0 ? 'text-green-500' : 'text-red-500'">
-                {{ totalCasesTrend > 0 ? '▲' : '▼' }} {{ Math.abs(totalCasesTrend) }}%
-              </span>
-              from last month
-            </div>
-          </template>
-        </Card>
-
-        <Card>
-          <template #content>
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="text-lg font-semibold text-gray-600">Resolved Cases</h3>
-                <p class="text-3xl font-bold text-primary-600">{{ resolvedCases }}</p>
-              </div>
-              <i class="pi pi-check-circle text-4xl text-primary-600"></i>
-            </div>
-            <div class="mt-2 text-sm text-gray-500">
-              <span :class="resolvedCasesTrend > 0 ? 'text-green-500' : 'text-red-500'">
-                {{ resolvedCasesTrend > 0 ? '▲' : '▼' }} {{ Math.abs(resolvedCasesTrend) }}%
-              </span>
-              resolution rate this month
-            </div>
-          </template>
-        </Card>
-
-        <Card>
-          <template #content>
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="text-lg font-semibold text-gray-600">Avg. Resolution Time</h3>
-                <p class="text-3xl font-bold text-primary-600">{{ averageResolutionTime }} hrs</p>
-              </div>
-              <i class="pi pi-clock text-4xl text-primary-600"></i>
-            </div>
-            <div class="mt-2 text-sm text-gray-500">
-              <span :class="resolutionTimeTrend > 0 ? 'text-red-500' : 'text-green-500'">
-                {{ resolutionTimeTrend > 0 ? '▲' : '▼' }} {{ Math.abs(resolutionTimeTrend) }}%
-              </span>
-              from previous period
-            </div>
-          </template>
-        </Card>
-      </div>
-
-      <DataTable
-        v-model:filters="filters"
-        :value="cases"
-        :paginator="true"
-        :rows="20"
-        :rowsPerPageOptions="[20, 50, 100]"
-        :rowHover="true"
-        scrollable
-        scrollHeight="600px"
-        responsiveLayout="scroll"
-        @row-click="$router.push({ path: '/cases/' + $event.data.id })"
-        dataKey="id"
-        :loading="loading"
-        filterDisplay="menu"
-        selection-mode="single"
-        :globalFilterFields="['titleId', 'assignee', 'caseType', 'status', 'createdBy.name']"
-      >
-        <template #header>
-          <div class="flex justify-between items-center">
-            <Button
-              type="button"
-              icon="pi pi-filter-slash"
-              label="Clear"
-              severity="secondary"
-              @click="clearFilters()"
-            />
-            <IconField>
-              <InputIcon>
-                <i class="pi pi-search" />
-              </InputIcon>
-              <InputText v-model="filters['global'].value" placeholder="Global Search" />
-            </IconField>
-          </div>
-        </template>
-
-        <Column field="id" header="Case ID" :sortable="true" />
-
-        <Column field="titleId" header="Title ID" :sortable="true">
-          <template #filter="{ filterModel }">
-            <InputText v-model="filterModel.value" type="text" placeholder="Search Title ID" />
-          </template>
-        </Column>
-
-        <Column field="caseType" header="Case Type" :sortable="true">
-          <template #body="slotProps">
-            <Tag :value="slotProps.data.caseType" :severity="'secondary'" />
-          </template>
-          <template #filter="{ filterModel }">
-            <Select
-              v-model="filterModel.value"
-              :options="[
-                { label: 'Servicecase', value: 'Servicecase' },
-                { label: 'Testcase', value: 'Testcase' },
-              ]"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Select Case Type"
-            />
-          </template>
-        </Column>
-
-        <Column
-          field="createdBy.name"
-          header="Created by"
-          :showFilterMatchModes="false"
-          :sortable="true"
-        >
-          <template #body="{ data }">
-            <div class="flex items-center gap-2">
-              <img
-                :alt="data.createdBy.name"
-                src="https://placecats.com/50/50"
-                class="rounded-full w-8"
-              />
-              <span>{{ data.createdBy.name }}</span>
-            </div>
-          </template>
-          <template #filter="{ filterModel }">
-            <Select
-              v-model="filterModel.value"
-              :options="[
-                { label: 'Unassigned', value: 'Unassigned' },
-                { label: 'Assigned', value: 'Assigned' },
-              ]"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Select Creator"
-            />
-          </template>
-        </Column>
-
-        <Column field="status" header="Status" :sortable="true">
-          <template #body="slotProps">
-            <Tag
-              :severity="getStatusSeverity(slotProps.data.status)"
-              :value="slotProps.data.status"
-            />
-          </template>
-          <template #filter="{ filterModel }">
-            <Select
-              v-model="filterModel.value"
-              :options="[
-                { label: 'Open', value: 'Open' },
-                { label: 'Closed', value: 'Closed' },
-                { label: 'In-Progress', value: 'In-Progress' },
-              ]"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Select Status"
-            />
-          </template>
-        </Column>
-
-        <Column
-          field="updatedOn"
-          header="Updated"
-          data-type="date"
-          :sortable="true"
-          :show-filter-operator="false"
-        >
-          <template #body="slotProps">
-            {{ formatDate(slotProps.data.updatedOn, true) }}
-          </template>
-          <template #filter="{ filterModel }">
-            <DatePicker
-              v-model="filterModel.value"
-              dateFormat="mm/dd/yy"
-              placeholder="Select Date"
-            />
-          </template>
-        </Column>
-
-        <Column :exportable="false" style="min-width: 4rem">
-          <template #body="slotProps">
-            <Menu ref="menu" :model="getMenuItems(slotProps.data)" :popup="true" appendTo="body" />
-            <Button icon="pi pi-ellipsis-v" @click="toggleMenu($event)" text rounded />
-          </template>
-        </Column>
-
-        <template #empty>
-          <div class="flex flex-col items-center">
-            <span>No cases found. Try another search query or adjust the filters.</span>
-            <Button
-              variant="text"
-              label="Clear Filters"
-              icon="pi pi-filter"
-              @click="clearFilters()"
-            />
-          </div>
-        </template>
-      </DataTable>
-    </div>
-  </div>
-
-  <CaseDeleteDialog
-    v-if="deleteDialogVisible"
-    v-model:visible="deleteDialogVisible"
-    :titles="selectedCase?.titleId || ''"
-    :on-delete="deleteCase"
-    @update:visible="onDeleteDialogClose()"
-  />
-</template>
-
 <script setup lang="ts">
 // Vue and PrimeVue imports
 import { ref, reactive, computed } from 'vue'
@@ -479,3 +249,233 @@ const resolvedCasesTrend = ref(10) // Example: 10% increase
 const averageResolutionTime = ref(24) // Example: 24 hours
 const resolutionTimeTrend = ref(-5) // Example: 5% decrease
 </script>
+
+<template>
+  <div class="flex flex-1 my-auto">
+    <div class="transition-all duration-300 p-6 space-y-6 mx-auto">
+      <div class="flex items-center justify-between">
+        <div class="flex gap-4">
+          <h1 class="text-3xl font-bold">Cases</h1>
+        </div>
+        <Button label="Case Create" icon="pi pi-plus" @click="$router.push('/cases/create')" />
+      </div>
+
+      <!-- KPI Widgets Row -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Card>
+          <template #content>
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-600">Total Cases</h3>
+                <p class="text-3xl font-bold text-primary-600">{{ totalCases }}</p>
+              </div>
+              <i class="pi pi-file text-4xl text-primary-600"></i>
+            </div>
+            <div class="mt-2 text-sm text-gray-500">
+              <span :class="totalCasesTrend > 0 ? 'text-green-500' : 'text-red-500'">
+                {{ totalCasesTrend > 0 ? '▲' : '▼' }} {{ Math.abs(totalCasesTrend) }}%
+              </span>
+              from last month
+            </div>
+          </template>
+        </Card>
+
+        <Card>
+          <template #content>
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-600">Resolved Cases</h3>
+                <p class="text-3xl font-bold text-primary-600">{{ resolvedCases }}</p>
+              </div>
+              <i class="pi pi-check-circle text-4xl text-primary-600"></i>
+            </div>
+            <div class="mt-2 text-sm text-gray-500">
+              <span :class="resolvedCasesTrend > 0 ? 'text-green-500' : 'text-red-500'">
+                {{ resolvedCasesTrend > 0 ? '▲' : '▼' }} {{ Math.abs(resolvedCasesTrend) }}%
+              </span>
+              resolution rate this month
+            </div>
+          </template>
+        </Card>
+
+        <Card>
+          <template #content>
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-600">Avg. Resolution Time</h3>
+                <p class="text-3xl font-bold text-primary-600">{{ averageResolutionTime }} hrs</p>
+              </div>
+              <i class="pi pi-clock text-4xl text-primary-600"></i>
+            </div>
+            <div class="mt-2 text-sm text-gray-500">
+              <span :class="resolutionTimeTrend > 0 ? 'text-red-500' : 'text-green-500'">
+                {{ resolutionTimeTrend > 0 ? '▲' : '▼' }} {{ Math.abs(resolutionTimeTrend) }}%
+              </span>
+              from previous period
+            </div>
+          </template>
+        </Card>
+      </div>
+
+      <DataTable
+        v-model:filters="filters"
+        :value="cases"
+        :paginator="true"
+        :rows="20"
+        :rowsPerPageOptions="[20, 50, 100]"
+        :rowHover="true"
+        scrollable
+        scrollHeight="600px"
+        responsiveLayout="scroll"
+        @row-click="$router.push({ path: '/cases/' + $event.data.id })"
+        dataKey="id"
+        :loading="loading"
+        filterDisplay="menu"
+        selection-mode="single"
+        :globalFilterFields="['titleId', 'assignee', 'caseType', 'status', 'createdBy.name']"
+      >
+        <template #header>
+          <div class="flex justify-between items-center">
+            <Button
+              type="button"
+              icon="pi pi-filter-slash"
+              label="Clear"
+              severity="secondary"
+              @click="clearFilters()"
+            />
+            <IconField>
+              <InputIcon>
+                <i class="pi pi-search" />
+              </InputIcon>
+              <InputText v-model="filters['global'].value" placeholder="Global Search" />
+            </IconField>
+          </div>
+        </template>
+
+        <Column field="id" header="Case ID" :sortable="true" />
+
+        <Column field="titleId" header="Title ID" :sortable="true">
+          <template #filter="{ filterModel }">
+            <InputText v-model="filterModel.value" type="text" placeholder="Search Title ID" />
+          </template>
+        </Column>
+
+        <Column field="caseType" header="Case Type" :sortable="true">
+          <template #body="slotProps">
+            <Tag :value="slotProps.data.caseType" :severity="'secondary'" />
+          </template>
+          <template #filter="{ filterModel }">
+            <Select
+              v-model="filterModel.value"
+              :options="[
+                { label: 'Servicecase', value: 'Servicecase' },
+                { label: 'Testcase', value: 'Testcase' },
+              ]"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select Case Type"
+            />
+          </template>
+        </Column>
+
+        <Column
+          field="createdBy.name"
+          header="Created by"
+          :showFilterMatchModes="false"
+          :sortable="true"
+        >
+          <template #body="{ data }">
+            <div class="flex items-center gap-2">
+              <img
+                :alt="data.createdBy.name"
+                src="https://placecats.com/50/50"
+                class="rounded-full w-8"
+              />
+              <span>{{ data.createdBy.name }}</span>
+            </div>
+          </template>
+          <template #filter="{ filterModel }">
+            <Select
+              v-model="filterModel.value"
+              :options="[
+                { label: 'Unassigned', value: 'Unassigned' },
+                { label: 'Assigned', value: 'Assigned' },
+              ]"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select Creator"
+            />
+          </template>
+        </Column>
+
+        <Column field="status" header="Status" :sortable="true">
+          <template #body="slotProps">
+            <Tag
+              :severity="getStatusSeverity(slotProps.data.status)"
+              :value="slotProps.data.status"
+            />
+          </template>
+          <template #filter="{ filterModel }">
+            <Select
+              v-model="filterModel.value"
+              :options="[
+                { label: 'Open', value: 'Open' },
+                { label: 'Closed', value: 'Closed' },
+                { label: 'In-Progress', value: 'In-Progress' },
+              ]"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select Status"
+            />
+          </template>
+        </Column>
+
+        <Column
+          field="updatedOn"
+          header="Updated"
+          data-type="date"
+          :sortable="true"
+          :show-filter-operator="false"
+        >
+          <template #body="slotProps">
+            {{ formatDate(slotProps.data.updatedOn, true) }}
+          </template>
+          <template #filter="{ filterModel }">
+            <DatePicker
+              v-model="filterModel.value"
+              dateFormat="mm/dd/yy"
+              placeholder="Select Date"
+            />
+          </template>
+        </Column>
+
+        <Column :exportable="false" style="min-width: 4rem">
+          <template #body="slotProps">
+            <Menu ref="menu" :model="getMenuItems(slotProps.data)" :popup="true" appendTo="body" />
+            <Button icon="pi pi-ellipsis-v" @click="toggleMenu($event)" text rounded />
+          </template>
+        </Column>
+
+        <template #empty>
+          <div class="flex flex-col items-center">
+            <span>No cases found. Try another search query or adjust the filters.</span>
+            <Button
+              variant="text"
+              label="Clear Filters"
+              icon="pi pi-filter"
+              @click="clearFilters()"
+            />
+          </div>
+        </template>
+      </DataTable>
+    </div>
+  </div>
+
+  <CaseDeleteDialog
+    v-if="deleteDialogVisible"
+    v-model:visible="deleteDialogVisible"
+    :titles="selectedCase?.titleId || ''"
+    :on-delete="deleteCase"
+    @update:visible="onDeleteDialogClose()"
+  />
+</template>
