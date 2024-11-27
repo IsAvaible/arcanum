@@ -1,0 +1,269 @@
+openapi: 3.0.3
+info:
+  title: Cases API
+  description: |
+    The Cases API allows you to manage cases by creating, retrieving, updating, and deleting them. It also supports file attachments associated with cases.
+  version: '1.0.0'
+servers:
+  - url: http://localhost:3000/api
+paths:
+  /cases:
+    get:
+      summary: Retrieve all cases
+      description: Retrieve a list of all cases.
+      responses:
+        200:
+          description: Successfully retrieved a list of cases.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Case'
+        500:
+          description: Error retrieving cases.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create a new case
+      description: Create a new case.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: Title of the case.
+                description:
+                  type: string
+                  description: Description of the case.
+                solution:
+                  type: string
+                  description: Solution for the case.
+                assignee:
+                  type: string
+                  description: Person responsible for the case.
+                status:
+                  type: string
+                  description: Status of the case.
+                case_type:
+                  type: string
+                  description: Type of the case.
+                priority:
+                  type: string
+                  description: Priority level of the case.
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Files to upload.
+      responses:
+        201:
+          description: Case successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        400:
+          description: Validation error or file upload error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error creating the case.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cases/{id}:
+    get:
+      summary: Retrieve a case by ID
+      description: Retrieve a specific case by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case to retrieve.
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Successfully retrieved the case.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        404:
+          description: Case not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error retrieving the case.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update a case by ID
+      description: Update an existing case by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case to update.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                solution:
+                  type: string
+                assignee:
+                  type: string
+                status:
+                  type: string
+                case_type:
+                  type: string
+                priority:
+                  type: string
+      responses:
+        200:
+          description: Case successfully updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        404:
+          description: Case not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error updating the case.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete a case by ID
+      description: Delete a specific case by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case to delete.
+          schema:
+            type: integer
+      responses:
+        204:
+          description: Case successfully deleted.
+        404:
+          description: Case not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error deleting the case.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cases/{id}/attachments/{filename}:
+    get:
+      summary: Download an attachment
+      description: Download an attachment associated with a case.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case.
+          schema:
+            type: integer
+        - name: filename
+          in: path
+          required: true
+          description: Name of the attachment file.
+          schema:
+            type: string
+      responses:
+        200:
+          description: File successfully downloaded.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        404:
+          description: Case or attachment not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error downloading the attachment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Case:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        solution:
+          type: string
+          nullable: true
+        assignee:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        case_type:
+          type: string
+          nullable: true
+        priority:
+          type: string
+          nullable: true
+        attachment:
+          type: array
+          items:
+            type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message.
