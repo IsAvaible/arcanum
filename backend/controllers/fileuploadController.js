@@ -21,7 +21,7 @@ function checkFileType(file, cb) {
     // Check ext
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
     
-    const mimetypes = /image\/jpeg|image\/jpg|image\/png|image\/gif|text\/plain|application\/pdf/; 
+    const mimetypes = /image\/jpeg|image\/jpg|image\/png|image\/gif|text\/plain|application\/pdf|audio\/mpeg|audio\/wav|application\/msword/; 
     // Check mime
     const mimetype = mimetypes.test(file.mimetype);
    
