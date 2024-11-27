@@ -7,7 +7,6 @@ from bs4 import BeautifulSoup
 from flask import Blueprint
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import AzureChatOpenAI
-from pydub import AudioSegment
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 
