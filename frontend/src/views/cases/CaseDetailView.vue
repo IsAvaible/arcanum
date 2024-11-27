@@ -6,7 +6,6 @@ import InputText from 'primevue/inputtext'
 import Dropdown from 'primevue/dropdown'
 import Calendar from 'primevue/calendar'
 import Textarea from 'primevue/textarea'
-import FileUpload from 'primevue/fileupload'
 import { useRouter } from 'vue-router'
 
 const caseNumber = ref('12345')
@@ -49,45 +48,46 @@ const selectedPriority = ref(priorities[0])
 const selectedStatus = ref(statuses[0])
 const selectedAssignee = ref(null)
 
-const onUpload = (event: unknown) => {
-  console.log('File uploaded:', event)
-}
+// File upload variables and handlers
+const files = ref<Array<{ name: string; preview: string }>>([])
+const isUploadCompleted = ref(false)
 
-const dataTypes = [
-  { label: 'Text', value: 'text' },
-  { label: 'XML', value: 'xml' },
-  { label: 'JSON', value: 'json' },
-  { label: 'Image', value: 'image' },
-  { label: 'Audio', value: 'audio' },
-  { label: 'Video', value: 'video' },
-]
-
-const selectedDataType = ref('image')
-
-const getUploadProps = (dataType: string) => {
-  switch (dataType) {
-    case 'image':
-      return {
-        accept: 'image/*',
-        maxFileSize: 1000000,
-        chooseLabel: 'Choose Image',
-      }
-    case 'audio':
-      return {
-        accept: 'audio/*',
-        maxFileSize: 1000000,
-        chooseLabel: 'Choose Audio',
-      }
-    case 'video':
-      return {
-        accept: 'video/*',
-        maxFileSize: 10000000,
-        chooseLabel: 'Choose Video',
-      }
-    default:
-      return {}
+const handleUpload = () => {
+  if (files.value.length > 0) {
+    console.log('Uploading files:')
+    files.value.forEach((fileData) => {
+      // Simulating an upload action
+      console.log(`Uploading file: ${fileData.name}`)
+      // Add your actual API call here
+    })
+    isUploadCompleted.value = true
+    alert('Files uploaded successfully!')
+  } else {
+    console.error('No files selected for upload.')
+    alert('No files to upload!')
   }
 }
+
+const onFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  if (target.files) {
+    Array.from(target.files).forEach((file) => {
+      const preview = URL.createObjectURL(file)
+      files.value.push({ name: file.name, preview })
+    })
+    isUploadCompleted.value = false // Reset state when new files are selected
+    console.log('Files selected:', files.value)
+  }
+}
+
+const removeFile = (index: number) => {
+  files.value.splice(index, 1)
+  if (files.value.length === 0) {
+    isUploadCompleted.value = false // Ensure the button reappears if files are removed
+  }
+}
+
+const tabs = ref([{ label: 'PDF' }, { label: 'Audio' }, { label: 'Video' }, { label: 'Image' }])
 </script>
 
 <template>
@@ -161,28 +161,8 @@ const getUploadProps = (dataType: string) => {
                 :options="priorities"
                 optionLabel="name"
                 class="w-full"
-              >
-                <template #value="slotProps">
-                  <div class="flex items-center gap-2" v-if="slotProps.value">
-                    <div
-                      class="w-3 h-3 rounded-full"
-                      :style="{ backgroundColor: slotProps.value.color }"
-                    ></div>
-                    <span>{{ slotProps.value.name }}</span>
-                  </div>
-                </template>
-                <template #option="slotProps">
-                  <div class="flex items-center gap-2">
-                    <div
-                      class="w-3 h-3 rounded-full"
-                      :style="{ backgroundColor: slotProps.option.color }"
-                    ></div>
-                    <span>{{ slotProps.option.name }}</span>
-                  </div>
-                </template>
-              </Dropdown>
+              />
             </div>
-
             <div class="field">
               <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
               <Dropdown
@@ -190,34 +170,7 @@ const getUploadProps = (dataType: string) => {
                 :options="statuses"
                 optionLabel="name"
                 class="w-full"
-              >
-                <template #value="slotProps">
-                  <div v-if="slotProps.value" class="flex items-center">
-                    <div
-                      class="px-3 py-1 rounded-md text-sm"
-                      :style="{
-                        backgroundColor: slotProps.value.color,
-                        color: slotProps.value.textColor,
-                      }"
-                    >
-                      {{ slotProps.value.name }}
-                    </div>
-                  </div>
-                </template>
-                <template #option="slotProps">
-                  <div class="flex items-center">
-                    <div
-                      class="px-3 py-1 rounded-md text-sm"
-                      :style="{
-                        backgroundColor: slotProps.option.color,
-                        color: slotProps.option.textColor,
-                      }"
-                    >
-                      {{ slotProps.option.name }}
-                    </div>
-                  </div>
-                </template>
-              </Dropdown>
+              />
             </div>
 
             <div class="field">
@@ -228,31 +181,7 @@ const getUploadProps = (dataType: string) => {
                 optionLabel="name"
                 placeholder="Select Assignee"
                 class="w-full"
-              >
-                <template #value="slotProps">
-                  <div class="flex items-center gap-2" v-if="slotProps.value">
-                    <img
-                      :src="slotProps.value.image"
-                      :alt="slotProps.value.name"
-                      class="w-6 h-6 rounded-full"
-                    />
-                    <span>{{ slotProps.value.name }}</span>
-                  </div>
-                </template>
-                <template #option="slotProps">
-                  <div class="flex items-center gap-2">
-                    <img
-                      :src="slotProps.option.image"
-                      :alt="slotProps.option.name"
-                      class="w-6 h-6 rounded-full"
-                    />
-                    <span>{{ slotProps.option.name }}</span>
-                  </div>
-                </template>
-              </Dropdown>
-              <p class="mt-2 text-sm text-gray-500" v-if="!selectedAssignee">
-                No assignee selected
-              </p>
+              />
             </div>
           </div>
         </template>
@@ -260,7 +189,7 @@ const getUploadProps = (dataType: string) => {
     </div>
 
     <!-- Description Card -->
-    <Card class="mb-6">
+    <Card class="mt-6">
       <template #title>
         <h2 class="text-xl font-semibold mb-4">Description</h2>
       </template>
@@ -270,7 +199,7 @@ const getUploadProps = (dataType: string) => {
     </Card>
 
     <!-- Solution Card -->
-    <Card class="mb-6">
+    <Card class="mt-6">
       <template #title>
         <h2 class="text-xl font-semibold mb-4">Solution</h2>
       </template>
@@ -280,84 +209,64 @@ const getUploadProps = (dataType: string) => {
     </Card>
 
     <!-- Data Card -->
-    <Card>
+    <Card class="mt-6">
       <template #title>
         <h2 class="text-xl font-semibold mb-4">Data</h2>
       </template>
       <template #content>
-        <div class="space-y-6">
-          <div class="flex justify-between items-center">
-            <div v-for="dataType in dataTypes" :key="dataType.value" class="text-center">
-              <button
-                @click="selectedDataType = dataType.value"
-                class="px-4 py-2 rounded-md transition-colors duration-200 ease-in-out"
-                :class="{
-                  'bg-blue-100 text-blue-700': selectedDataType === dataType.value,
-                  'hover:bg-gray-100': selectedDataType !== dataType.value,
-                }"
-              >
-                {{ dataType.label }}
-              </button>
-            </div>
+        <!-- Tabs Section -->
+        <div class="flex justify-center space-x-4 mb-6">
+          <button
+            v-for="tab in tabs"
+            :key="tab.label"
+            :class="['px-4 py-2 rounded-md font-medium']"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
+
+        <!-- Centering container -->
+        <div class="flex flex-col items-center space-y-4">
+          <!-- File Input -->
+          <div class="relative flex flex-col items-center space-y-2">
+            <input
+              id="file-upload"
+              type="file"
+              @change="onFileChange"
+              multiple
+              :accept="'image/jpeg,image/png,image/gif,audio/mp3,audio/wav,video/mp4,video/avi,application/pdf'"
+              class="block border-gray-300 rounded-md shadow-sm focus:ring-blue-500 hover:border-blue-500"
+            />
+            <p class="text-gray-500 text-sm">You can upload multiple files</p>
           </div>
 
-          <div class="mt-4">
-            <div v-if="['text', 'xml', 'json'].includes(selectedDataType)">
-              <Textarea
-                :placeholder="`Enter ${selectedDataType.toUpperCase()} data`"
-                rows="4"
-                class="w-full"
-              />
-            </div>
-            <div v-else class="flex justify-center">
-              <FileUpload
-                mode="basic"
-                :auto="true"
-                @upload="onUpload"
-                v-bind="getUploadProps(selectedDataType)"
-              />
-            </div>
+          <!-- Uploaded Files List -->
+          <div v-if="files.length" class="w-full mt-4">
+            <h3 class="text-md font-semibold mb-2">Uploaded Files:</h3>
+            <ul class="list-disc pl-5 space-y-1">
+              <li v-for="(file, index) in files" :key="index" class="text-gray-700">
+                <a :href="file.preview" target="_blank" class="text-blue-500 underline">
+                  {{ file.name }}
+                </a>
+                <Button
+                  icon="pi pi-trash"
+                  class="p-button-text p-button-danger ml-2"
+                  @click="removeFile(index)"
+                />
+              </li>
+            </ul>
           </div>
+
+          <!-- Upload Button -->
+          <Button
+            v-if="!isUploadCompleted"
+            label="Upload Files"
+            class="p-button-success"
+            @click="handleUpload"
+            :disabled="files.length === 0"
+          />
         </div>
       </template>
     </Card>
   </div>
 </template>
-
-<style scoped>
-:deep(.p-card) {
-  background-color: white;
-  border-radius: 0.5rem;
-}
-
-:deep(.p-dropdown),
-:deep(.p-calendar),
-:deep(.p-inputtext),
-:deep(.p-textarea) {
-  width: 100%;
-}
-
-:deep(.p-fileupload-buttonbar) {
-  background-color: transparent;
-  border: none;
-  justify-content: center;
-}
-
-:deep(.p-button.p-fileupload-choose) {
-  background-color: #3b82f6;
-  border-color: #3b82f6;
-}
-
-:deep(.p-button.p-fileupload-choose:hover) {
-  background-color: #2563eb;
-  border-color: #2563eb;
-}
-
-:deep(.p-dropdown-item) {
-  padding: 0.5rem !important;
-}
-
-:deep(.p-dropdown-label) {
-  padding: 0.5rem !important;
-}
-</style>
