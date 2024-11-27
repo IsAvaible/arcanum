@@ -1,3 +1,4 @@
+const { hash } = require('crypto');
 const fs = require('fs');
 
 let nextcloudClient;
@@ -27,11 +28,40 @@ async function listFiles() {
 async function uploadFile(localFilePath, remoteFilePath, fileName) {
     await nextcloudClientPromise;
     const fileContent = fs.readFileSync(localFilePath);
+    const hashedFileContent = hash('sha256').update(fileContent).digest('hex');
     
+    const folder = ["Audio/", "Bilder/","Text/" ];
+    const fileExtension = fileName.split('.').pop().toLowerCase();
+    let folderPath = '';
+
+    switch (fileExtension) {
+        case 'mp3':
+        case 'wav':
+            folderPath = folder[0]; // Audio/
+            break;
+        case 'jpg':
+        case 'jpeg':
+        case 'png':
+        case 'gif':
+            folderPath = folder[1]; // Bilder/
+            break;
+        case 'txt':
+        case 'doc':
+        case 'pdf':
+            folderPath = folder[2]; // Text/
+            break;
+    }
+    if(folderPath === ''){
+        console.log('File type not found');
+        return -1;
+    }
+    remoteFilePath = remoteFilePath + folderPath + hashedFileContent;
     console.log('Uploading file:', localFilePath + ' to ' + remoteFilePath);
     
+    
+
     try {
-        await nextcloudClient.putFileContents(remoteFilePath+fileName, fileContent);
+        await nextcloudClient.putFileContents(remoteFilePath, fileContent);
         console.log('File uploaded successfully');
 
         fs.unlink(localFilePath, (err) => {
@@ -44,6 +74,8 @@ async function uploadFile(localFilePath, remoteFilePath, fileName) {
     } catch (error) {
         console.error('Error uploading file:', error);
     }
+
+    return remoteFilePath;
 }
 
 // Example function to download a file

@@ -52,4 +52,6 @@ router.post('/upload', (req, res) => {
 router.get('/upload', (req, res) => {
     res.render('./frontend/fileUpload');    
 });
+
+
 module.exports = router;
