@@ -55,7 +55,7 @@ def generate_case_langchain_production(request):
         json_str = request.get_json(force=True)
         attachments = json_str["attachments"]
         socket_id = json_str["socket_id"]
-        prompt = "Please create metadata for a new case based on the information provided and return them in JSON!"
+        prompt = "Please create metadata for a new case based on the information provided and return them in JSON! If the context contains Audio Files that were transcribed, please include granular timestamps in the format [filename, start, end]"
 
         llm = AzureChatOpenAI(
             azure_endpoint=AZURE_ENDPOINT,

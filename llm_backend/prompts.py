@@ -36,6 +36,9 @@ IGNORE and DO NOT create a case if the QUERY or CONTEXT is about:
 
 If you find multiple problems dont merge them into one case, make one case for each problem!
 
+You may receive transcripts of one or multiple audio file with timestamps.
+For each extracted detail, provide the specific timestamp range [filename, start -> end].
+
 DO NOT include personal names or sensitive data, especially when using audio files. Audio files should only complement general information and not serve as the primary source.
 Personal data should only include the assignee, i.e., the name(s) of the responsible person(s).
 ENSURE your response is in GERMAN and avoid using other languages unless necessary for understanding the CONTEXT.

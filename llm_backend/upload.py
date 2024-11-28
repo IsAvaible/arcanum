@@ -82,8 +82,9 @@ def upload_file_method_production(files, pdf_extractor):
         if allowed_file(filename):
             if "audio" in mimetype:
                 partialTranscription = transcribe(file, texts, llm, path, filename, whisper_prompt)
-                single_text = "".join(partialTranscription)
-                texts += " " + single_text
+                single_text = f"Transcript of Audiofile: {filename}: "
+                single_text = single_text + "".join(partialTranscription)
+                texts += "  " + single_text
             elif mimetype == "application/pdf":
                 texts += f" Content of PDF File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 single_text = create_text_chunks_pdfplumber(path)

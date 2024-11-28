@@ -27,16 +27,16 @@ class Case(BaseModel):
     )
     description: str = Field(
         ...,
-        description="A detailed explanation of the case, including relevant background information and context necessary for understanding the problem. This field should focus on the issue itself and should not include the solution.",
+        description="A detailed explanation of the case, including relevant background information and context necessary for understanding the problem. This field should focus on the issue itself and should not include the solution. Please always include multiple timestamps when you have an audio file.",
     )
     solution: str = Field(
         ...,
-        description="A proposed or implemented solution to address the case. If not yet resolved, this can include potential steps or approaches to consider.",
+        description="A proposed or implemented solution to address the case. If not yet resolved, this can include potential steps or approaches to consider. Please always include multiple timestamps when you have an audio file.",
     )
-    assignee: list[str] = Field(
+    """assignee: list[str] = Field(
         ...,
         description="The name or identifier of the person responsible for handling or resolving the case.",
-    )
+    )"""
     status: str = Field(
         ...,
         description="The current state of the case, such as 'open', 'in progress' or 'resolved' to track its progression.",
