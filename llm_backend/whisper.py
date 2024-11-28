@@ -9,7 +9,8 @@ from langchain_core.prompts import ChatPromptTemplate
 from app import app
 from audio import split_audio_with_overlap
 from prompts import get_system_prompt
-import openai
+from openai import AzureOpenAI
+
 
 
 load_dotenv()
@@ -21,10 +22,12 @@ AZURE_DEPLOYMENT = os.getenv("AZURE_DEPLOYMENT_WHISPER")
 OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
 AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 
-openai.api_type = "azure"
-openai.api_base = AZURE_ENDPOINT
-openai.api_version = AZURE_DEPLOYMENT  # Stelle sicher, dass diese Version unterstützt wird
-openai.api_key = AZURE_OPENAI_API_KEY
+
+
+client = AzureOpenAI(azure_endpoint=AZURE_ENDPOINT,
+                     api_version=AZURE_DEPLOYMENT,
+                     api_key=AZURE_OPENAI_API_KEY)
+  # Stelle sicher, dass diese Version unterstützt wird
 
 
 def transcribe(file, texts, llm, path, filename, whisper_prompt):
@@ -65,24 +68,20 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
             segment.export(path, format="mp3")
             # Set up AzureChatOpenAI with the required configurations
             with open(path, "rb") as audio_file:
-                response = openai.Audio.transcribe(
-                    file=audio_file,
-                    model=AZURE_DEPLOYMENT,
-                    response_format="verbose_json",
-                    prompt=whisper_prompt,
-                    timestamp_granularities=["word"]
-                )
-                print(response)
-            partialTranscription.append(response["text"])
-    else:
-        with open(path, "rb") as audio_file:
-            response = openai.Audio.transcribe(
-                file=audio_file,
+                response = client.audio.transcribe(file=audio_file,
                 model=AZURE_DEPLOYMENT,
                 response_format="verbose_json",
                 prompt=whisper_prompt,
-                timestamp_granularities=["word"]
-            )
+                timestamp_granularities=["word"])
+                print(response)
+            partialTranscription.append(response.text)
+    else:
+        with open(path, "rb") as audio_file:
+            response = client.audio.transcribe(file=audio_file,
+            model=AZURE_DEPLOYMENT,
+            response_format="verbose_json",
+            prompt=whisper_prompt,
+            timestamp_granularities=["word"])
             print(response)
-        partialTranscription.append(response["text"])
+        partialTranscription.append(response.text)
     return partialTranscription
