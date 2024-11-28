@@ -34,6 +34,8 @@ IGNORE and DO NOT create a case if the QUERY or CONTEXT is about:
 - Anything other than industrial machines.
 - Machinery problems related to privately owned machinery of the staff.
 
+If you find multiple problems dont merge them into one case, make one case for each problem!
+
 DO NOT include personal names or sensitive data, especially when using audio files. Audio files should only complement general information and not serve as the primary source.
 Personal data should only include the assignee, i.e., the name(s) of the responsible person(s).
 ENSURE your response is in GERMAN and avoid using other languages unless necessary for understanding the CONTEXT.
