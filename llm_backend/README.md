@@ -31,3 +31,35 @@
   ]
 }            
 ```
+
+### Beispiel Antwort:
+
+```
+{
+    "cases": [
+        {
+            "assignee": [
+                "Marcel"
+            ],
+            "attachments": [
+                1234
+            ],
+            "description": "Das Schweißgerät MIG4300Pro macht merkwürdige Geräusche, die auf eine mögliche Überlastung des Motors hindeuten. Zudem schaltet sich das Gerät bei längeren Schweißnähten ab. Die Stromversorgung wurde überprüft und ist stabil. Die Lüftungsschlitze sind frei, jedoch wurde festgestellt, dass der Draht in der Drahtzuführung verhakt war.",
+            "solution": "Die Drahtrolle wurde neu ausgerichtet, was das Problem behoben hat.",
+            "status": "resolved",
+            "title": "Merkwürdige Geräusche und Abschaltung des Schweißgeräts MIG4300Pro"
+        },
+        {
+            "assignee": [],
+            "attachments": [
+                4567
+            ],
+            "description": "Beim Schweißen mit dem MIG4300Pro trat kein Gasfluss auf, was zu Poren in der Schweißnaht führte. Die Gasflasche war noch halb voll und das Ventil war offen. Alle Schlauchverbindungen wurden kontrolliert und es wurde festgestellt, dass der Schlauch beschädigt war.",
+            "solution": "Ein neuer Schlauch wurde installiert, was den Gasfluss wiederherstellte und die Schweißnähte verbesserten sich.",
+            "status": "resolved",
+            "title": "Kein Gasfluss beim Schweißgerät MIG4300Pro"
+        }
+    ]
+}
+
+```
