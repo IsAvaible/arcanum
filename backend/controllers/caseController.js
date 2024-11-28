@@ -188,7 +188,7 @@ exports.createCase = [
                       size: file.size,
                       description: '', // Optional: aus req.body
                       uploadedAt: new Date(),
-                      filehash: '', // Optional: Hash berechnen
+                      filehash: remoteFilePath.substring(remoteFilePath.lastIndexOf('/') +1, remoteFilePath.lastIndexOf('.')), 
                   };
 
                   attachment = await Attachments.create(attachmentData);
@@ -314,7 +314,7 @@ exports.createCase = [
                       size: file.size,
                       description: '', // Optional: aus req.body
                       uploadedAt: new Date(),
-                      filehash: '', // Optional: Hash berechnen
+                      filehash: remoteFilePath.substring(remoteFilePath.lastIndexOf('/') +1, remoteFilePath.lastIndexOf('.')), // Optional: Hash berechnen
                   };
 
                   attachment = await Attachments.create(attachmentData);

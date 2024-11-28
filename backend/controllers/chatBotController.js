@@ -77,7 +77,7 @@ exports.createCaseFromFiles = [
                           size: file.size,
                           description: '', // Optional: aus req.body
                           uploadedAt: new Date(),
-                          filehash: '', // Optional: Hash berechnen
+                          filehash: remoteFilePath.substring(remoteFilePath.lastIndexOf('/') +1, remoteFilePath.lastIndexOf('.')), 
                       };
 
                       attachment = await Attachments.create(attachmentData);
@@ -221,14 +221,19 @@ exports.createCaseFromFiles = [
       }
 
  
-
-
-  
       // **Aktualisierten Case abrufen**
-      const updatedCase = await Cases.findByPk(caseId);
+      const updatedCaseWithAttachments = await Cases.findByPk(caseId, {
+        include: [{
+            model: Attachments,
+            as: 'attachments',
+            through: { attributes: [] }
+        }]
+    });
+  
+
 
       //const llmResponse = await axios.post('URL_ZUM_LLM_ENDPOINT', { cases: [updatedCase] });
-      res.json(updatedCase);
+      res.json(updatedCaseWithAttachments);
       //res.json(llmResponse);
     } catch (error) {
       console.error('Error updating case:', error);
@@ -247,8 +252,8 @@ exports.createCaseFromFiles = [
         "solution": "TestLLMSolution",
         "status": "TestLLMStatus",
         "attachments": [ 
-          40,
-          41
+          48,
+          53
         ], 
       }
   };
