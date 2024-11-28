@@ -17,17 +17,18 @@ function checkFileName(file) {
 // Check file type
 function checkFileType(file, cb) {
     // Allowed ext
-    const filetypes = /jpeg|jpg|png|gif|txt|pdf/;
+    const filetypes = /jpeg|jpg|png|gif|txt|pdf|mp3|wav|doc/;
     // Check ext
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
     
-    const mimetypes = /image\/jpeg|image\/jpg|image\/png|image\/gif|text\/plain|application\/pdf/; 
+    const mimetypes = /image\/jpeg|image\/jpg|image\/png|image\/gif|text\/plain|application\/pdf|audio\/mpeg|audio\/wav|application\/msword/; 
     // Check mime
     const mimetype = mimetypes.test(file.mimetype);
+   
 
     if (mimetype && extname) {
-        console.log("File Type Chekc succsessfull")
-        return cb(null, true);
+        console.log("File type check succsessfull")
+        return cb(null, true), extname;
     } else {
         cb('Error: Images/Text Only!');
     }

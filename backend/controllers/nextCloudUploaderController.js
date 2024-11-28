@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const fs = require('fs');
 
 let nextcloudClient;
@@ -14,9 +15,21 @@ const nextcloudClientPromise = (async () => {
   })();
 
 // Example function to list files in the root directory
-async function listFiles() {
+async function listFiles(remoteFilePath) {
     try {
-        const directoryItems = await nextcloudClient.getDirectoryContents('/test-folder/');
+        const directoryItems = await nextcloudClient.getDirectoryContents(remoteFilePath.toString());
+      //  console.log(directoryItems);
+        return directoryItems;
+    } catch (error) {
+        
+        console.error('Error listing files:', error);
+    }
+}
+
+// list file in a specific folder and check if the file is already in the folder
+async function listFilesSpec(remoteFolder, fileName) {
+    try {
+        const directoryItems = await nextcloudClient.getDirectoryContents(remoteFolder);
         console.log(directoryItems);
     } catch (error) {
         console.error('Error listing files:', error);
@@ -27,13 +40,66 @@ async function listFiles() {
 async function uploadFile(localFilePath, remoteFilePath, fileName) {
     await nextcloudClientPromise;
     const fileContent = fs.readFileSync(localFilePath);
+    let hashedFileContent = '';
+
+    try{
+        hashedFileContent = crypto.createHash('sha256').update(fileContent).digest('hex');
+        console.log('Hashed file content:', hashedFileContent);
+    } catch (error) {   
+        console.error('Error hashing file content:', error);
+    }
     
-    console.log('Uploading file:', localFilePath + ' to ' + remoteFilePath);
+    const folder = ["Audio/", "Bilder/","Text/" ];
+    const fileExtension = fileName.split('.').pop().toLowerCase();
+    let folderPath = '';
+
+    console.log("Fieltype: " + fileExtension);
+    switch (fileExtension) {
+        case 'mp3':
+        case 'wav':
+            folderPath = folder[0]; // Audio/
+            break;
+        case 'jpg':
+        case 'jpeg':
+        case 'png':
+        case 'gif':
+            folderPath = folder[1]; // Bilder/
+            break;
+        case 'txt':
+        case 'doc':
+        case 'pdf':
+            folderPath = folder[2]; // Text/
+            break;
+    }
+    if(folderPath === ''){
+        console.log('File type not found');
+        return -1;
+    }
     
     try {
-        await nextcloudClient.putFileContents(remoteFilePath+fileName, fileContent);
+        const directoryItems = await listFiles(remoteFilePath + folderPath);
+        remoteFilePath = remoteFilePath + folderPath + hashedFileContent.toString() + '.' + fileExtension;
+        
+        if(directoryItems !== undefined){
+            for (const item of directoryItems) {
+                    //console.log('Item:', item.basename + " == " + hashedFileContent.toString()+ "." + fileExtension);
+                    if (item.basename === hashedFileContent.toString() + "." + fileExtension) {
+                        console.log('File already exists in the folder, skipping upload');
+                        return -1;
+                    }
+                }
+            } else {
+                console.log('Can not list Folder content');
+            }
+    
+        
+        await nextcloudClient.putFileContents(remoteFilePath, fileContent);
         console.log('File uploaded successfully');
 
+    } catch (error) {
+        console.error('Error uploading file:', error);
+    } finally {
+        
         fs.unlink(localFilePath, (err) => {
             if (err) {
               console.error('Error deleting file:', err);
@@ -41,9 +107,9 @@ async function uploadFile(localFilePath, remoteFilePath, fileName) {
               console.log('File deleted successfully');
             }
           });
-    } catch (error) {
-        console.error('Error uploading file:', error);
     }
+
+    return remoteFilePath;
 }
 
 // Example function to download a file
