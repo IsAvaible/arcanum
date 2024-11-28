@@ -9,7 +9,7 @@
   - Endpunkt zu Case Generierung ist `http://127.0.0.1:5001/generate_case`
   - HTTP Methode -> POST
 
-### Beispiel JSON:
+### Beispiel Request:
 ```
 {
   "socket_id" : "123",
@@ -32,7 +32,7 @@
 }            
 ```
 
-### Beispiel Antwort:
+### Beispiel Response:
 
 ```
 {
