@@ -11,7 +11,7 @@
 
 ### Beispiel JSON:
 ```
-  {
+{
   "socket_id" : "123",
   "attachments":[
       {	
@@ -29,6 +29,5 @@
           "filehash": "12345678912456789b"
       }
   ]
-}
-                
+}            
 ```
