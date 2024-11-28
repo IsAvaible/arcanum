@@ -75,7 +75,6 @@ exports.createCaseFromFiles = [
                           filepath: remoteFilePath,
                           mimetype: file.mimetype,
                           size: file.size,
-                          description: '', // Optional: aus req.body
                           uploadedAt: new Date(),
                           filehash: remoteFilePath.substring(remoteFilePath.lastIndexOf('/') +1, remoteFilePath.lastIndexOf('.')), 
                       };
@@ -102,7 +101,7 @@ exports.createCaseFromFiles = [
       console.log( "Sende ans LLM: ",JSON.stringify(llmRequestData));
       //Daten an das LLM senden 
       try{
-        //const llmResponse = await axios.post('URL_ZUM_LLM_ENDPOINT', llmRequestData);    
+        //const llmResponse = await axios.post('localhost:5001/generate_case', llmRequestData);    
 
         const llmResponse = testLLMResponse;
         const responseData = llmResponse;
@@ -170,14 +169,14 @@ exports.createCaseFromFiles = [
 
           console.log( "Erstellter Case: ", JSON.stringify(casesAll));
             // Antwort an das Frontend senden
-            res.status(200).json(casesAll);
+            res.status(201).json(casesAll);
         } else if(responseData.message){
             res.status(200).json({ message: responseData.message });
         } else {
-            res.status(500).json({ error: 'Unerwartete Antwort vom LLM' });
+            res.status(500).json({ error: 'Error creating case.' });
           }
         } catch (error) {
-          res.status(500).json({ error: 'Fehler beim Senden der Daten an das LLM' });
+          res.status(500).json({ error: 'Error creating case.' });
         }
 
       
@@ -232,7 +231,7 @@ exports.createCaseFromFiles = [
   
 
 
-      //const llmResponse = await axios.post('URL_ZUM_LLM_ENDPOINT', { cases: [updatedCase] });
+      //const llmResponse = await axios.post('localhost:5001/safe_case', updatedCaseWithAttachments);
       res.json(updatedCaseWithAttachments);
       //res.json(llmResponse);
     } catch (error) {
@@ -252,8 +251,8 @@ exports.createCaseFromFiles = [
         "solution": "TestLLMSolution",
         "status": "TestLLMStatus",
         "attachments": [ 
-          48,
-          53
+          56,
+          57
         ], 
       }
   };

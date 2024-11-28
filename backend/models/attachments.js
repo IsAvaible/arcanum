@@ -38,10 +38,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    description: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
     uploadedAt: {
       type: DataTypes.DATE,
       allowNull: false,

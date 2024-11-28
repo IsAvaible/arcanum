@@ -186,7 +186,6 @@ exports.createCase = [
                       filepath: remoteFilePath,
                       mimetype: file.mimetype,
                       size: file.size,
-                      description: '', // Optional: aus req.body
                       uploadedAt: new Date(),
                       filehash: remoteFilePath.substring(remoteFilePath.lastIndexOf('/') +1, remoteFilePath.lastIndexOf('.')), 
                   };
@@ -312,7 +311,6 @@ exports.createCase = [
                       filepath: remoteFilePath,
                       mimetype: file.mimetype,
                       size: file.size,
-                      description: '', // Optional: aus req.body
                       uploadedAt: new Date(),
                       filehash: remoteFilePath.substring(remoteFilePath.lastIndexOf('/') +1, remoteFilePath.lastIndexOf('.')), // Optional: Hash berechnen
                   };

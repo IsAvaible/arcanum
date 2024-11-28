@@ -26,10 +26,6 @@ module.exports = {
         allowNull: false,
         type: Sequelize.INTEGER
       },
-      description: {
-        allowNull: true,
-        type: Sequelize.STRING
-      },
       uploadedAt: {
         allowNull: false,
         type: Sequelize.DATE,
