@@ -54,15 +54,15 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
     texts += f" NEW AUDIO FILE {json.dumps(file)} - CONTENT: "
     # split if 24mb or greater
 
-    partialTranscription = []
+    #partialTranscription = []
     new_segments = []
 
     if float(file_size_mb) > 24.0:
         # split files
         segments = split_audio_with_overlap(path, segment_length_ms=300000, overlap_ms=500)
         for idx, segment in enumerate(segments):
-            if partialTranscription:
-                partial_transcript_to_context = partialTranscription[-1][-200:]
+            #if partialTranscription:
+                #partial_transcript_to_context = partialTranscription[-1][-200:]
                 # print("partialTranscription:"+str(partial_transcript_to_context)+"\n\n")
             print(f"segment {idx}")
             path = os.path.join(
