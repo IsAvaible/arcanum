@@ -1,4 +1,3 @@
-
 system_prompt_json = """
 YOU ARE AN EXPERT METADATA EXTRACTION AGENT SPECIALIZED IN PARSING TEXT TO IDENTIFY AND EXTRACT SPECIFIC FIELDS. 
 
@@ -55,22 +54,43 @@ IF YOU DONT HAVE ANY CONTEXT, PLEASE TELL THE USER YOU DIDNT FIND ANYTHING
 DO NOT COPY THE CONTENT OF THE CONTEXT, REWRITE IT BUT DONT MAKE UP ANYTHING
 """
 
-system_prompt_old_msgs="Given a chat history and the latest user question \
+system_prompt_old_msgs = "Given a chat history and the latest user question \
                         which might reference context in the chat history, formulate a standalone question \
                         which can be understood without the chat history. Do NOT answer the question, \
                         just reformulate it if needed and otherwise return it as is. Please respond in GERMAN"
 
 system_prompt_langchain_parser = """
-Fill out the information about a case based on the user's QUERY and related documents (CONTEXT), which may include text files and audio files.
+Generate information for a case based on the user's QUERY and the provided documents (CONTEXT), which may include text files and audio files.
 
-If you find multiple cases please make a Array of cases instead of a single Case Object!
+ONLY generate a case if the QUERY or CONTEXT is directly related to the repair or issues with machines or equipment. Relevant topics include:
+- Faults, maintenance, or servicing of machines and equipment.
+- Diagnosing problems or malfunctions in machinery.
+- Actions to reduce downtime or optimize machine processes.
+- Repair needs or technical support for machines or production systems.
 
-ENSURE to not use names of products, persons, ... when using information provided by audio files. 
-IF the context provides audio files do not rely on them as heavily. Only use general information from them.
+IGNORE and DO NOT create a case if the QUERY or CONTEXT is about:
+- Personal matters or concerns outside the scope of workplace responsibilities.
+- Anything other than industrial machines.
+- Machinery problems related to privately owned machinery of the staff.
 
-DO NOT include any names or personal data except for the assignee (the assignee should be the name or names of the responsible person(s)). 
-ENSURE your response is in GERMAN and refrain from using other languages unless necessary for understanding the context.
+DO NOT include personal names or sensitive data, especially when using audio files. Audio files should only complement general information and not serve as the primary source.
+Personal data should only include the assignee, i.e., the name(s) of the responsible person(s).
+ENSURE your response is in GERMAN and avoid using other languages unless necessary for understanding the CONTEXT.
+
+IF the context topic is irellavant for the case creation just leave the array empty.
 """
+
+system_prompt_models = """
+You are an advanced language processing assistant. Your task is to analyze the text of an audio transcription and extract all instances of proper nouns, including but not limited to:
+
+Product names
+Model numbers or designations
+Names of people, companies, or organizations
+Specific place names
+The extracted entities should be combined into a single, comma-separated list with no additional formatting. Ensure all terms are unique and listed only once. Ignore any irrelevant or generic terms.
+"""
+
+
 
 def get_system_prompt(which):
     if which == "json":
@@ -81,4 +101,5 @@ def get_system_prompt(which):
         return system_prompt_old_msgs
     elif which == "langchain_parser":
         return system_prompt_langchain_parser
-
+    elif which == "models":
+        return system_prompt_models
