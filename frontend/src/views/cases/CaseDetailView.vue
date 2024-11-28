@@ -7,9 +7,12 @@ import Dropdown from 'primevue/dropdown'
 import Calendar from 'primevue/calendar'
 import Textarea from 'primevue/textarea'
 import FileUpload from 'primevue/fileupload'
+import { useRouter } from 'vue-router'
 
 const caseNumber = ref('12345')
 const breadcrumb = ref('Cases / Servicecase / Overview')
+
+const router = useRouter()
 
 const caseDetails = ref({
   type: 'Servicecase',
@@ -92,7 +95,17 @@ const getUploadProps = (dataType: string) => {
     <!-- Header -->
     <div class="mb-8">
       <div class="flex justify-between items-center mb-2">
-        <h1 class="text-2xl font-bold text-gray-900">Case #{{ caseNumber }}</h1>
+        <div class="flex gap-3 items-center">
+          <Button
+            @click="router.push('/cases')"
+            icon="pi pi-chevron-left"
+            outlined
+            rounded
+            v-tooltip.top="{ value: 'Return to Case List', showDelay: 1000 }"
+          />
+          <h1 class="text-2xl font-bold text-gray-900">Case #{{ caseNumber }}</h1>
+        </div>
+
         <div class="flex gap-2">
           <Button label="Generate PDF" icon="pi pi-file-pdf" class="p-button-success" />
           <Button label="Plan Call" icon="pi pi-phone" class="p-button-success" />

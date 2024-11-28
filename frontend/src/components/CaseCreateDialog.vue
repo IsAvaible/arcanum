@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-
 import Dialog from 'primevue/dialog'
 
 import Accordion from 'primevue/accordion'
@@ -30,10 +28,17 @@ import CaseCreateStepper from '@/components/case-create-form/CaseCreateStepper.v
 import { toTypedSchema } from '@vee-validate/zod'
 import * as zod from 'zod'
 import { useForm } from 'vee-validate'
+import { useVModel } from '@vueuse/core'
 
 const toast = useToast()
 
-const dialogVisible = ref(true)
+const props = defineProps<{
+  visible: boolean
+}>()
+
+const emit = defineEmits(['update:visible'])
+
+const dialogVisible = useVModel(props, 'visible', emit)
 
 const caseTypes = [
   {
@@ -163,6 +168,15 @@ const onSubmit = handleSubmit((_values) => {
     life: 3000,
   })
 })
+
+const dialogPT = {
+  content: {
+    class: 'flex-1',
+  },
+  footer: {
+    class: 'pt-5',
+  },
+}
 </script>
 
 <template>
@@ -171,6 +185,7 @@ const onSubmit = handleSubmit((_values) => {
     class="w-[calc(100%-3rem)] max-w-7xl bg-slate-100 h-[calc(100%-3rem)] max-h-[min(1024px, calc(100%-3rem))] flex flex-col"
     :modal="true"
     :closable="false"
+    :pt="dialogPT"
   >
     <template #header>
       <div class="w-full -m-5 p-5 box-content bg-white rounded-t-xl overflow-x-auto">
@@ -380,7 +395,8 @@ const onSubmit = handleSubmit((_values) => {
 
     <template #footer>
       <div class="w-full -m-5 p-5 box-content bg-white flex justify-between rounded-b-xl">
-        <Button label="Cancel" @click="dialogVisible = false" variant="text" />
+        <!-- Cancel Button with RouterLink -->
+        <Button label="Cancel" variant="text" @click="dialogVisible = false" />
         <div class="flex gap-x-5">
           <Button
             label="Previous"
@@ -405,32 +421,49 @@ const onSubmit = handleSubmit((_values) => {
   </Dialog>
 </template>
 
-<style>
-.p-dialog-footer {
-  @apply mt-auto;
-}
-
-.p-dialog-content {
-  @apply flex-1;
-}
-
-.p-accordionpanel-active {
+<style scoped>
+:deep(.p-accordionpanel-active) {
   @apply flex-1 lg-h:overflow-auto scrollbar-thin;
 }
 
-.p-accordionpanel-active > .p-accordionheader {
+:deep(.p-accordionpanel-active > .p-accordionheader) {
   @apply pointer-events-none;
 }
 
-.p-accordioncontent {
+:deep(.p-accordioncontent) {
   @apply flex-1 flex flex-col;
 }
 
-.p-accordioncontent-content {
+:deep(.p-accordioncontent-content) {
   @apply flex-1;
 }
 
-.p-dialog-footer {
-  @apply pt-5;
+:deep(*) {
+  --p-primary-50: #eff6ff;
+  --p-primary-100: #dbeafe;
+  --p-primary-200: #bfdbfe;
+  --p-primary-300: #93c5fd;
+  --p-primary-400: #60a5fa;
+  --p-primary-500: #3b82f6;
+  --p-primary-600: #2563eb;
+  --p-primary-700: #1d4ed8;
+  --p-primary-800: #1e40af;
+  --p-primary-900: #1e3a8a;
+  --p-primary-950: #1e3a8a;
+  --p-primary-color: var(--p-primary-500);
+  --p-primary-contrast-color: var(--p-surface-0);
+  --p-primary-hover-color: var(--p-primary-600);
+  --p-primary-active-color: var(--p-primary-700);
+  --p-content-border-color: var(--p-surface-200);
+  --p-content-hover-background: var(--p-surface-100);
+  --p-content-hover-color: var(--p-surface-800);
+  --p-highlight-background: var(--p-primary-50);
+  --p-highlight-color: var(--p-primary-700);
+  --p-highlight-focus-background: var(--p-primary-100);
+  --p-highlight-focus-color: var(--p-primary-800);
+  --p-text-color: var(--p-surface-700);
+  --p-text-hover-color: var(--p-surface-800);
+  --p-text-muted-color: var(--p-surface-500);
+  --p-text-hover-muted-color: var(--p-surface-600);
 }
 </style>

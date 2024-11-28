@@ -1,38 +1,86 @@
 import json
 import os
 
+from dotenv import load_dotenv
 from flask import jsonify, Blueprint, session
 from langchain_chroma import Chroma
-from langchain_openai import OpenAIEmbeddings
 
 from app import socketio
 from prompts import get_system_prompt
 from session import add_value_to_session_list
-from upload import upload_file_method
+from upload import upload_file_method, upload_file_method_production
 
 from langchain_core.output_parsers import JsonOutputParser
-from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import ValidationError
 from langchain_core.prompts import MessagesPlaceholder
+from langchain_openai import AzureChatOpenAI
+from langchain_openai import AzureOpenAIEmbeddings
+
+load_dotenv()
+
+AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
+AZURE_DEPLOYMENT_GPT = os.getenv("AZURE_DEPLOYMENT_GPT")
+AZURE_DEPLOYMENT_EMBEDDING = os.getenv("AZURE_DEPLOYMENT_EMBEDDING")
+OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
+
 
 vector_store = None
-openai_models = ['gpt-4o-mini', 'gpt-3.5-turbo-0125', 'gpt-3.5-turbo-1106']
-llm = Blueprint('llm', __name__)
+openai_models = ["gpt-4o-mini", "gpt-3.5-turbo-0125", "gpt-3.5-turbo-1106"]
+llm = Blueprint("llm", __name__)
 
+
+
+class CaseAttachment(BaseModel):
+    file_id: int = Field(
+        ...,
+        description="A unique numeric identifier for the file within the system."
+    )
+    filename: str = Field(
+        ...,
+        description="The name of the file, including its extension (e.g., 'document.pdf'), as stored in the system."
+    )
+    filepath: str = Field(
+        ...,
+        description="The full path to the file's location on the system, specifying where the file is stored."
+    )
+    filehash: str = Field(
+        ...,
+        description="A unique hash generated for the file to verify its integrity and identify its contents."
+    )
 
 # defining the desired output of the llm
 class Case(BaseModel):
-    title: str = Field(...,description="A short, clear summary of the case. This should provide a concise idea of the issue at hand.")
-    description: str = Field(...,description="A detailed explanation of the case, including relevant background information and context necessary for understanding the problem. This field should focus on the issue itself and should not include the solution.")
-    solution: str = Field(...,description="A proposed or implemented solution to address the case. If not yet resolved, this can include potential steps or approaches to consider.")
-    assignee: list[str] = Field(...,description="The name or identifier of the person responsible for handling or resolving the case.")
-    status: str = Field(...,description="The current state of the case, such as 'open', 'in progress' or 'resolved' to track its progression.")
+    title: str = Field(
+        ...,
+        description="A short, clear summary of the case. This should provide a concise idea of the issue at hand.",
+    )
+    description: str = Field(
+        ...,
+        description="A detailed explanation of the case, including relevant background information and context necessary for understanding the problem. This field should focus on the issue itself and should not include the solution.",
+    )
+    solution: str = Field(
+        ...,
+        description="A proposed or implemented solution to address the case. If not yet resolved, this can include potential steps or approaches to consider.",
+    )
+    assignee: list[str] = Field(
+        ...,
+        description="The name or identifier of the person responsible for handling or resolving the case.",
+    )
+    status: str = Field(
+        ...,
+        description="The current state of the case, such as 'open', 'in progress' or 'resolved' to track its progression.",
+    )
+    attachment: list[CaseAttachment] = Field(
+        ...,
+        description="All the files that were used to generate this Case.",
+    )
 
 
 class CaseArray(BaseModel):
-    cases: list[Case] = Field(...,description="A list of one or multiple cases.")
+    cases: list[Case] = Field(..., description="A list of one or multiple cases.")
+
 
 def check_if_output_is_valid(chain_output):
     try:
@@ -45,12 +93,13 @@ def check_if_output_is_valid(chain_output):
 
         return False
 
-def start_quering_llm(invokedPrompt,llm,parser,max_tries=3) -> dict :
+
+def start_quering_llm(invokedPrompt, llm, parser, max_tries=3) -> dict:
     """
     Queries the LLM with the given prompt template, LLM, and parser to generate a valid case.
     If the output is invalid (i.e., not in JSON format or missing some required parameters),
     the function re-queries the LLM until it gets a valid output or reaches the maximum number of retries.
-    
+
     Returns:
         dict: The output case formatted as a Python dictionary if valid, otherwise returning an empty dict.
     """
@@ -58,7 +107,7 @@ def start_quering_llm(invokedPrompt,llm,parser,max_tries=3) -> dict :
     chain_output = chain.invoke(invokedPrompt)
 
     is_valid = False
-    for try_number in range(1,max_tries+1):
+    for try_number in range(1, max_tries + 1):
         is_valid = check_if_output_is_valid(chain_output)
         if is_valid:
             break
@@ -76,25 +125,70 @@ def start_quering_llm(invokedPrompt,llm,parser,max_tries=3) -> dict :
     return chain_output
 
 
-def generate_case_langchain(request):
-    if request.method == 'POST':
-        files = request.files.getlist("file")
-        model = request.form.get("model")
-        prompt = request.form.get("prompt")
-        chat_counter = request.form.get("chat_counter")
-        pdf_extractor = request.form.get("pdf_extractor")
+def generate_case_langchain_production(request):
+    if request.method == "POST":
+        json_str = request.get_json(force=True)
+        attachments = json_str["attachments"]
+        socket_id = json_str["socket_id"]
+        prompt = "Please create metadata for a new case based on the information provided and return them in JSON!"
 
-        llm = ChatOpenAI(
-            model=model,
+        llm = AzureChatOpenAI(
+            azure_endpoint=AZURE_ENDPOINT,
+            azure_deployment=AZURE_DEPLOYMENT_GPT,
+            openai_api_version=OPENAI_API_VERSION,
             temperature=0,
             max_tokens=None,
             timeout=None,
             max_retries=2,
-            streaming=False
+            streaming=False,
         )
+
+        context = upload_file_method_production(attachments, socket_id)
+
+        system_prompt_langchain_parser = get_system_prompt("langchain_parser")
+        case_parser_json = JsonOutputParser(pydantic_object=CaseArray)
+
+        messages = [
+            ("system", "{system_prompt}\n{format_instructions}"),
+            ("human", "CONTEXT: {context}\n\nQUERY: {query}"),
+        ]
+
+        promptLangchain = ChatPromptTemplate.from_messages(messages).partial(
+            system_prompt=system_prompt_langchain_parser,
+            format_instructions=case_parser_json.get_format_instructions(),
+        )
+        promptLangchainInvoked = promptLangchain.invoke(
+            {"context": context, "query": prompt}
+        )
+
+        response_dict = start_quering_llm(
+            promptLangchainInvoked, llm, case_parser_json, max_tries=3
+        )
+
+        return jsonify(response_dict), 200
+
+
+def generate_case_langchain(request):
+    if request.method == "POST":
+        files = request.files.getlist("file")
+        prompt = request.form.get("prompt")
+        chat_counter = request.form.get("chat_counter")
+        pdf_extractor = request.form.get("pdf_extractor")
+
+        llm = AzureChatOpenAI(
+            azure_endpoint=AZURE_ENDPOINT,
+            azure_deployment=AZURE_DEPLOYMENT_GPT,
+            openai_api_version=OPENAI_API_VERSION,
+            temperature=0,
+            max_tokens=None,
+            timeout=None,
+            max_retries=2,
+            streaming=False,
+        )
+
         if not prompt:
-            return jsonify({'error': 'No prompt provided'}), 400
-        
+            return jsonify({"error": "No prompt provided"}), 400
+
         # Kontext sammeln und in der Session speichern
         session_key = f"context{chat_counter}"
         old_messages_key = f"old_messages{chat_counter}"
@@ -113,49 +207,66 @@ def generate_case_langchain(request):
         # Set up a parser + inject instructions into the prompt template.
         case_parser_json = JsonOutputParser(pydantic_object=CaseArray)
         messages = [
-            ("system","{system_prompt}\n{format_instructions}"),
+            ("system", "{system_prompt}\n{format_instructions}"),
             MessagesPlaceholder("history"),
-            ("human", "CONTEXT: {context}\n\nQUERY: {query}")
+            ("human", "CONTEXT: {context}\n\nQUERY: {query}"),
         ]
-        promptLangchain = ChatPromptTemplate.from_messages(messages).partial(system_prompt=system_prompt_langchain_parser,format_instructions=case_parser_json.get_format_instructions())
-        promptLangchainInvoked = promptLangchain.invoke({"context": context, "query": prompt, "history":history})
-        print(promptLangchainInvoked)
+        promptLangchain = ChatPromptTemplate.from_messages(messages).partial(
+            system_prompt=system_prompt_langchain_parser,
+            format_instructions=case_parser_json.get_format_instructions(),
+        )
+        promptLangchainInvoked = promptLangchain.invoke(
+            {"context": context, "query": prompt, "history": history}
+        )
+        response_dict = start_quering_llm(
+            promptLangchainInvoked, llm, case_parser_json, max_tries=3
+        )
+        response_json_string = json.dumps(
+            response_dict, indent=2, ensure_ascii=False
+        )  # makes the dict print out more readable for the user
 
-        response_dict = start_quering_llm(promptLangchainInvoked,llm,case_parser_json,max_tries=3)
-        response_json_string = json.dumps(response_dict, indent=2, ensure_ascii=False) # makes the dict print out more readable for the user
-
-        
-        add_value_to_session_list(old_messages_key,("human", prompt))
-        add_value_to_session_list(old_messages_key,("assistant", response_json_string))
+        add_value_to_session_list(old_messages_key, ("human", prompt))
+        add_value_to_session_list(old_messages_key, ("assistant", response_json_string))
 
         old_messages_json_key = f"old_messages_json_{chat_counter}"
-        add_value_to_session_list(old_messages_json_key, chat_message_to_json(("human", prompt)))
-        add_value_to_session_list(old_messages_json_key, chat_message_to_json(("assistant", response_json_string)))
+        add_value_to_session_list(
+            old_messages_json_key, chat_message_to_json(("human", prompt))
+        )
+        add_value_to_session_list(
+            old_messages_json_key,
+            chat_message_to_json(("assistant", response_json_string)),
+        )
 
         return response_json_string, 200
 
+
 def chat(request):
-    if request.method == 'POST':
-        model = request.form.get("model")
+    if request.method == "POST":
         prompt = request.form.get("prompt")
 
         if not prompt:
-            return jsonify({'error': 'No prompt provided'}), 400
+            return jsonify({"error": "No prompt provided"}), 400
 
         chat_counter = request.form.get("chat_counter")
 
-        llm = ChatOpenAI(
-            model=model,
+        llm = AzureChatOpenAI(
+            azure_endpoint=AZURE_ENDPOINT,
+            azure_deployment=AZURE_DEPLOYMENT_GPT,
+            openai_api_version=OPENAI_API_VERSION,
             temperature=0,
             max_tokens=None,
             timeout=None,
-            streaming=True
+            max_retries=2,
+            streaming=True,
         )
 
-        embedding_function = OpenAIEmbeddings(model='text-embedding-3-large')
+        embedding_function = AzureOpenAIEmbeddings(
+            azure_endpoint=AZURE_ENDPOINT,
+            azure_deployment=AZURE_DEPLOYMENT_EMBEDDING,
+            api_version=OPENAI_API_VERSION,
+        )
         vector_store = Chroma(
-            persist_directory=".chromadb/",
-            embedding_function=embedding_function
+            persist_directory=".chromadb/", embedding_function=embedding_function
         )
         # GET OLD MSGS
         old_messages_key = f"old_messages{chat_counter}"
@@ -164,7 +275,10 @@ def chat(request):
 
         if old_messages:
             all_msgs = "\n".join(x[1] for x in old_messages)
-            old_msgs = [("system", get_system_prompt("old_msgs")),("human", all_msgs + "That is the latest user query: " + prompt)]
+            old_msgs = [
+                ("system", get_system_prompt("old_msgs")),
+                ("human", all_msgs + "That is the latest user query: " + prompt),
+            ]
             new_prompt = llm.invoke(old_msgs).content
             embedding_vector = embedding_function.embed_query(new_prompt)
         else:
@@ -191,8 +305,10 @@ def chat(request):
         # Alte Nachrichten sammeln und in der Session speichern
 
         human_query_tup_without_context = ("human", new_prompt)
-        human_query_tup_with_context = ("human", "Please take this as input data: " + context)
-
+        human_query_tup_with_context = (
+            "human",
+            "Please take this as input data: " + context,
+        )
 
         messages = [
             ("system", get_system_prompt("chat")),
@@ -209,15 +325,14 @@ def chat(request):
         # LLM-Response streamen
         result = ""
         response_generator = llm.stream(messages)
-        socketio.emit(f"stream{chat_counter}", {'content': "START_LLM_MESSAGE"})
+        socketio.emit(f"stream{chat_counter}", {"content": "START_LLM_MESSAGE"})
 
         for response_chunk in response_generator:
             result_chunk = response_chunk.content
             result += result_chunk
-            socketio.emit(f"stream{chat_counter}", {'content': result_chunk})
+            socketio.emit(f"stream{chat_counter}", {"content": result_chunk})
 
-
-        socketio.emit(f"stream{chat_counter}", {'content': "END_LLM_MESSAGE"})
+        socketio.emit(f"stream{chat_counter}", {"content": "END_LLM_MESSAGE"})
 
         add_value_to_session_list(old_messages_key, ("assistant", result))
 
@@ -226,31 +341,27 @@ def chat(request):
         for msg in old_msgs:
             add_value_to_session_list(old_messages_json_key, chat_message_to_json(msg))
 
-        return '', 200
-
+        return "", 200
 
 
 def format_chat_messages(messages):
     formatted_messages = []
     for role, content in messages:
         formatted_messages.append(f"{role.capitalize()}: {content}")
-    return "\n------------------------------------------------\n".join(formatted_messages)
+    return "\n------------------------------------------------\n".join(
+        formatted_messages
+    )
 
 
 def chat_messages_to_json(messages):
     messages_list = []
     for role, content in messages:
-        messages_list.append({
-            "role": role,
-            "content": content
-        })
+        messages_list.append({"role": role, "content": content})
     return json.dumps(messages_list, indent=4)
+
 
 def chat_message_to_json(message):
     role, content = message
     content = content.strip('"')
-    msg = {
-            "role": role,
-            "content": content
-        }
+    msg = {"role": role, "content": content}
     return msg

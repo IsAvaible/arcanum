@@ -42,7 +42,7 @@ const activeStep = useVModel(props, 'modelValue', emit)
               {
                 'text-green-500': props.stepInteracted(+value) && props.stepValid(+value),
                 'text-red-500': props.stepInteracted(+value) && !props.stepValid(+value),
-                'text-primary-500': +value === activeStep && !props.stepInteracted(+value),
+                'text-blue-500': +value === activeStep && !props.stepInteracted(+value),
                 'text-surface-400': +value > activeStep && !props.stepInteracted(+value),
               },
             ]"
@@ -57,7 +57,7 @@ const activeStep = useVModel(props, 'modelValue', emit)
                     props.stepInteracted(+value) && props.stepValid(+value),
                   'ring-2 ring-red-500 text-red-500':
                     props.stepInteracted(+value) && !props.stepValid(+value),
-                  'ring-2 ring-primary-500 text-primary-500':
+                  'ring-2 ring-blue-500 text-blue-500':
                     +value === activeStep && !props.stepInteracted(+value),
                   'ring-1 ring-surface-400': +value > activeStep && !props.stepInteracted(+value),
                 },
@@ -81,13 +81,13 @@ const activeStep = useVModel(props, 'modelValue', emit)
               {
                 'before:from-green-500': props.stepInteracted(+value) && props.stepValid(+value),
                 'before:from-red-500': props.stepInteracted(+value) && !props.stepValid(+value),
-                'before:from-primary-500': +value === activeStep && !props.stepInteracted(+value),
+                'before:from-blue-500': +value === activeStep && !props.stepInteracted(+value),
                 'before:from-surface-400': +value > activeStep && !props.stepInteracted(+value),
                 'before:to-green-500':
                   props.stepInteracted(+value + 1) && props.stepValid(+value + 1),
                 'before:to-red-500':
                   props.stepInteracted(+value + 1) && !props.stepValid(+value + 1),
-                'before:to-primary-500':
+                'before:to-blue-500':
                   +value + 1 === activeStep && !props.stepInteracted(+value + 1),
                 'before:to-50% before:to-surface-400':
                   +value + 1 > activeStep && !props.stepInteracted(+value + 1),
