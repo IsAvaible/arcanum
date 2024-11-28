@@ -6,6 +6,7 @@ import InputText from 'primevue/inputtext'
 import Dropdown from 'primevue/dropdown'
 import Calendar from 'primevue/calendar'
 import Textarea from 'primevue/textarea'
+import Drawer from 'primevue/drawer' // Import the Drawer component
 import { useRouter } from 'vue-router'
 
 const caseNumber = ref('12345')
@@ -56,9 +57,7 @@ const handleUpload = () => {
   if (files.value.length > 0) {
     console.log('Uploading files:')
     files.value.forEach((fileData) => {
-      // Simulating an upload action
       console.log(`Uploading file: ${fileData.name}`)
-      // Add your actual API call here
     })
     isUploadCompleted.value = true
     alert('Files uploaded successfully!')
@@ -88,6 +87,61 @@ const removeFile = (index: number) => {
 }
 
 const tabs = ref([{ label: 'PDF' }, { label: 'Audio' }, { label: 'Video' }, { label: 'Image' }])
+
+// Drawer variables
+const visibleRight = ref(false)
+const selectedFile = ref<{ name: string; preview: string } | null>(null)
+
+const isEditing = ref(false) // Track editing mode
+const newFileName = ref('') // Temporary file name for editing
+
+const openFileInDrawer = (file: { name: string; preview: string }) => {
+  selectedFile.value = file
+  visibleRight.value = true
+  isEditing.value = false // Reset editing mode when drawer opens
+}
+
+const editFile = () => {
+  if (selectedFile.value) {
+    newFileName.value = selectedFile.value.name // Pre-fill with current file name
+    isEditing.value = true
+  }
+}
+
+const saveFileName = () => {
+  if (selectedFile.value && newFileName.value.trim()) {
+    const fileIndex = files.value.findIndex((file) => file.name === selectedFile.value!.name)
+    if (fileIndex !== -1) {
+      files.value[fileIndex].name = newFileName.value.trim() // Update file name
+      selectedFile.value.name = newFileName.value.trim()
+      isEditing.value = false // Exit editing mode
+      alert('File name updated successfully!')
+    }
+  }
+}
+
+const cancelEdit = () => {
+  isEditing.value = false // Cancel editing mode
+  newFileName.value = '' // Reset file name
+}
+
+const downloadFile = () => {
+  if (selectedFile.value) {
+    const a = document.createElement('a')
+    a.href = selectedFile.value.preview
+    a.download = selectedFile.value.name
+    a.click()
+  }
+}
+
+// Function to open the file content
+const openFile = () => {
+  if (selectedFile.value) {
+    window.open(selectedFile.value.preview, '_blank') // Open in a new tab
+  } else {
+    alert('No file selected to open!')
+  }
+}
 </script>
 
 <template>
@@ -214,18 +268,6 @@ const tabs = ref([{ label: 'PDF' }, { label: 'Audio' }, { label: 'Video' }, { la
         <h2 class="text-xl font-semibold mb-4">Data</h2>
       </template>
       <template #content>
-        <!-- Tabs Section -->
-        <div class="flex justify-center space-x-4 mb-6">
-          <button
-            v-for="tab in tabs"
-            :key="tab.label"
-            :class="['px-4 py-2 rounded-md font-medium']"
-          >
-            {{ tab.label }}
-          </button>
-        </div>
-
-        <!-- Centering container -->
         <div class="flex flex-col items-center space-y-4">
           <!-- File Input -->
           <div class="relative flex flex-col items-center space-y-2">
@@ -244,8 +286,12 @@ const tabs = ref([{ label: 'PDF' }, { label: 'Audio' }, { label: 'Video' }, { la
           <div v-if="files.length" class="w-full mt-4">
             <h3 class="text-md font-semibold mb-2">Uploaded Files:</h3>
             <ul class="list-disc pl-5 space-y-1">
-              <li v-for="(file, index) in files" :key="index" class="text-gray-700">
-                <a :href="file.preview" target="_blank" class="text-blue-500 underline">
+              <li
+                v-for="(file, index) in files"
+                :key="index"
+                class="flex items-center text-gray-700 space-x-2"
+              >
+                <a class="text-blue-500 underline cursor-pointer" @click="openFileInDrawer(file)">
                   {{ file.name }}
                 </a>
                 <Button
@@ -268,5 +314,92 @@ const tabs = ref([{ label: 'PDF' }, { label: 'Audio' }, { label: 'Video' }, { la
         </div>
       </template>
     </Card>
+
+    <!-- Drawer for File Preview -->
+    <Drawer
+      v-model:visible="visibleRight"
+      header="File Preview"
+      position="right"
+      class="bg-gray-100 text-gray-900"
+    >
+      <template v-if="selectedFile">
+        <div class="p-6">
+          <!-- File Icon -->
+          <div class="flex justify-center mb-6">
+            <i class="pi pi-file text-gray-500 text-4xl"></i>
+          </div>
+
+          <!-- File Name and Details -->
+          <div class="text-center mb-4">
+            <h2 class="text-lg font-semibold">
+              {{ isEditing ? 'Edit File Name' : selectedFile.name }}
+            </h2>
+            <p v-if="!isEditing" class="text-sm text-gray-500">2.5 GB, 01:30:45</p>
+          </div>
+
+          <!-- Edit Input -->
+          <div v-if="isEditing" class="mb-6">
+            <InputText v-model="newFileName" placeholder="Enter new file name" class="w-full" />
+            <div class="flex justify-around mt-2">
+              <Button
+                label="Save"
+                icon="pi pi-check"
+                class="p-button-success"
+                @click="saveFileName"
+              />
+              <Button
+                label="Cancel"
+                icon="pi pi-times"
+                class="p-button-secondary"
+                @click="cancelEdit"
+              />
+            </div>
+          </div>
+
+          <!-- File Description -->
+          <div v-if="!isEditing" class="mb-6">
+            <h3 class="text-sm font-bold mb-2 text-gray-700">File Description</h3>
+            <p class="text-sm text-gray-600">
+              I literally just learned that my favorite board game in the whole world (Monopoly) is
+              based on Atlantic City!
+            </p>
+          </div>
+
+          <!-- File Shared Section -->
+          <div v-if="!isEditing" class="mb-6">
+            <h3 class="text-sm font-bold mb-2 text-gray-700">File Shared With:</h3>
+            <div class="flex items-center space-x-3">
+              <div
+                class="w-8 h-8 bg-gray-300 rounded-full flex justify-center items-center text-gray-700"
+              >
+                A
+              </div>
+              <span class="text-sm text-gray-800">Alexander Mikolaenko (You)</span>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div v-if="!isEditing" class="flex justify-around mt-6 space-x-4">
+            <Button
+              label="Share"
+              icon="pi pi-external-link"
+              class="p-button-outlined p-button-primary"
+            />
+            <Button
+              label="Edit"
+              icon="pi pi-pencil"
+              class="p-button-outlined p-button-warning"
+              @click="editFile"
+            />
+            <Button
+              label="Open"
+              icon="pi pi-external-link"
+              class="p-button-outlined p-button-success"
+              @click="openFile"
+            />
+          </div>
+        </div>
+      </template>
+    </Drawer>
   </div>
 </template>
