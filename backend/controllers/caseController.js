@@ -117,9 +117,6 @@ exports.deleteCase = async (req, res) => {
       }
     }
 
-        //const deleted = await Cases.destroy({
-         //   where: { id: caseId }
-        //});
         await caseItemToDelete.destroy()
         res.status(204).send();
     } catch (error) {
@@ -151,12 +148,6 @@ exports.createCase = [
 
     // **Anfrage-Handler**
     async (req, res) => {
-      // **Validierungsergebnisse prüfen**
-      //const errors = validationResult(req);
-
-      //if (!errors.isEmpty()) {
-      //  return res.status(400).json({ errors: errors.array() });
-      //}
 
   
       try {
@@ -178,31 +169,33 @@ exports.createCase = [
         if(req.files && req.files.length > 0){
             for(const file of req.files){
                 const localFilePath = file.path;
-                const remoteFilePath = "/test-folder/" + file.filename;
 
                 try{
-                    await nextCloud.uploadFile(localFilePath, "/test-folder/", file.filename);
+                  const remoteFilePath =  await nextCloud.uploadFile(localFilePath, "/test-folder/", file.filename);
 
-                    //Code wenn Max den Filename, path, mimetype, hash usw. in uploadFile definiert 
-                    //const attachmentData = await nextCloud.uploadFile(file);
-                    //const attachment = await Attachments.create(attachmentData);
-                    //attachmentInstances.push(attachment);
-                    
-                        // Attachment-Datensatz erstellen
-                        const attachmentData = {
-                          filename: file.filename,
-                          filepath: remoteFilePath,
-                          mimetype: file.mimetype,
-                          size: file.size,
-                          description: '', // Optional: aus req.body
-                          uploadedAt: new Date(),
-                          filehash: '', // Optional: Hash berechnen
-                      };
+                  let attachment =  await Attachments.findOne({
+                    where: {
+                      filepath: remoteFilePath
+                    }
+                  });
+                
+                    if(!attachment){
+                    // Attachment-Datensatz erstellen
+                    const attachmentData = {
+                      filename: file.filename,
+                      filepath: remoteFilePath,
+                      mimetype: file.mimetype,
+                      size: file.size,
+                      description: '', // Optional: aus req.body
+                      uploadedAt: new Date(),
+                      filehash: '', // Optional: Hash berechnen
+                  };
 
-                      const attachment = await Attachments.create(attachmentData);
+                  attachment = await Attachments.create(attachmentData);
+                }
 
                       //Attachment.Instanzen sammeln
-                      attachmentInstances.push(attachment);
+                  attachmentInstances.push(attachment);
 
                 }catch (error) {
                     console.error('Error uploading file to NextCloud:', error);
@@ -301,24 +294,31 @@ exports.createCase = [
           const attachmentInstances = [];
           for (const file of req.files) {
               const localFilePath = file.path;
-              const remoteFilePath = "/test-folder/" + file.filename;
 
               try {
                   // Datei zu NextCloud hochladen
-                  await nextCloud.uploadFile(localFilePath, "/test-folder/", file.filename);
+                  const remoteFilePath =  await nextCloud.uploadFile(localFilePath, "/test-folder/", file.filename);
 
-                  // Attachment-Datensatz erstellen
-                  const attachmentData = {
+                  let attachment =  await Attachments.findOne({
+                    where: {
+                      filepath: remoteFilePath
+                    }
+                  });
+                
+                    if(!attachment){
+                    // Attachment-Datensatz erstellen
+                    const attachmentData = {
                       filename: file.filename,
                       filepath: remoteFilePath,
                       mimetype: file.mimetype,
                       size: file.size,
-                      description: '', // Optional
+                      description: '', // Optional: aus req.body
                       uploadedAt: new Date(),
-                      filehash: '', // Optional
+                      filehash: '', // Optional: Hash berechnen
                   };
 
-                  const attachment = await Attachments.create(attachmentData);
+                  attachment = await Attachments.create(attachmentData);
+                }
 
                   // Attachment-Instanz sammeln
                   attachmentInstances.push(attachment);

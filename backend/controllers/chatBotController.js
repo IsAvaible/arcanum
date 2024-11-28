@@ -2,10 +2,8 @@ const { Cases, Attachments }  = require('../models');
 const nextCloud = require('./nextCloudUploaderController.js');
 const path = require('path');
 const fileUploadController = require('../controllers/fileuploadController');
-const fs = require('fs');
 const multer = require('multer');
 const { body, validationResult } = require('express-validator');
-const { updateCase } = require('./caseController.js');
 
 
 const upload = multer({
@@ -48,12 +46,6 @@ exports.createCaseFromFiles = [
 
     // **Anfrage-Handler**
     async (req, res) => {
-      // **Validierungsergebnisse prüfen**
-      //const errors = validationResult(req);
-
-      //if (!errors.isEmpty()) {
-      //  return res.status(400).json({ errors: errors.array() });
-      //}
 
         const files = req.files;
         //const socket_id = req.body.socket_id;
@@ -66,16 +58,17 @@ exports.createCaseFromFiles = [
         if(files && files.length > 0){
             for(const file of files){
                 const localFilePath = file.path;
-                const remoteFilePath = "/test-folder/" + file.filename;
 
                 try{
-                    await nextCloud.uploadFile(localFilePath, "/test-folder/", file.filename);
+                      const remoteFilePath =   await nextCloud.uploadFile(localFilePath, "/test-folder/", file.filename);
 
-                    //Code wenn Max den Filename, path, mimetype, hash usw. in uploadFile definiert 
-                    //const attachmentData = await nextCloud.uploadFile(file);
-                    //const attachment = await Attachments.create(attachmentData);
-                    //attachmentInstances.push(attachment);
+                      let attachment =  await Attachments.findOne({
+                        where: {
+                          filepath: remoteFilePath
+                        }
+                      });
                     
+                        if(!attachment){
                         // Attachment-Datensatz erstellen
                         const attachmentData = {
                           filename: file.filename,
@@ -87,7 +80,8 @@ exports.createCaseFromFiles = [
                           filehash: '', // Optional: Hash berechnen
                       };
 
-                      const attachment = await Attachments.create(attachmentData);
+                      attachment = await Attachments.create(attachmentData);
+                    }
 
                       //Attachment.Instanzen sammeln
                       attachmentInstances.push(attachment);
@@ -174,7 +168,7 @@ exports.createCaseFromFiles = [
             }]
           });
 
-          console.log( "ERstellter Case: ", JSON.stringify(casesAll));
+          console.log( "Erstellter Case: ", JSON.stringify(casesAll));
             // Antwort an das Frontend senden
             res.status(200).json(casesAll);
         } else if(responseData.message){
