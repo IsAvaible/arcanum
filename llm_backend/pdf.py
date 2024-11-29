@@ -2,20 +2,9 @@ import os
 
 import pdfplumber
 import pytesseract
-from langchain_community.document_loaders import PyPDFLoader
 from pdf2image import convert_from_path
-from pypdf import PdfReader
 
 pytesseract.pytesseract.tesseract_cmd = os.getenv("TESSERACT_BIN")
-
-
-def create_text_chunks_pdfreader(pdf_path):
-    content = ""
-    pdf_reader = PdfReader(pdf_path)
-    for page in pdf_reader.pages:
-        content += page.extract_text()
-    return content
-
 
 def create_text_chunks_pdfplumber(pdf_path):
     content = ""
@@ -38,17 +27,6 @@ def create_text_chunks_pdfplumber(pdf_path):
                     content += row_text + "\n"
 
     return content
-
-
-def create_text_chunks_pypdfloader(pdf_path):
-    loader = PyPDFLoader(pdf_path)
-    pages = loader.load_and_split()
-    content = ""
-    for page in pages:
-        content += page.page_content + "\n"
-
-    return content
-
 
 def create_text_chunks_ocr(pdf_path):
     pages = convert_from_path(pdf_path, 600)
