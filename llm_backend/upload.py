@@ -55,7 +55,7 @@ def upload_file_method_production(files, pdf_extractor):
     file_as_dict = {}
     files_as_dicts_json = ""
     texts = ""
-    single_text = ""
+    single_text = None
     whisper_prompt = ""
 
 
@@ -81,9 +81,8 @@ def upload_file_method_production(files, pdf_extractor):
 
         if allowed_file(filename):
             if "audio" in mimetype:
-                partialTranscription = transcribe(file, texts, llm, path, filename, whisper_prompt)
-                single_text = f"Transcript of Audiofile: {filename}: "
-                single_text = single_text + "".join(partialTranscription)
+                transcription = transcribe(file, texts, llm, path, filename, whisper_prompt)
+                single_text = transcription
                 texts += "  " + single_text
             elif mimetype == "application/pdf":
                 texts += f" Content of PDF File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
@@ -103,14 +102,19 @@ def upload_file_method_production(files, pdf_extractor):
                     texts += contents
                     single_text = contents
 
+
             file_as_dict = {
                 "filename": filename,
                 "mimetype": mimetype,
                 "filehash": filehash,
                 "filepath": filepath,
                 "file_id": file_id,
-                "content": single_text,
             }
+            try:
+                json_dict = json.loads(single_text)
+                file_as_dict.update(json_dict)
+            except:
+                file_as_dict["content"] = single_text
 
             # HIER: CONTENT VON DATEIEN -> IN DATEI TEMPORÄR SPEICHERN
 

@@ -55,7 +55,11 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
     # split if 24mb or greater
 
     #partialTranscription = []
-    new_segments = []
+    data = {
+        "context": "transcription",
+        "segments": []  # Leere Liste, die später gefüllt werden kann
+    }
+
 
     if float(file_size_mb) > 24.0:
         # split files
@@ -81,19 +85,19 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
 
             segments = response.segments
             combined_segments = []
-            n = 15
+            n = 2
             for i in range(0, len(segments), n):
                 group_segments = list(islice(segments, i, i + n))
                 combined_segments.append(combine_segments(group_segments))
 
-            new_segments.append(generate_segment_dict(combined_segments, idx))
-        print(new_segments)
+            data["segments"].append(generate_segment_dict(combined_segments, idx))
+
         formatted_string = ""
-        for seg in new_segments:
+        for seg in data["segments"]:
             for s in seg:
                 formatted_string += f"Von {s.get('start')} bis {s.get('end')}:\n{s.get('text')}\n\n"
-        return formatted_string
-        #return json.dumps(new_segments, ensure_ascii=False)
+        #return formatted_string
+        return json.dumps(data, ensure_ascii=False)
     else:
 
         audio_file = open(path, "rb")
@@ -112,15 +116,19 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
             group_segments = list(islice(segments, i, i + n))
             combined_segments.append(combine_segments(group_segments))
 
+        data = {
+            "context": "transcription",
+            "segments": []  # Leere Liste, die später gefüllt werden kann
+        }
         new_segments = generate_segment_dict(combined_segments)
-        print(new_segments)
+        data["segments"] = new_segments
         formatted_string = ""
         index = 1
         for s in new_segments:
-            formatted_string += f"{index}\n{s.get('start')} --> {s.get('end')}\n{s.get('text')}\n\n"
+            formatted_string += f"[{s.get('start')} --> {s.get('end')}]\n{s.get('text')}\n\n"
             index += 1
-        return formatted_string
-        #return json.dumps(new_segments, ensure_ascii=False)
+        #return formatted_string
+        return json.dumps(data, ensure_ascii=False)
 
 
 def convert_timestamp_to_str(ts):
@@ -152,8 +160,8 @@ def generate_segment_dict(combined_segments, idx=0):
         start_str = convert_timestamp_to_str(start)
         end_str = convert_timestamp_to_str(end)
         new_segments.append({
-            "start": start_str,
-            "end": end_str,
-            "text": text
+            "start_timestamp": start_str,
+            "end_timestamp": end_str,
+            "transcription_text": text
         })
     return new_segments
