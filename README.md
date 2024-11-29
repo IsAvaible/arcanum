@@ -70,6 +70,14 @@ Follow these steps to set up and run the project locally for development.
 5. Stop the Containers
     - docker-compose down
 
+After changing any POSTGRES_* envrionment variables, you need to delete the associated volume to apply the changes.
+```bash
+docker-compose down
+docker volume ls
+docker volume rm <volume-name>
+docker-compose up
+```
+
 #### Setting up the Frontend / Backend / API projects
 
 Please consult the respective README files in the [frontend](frontend/README.md), [backend](backend/README.md), and [api](api/README.md) directories for instructions on setting up the frontend, backend, and API projects.
