@@ -7,9 +7,9 @@ from webdav3.client import Client
 load_dotenv()
 
 options = {
-    "webdav_hostname": os.getenv("WEBDAV_HOSTNAME"),
-    "webdav_login": os.getenv("WEBDAV_LOGIN"),
-    "webdav_password": os.getenv("WEBDAV_PASSWORD"),
+    "webdav_hostname": os.getenv("NEXTCLOUD_URL"),
+    "webdav_login": os.getenv("NEXTCLOUD_USERNAME"),
+    "webdav_password": os.getenv("NEXTCLOUD_PASSWORD"),
     "webdav_timeout": 30,
 }
 
