@@ -5,8 +5,8 @@ from bs4 import BeautifulSoup
 from langchain_openai import AzureChatOpenAI
 from dotenv import load_dotenv
 
-from llm_backend.readwrite import write_to_file, read_from_file, text_to_dict
-from llm_backend.webdav import check_if_cached, download_cache, upload_cache_file
+from readwrite import write_to_file, read_from_file, text_to_dict
+from webdav import check_if_cached, download_cache, upload_cache_file
 from whisper import transcribe
 from pdf import (
     create_text_chunks_pdfplumber,
