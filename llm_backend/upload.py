@@ -60,8 +60,6 @@ def upload_file_method_production(files, pdf_extractor):
 
 
     for file in files:
-
-        print (file)
         filepath = file["filepath"]
         mimetype = mimetypes.guess_type(filepath)
         file["mimetype"] = mimetype[0]
@@ -110,10 +108,14 @@ def upload_file_method_production(files, pdf_extractor):
                 "filepath": filepath,
                 "file_id": file_id,
             }
+
+
             try:
+                #transcription as json
                 json_dict = json.loads(single_text)
                 file_as_dict.update(json_dict)
             except ValueError:
+                #if var is not json, append as text
                 file_as_dict["content"] = single_text
 
             # HIER: CONTENT VON DATEIEN -> IN DATEI TEMPORÄR SPEICHERN

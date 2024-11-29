@@ -17,6 +17,8 @@ options = {
 client = Client(options)
 client.verify = True
 
+LLM_CACHE = "/IP_WKS/LLM_CACHE/"
+
 
 def download_file_webdav(filepath, filename):
     path = os.path.join(
@@ -34,4 +36,14 @@ def download_folder_webdav(filepath):
         app.root_path, os.path.join(app.config["UPLOAD_FOLDER"]), filepath
     )
     client.download_sync(remote_path=filepath, local_path=path)
+    return path
+
+
+def upload_file(content, new_filename):
+    path = os.path.join(
+        app.root_path, os.path.join(app.config["UPLOAD_FOLDER"], new_filename+".txt")
+    )
+    with open(path, 'w') as file:
+        file.write(content)
+    client.upload_sync(remote_path=LLM_CACHE, local_path=path)
     return path
