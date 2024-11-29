@@ -7,6 +7,11 @@ export default {
    * Rules
    */
   rules: {
-    'body-max-line-length': [0, 'always', 250],
+    // Disable the body-max-line-length rule
+    'body-max-line-length': [0],
+    // Disable the subject-case rule
+    'subject-case': [0],
+    // Forbid empty scopes
+    'scope-empty': [2, 'never'],
   },
 }

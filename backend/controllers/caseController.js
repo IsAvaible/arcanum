@@ -162,6 +162,8 @@ exports.createCase = [
           priority
         } = req.body;
 
+        const caseDetails = { title, description, solution, assignee, status, case_type, priority };
+
         // **Array zum Speichern der Remote-Dateipfade**
         const attachmentInstances = [];
 
