@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "cross-env VITE_APP_API_URL=http://localhost:5173 vite\"",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "test": "run-s test:unit test:e2e",
@@ -25,7 +25,7 @@
     "axios": "^1.7.7",
     "pinia": "^2.2.6",
     "primeicons": "^7.0.0",
-    "primevue": "^4.2.2",
+    "primevue": "^4.2.4",
     "quill": "^2.0.2",
     "tailwindcss-primeui": "^0.3.4",
     "vee-validate": "^4.14.7",
