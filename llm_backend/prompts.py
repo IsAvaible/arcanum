@@ -40,7 +40,7 @@ DO NOT include personal names or sensitive data, especially when using audio fil
 
 **When processing audio files:**  
 - Extract relevant information and integrate it into the case.  
-- Attach **timestamps** from the transcriptions to the respective information ("[start_timestamp - end_timestamp]").
+- Attach **timestamps** from the transcriptions to the respective information ("[file_name: start_timestamp - end_timestamp]").
 
 ENSURE your response is in GERMAN and avoid using other languages unless necessary for understanding the CONTEXT.  
 
