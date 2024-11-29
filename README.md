@@ -60,6 +60,16 @@ Follow these steps to set up and run the project locally for development.
     - Update the `.env.development` file with any required environment-specific variables (such as API URLs, keys, etc.).
    > Note: Ensure you don’t commit any sensitive information to version control by adding `.env.development` to your `.gitignore` file if it’s not already there.
 
+#### Setting up docker 
+1. Install Docker from the Docker Website
+2. Check the README files  [frontend](frontend/README.md), [backend](backend/README.md), and [api](api/README.md) to set up the env. variables
+3. Build the Docker Images
+    - docker-compose build
+4. Start the container
+   -  docker-compose up
+5. Stop the Containers
+    - docker-compose down
+
 #### Setting up the Frontend / Backend / API projects
 
 Please consult the respective README files in the [frontend](frontend/README.md), [backend](backend/README.md), and [api](api/README.md) directories for instructions on setting up the frontend, backend, and API projects.
