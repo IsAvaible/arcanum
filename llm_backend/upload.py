@@ -56,7 +56,7 @@ def upload_file_method_production(files, pdf_extractor):
     single_text = None
     whisper_prompt = ""
     # SET TRUE IF CACHING SHOULD BE ACTIVATED -> FALSE IF NOT
-    USE_CACHE = True
+    USE_CACHE = False
 
     for file in files:
         print (file)
