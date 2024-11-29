@@ -2,7 +2,7 @@
 ### basierend auf Flask + Langchain + Azure OpenAI
 
 ### Environment Setup
-- Um auf SCIEBO zugreifen zu können, muss hier https://fh-aachen.sciebo.de/settings/personal?sectionid=security ein Token erstellt werden und `WEBDAV_LOGIN` und `WEBDAV_PASSWORD` lokal als Umgebungsvariable hinterlegt werden.
+- Um auf SCIEBO zugreifen zu können, muss hier https://fh-aachen.sciebo.de/settings/personal?sectionid=security ein Token erstellt werden und `NEXTCLOUD_USERNAME` und `NEXTCLOUD_PASSWORD` lokal als Umgebungsvariable hinterlegt werden.
   - Herr Neugebauer muss euch einladen, um auf den Ordner zugreifen zu können!
 - Um die Azure OpenAI API verwenden zu können, muss die Variable `AZURE_OPENAI_API_KEY` in den lokalen Umgebungsvariablen auf den Azure-API-Schlüssel von Oculavis gesetzt werden. Der Schlüssel kann der .dbx Datei mithilfe des zugehörigen Passworts entnommen werden.
 - Zur Einfachheit bitte einfach die Docker Compose starten
