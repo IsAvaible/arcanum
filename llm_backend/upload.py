@@ -113,7 +113,7 @@ def upload_file_method_production(files, pdf_extractor):
             try:
                 json_dict = json.loads(single_text)
                 file_as_dict.update(json_dict)
-            except:
+            except ValueError:
                 file_as_dict["content"] = single_text
 
             # HIER: CONTENT VON DATEIEN -> IN DATEI TEMPORÄR SPEICHERN
