@@ -41,6 +41,7 @@ def start_quering_llm(invokedPrompt, llm, parser, max_tries=3) -> dict:
             chain_output = chain.invoke(invokedPrompt)
             pass
 
+
     if not is_valid:
         print(f"Couldn't get valid output in {try_number} tries")
         return {}
