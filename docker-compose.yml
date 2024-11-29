@@ -26,7 +26,7 @@ services:
       - node_backend
     working_dir: /llm_backend
     command: >
-      sh -c "pip install --no-cache-dir -r ./requirements.txt && python main.py"
+      sh -c "apt-get update && apt-get install -y ffmpeg && pip install --no-cache-dir -r ./requirements.txt && python main.py"
   db:
     image: postgres:15
     container_name: postgres_db
