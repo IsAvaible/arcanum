@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const port = 3000;
 const caseRoutes = require('./routes/caseRoutes');
+const chatBotRoutes = require('./routes/chatBotRoutes');
 const uploadRoutes = require('./routes/exampleFileUpload');
 const env = require('dotenv').config();
 
@@ -19,7 +20,9 @@ app.use(express.urlencoded({ extended: true }));
 
 //Routen verwenden
 app.use('/api/cases', caseRoutes);
+app.use('/api', chatBotRoutes);
 app.use('/', uploadRoutes);
+
 
 
 

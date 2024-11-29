@@ -85,7 +85,7 @@ async function uploadFile(localFilePath, remoteFilePath, fileName) {
                     //console.log('Item:', item.basename + " == " + hashedFileContent.toString()+ "." + fileExtension);
                     if (item.basename === hashedFileContent.toString() + "." + fileExtension) {
                         console.log('File already exists in the folder, skipping upload');
-                        return -1;
+                        return remoteFilePath;
                     }
                 }
             } else {

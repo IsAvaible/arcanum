@@ -9,6 +9,12 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // Hier kannst du Assoziationen zu anderen Modellen definieren
+      Cases.belongsToMany(models.Attachments, {
+        through: 'CaseAttachments',
+        foreignKey: 'caseId',
+        otherKey: 'attachmentId',
+        as: 'attachments'
+      });
     }
   }
   Cases.init({ 
@@ -46,9 +52,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true
     },
-    attachment: {
-      type: DataTypes.ARRAY(DataTypes.STRING), // Oder DataTypes.JSON, falls du zusätzliche Informationen speichern möchtest
-      allowNull: true
+    draft: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
     },
     createdAt: {
       type: DataTypes.DATE,

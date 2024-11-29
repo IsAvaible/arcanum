@@ -64,5 +64,3 @@ async function scanFileWithAzure(file) {
 };
 
 module.exports = { checkFileType, scanFileWithAzure, router, checkFileName };
-
-
