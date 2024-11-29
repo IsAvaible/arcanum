@@ -9,6 +9,8 @@ from dotenv import load_dotenv
 import hashlib
 
 from app import app
+from llm_backend.readwrite import write_to_file, read_from_file, text_to_dict
+from llm_backend.webdav import check_if_cached, download_cache, upload_cache_file
 from whisper import transcribe
 from pdf import (
     create_text_chunks_pdfplumber,
@@ -57,10 +59,10 @@ def upload_file_method_production(files, pdf_extractor):
     texts = ""
     single_text = None
     whisper_prompt = ""
-
+    # SET TRUE IF CACHING SHOULD BE ACTIVATED -> FALSE IF NOT
+    USE_CACHE = False
 
     for file in files:
-
         print (file)
         filepath = file["filepath"]
         mimetype = mimetypes.guess_type(filepath)
@@ -79,7 +81,9 @@ def upload_file_method_production(files, pdf_extractor):
         path = download_file_webdav(filepath, filename)
         mimetype = file["mimetype"]
 
-        if allowed_file(filename):
+        is_cached = check_if_cached(filehash)
+
+        if allowed_file(filename) and (not is_cached or not USE_CACHE):
             if "audio" in mimetype:
                 transcription = transcribe(file, texts, llm, path, filename, whisper_prompt)
                 single_text = transcription
@@ -103,63 +107,36 @@ def upload_file_method_production(files, pdf_extractor):
                     single_text = contents
 
 
-            file_as_dict = {
-                "filename": filename,
-                "mimetype": mimetype,
-                "filehash": filehash,
-                "filepath": filepath,
-                "file_id": file_id,
-            }
-            try:
-                json_dict = json.loads(single_text)
-                file_as_dict.update(json_dict)
-            except ValueError:
-                file_as_dict["content"] = single_text
+        ### CACHE TO MINIMIZE AZURE API CALLS
+        if is_cached and USE_CACHE:
+            print("USING CACHE")
+            cache_path = download_cache(filehash) # download cache file
+            txt = read_from_file(cache_path) # read cache file
+            content_dict = text_to_dict(txt) # file to dict
+        else:
+            print("NOT USING CACHE")
+            content_dict = {"content": single_text}
+            # write file to cache
+            file_path = write_to_file(filehash, json.dumps(content_dict, ensure_ascii=False))
+            upload_cache_file(file_path, filehash)
 
-            # HIER: CONTENT VON DATEIEN -> IN DATEI TEMPORÄR SPEICHERN
+
+        file_as_dict = {
+            "filename": filename,
+            "mimetype": mimetype,
+            "filehash": filehash,
+            "filepath": filepath,
+            "file_id": file_id,
+        }
+
+        try:
+            file_as_dict.update(content_dict)
+        except ValueError:
+            file_as_dict["content"] = single_text
+
 
         files_as_dicts.append(file_as_dict)
         files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False)
-
-        print(files_as_dicts_json)
     return files_as_dicts_json
 
 
-def clean_filename(filepath):
-    # Get the filename without the path
-    filename = os.path.basename(filepath)
-    # Replace disallowed special characters with blanks
-    clean_name = re.sub(r"[^a-zA-Z0-9]", " ", filename)
-    return clean_name
-
-
-### FÜR SPÄTER EVTL
-### SORGT DAFÜR DAS DATEIEN NUR EINMAL HOCHGELADEN WERDEN
-def generate_file_hash(file_storage):
-    """Generate SHA-256 hash for a file uploaded via Flask (FileStorage)."""
-    sha256_hash = hashlib.sha256()
-    file_storage.stream.seek(0)  # Ensure we're at the start of the file
-    for chunk in iter(lambda: file_storage.stream.read(4096), b""):
-        sha256_hash.update(chunk)
-    file_storage.stream.seek(0)  # Reset stream position after reading
-    return sha256_hash.hexdigest()
-
-
-def store_hash(file_storage):
-    """Check if hash exists in file, otherwise add it to the list."""
-    hash_value = generate_file_hash(file_storage)
-    hash_file_path = os.path.join(app.config["UPLOAD_FOLDER"], "hashvalues.txt")
-    # Read existing hashes if the file exists
-    try:
-        with open(hash_file_path, "r") as hash_file:
-            existing_hashes = hash_file.read().splitlines()
-    except FileNotFoundError:
-        existing_hashes = []
-
-    # Append the new hash if it's not already in the list
-    if hash_value not in existing_hashes:
-        with open(hash_file_path, "a") as hash_file:
-            hash_file.write(f"{hash_value}\n")
-        return True
-    else:
-        return False
