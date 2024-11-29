@@ -3,13 +3,10 @@ import os
 from dotenv import load_dotenv
 from app import app
 from webdav3.client import Client
-
-from llm_backend.hash import generate_sha256_hash
-
 load_dotenv()
 
 options = {
-    "webdav_hostname": os.getenv("NEXTCLOUD_HOSTNAME"),
+    "webdav_hostname": os.getenv("NEXTCLOUD_URL"),
     "webdav_login": os.getenv("NEXTCLOUD_USERNAME"),
     "webdav_password": os.getenv("NEXTCLOUD_PASSWORD"),
     "webdav_timeout": 30,
