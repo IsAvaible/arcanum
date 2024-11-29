@@ -17,6 +17,8 @@ npm install
 3. run Migrations:
 npx sequelize-cli db:migrate --config ./configs/config.js
 
+(npx sequelize-cli db:migrate:undo --config ./configs/config.js)
+
 4. Start the backend:
 npm run start-backend
 
@@ -38,12 +40,12 @@ The application uses a .env file in combination with dotenv to securely manage e
 
 
 .env should be configured like this: 
-DB_NAME=cases
-DB_HOST=localhost
-DB_PASSWORD=...
-DB_USER=...
-DB_DIALECT=postgres
-DB_PORT=...
+POSTGRES_NAME=cases
+POSTGRES_HOST=localhost
+POSTGRES_PASSWORD=...
+POSTGRES_USER=...
+POSTGRES_DIALECT=postgres
+POSTGRES_PORT=...
 
 AZURE_API_KEY= 123
 AZURE_URL= 123

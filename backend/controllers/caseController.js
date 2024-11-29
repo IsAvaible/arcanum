@@ -1,10 +1,9 @@
-const { Cases }  = require('../models');
+const { Cases, Attachments }  = require('../models');
 const { body, validationResult } = require('express-validator');
 const multer = require('multer');
 const nextCloud = require('./nextCloudUploaderController.js');
 const path = require('path');
 const fileUploadController = require('../controllers/fileuploadController');
-const fs = require('fs');
 
 
 
@@ -35,7 +34,13 @@ const upload = multer({
 exports.showCaseDetail = async (req, res) => {
     const caseId = parseInt(req.params.id, 10);
     try {
-        const caseItem = await Cases.findByPk(caseId);
+        const caseItem = await Cases.findByPk(caseId, {
+          include: [{
+            model: Attachments,
+            as: 'attachments',
+            through: { attributes: [] } //Daten aus der Zwischentabelle ausblenden
+          }]
+        });
 
         if (!caseItem) {
             return res.status(404).json({ message: 'Case not found' });
@@ -53,7 +58,13 @@ exports.showCaseDetail = async (req, res) => {
 
 exports.showCaseList = async (req, res) => {
     try {
-        const casesAll = await Cases.findAll();
+        const casesAll = await Cases.findAll({
+          include: [{
+            model: Attachments,
+            as: 'attachments',
+            through: { attributes: [] }
+          }]
+        });
         res.json(casesAll);
     } catch (error) {
         console.error('Error fetching cases:', error);
@@ -68,33 +79,46 @@ exports.deleteCase = async (req, res) => {
     const caseId = parseInt(req.params.id, 10);
     try {
 
-        const caseItemToDelete = await Cases.findByPk(caseId);
+      const caseItemToDelete = await Cases.findByPk(caseId, {
+        include: [{
+          model: Attachments,
+          as: 'attachments',
+          through: { attributes: [] } //Daten aus der Zwischentabelle ausblenden
+        }]
+      });
 
         if (!caseItemToDelete) {
           return res.status(404).json({ message: 'Case not found' });
       }
 
-      const attachments = caseItemToDelete.attachment;
-      if (Array.isArray(attachments)) {
-          for (const remoteFilePath of attachments) {
-              try {
-                  await nextCloud.deleteFile(remoteFilePath);
-                  console.log(`File deleted: ${remoteFilePath}`);
-              } catch (error) {
-                  console.error(`Error deleting file ${remoteFilePath}:`, error);
-              }
+      const attachments = caseItemToDelete.attachments;
+      console.log(`attachemtens From Case to delete${attachments}`);
+
+      if(attachments && attachments.length > 0){
+        for(const attachment of attachments){
+          try {
+            console.log(`attachemt From Case to delete${attachment}`);
+            // Überprüfen, ob das Attachment mit anderen Cases verknüpft ist
+            const attachmentCases = await attachment.getCases();
+            if (attachmentCases.length <= 1) { // Nur mit diesem Case verknüpft
+                // Datei aus NextCloud löschen
+                const remoteFilePath = attachment.filepath;
+                await nextCloud.deleteFile(remoteFilePath);
+                console.log(`File deleted: ${remoteFilePath}`);
+                // Attachment aus der Datenbank löschen
+                await attachment.destroy();
+          }else {
+            // Nur die Verknüpfung entfernen
+            await caseItemToDelete.removeAttachment(attachment)
           }
-      }
-
-        const deleted = await Cases.destroy({
-            where: { id: caseId }
-        });
-
-        if (deleted) {
-            res.status(204).send();
-        } else {
-            res.status(404).json({ message: 'Case not found' });
+        } catch(error){
+          console.error(`Error processing attachment ${attachment.id}:`, error);
         }
+      }
+    }
+
+        await caseItemToDelete.destroy()
+        res.status(204).send();
     } catch (error) {
         console.error('Error deleting case:', error);
         res.status(500).json({ message: 'Error deleting case' });
@@ -124,12 +148,6 @@ exports.createCase = [
 
     // **Anfrage-Handler**
     async (req, res) => {
-      // **Validierungsergebnisse prüfen**
-      //const errors = validationResult(req);
-
-      //if (!errors.isEmpty()) {
-      //  return res.status(400).json({ errors: errors.array() });
-      //}
 
   
       try {
@@ -144,18 +162,42 @@ exports.createCase = [
           priority
         } = req.body;
 
+        const caseDetails = { title, description, solution, assignee, status, case_type, priority };
+
         // **Array zum Speichern der Remote-Dateipfade**
-        const attachment = [];
+        const attachmentInstances = [];
 
         // **Hochgeladene Dateien verarbeiten**
         if(req.files && req.files.length > 0){
             for(const file of req.files){
                 const localFilePath = file.path;
-                const remoteFilePath = "/test-folder/" + file.filename;
 
                 try{
-                    await nextCloud.uploadFile(localFilePath, "/test-folder/", file.filename);
-                    attachment.push(remoteFilePath);
+                  const remoteFilePath =  await nextCloud.uploadFile(localFilePath, "/test-folder/", file.filename);
+
+                  let attachment =  await Attachments.findOne({
+                    where: {
+                      filepath: remoteFilePath
+                    }
+                  });
+                
+                    if(!attachment){
+                    // Attachment-Datensatz erstellen
+                    const attachmentData = {
+                      filename: file.filename,
+                      filepath: remoteFilePath,
+                      mimetype: file.mimetype,
+                      size: file.size,
+                      uploadedAt: new Date(),
+                      filehash: remoteFilePath.substring(remoteFilePath.lastIndexOf('/') +1, remoteFilePath.lastIndexOf('.')), 
+                  };
+
+                  attachment = await Attachments.create(attachmentData);
+                }
+
+                      //Attachment.Instanzen sammeln
+                  attachmentInstances.push(attachment);
+
                 }catch (error) {
                     console.error('Error uploading file to NextCloud:', error);
                     return res.status(500).json({ message: 'Error uploading files to NextCloud' });
@@ -172,13 +214,26 @@ exports.createCase = [
           status,
           case_type,
           priority,
-          attachment,
           createdAt: new Date(),
           updatedAt: new Date()
         });
+
+        // **Attachments mit dem Case verknüpfen**
+        if (attachmentInstances.length > 0) {
+          await newCase.addAttachments(attachmentInstances);
+      }
+
+
   
         // **Erfolgsantwort senden**
-        res.status(201).json(newCase);
+        const caseWithAttachments = await Cases.findByPk(newCase.id, {
+          include: [{
+              model: Attachments,
+              as: 'attachments',
+              through: { attributes: [] }
+          }]
+      });
+        res.status(201).json(caseWithAttachments);
       } catch (error) {
         console.error('Error creating case:', error);
         res.status(500).json({ message: 'Error creating case' });
@@ -188,7 +243,18 @@ exports.createCase = [
 
 
 
-  exports.updateCase = async (req, res) => {
+  exports.updateCase = [
+  // **Multer-Middleware**
+  (req, res, next) => {
+    upload(req, res, function (err) {
+        if (err) {
+            return res.status(400).json({ message: err.message });
+        }
+        next();
+    });
+},
+  
+  async (req, res) => {
     const caseId = parseInt(req.params.id, 10);
   
     try {
@@ -221,15 +287,71 @@ exports.createCase = [
         return res.status(404).json({ message: 'Case not found' });
       }
   
-      // **Aktualisierten Fall abrufen**
+      // **Aktualisierten Case abrufen**
       const updatedCase = await Cases.findByPk(caseId);
-      res.json(updatedCase);
+
+      // **Neue Attachments verarbeiten (falls vorhanden)**
+      if (req.files && req.files.length > 0) {
+          const attachmentInstances = [];
+          for (const file of req.files) {
+              const localFilePath = file.path;
+
+              try {
+                  // Datei zu NextCloud hochladen
+                  const remoteFilePath =  await nextCloud.uploadFile(localFilePath, "/test-folder/", file.filename);
+
+                  let attachment =  await Attachments.findOne({
+                    where: {
+                      filepath: remoteFilePath
+                    }
+                  });
+                
+                    if(!attachment){
+                    // Attachment-Datensatz erstellen
+                    const attachmentData = {
+                      filename: file.filename,
+                      filepath: remoteFilePath,
+                      mimetype: file.mimetype,
+                      size: file.size,
+                      uploadedAt: new Date(),
+                      filehash: remoteFilePath.substring(remoteFilePath.lastIndexOf('/') +1, remoteFilePath.lastIndexOf('.')), // Optional: Hash berechnen
+                  };
+
+                  attachment = await Attachments.create(attachmentData);
+                }
+
+                  // Attachment-Instanz sammeln
+                  attachmentInstances.push(attachment);
+
+              } catch (error) {
+                  console.error('Error uploading file to NextCloud:', error);
+                  return res.status(500).json({ message: 'Error uploading files to NextCloud' });
+              }
+          }
+
+          // **Attachments mit dem Case verknüpfen**
+          if (attachmentInstances.length > 0) {
+              await updatedCase.addAttachments(attachmentInstances);
+          }
+      }
+
+       // **Case mit Attachments abrufen und zurückgeben**
+       const caseWithAttachments = await Cases.findByPk(caseId, {
+        include: [{
+            model: Attachments,
+            as: 'attachments',
+            through: { attributes: [] }
+        }]
+    });
+
+
+      res.json(caseWithAttachments);
     } catch (error) {
       console.error('Error updating case:', error);
       res.status(500).json({ message: 'Error updating case' });
     }
-  };
-
+  }
+  ];
 
 
 
@@ -237,29 +359,37 @@ exports.createCase = [
     const { caseId, filename } = req.params;
   
     try {
-      // **1. Fall abrufen**
-      const caseItem = await Cases.findByPk(caseId);
+      // **1. Case mit Attachments abrufen**
+      const caseItem = await Cases.findByPk(caseId, {
+        include: [{
+            model: Attachments,
+            as: 'attachments',
+            through: { attributes: [] }
+        }]
+    });
       
   
       if (!caseItem) {
         return res.status(404).json({ message: 'Case not found' });
       }
   
-      const attachments = caseItem.attachment;
+      const attachments = caseItem.attachments;
   
-      // **2. Überprüfen, ob die Datei zum Caseg gehört**
-      const remoteFilePath = attachments.find(path => path.endsWith(filename));
+      // **2. Attachment mit passendem Dateinamen finden**
+      const attachment = attachments.find(att => att.filename === filename);
   
-      if (!remoteFilePath) {
+      if (!attachment) {
         return res.status(404).json({ message: 'Attachment not found' });
       }
+
   
       // **3. Datei aus Nextcloud abrufen**
-      const fileContent = await nextCloud.downloadFileAndReturn(remoteFilePath);
+      const fileContent = await nextCloud.downloadFileAndReturn(attachment.filepath);
 
   
       // **4. Datei an den Client senden**
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Type', attachment.mimetype);
       res.send(fileContent);
       
   
