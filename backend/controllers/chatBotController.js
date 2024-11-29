@@ -101,9 +101,7 @@ exports.createCaseFromFiles = [
       console.log( "Sende ans LLM: ",JSON.stringify(llmRequestData));
       //Daten an das LLM senden 
       try{
-        //const llmResponse = await axios.post('localhost:5001/generate_case', llmRequestData);    
-
-        const llmResponse = testLLMResponse;
+        const llmResponse = await axios.post('localhost:5001/generate_case', llmRequestData);    
         const responseData = llmResponse;
         console.log( "Empange vom LLM: ", llmResponse);
 
@@ -231,7 +229,7 @@ exports.createCaseFromFiles = [
   
 
 
-      //const llmResponse = await axios.post('localhost:5001/safe_case', updatedCaseWithAttachments);
+      const llmResponse = await axios.post('localhost:5001/safe_case', updatedCaseWithAttachments);
       res.json(updatedCaseWithAttachments);
       //res.json(llmResponse);
     } catch (error) {
@@ -240,25 +238,3 @@ exports.createCaseFromFiles = [
     }
   }
   ];
-
-
-  const testLLMResponse = 
-  { 
-    "cases":
-      {
-        "title": "TestLLMREsponse",
-        "description": "(bei Audio z.b) wichtige stelle bei 4:35min in filename.mp4...",
-        "solution": "TestLLMSolution",
-        "status": "TestLLMStatus",
-        "attachments": [ 
-          56,
-          57
-        ], 
-      }
-  };
-
-  const testLLMResponse2 = 
-  {
-    "message": "Die von ihnen zu verfügung gestellten Datein konnte ich keinen case erstellen, weil..."
-  
-  };
