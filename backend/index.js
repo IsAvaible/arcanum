@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const app = express();
 const port = 3000;
 const caseRoutes = require('./routes/caseRoutes');
@@ -9,6 +10,10 @@ const env = require('dotenv').config();
 // for development only
 app.set('view engine', 'ejs');
 
+// Use CORS middleware, see: https://expressjs.com/en/resources/middleware/cors.html
+app.use(cors({
+  origin: ['http://localhost:4173', 'http://localhost:5173'], // Allow only these origins
+}));
 
 // Middleware (optional)
 const exampleMiddleware = require('./middlewares/exampleLogger');
