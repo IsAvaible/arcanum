@@ -27,11 +27,11 @@ class Case(BaseModel):
     )
     description: str = Field(
         ...,
-        description="A detailed explanation of the case, including relevant background information, context necessary for understanding the problem. Include Timestamps!",
+        description="A detailed explanation of the case, including relevant background information, context necessary for understanding the problem. Include granular Timestamps from Audio files!",
     )
     solution: str = Field(
         ...,
-        description="A proposed or implemented solution to address the case. If not yet resolved, this can include potential steps or approaches to consider. Include Timestamps!",
+        description="A proposed or implemented solution to address the case. If not yet resolved, this can include potential steps or approaches to consider. Include granular Timestamps from Audio files!",
     )
     """assignee: list[str] = Field(
         ...,

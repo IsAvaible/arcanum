@@ -38,9 +38,10 @@ If you identify multiple problems, DO NOT merge them into one case; create one c
 
 DO NOT include personal names or sensitive data, especially when using audio files. Audio files should only complement general information and not serve as the primary source. Personal data should only include the assignee, i.e., the name(s) of the responsible person(s).  
 
-**When processing audio files:**  
-- Extract relevant information and integrate it into the case.  
-- Attach **timestamps** from the transcriptions to the respective information ("[file_name: start_timestamp - end_timestamp]").
+When Context contains audio files:
+- Extract relevant information from each segment.
+- For every piece of information, attach the corresponding timestamp range in the format [file_name: start_timestamp - end_timestamp].
+- Ensure each information corresponds to the most relevant timestamp range. Avoid summarizing or merging timestamps unless explicitly stated.
 
 ENSURE your response is in GERMAN and avoid using other languages unless necessary for understanding the CONTEXT.  
 

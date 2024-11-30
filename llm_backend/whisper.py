@@ -32,6 +32,7 @@ class Segment:
     def __repr__(self):
         return f"({self.start}, {self.end}, {self.text})"
 
+
 def transcribe(file, texts, llm, path, filename, whisper_prompt):
     # if texts not empty -> try to get model numbers etc. by Text content
     if texts != "":
@@ -52,14 +53,12 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
 
     file_size_mb = os.stat(path).st_size / (1024 * 1024)
     texts += f" NEW AUDIO FILE {json.dumps(file)} - CONTENT: "
-    # split if 24mb or greater
 
-    #partialTranscription = []
     data = {
-        "context": "transcription",
-        "segments": []  # Leere Liste, die später gefüllt werden kann
+        "context": "transcription of audio file",
+        "segments": [],
+        # Leere Liste, die später gefüllt werden kann
     }
-
 
     if float(file_size_mb) > 24.0:
         # split files
@@ -89,15 +88,16 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
             for i in range(0, len(segments), n):
                 group_segments = list(islice(segments, i, i + n))
                 combined_segments.append(combine_segments(group_segments))
-
             data["segments"].append(generate_segment_dict(combined_segments, idx))
 
+        # JSON besser als String
         formatted_string = ""
-        for seg in data["segments"]:
-            for s in seg:
-                formatted_string += f"Von {s.get('start')} bis {s.get('end')}:\n{s.get('text')}\n\n"
+        #for seg in data["segments"]:
+        #    for s in seg:
+        #        formatted_string += f"Von {s.get('start')} bis {s.get('end')}:\n{s.get('text')}\n\n"
         #return formatted_string
-        return json.dumps(data, ensure_ascii=False)
+
+        return data
     else:
 
         audio_file = open(path, "rb")
@@ -122,13 +122,14 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
         }
         new_segments = generate_segment_dict(combined_segments)
         data["segments"] = new_segments
-        formatted_string = ""
-        index = 1
-        for s in new_segments:
-            formatted_string += f"[{s.get('start')} --> {s.get('end')}]\n{s.get('text')}\n\n"
-            index += 1
+
+        #formatted_string = ""
+        #index = 1
+        #for s in new_segments:
+        #    formatted_string += f"[{s.get('start')} --> {s.get('end')}]\n{s.get('text')}\n\n"
+        #    index += 1
         #return formatted_string
-        return json.dumps(data, ensure_ascii=False)
+        return data
 
 
 def convert_timestamp_to_str(ts):
