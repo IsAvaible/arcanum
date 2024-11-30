@@ -10,7 +10,8 @@ export const useCaseFormValidation = (errors: ComputedRef<Partial<Record<string,
     selectedAssignees: useField<User[]>('selectedAssignees'),
     selectedParticipants: useField<User[]>('selectedParticipants'),
     selectedTeam: useField<Team>('selectedTeam'),
-    details: useField<string>('details'),
+    description: useField<string>('description'),
+    solution: useField<string>('solution'),
     selectedProducts: useField<number[]>('selectedProducts'),
   }
 
@@ -48,7 +49,8 @@ export const useCaseFormValidation = (errors: ComputedRef<Partial<Record<string,
         await fields.selectedTeam.validate()
         return
       case 2:
-        await fields.details.validate()
+        await fields.description.validate()
+        await fields.solution.validate()
         return
       case 3:
         await fields.selectedProducts.validate()

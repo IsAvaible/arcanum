@@ -28,7 +28,10 @@ import CaseCreateStepper from '@/components/case-create-form/CaseCreateStepper.v
 import { toTypedSchema } from '@vee-validate/zod'
 import * as zod from 'zod'
 import { useForm } from 'vee-validate'
+import { ref } from 'vue'
 import { useVModel } from '@vueuse/core'
+import { useApi } from '@/composables/useApi'
+import type { CasesPostCaseTypeEnum } from '@/api'
 
 const toast = useToast()
 
@@ -37,6 +40,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['update:visible'])
+
+const api = useApi()
 
 const dialogVisible = useVModel(props, 'visible', emit)
 
@@ -88,7 +93,8 @@ const schema = toTypedSchema(
       .nonempty('Please select at least one assignee'),
     selectedParticipants: zod.array(zod.any()).optional(),
     selectedTeam: zod.any().optional(),
-    details: zod.string().optional(),
+    description: zod.string().optional(),
+    solution: zod.string().optional(),
     selectedProducts: zod.array(zod.number()).default([]),
   }),
 )
@@ -159,14 +165,61 @@ const isClickable = (step: number) => {
   }
 }
 
+enum SubmitState {
+  IDLE,
+  SUBMITTING,
+  SUCCESS,
+  ERROR,
+}
+const submitState = ref<SubmitState>(SubmitState.IDLE)
 // Form submission
-const onSubmit = handleSubmit((_values) => {
+const onSubmit = handleSubmit(async (_values) => {
+  console.log('Submitting form', _values)
+  submitState.value = SubmitState.SUBMITTING
+  try {
+    await api.casesPost(
+      {
+        title: fields.title.value.value,
+        caseType: fields.selectedCaseType.value.value as CasesPostCaseTypeEnum,
+        assignee: fields.selectedAssignees.value.value[0]!.name,
+        // assignees: fields.selectedAssignees.value.value,
+        // participants: fields.selectedParticipants.value.value,
+        // team: fields.selectedTeam.value.value,
+        // details: fields.details.value.value,
+        description: fields.description.value.value,
+        solution: fields.solution.value.value,
+        priority: 'Low',
+        // products: fields.selectedProducts.value.value,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    )
+  } catch (error) {
+    submitState.value = SubmitState.ERROR
+    setTimeout(() => {
+      submitState.value = SubmitState.IDLE
+    }, 3000)
+    console.error('Error creating case', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Error Creating Case',
+      detail: 'There was an error creating your case',
+      life: 3000,
+    })
+    return
+  }
+
+  submitState.value = SubmitState.SUCCESS
   toast.add({
     severity: 'success',
     summary: 'Case Created',
     detail: 'Your case has been successfully created',
     life: 3000,
   })
+  dialogVisible.value = false
 })
 
 const dialogPT = {
@@ -341,17 +394,35 @@ const dialogPT = {
             title="Details"
           />
           <AccordionContent>
-            <div class="h-full flex flex-col gap-y-3">
-              <Label
-                for="details"
-                label="Details"
-                description="Provide additional information about the case"
-              />
-              <TempEditor
-                v-model="fields.details.value.value"
-                editorStyle="flex: 1; min-height: 200px"
-                class="flex-1 flex flex-col"
-              />
+            <div class="h-full grid gap-y-4">
+              <div class="flex flex-col gap-y-3">
+                <Label
+                  for="description"
+                  label="Description"
+                  description="Describe the case in detail, e.g. what happened, when, and why"
+                  icon="pi-info-circle"
+                />
+                <TempEditor
+                  v-model="fields.description.value.value"
+                  editorStyle="flex: 1; min-height: 180px"
+                  class="flex-1 flex flex-col"
+                  id="description"
+                />
+              </div>
+              <div class="flex flex-col gap-y-3">
+                <Label
+                  for="solution"
+                  label="Solution"
+                  description="Describe the solution to the case, e.g. how the issue was resolved"
+                  icon="pi-check-circle"
+                />
+                <TempEditor
+                  v-model="fields.solution.value.value"
+                  editorStyle="flex: 1; min-height: 180px"
+                  class="flex-1 flex flex-col"
+                  id="solution"
+                />
+              </div>
             </div>
           </AccordionContent>
         </AccordionPanel>
@@ -410,6 +481,18 @@ const dialogPT = {
             :disabled="!stepValid(activeStep) || activeStep == steps.length - 1"
           />
           <Button
+            :loading="submitState === SubmitState.SUBMITTING"
+            :icon="`pi ${
+              submitState === SubmitState.SUCCESS
+                ? 'pi-check'
+                : submitState === SubmitState.ERROR
+                  ? 'pi-times'
+                  : 'pi-send'
+            }`"
+            :class="{
+              'p-button-success pulse': submitState === SubmitState.SUCCESS,
+              'p-button-danger pulse': submitState === SubmitState.ERROR,
+            }"
             label="Submit"
             @click="onSubmit"
             :disabled="!form.valid"
