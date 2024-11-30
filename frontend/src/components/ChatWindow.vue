@@ -1,10 +1,8 @@
 <template>
-  <div
-    class="flex-1 h-full overflow-y-auto overflow-x-clip overflow-hidden flex border border-gray-300 rounded-2xl bg-white"
-  >
-    <!-- Left Sidebar -->
-    <div class="w-4/12 xl:w-3/12 min-w-40 overflow-auto flex flex-col gap-6">
-      <div class="flex flex-col gap-6 pt-3 pb-2 -mb-2 px-5 sticky top-0 bg-white z-10">
+  <div class="flex h-screen bg-white">
+    <!-- Sidebar -->
+    <div class="w-4/12 xl:w-3/12 min-w-40 overflow-auto flex flex-col gap-6 border-r">
+      <div class="flex flex-col gap-6 pt-3 pb-2 px-5 sticky top-0 bg-white z-10">
         <div class="flex items-center justify-between gap-6 text-gray-800">
           <div class="text-2xl font-medium lead">Chats</div>
           <Button icon="pi pi-plus" text />
@@ -12,11 +10,11 @@
       </div>
       <div class="px-5">
         <div class="relative">
-          <input
+          <InputText
             v-model="search"
             type="text"
-            placeholder="Placeholder"
-            class="w-full py-2 px-4 text-gray-800 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            placeholder="Search chats..."
+            class="w-full py-2 px-4 text-gray-800 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <i
             class="pi pi-search absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500"
@@ -41,24 +39,21 @@
       </div>
       <div class="flex-1 flex flex-col">
         <div
-          v-for="chat in chats"
+          v-for="chat in filteredChats"
           :key="chat.name"
           class="flex items-center gap-4 p-3 cursor-pointer hover:bg-gray-100 transition-all"
           :class="{
-            'bg-gray-200': chat.name === activeChat,
+            'bg-blue-100': chat.name === 'ARCANUM AI',
+            'bg-gray-200': chat.name === activeChat?.name,
           }"
+          @click="setActiveChat(chat)"
         >
-          <div class="relative">
-            <Avatar
-              v-bind="chat.image ? { image: chat.image } : { label: chat.capName }"
-              :class="{
-                '!bg-gray-300 !text-gray-800': !chat.image,
-              }"
-              class="text-base font-medium flex"
-              size="large"
-              shape="circle"
-            />
-          </div>
+          <Avatar
+            v-bind="chat.image ? { image: chat.image } : { label: chat.capName }"
+            class="text-base font-medium flex"
+            size="large"
+            shape="circle"
+          />
           <div class="flex-1">
             <div class="flex items-center justify-between">
               <div class="text-base font-medium text-gray-800">{{ chat.name }}</div>
@@ -71,32 +66,35 @@
     </div>
 
     <!-- Chat Window -->
-    <div class="w-8/12 xl:w-6/12 border-x border-gray-300 flex flex-col bg-white">
-      <div class="flex items-center justify-between p-4 gap-4 border-b border-gray-300">
-        <div class="flex items-center cursor-pointer">
+    <div class="w-8/12 xl:w-6/12 flex flex-col">
+      <div
+        v-if="activeChat"
+        class="flex items-center justify-between p-4 gap-4 border-b border-gray-300"
+      >
+        <div class="flex items-center">
           <Avatar
-            image="https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar-primetek.png"
-            class="mr-2 av"
+            v-bind="activeChat.image ? { image: activeChat.image } : { label: activeChat.capName }"
+            class="mr-2"
             size="large"
             shape="circle"
           />
           <div class="flex-1">
-            <div class="text-gray-800 font-medium leading-6">PrimeTek</div>
-            <div class="text-gray-500 text-sm leading-5 line-clamp-1">
-              Cody Fisher, Esther Howard...
-            </div>
+            <div class="text-gray-800 font-medium">{{ activeChat.name }}</div>
+            <div class="text-gray-500 text-sm">{{ activeChat.lastMessage }}</div>
           </div>
         </div>
         <div class="flex items-center gap-3">
-          <i class="pi pi-phone text-gray-800" style="font-size: 1rem"></i>
-          <i class="pi pi-search text-gray-800" style="font-size: 1rem"></i>
-          <i class="pi pi-ellipsis-h text-gray-800" style="font-size: 1rem"></i>
+          <i class="pi pi-phone text-gray-800"></i>
+          <i class="pi pi-search text-gray-800"></i>
+          <i class="pi pi-ellipsis-h text-gray-800"></i>
         </div>
       </div>
-
-      <div class="flex-1 overflow-y-auto flex flex-col gap-4 py-4 px-6">
+      <div v-else class="flex items-center justify-center h-full">
+        <p class="text-gray-500">Select a chat to start messaging.</p>
+      </div>
+      <div v-if="activeChat" class="flex-1 overflow-y-auto flex flex-col gap-4 py-4 px-6">
         <div
-          v-for="message in chatMessages"
+          v-for="message in activeChat.messages || []"
           :key="message.id"
           class="flex items-start gap-2"
           :class="{ 'flex-row-reverse': message.type === 'sent' }"
@@ -116,32 +114,46 @@
           </div>
         </div>
       </div>
+      <div v-if="activeChat" class="p-4 border-t border-gray-300 flex items-center gap-3 bg-white">
+        <!-- Smiley Icon -->
+        <i class="pi pi-face-smile" style="font-size: 1.2rem; color: black"></i>
 
-      <div class="p-4 border-t border-gray-300 flex items-center gap-3 bg-white">
-        <i class="pi pi-face-smile" style="font-size: 1.5rem; color: black"></i>
-        <i class="pi pi-paperclip" style="font-size: 1.5rem; color: black"></i>
+        <!-- Paperclip Icon -->
+        <i class="pi pi-paperclip" style="font-size: 1.2rem; color: black"></i>
+        <!-- Inputfield -->
         <input
+          v-model="messageInput"
           type="text"
-          placeholder="Placeholder"
+          placeholder="Type a message"
           class="flex-1 border border-gray-300 rounded-md py-2 px-4 text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+          @keyup.enter="sendMessage"
         />
-        <i class="pi pi-send" style="font-size: 1.5rem; color: black"></i>
+
+        <!-- Send-Icon -->
+        <i
+          class="pi pi-send"
+          style="font-size: 1.3rem; color: blue; cursor: pointer"
+          @click="sendMessage"
+        ></i>
       </div>
     </div>
 
     <!-- User Details -->
-    <!-- User Details -->
-    <div class="w-3/12 min-w-[300px] px-4 py-6 bg-white">
+    <div class="w-3/12 min-w-[300px] bg-white px-4 py-6 flex flex-col">
       <div class="flex flex-col items-center">
         <!-- Avatar -->
         <Avatar
-          image="https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar-primetek.png"
+          v-bind="
+            activeChat?.image ? { image: activeChat.image } : { label: activeChat?.capName || '?' }
+          "
           class="w-24 h-24 mb-4"
           shape="circle"
         />
-        <!-- Name und Username -->
-        <div class="text-gray-800 font-medium text-xl">PrimeTek</div>
-        <div class="text-gray-500 text-sm">@primetek</div>
+
+        <div v-if="activeChat" class="text-gray-800 font-medium text-xl">
+          {{ activeChat.name }}
+        </div>
+        <div v-else class="text-gray-500 text-center">No chat selected.</div>
       </div>
 
       <!-- Action Buttons -->
@@ -165,14 +177,11 @@
 
       <!-- Toggles -->
       <div class="mt-4">
-        <!-- Notification Toggle -->
         <div class="flex items-center justify-between mb-4">
-          <!-- Icon und Label -->
           <div class="flex items-center gap-3">
             <i class="pi pi-bell" style="font-size: 1.2rem; color: #333"></i>
             <span class="text-gray-800 text-sm">Notification</span>
           </div>
-          <!-- Schalter -->
           <label class="relative inline-flex items-center cursor-pointer">
             <input type="checkbox" class="sr-only peer" v-model="notification" />
             <div
@@ -181,14 +190,11 @@
           </label>
         </div>
 
-        <!-- Sound Toggle -->
         <div class="flex items-center justify-between mb-4">
-          <!-- Icon und Label -->
           <div class="flex items-center gap-3">
             <i class="pi pi-volume-up" style="font-size: 1.2rem; color: #333"></i>
             <span class="text-gray-800 text-sm">Sound</span>
           </div>
-          <!-- Schalter -->
           <label class="relative inline-flex items-center cursor-pointer">
             <input type="checkbox" class="sr-only peer" v-model="sound" />
             <div
@@ -197,14 +203,11 @@
           </label>
         </div>
 
-        <!-- Save to Downloads Toggle -->
         <div class="flex items-center justify-between mb-4">
-          <!-- Icon und Label -->
           <div class="flex items-center gap-3">
             <i class="pi pi-download" style="font-size: 1.2rem; color: #333"></i>
             <span class="text-gray-800 text-sm">Save to downloads</span>
           </div>
-          <!-- Schalter -->
           <label class="relative inline-flex items-center cursor-pointer">
             <input type="checkbox" class="sr-only peer" v-model="saveToDownloads" />
             <div
@@ -214,20 +217,27 @@
         </div>
       </div>
 
-      <!-- Members Section -->
-      <div class="mt-6">
+      <div v-if="activeChat?.isGroup" class="mt-6 flex-1 overflow-y-auto">
+        <!-- Header -->
         <div class="flex justify-between items-center mb-4">
           <span class="text-gray-800 font-medium text-sm">Members</span>
           <a href="#" class="text-blue-500 hover:underline text-sm">See All</a>
         </div>
+
+        <!-- Members List -->
         <div
-          v-for="(member, index) in members"
+          v-for="(member, index) in activeChat?.members || []"
           :key="index"
           class="flex items-center justify-between mb-4"
         >
           <div class="flex items-center gap-3">
-            <Avatar icon="pi pi-user" shape="circle" class="bg-gray-300 w-8 h-8" />
-            <span class="text-gray-800 text-sm">{{ member }}</span>
+            <Avatar
+              v-bind="member.image ? { image: member.image } : { icon: 'pi pi-user' }"
+              shape="circle"
+              class="bg-gray-300 w-8 h-8"
+            />
+
+            <span class="text-gray-800 text-sm">{{ member.name }}</span>
           </div>
           <button class="p-button p-button-text">
             <i class="pi pi-angle-right" style="font-size: 1.2rem; color: #333"></i>
@@ -236,7 +246,7 @@
       </div>
 
       <!-- Tabs -->
-      <div class="mt-6">
+      <div class="mt-4">
         <div class="flex border border-gray-300 rounded-md overflow-hidden text-sm">
           <button
             v-for="tab in mediaOptions"
@@ -258,17 +268,35 @@
 
 <script lang="ts">
 import Dialog from 'primevue/dialog'
-import ToggleSwitch from 'primevue/toggleswitch' // Neuer Import
+import ToggleSwitch from 'primevue/toggleswitch'
+import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
+import Avatar from 'primevue/avatar'
+import myImage from '@/assets/images/arcanum-ai.jpg'
+
+type Chat = {
+  name: string
+  image?: string
+  capName: string
+  time: string
+  lastMessage: string
+  messages?: Array<{ id: number; type: string; message: string; capName?: string; image?: string }>
+}
 
 export default {
   name: 'Chat',
-  components: Dialog,
-  ToggleSwitch,
+  components: {
+    Dialog,
+    ToggleSwitch,
+    Button,
+    InputText,
+    Avatar,
+  },
   data() {
     return {
-      notification: true, // Anfangswert für Notification
-      sound: false, // Anfangswert für Sound
-      saveToDownloads: false, // Anfangswert für Save to Downloads
+      notification: true,
+      sound: false,
+      saveToDownloads: false,
       search: '',
       download: false,
       value: 'Chat',
@@ -276,27 +304,38 @@ export default {
       options: ['Chat', 'Call'],
       media: 'Media',
       mediaOptions: ['Media', 'Link', 'Docs'],
-      activeChat: 'PrimeTek Team',
-      members: ['Cody Fisher', 'Jerome Bell', 'Robert Fox'], // Mitgliederliste
-      menuItems: [
-        {
-          label: 'Group Info',
-          icon: 'pi pi-info-circle',
-        },
-        {
-          label: 'Leave group',
-          icon: 'pi pi-sign-out',
-        },
-      ],
+      messageInput: '',
+      activeChat: null as Chat | null,
       chats: [
         {
-          image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar11.jpg',
+          name: 'ARCANUM AI',
+          image: myImage,
+          capName: 'AI',
+          time: '',
+          isGroup: false,
+          members: [],
+          lastMessage: 'Ask me anything about',
+          messages: [
+            {
+              id: 1,
+              type: 'received',
+              message: 'Hello! How can I assist you today?',
+              capName: 'AI',
+            },
+          ],
+        },
+        {
           name: 'Cody Fisher',
+          image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar12.jpg',
           capName: 'CF',
-          active: true,
-          unreadMessageCount: 8,
-          time: '12.30',
+          time: '12:30',
+          isGroup: false,
+          members: [],
           lastMessage: "Hey there! I've heard about PrimeVue. Any cool tips for getting started?",
+          messages: [
+            { id: 1, type: 'received', message: 'Hi, how can I help you?', capName: 'CF' },
+            { id: 2, type: 'sent', message: 'I have a question about PrimeVue.', capName: 'You' },
+          ],
         },
         {
           image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar-primetek.png',
@@ -305,151 +344,74 @@ export default {
           active: undefined,
           unreadMessageCount: 0,
           time: '11.15',
+          isGroup: true,
+          members: [
+            {
+              name: 'Cody Fisher',
+              image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar12.jpg',
+            },
+            {
+              name: 'Esther Howard',
+              image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar13.jpg',
+            },
+            {
+              name: 'Darlene Robertson',
+              image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar11.jpg',
+            },
+          ],
           lastMessage: "Let's implement PrimeVue. Elevating our UI game! 🚀",
         },
         {
-          image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar2.png',
-          name: 'Jerome Bell',
-          capName: 'JB',
-          active: true,
-          unreadMessageCount: 4,
-          time: '11.15',
-          lastMessage: "Absolutely! PrimeVue's documentation is gold—simplifies our UI work.",
-        },
-        {
-          image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar12.jpg',
-          name: 'Robert Fox',
-          capName: 'RF',
-          active: false,
-          unreadMessageCount: 0,
-          time: '11.15',
-          lastMessage: "Interesting! PrimeVue sounds amazing. What's your favorite feature?",
-        },
-        {
-          image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar13.jpg',
           name: 'Esther Howard',
+          image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar13.jpg',
           capName: 'EH',
-          active: true,
-          unreadMessageCount: 9,
-          time: '11.15',
-          lastMessage: 'Quick one, team! Anyone using PrimeVue for mobile app development?',
+          time: '12:30',
+          isGroup: false,
+          members: [],
+          lastMessage: 'Do you have a moment to discuss our project?',
+          messages: [
+            { id: 1, type: 'received', message: 'Sure, what’s the issue?', capName: 'EH' },
+            { id: 2, type: 'sent', message: "It's about the deadline.", capName: 'You' },
+          ],
         },
         {
-          image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar9.jpg',
           name: 'Darlene Robertson',
+          image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar9.jpg',
           capName: 'DR',
-          active: false,
-          unreadMessageCount: 0,
-          time: '11.15',
-          lastMessage:
-            "Just explored PrimeVue's themes. Can we talk about those stunning designs? 😍",
-        },
-        {
-          image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar6.png',
-          name: 'Ralph Edwards',
-          capName: 'RE',
-          active: false,
-          unreadMessageCount: 0,
-          time: '11.15',
-          lastMessage: 'PrimeVue is a game-changer, right? What are your thoughts, folks?',
-        },
-        {
-          image: '',
-          name: 'Ronald Richards',
-          capName: 'RR',
-          active: false,
-          unreadMessageCount: 0,
-          time: '11.15',
-          lastMessage:
-            "Jumping in! PrimeVue's community forum is buzzing. Any engaging discussions?",
-        },
-        {
-          image: '',
-          name: 'Kristin Watson',
-          capName: 'KW',
-          active: false,
-          unreadMessageCount: 0,
-          time: '11.15',
-          lastMessage: 'Sharing a quick win-PrimeVue tutorials are leveling up my UI skills. 👩‍💻',
-        },
-        {
-          image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar7.png',
-          name: 'Darrell Steward',
-          capName: 'DS',
-          active: false,
-          unreadMessageCount: 0,
-          time: '11.15',
-          lastMessage: "Reflecting on PrimeVue's impact on our workflow. What's your take?",
-        },
-      ],
-      chatMessages: [
-        {
-          id: 1,
-          attachment: '',
-          name: '',
-          image: '',
-          capName: 'OS',
-          type: 'received',
-          message: "Awesome! What's the standout feature?",
-        },
-        {
-          id: 2,
-          attachment: '',
-          name: '',
-          image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar8.png',
-          capName: 'A',
-          type: 'received',
-          message: 'PrimeVue rocks! Simplifies UI dev with versatile components.',
-        },
-        {
-          id: 3,
-          attachment: '',
-          name: '',
-          image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar11.jpg',
-          capName: 'A',
-          type: 'received',
-          message: 'Intriguing! Tell us more about its impact.',
-        },
-        {
-          id: 4,
-          attachment:
-            'https://www.primefaces.org/cdn/primevue/images/landing/apps/message-image.png',
-          name: '',
-          image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar2.png',
-          capName: 'A',
-          type: 'received',
-          message:
-            "It's design-neutral and compatible with Tailwind. Features accessible, high-grade components!",
-        },
-        {
-          id: 5,
-          attachment: '',
-          name: '',
-          image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar5.png',
-          capName: 'A',
-          type: 'sent',
-          message: 'Customizable themes, responsive design – UI excellence!',
-        },
-        {
-          id: 6,
-          attachment: '',
-          name: '',
-          image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar8.png',
-          capName: 'A',
-          type: 'received',
-          message: 'Love it! Fast-tracking our development is key.',
-        },
-        {
-          id: 7,
-          attachment: '',
-          name: '',
-          image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar6.png',
-          capName: 'A',
-          type: 'received',
-          message: 'Documentation rocks too – smooth integration for all.',
+          time: '12:30',
+          isGroup: false,
+          members: [],
+          lastMessage: 'Just checking in for updates on our project!',
+          messages: [],
         },
       ],
     }
+  },
+  computed: {
+    filteredChats() {
+      return this.chats.filter((chat) =>
+        chat.name.toLowerCase().includes(this.search.toLowerCase()),
+      )
+    },
+  },
+
+  methods: {
+    setActiveChat(chat: Chat) {
+      this.activeChat = chat
+    },
+    sendMessage() {
+      if (this.messageInput.trim() !== '' && this.activeChat) {
+        if (!this.activeChat.messages || !Array.isArray(this.activeChat.messages)) {
+          this.activeChat.messages = []
+        }
+        this.activeChat.messages.push({
+          id: this.activeChat.messages.length + 1,
+          type: 'sent',
+          message: this.messageInput.trim(),
+        })
+        this.messageInput = '' // Eingabefeld leeren
+      }
+    },
   },
 }
 </script>

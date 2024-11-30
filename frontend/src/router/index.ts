@@ -39,7 +39,7 @@ const router = createRouter({
       component: NotFoundView,
     },
     {
-      path: '/chat', // Route für Chat
+      path: '/chat', // Route for Chat
       name: 'Chat',
       component: ChatWindow,
     },

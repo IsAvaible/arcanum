@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "cross-env VITE_APP_API_URL=http://localhost:5173 vite\"",
+    "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "test": "run-s test:unit test:e2e",
