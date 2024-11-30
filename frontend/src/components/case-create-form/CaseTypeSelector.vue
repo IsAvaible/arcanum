@@ -2,6 +2,7 @@
 import CaseTypeCard from '@/components/case-create-form/CaseTypeCard.vue'
 import { ref } from 'vue'
 import { useScroll } from '@vueuse/core'
+import FadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
 
 const props = defineProps<{
   caseTypes: {
@@ -45,27 +46,8 @@ window.addEventListener('resize', () => caseTypeSelector.value?.dispatchEvent(ne
       {{ caseType.title }}
     </option>
   </select>
-  <div class="relative">
-    <!-- Fading effect overlay left -->
-    <div
-      :class="[
-        'absolute top-0 left-0 h-full w-10 bg-gradient-to-r from-white to-transparent pointer-events-none transition-opacity',
-        caseTypeSelectorScrollState.left ? 'opacity-0' : 'opacity-100',
-      ]"
-    ></div>
-    <!-- Fading effect overlay right -->
-    <div
-      :class="[
-        'absolute top-0 right-0 h-full w-10 bg-gradient-to-l from-white to-transparent pointer-events-none transition-opacity',
-        caseTypeSelectorScrollState.right ? 'opacity-0' : 'opacity-100',
-      ]"
-    ></div>
-    <!-- Actual content -->
-    <div
-      class="flex items-stretch gap-x-6 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 pb-2 scroll-smooth"
-      aria-hidden="true"
-      ref="caseTypeSelector"
-    >
+  <FadeOverlay axis="horizontal">
+    <div class="flex items-stretch gap-x-6 pb-2" aria-hidden="true" ref="caseTypeSelector">
       <CaseTypeCard
         v-for="(caseType, index) in caseTypes"
         :key="index"
@@ -76,7 +58,7 @@ window.addEventListener('resize', () => caseTypeSelector.value?.dispatchEvent(ne
         <Component :is="caseType.icon" />
       </CaseTypeCard>
     </div>
-  </div>
+  </FadeOverlay>
 </template>
 
 <style scoped></style>
