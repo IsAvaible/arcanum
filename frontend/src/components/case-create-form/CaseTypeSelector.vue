@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import CaseTypeCard from '@/components/case-create-form/CaseTypeCard.vue'
-import { ref } from 'vue'
-import { useScroll } from '@vueuse/core'
-import FadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
+import ScrollFadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
 
 const props = defineProps<{
   caseTypes: {
@@ -18,15 +16,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
 }>()
-
-// Monitor case type selector scroll state to show/hide fading effect overlays
-const caseTypeSelector = ref<HTMLElement | null>(null)
-const { arrivedState: caseTypeSelectorScrollState } = useScroll(caseTypeSelector)
-// Trigger scroll event to populate initial scroll state
-setTimeout(() => caseTypeSelector.value?.dispatchEvent(new Event('scroll')), 0)
-
-// On resize, trigger scroll event to update scroll state
-window.addEventListener('resize', () => caseTypeSelector.value?.dispatchEvent(new Event('scroll')))
 </script>
 
 <template>
@@ -46,7 +35,7 @@ window.addEventListener('resize', () => caseTypeSelector.value?.dispatchEvent(ne
       {{ caseType.title }}
     </option>
   </select>
-  <FadeOverlay axis="horizontal">
+  <ScrollFadeOverlay axis="horizontal">
     <div class="flex items-stretch gap-x-6 pb-2" aria-hidden="true" ref="caseTypeSelector">
       <CaseTypeCard
         v-for="(caseType, index) in caseTypes"
@@ -58,7 +47,7 @@ window.addEventListener('resize', () => caseTypeSelector.value?.dispatchEvent(ne
         <Component :is="caseType.icon" />
       </CaseTypeCard>
     </div>
-  </FadeOverlay>
+  </ScrollFadeOverlay>
 </template>
 
 <style scoped></style>

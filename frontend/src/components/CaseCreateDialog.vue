@@ -32,6 +32,7 @@ import { ref } from 'vue'
 import { useVModel } from '@vueuse/core'
 import { useApi } from '@/composables/useApi'
 import type { CasesPostCaseTypeEnum } from '@/api'
+import ScrollFadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
 
 const toast = useToast()
 
@@ -458,7 +459,118 @@ const dialogPT = {
           />
           <!-- Review and confirmation content -->
           <AccordionContent>
-            <p>Review your case information before submitting.</p>
+            <div class="grid gap-y-6">
+              <div class="bg-slate-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">Basic Information</h2>
+                <div class="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <p class="text-sm text-slate-600">Case Title</p>
+                    <p class="font-medium">{{ fields.title.value.value || 'Not provided' }}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-slate-600">Case Type</p>
+                    <p class="font-medium">
+                      {{
+                        caseTypes.find((type) => type.title === fields.selectedCaseType.value.value)
+                          ?.title || 'Not selected'
+                      }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-slate-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">People</h2>
+                <div class="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <p class="text-sm text-slate-600">Assignees</p>
+                    <p class="font-medium">
+                      {{
+                        fields.selectedAssignees.value.value
+                          ?.map((assignee) => assignee.name)
+                          .join(', ') || 'No assignees'
+                      }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-slate-600">Team</p>
+                    <p class="font-medium">
+                      {{ fields.selectedTeam.value.value?.name || 'No team selected' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-slate-600">Participants</p>
+                    <p class="font-medium">
+                      {{
+                        fields.selectedParticipants.value.value
+                          ?.map((participant) => participant.name)
+                          .join(', ') || 'No participants'
+                      }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-slate-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">Details</h2>
+                <div class="grid gap-4">
+                  <div>
+                    <p class="text-sm text-slate-600">Description</p>
+                    <ScrollFadeOverlay
+                      axis="vertical"
+                      content-class="max-h-[150px]"
+                      fade-from="from-slate-50"
+                      class="ql-snow"
+                    >
+                      <div
+                        v-if="fields.description.value.value"
+                        class="ql-editor p-0 max-w-full overflow-auto"
+                        v-html="fields.description.value.value"
+                      ></div>
+                      <p v-else class="font-medium">No description provided</p>
+                    </ScrollFadeOverlay>
+                  </div>
+                  <div>
+                    <p class="text-sm text-slate-600">Solution</p>
+                    <ScrollFadeOverlay
+                      axis="vertical"
+                      content-class="max-h-[150px]"
+                      fade-from="from-slate-50"
+                      class="ql-snow"
+                    >
+                      <div
+                        v-if="fields.solution.value.value"
+                        class="ql-editor p-0 max-w-full max-h-[10px] overflow-auto"
+                        v-html="fields.solution.value.value"
+                      ></div>
+                      <p v-else class="font-medium">No solution provided</p>
+                    </ScrollFadeOverlay>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-slate-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">Products</h2>
+                <div>
+                  <p class="text-sm text-slate-600">Selected Products</p>
+                  <p class="font-medium">
+                    {{
+                      fields.selectedProducts.value.value?.length
+                        ? fields.selectedProducts.value.value.join(', ')
+                        : 'No products selected'
+                    }}
+                  </p>
+                </div>
+              </div>
+
+              <div class="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                <h2 class="text-lg font-semibold mb-2">Confirmation</h2>
+                <p class="text-yellow-800">
+                  Please review all information carefully before submitting. Once submitted, you may
+                  not be able to edit all details.
+                </p>
+              </div>
+            </div>
           </AccordionContent>
         </AccordionPanel>
       </Accordion>
