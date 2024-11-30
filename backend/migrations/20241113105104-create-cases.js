@@ -32,11 +32,13 @@ module.exports = {
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('NOW()')
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('NOW()')
       },
       case_type: {
         allowNull: true,
@@ -46,9 +48,10 @@ module.exports = {
         allowNull: true,
         type: Sequelize.STRING
       },
-      attachment: {
-        allowNull: true,
-        type: Sequelize.ARRAY(Sequelize.STRING)
+      draft: {
+        allowNull: false,
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
       }
     });
 
