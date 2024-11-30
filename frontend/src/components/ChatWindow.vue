@@ -281,6 +281,8 @@ type Chat = {
   time: string
   lastMessage: string
   messages?: Array<{ id: number; type: string; message: string; capName?: string; image?: string }>
+  isGroup?: boolean
+  members?: { name: string; image: string }[]
 }
 
 export default {
