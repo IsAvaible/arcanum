@@ -13,9 +13,12 @@ import { useToast } from 'primevue/usetoast'
 import { z } from 'zod'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
+import UserSelector, { type User } from '@/components/case-create-form/UserSelector.vue'
+import Divider from 'primevue/divider'
 
 // Define interfaces for type safety
 interface CaseDetails {
+  name: string
   type: string
   createdBy: string
   createdOn: Date
@@ -23,6 +26,8 @@ interface CaseDetails {
   reference: string
   description: string
   solution: string
+  assignees: User[]
+  participants: User[]
 }
 
 interface Priority {
@@ -38,12 +43,6 @@ interface Status {
   textColor: string
 }
 
-interface User {
-  id: number
-  name: string
-  image: string
-}
-
 const toast = useToast()
 const router = useRouter()
 
@@ -52,6 +51,7 @@ const breadcrumb = ref('Cases / Servicecase / Overview')
 
 // Initialize with proper typing
 const caseDetails = reactive<CaseDetails>({
+  name: 'Sample Case',
   type: 'Servicecase',
   createdBy: 'Jason Nicholas Arifin',
   createdOn: new Date('2024-10-25T10:28:00'),
@@ -59,6 +59,8 @@ const caseDetails = reactive<CaseDetails>({
   reference: '1234',
   description: 'Initial case description',
   solution: 'Here is the Solution',
+  assignees: [],
+  participants: [],
 })
 
 const originalCaseDetails = ref<CaseDetails>({ ...caseDetails })
@@ -76,21 +78,22 @@ const statuses: Status[] = [
   { name: 'Abgeschlossen', code: 'completed', color: '#f0fdf4', textColor: '#16a34a' },
 ]
 
-const users: User[] = [
-  { id: 1, name: 'John Doe', image: '/placeholder.svg?height=32&width=32' },
-  { id: 2, name: 'Jane Smith', image: '/placeholder.svg?height=32&width=32' },
-  { id: 3, name: 'Bob Johnson', image: '/placeholder.svg?height=32&width=32' },
-  { id: 4, name: 'Alice Brown', image: '/placeholder.svg?height=32&width=32' },
-  { id: 5, name: 'Charlie Davis', image: '/placeholder.svg?height=32&width=32' },
-]
+// users array to match User type
+const users: User[] = Array.from({ length: 15 }, (_, i) => ({
+  id: i + 1,
+  name: `User ${i + 1}`,
+  image: `/placeholder.svg?height=${50 + i}&width=${50 + i}`,
+}))
 
-const selectedPriority = ref<Priority>(priorities[1]) // P1
-const selectedStatus = ref<Status>(statuses[0]) // Offen
-const selectedAssignee = ref<User>(users[0]) // John Doe
+const selectedPriority = ref<Priority>(priorities[1])
+const selectedStatus = ref<Status>(statuses[0])
+const selectedAssignees = ref<User[]>([users[0]])
+const selectedParticipants = ref<User[]>([])
 
 const onUpload = (event: unknown) => {
   console.log('File uploaded:', event)
 }
+
 const dataTypes = [
   { label: 'Text', value: 'text' },
   { label: 'XML', value: 'xml' },
@@ -104,7 +107,9 @@ const selectedDataType = ref('image')
 
 const originalPriority = ref(selectedPriority.value)
 const originalStatus = ref(selectedStatus.value)
-const originalAssignee = ref(selectedAssignee.value)
+const originalAssignees = ref([...selectedAssignees.value])
+const originalParticipants = ref([...selectedParticipants.value])
+
 const getUploadProps = (dataType: string) => {
   switch (dataType) {
     case 'image':
@@ -135,19 +140,25 @@ const isEditMode = ref(false)
 const moreMenu = ref()
 const showUnsavedChanges = ref(false)
 
-// Simplified schema
+// schema
 const schema = toTypedSchema(
   z.object({
+    name: z.string().min(1, 'Case name is required'),
     type: z.string().min(1, 'Case type is required'),
     reference: z.string().min(1, 'Reference is required'),
     description: z.string().min(1, 'Description is required'),
     solution: z.string().min(1, 'Solution is required'),
+    assignees: z.array(z.any()).min(1, 'At least one assignee is required'),
+    participants: z.array(z.any()).optional(),
   }),
 )
 
 const { handleSubmit, errors, resetForm, setFieldValue } = useForm({
   validationSchema: schema,
-  initialValues: caseDetails,
+  initialValues: {
+    ...caseDetails,
+    assignees: selectedAssignees.value,
+  },
 })
 
 const hasUnsavedChanges = computed(() => {
@@ -155,7 +166,21 @@ const hasUnsavedChanges = computed(() => {
     JSON.stringify(caseDetails) !== JSON.stringify(originalCaseDetails.value) ||
     selectedPriority.value !== originalPriority.value ||
     selectedStatus.value !== originalStatus.value ||
-    selectedAssignee.value !== originalAssignee.value
+    JSON.stringify(selectedAssignees.value) !== JSON.stringify(originalAssignees.value) ||
+    JSON.stringify(selectedParticipants.value) !== JSON.stringify(originalParticipants.value)
+  )
+})
+
+// User role and permissions
+const userRole = ref('user')
+const userPermissions = ref(['view'])
+
+// Implement access control
+const canEdit = computed(() => {
+  return (
+    userRole.value === 'admin' ||
+    userRole.value === 'manager' ||
+    userPermissions.value.includes('edit')
   )
 })
 
@@ -165,6 +190,7 @@ const handleEdit = () => {
       severity: 'error',
       summary: 'Permission Denied',
       detail: 'You do not have permissions to edit this case.',
+      life: 3000,
     })
     return
   }
@@ -172,28 +198,47 @@ const handleEdit = () => {
   showUnsavedChanges.value = false
 }
 
-const handleSave = handleSubmit((values) => {
-  if (Object.keys(errors.value).length === 0) {
+const handleSave = handleSubmit(
+  (values) => {
+    // Simulate conflict detection
+    const conflictDetected = Math.random() < 0.2 // 20% chance of conflict
+
+    if (conflictDetected) {
+      toast.add({
+        severity: 'error',
+        summary: 'Conflict Detected',
+        detail: 'Another user has modified this case. Please refresh and try again.',
+        life: 3000,
+      })
+      return
+    }
+
     Object.assign(caseDetails, values)
     originalCaseDetails.value = { ...caseDetails }
     originalPriority.value = selectedPriority.value
     originalStatus.value = selectedStatus.value
-    originalAssignee.value = selectedAssignee.value
+    originalAssignees.value = [...selectedAssignees.value]
+    originalParticipants.value = [...selectedParticipants.value]
     isEditMode.value = false
     showUnsavedChanges.value = false
     toast.add({
       severity: 'success',
       summary: 'Changes Saved',
       detail: 'Your changes have been successfully saved.',
+      life: 3000,
     })
-  } else {
+  },
+  ({ errors }) => {
+    // This callback is called when there are validation errors
+    console.log('Validation errors:', errors)
     toast.add({
       severity: 'error',
       summary: 'Validation Error',
       detail: 'Please fix the errors before saving.',
+      life: 3000,
     })
-  }
-})
+  },
+)
 
 const handleCancel = () => {
   if (hasUnsavedChanges.value) {
@@ -202,7 +247,8 @@ const handleCancel = () => {
       Object.assign(caseDetails, originalCaseDetails.value)
       selectedPriority.value = originalPriority.value
       selectedStatus.value = originalStatus.value
-      selectedAssignee.value = originalAssignee.value
+      selectedAssignees.value = [...originalAssignees.value]
+      selectedParticipants.value = [...originalParticipants.value]
       isEditMode.value = false
       showUnsavedChanges.value = false
       toast.add({
@@ -220,7 +266,13 @@ const handleCancel = () => {
 
 // Watch for changes and update unsaved changes banner
 watch(
-  [() => ({ ...caseDetails }), selectedPriority, selectedStatus, selectedAssignee],
+  [
+    () => ({ ...caseDetails }),
+    selectedPriority,
+    selectedStatus,
+    selectedAssignees,
+    selectedParticipants,
+  ],
   () => {
     if (isEditMode.value) {
       showUnsavedChanges.value = hasUnsavedChanges.value
@@ -228,6 +280,10 @@ watch(
   },
   { deep: true },
 )
+
+watch(selectedAssignees, (newValue) => {
+  setFieldValue('assignees', newValue)
+})
 
 const menuItems = [
   {
@@ -256,11 +312,6 @@ const menuItems = [
 const toggleMenu = (event: Event) => {
   moreMenu.value.toggle(event)
 }
-
-const canEdit = computed(() => {
-  // Add your permission logic here
-  return true
-})
 </script>
 
 <template>
@@ -302,6 +353,7 @@ const canEdit = computed(() => {
         </div>
 
         <div class="flex gap-2">
+          <!-- hinzufügen in Button :disabled="!canEdit" falls man Edit nicht sehen möchte -->
           <Button v-if="!isEditMode" label="Edit" icon="pi pi-pencil" @click="handleEdit" />
           <Button v-if="isEditMode" label="Save" icon="pi pi-check" @click="handleSave" />
           <Button
@@ -346,8 +398,21 @@ const canEdit = computed(() => {
         <template #content>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="field">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Case Type</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Case Name (*)</label>
               <InputText
+                id="name"
+                v-model="caseDetails.name"
+                class="w-full"
+                :class="{ 'p-invalid': errors.name }"
+                :disabled="!isEditMode"
+                @update:modelValue="setFieldValue('name', $event)"
+              />
+              <small v-if="errors.name" class="p-error block mt-1">{{ errors.name }}</small>
+            </div>
+            <div class="field">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Case Type (*)</label>
+              <InputText
+                id="type"
                 v-model="caseDetails.type"
                 class="w-full"
                 :class="{ 'p-invalid': errors.type }"
@@ -473,36 +538,39 @@ const canEdit = computed(() => {
             </div>
 
             <div class="field">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Assignee</label>
-              <Dropdown
-                v-model="selectedAssignee"
-                :options="users"
-                optionLabel="name"
-                placeholder="Select Assignee"
-                class="w-full"
-                :disabled="!isEditMode"
-              >
-                <template #value="slotProps">
-                  <div class="flex items-center gap-2" v-if="slotProps.value">
-                    <img
-                      :src="slotProps.value.image"
-                      :alt="slotProps.value.name"
-                      class="w-6 h-6 rounded-full"
-                    />
-                    <span>{{ slotProps.value.name }}</span>
-                  </div>
-                </template>
-                <template #option="slotProps">
-                  <div class="flex items-center gap-2">
-                    <img
-                      :src="slotProps.option.image"
-                      :alt="slotProps.option.name"
-                      class="w-6 h-6 rounded-full"
-                    />
-                    <span>{{ slotProps.option.name }}</span>
-                  </div>
-                </template>
-              </Dropdown>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Assignees (*)</label>
+              <div class="w-full">
+                <UserSelector
+                  assigneeLabel="Assignees"
+                  :userOptions="users"
+                  v-model:selectedUsers="selectedAssignees"
+                  multi-select
+                  :disabled="!isEditMode"
+                  :invalid="!!errors.assignees"
+                />
+                <small v-if="errors.assignees" class="p-error block mt-1">
+                  {{ errors.assignees }}
+                </small>
+              </div>
+            </div>
+
+            <Divider />
+
+            <div class="field">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Participants</label>
+              <div class="w-full">
+                <UserSelector
+                  assigneeLabel="Participants"
+                  :userOptions="users"
+                  v-model:selectedUsers="selectedParticipants"
+                  multi-select
+                  :disabled="!isEditMode"
+                  :class="{ 'p-invalid': errors.participants }"
+                />
+                <small v-if="errors.participants" class="p-error block mt-1">
+                  {{ errors.participants }}
+                </small>
+              </div>
             </div>
           </div>
         </template>
@@ -620,6 +688,10 @@ const canEdit = computed(() => {
 :deep(.p-button.p-fileupload-choose:hover) {
   background-color: #2563eb;
   border-color: #2563eb;
+}
+
+:deep(.p-multiselect.p-invalid) {
+  border-color: #ef4444 !important;
 }
 
 :deep(.p-dropdown-item) {

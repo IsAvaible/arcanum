@@ -13,6 +13,8 @@ const props = defineProps<{
   userOptions: User[]
   selectedUsers: User[]
   multiSelect: boolean
+  disabled?: boolean
+  invalid?: boolean
 }>()
 
 // Group people by first letter of their name add Suggestions
@@ -69,8 +71,10 @@ const hidePopover = () => {
   <component
     :is="multiSelect ? MultiSelect : Select"
     class="w-full"
+    :disabled="props.disabled"
     id="{{ assigneeLabel.toLowerCase() }}"
     :options="groupedUserOptions"
+    :class="{ 'p-invalid': invalid }"
     option-group-label="label"
     option-label="name"
     optionGroupChildren="users"
@@ -99,7 +103,6 @@ const hidePopover = () => {
       </div>
     </template>
 
-    f
     <!-- @vue-ignore Only the MultiSelect component has the chip slot -->
     <template
       v-if="multiSelect"
@@ -150,4 +153,9 @@ const hidePopover = () => {
   </Popover>
 </template>
 
-<style scoped></style>
+<style scoped>
+:deep(.p-disabled) {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+</style>
