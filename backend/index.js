@@ -41,6 +41,7 @@ const options = {
   //ca: fs.readFileSync('./certs/ca.pem')
 };
 
+// for https uncomment the following lines
 /* try{
   const server = https.createServer(options, app).listen(port, function(req, res){
 
@@ -51,7 +52,7 @@ const options = {
 }
  */
 
-
+// for https comment the following line
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
