@@ -19,15 +19,14 @@ import CaseTypeSelector from '@/components/case-create-form/CaseTypeSelector.vue
 import UserSelector, { type User } from '@/components/case-create-form/UserSelector.vue'
 import TempEditor from '@/components/case-create-form/TempEditor.vue'
 import ProductSelector from '@/components/case-create-form/ProductSelector.vue'
-import TeamSelector from '@/components/case-create-form/TeamSelector.vue'
+import TeamSelector, { type Team } from '@/components/case-create-form/TeamSelector.vue'
 
-import { useCaseFormValidation } from '@/composables/useCaseFormValidation'
 import { useCaseFormStepper } from '@/composables/useCaseFormStepper'
 import StepHeader from '@/components/case-create-form/StepHeader.vue'
 import CaseCreateStepper from '@/components/case-create-form/CaseCreateStepper.vue'
 import { toTypedSchema } from '@vee-validate/zod'
 import * as zod from 'zod'
-import { useForm } from 'vee-validate'
+import { useField, useForm } from 'vee-validate'
 import { ref } from 'vue'
 import { useVModel } from '@vueuse/core'
 import { useApi } from '@/composables/useApi'
@@ -94,7 +93,9 @@ const schema = toTypedSchema(
       .nonempty('Please select at least one assignee'),
     selectedParticipants: zod.array(zod.any()).optional(),
     selectedTeam: zod.any().optional(),
-    description: zod.string().optional(),
+    description: zod
+      .string({ required_error: 'Please provide a description' })
+      .min(1, 'Please provide a description'),
     solution: zod.string().optional(),
     selectedProducts: zod.array(zod.number()).default([]),
   }),
@@ -109,21 +110,71 @@ const {
   validationSchema: schema,
 })
 
-// Form validation composable
-const {
-  fields,
-  stepValid: stepValidInner,
-  validateStep: validateStepInner,
-} = useCaseFormValidation(errors)
+// Form validation
+const fields = {
+  title: useField<string>('title'),
+  selectedCaseType: useField<string>('selectedCaseType'),
+  selectedAssignees: useField<User[]>('selectedAssignees'),
+  selectedParticipants: useField<User[]>('selectedParticipants'),
+  selectedTeam: useField<Team>('selectedTeam'),
+  description: useField<string>('description'),
+  solution: useField<string>('solution'),
+  selectedProducts: useField<number[]>('selectedProducts'),
+}
 
+/**
+ * Check if the current step is valid
+ * @param step The step to check
+ */
 const stepValid = (step: number = activeStep.value): boolean => {
-  return stepValidInner(step)
+  switch (step) {
+    case 0:
+      return !(errors.value.title || errors.value.selectedCaseType)
+    case 1:
+      return !(
+        errors.value.selectedAssignees ||
+        errors.value.selectedParticipants ||
+        errors.value.selectedTeam
+      )
+    case 2:
+      return !(errors.value.description || errors.value.solution)
+    case 3:
+      return !errors.value.selectedProducts
+    case 4:
+      return true
+    default:
+      return false
+  }
 }
 
-const validateStep = async (step: number = activeStep.value): Promise<void> => {
-  await validateStepInner(step)
+/**
+ * Validate the current step
+ * @param step The step to validate
+ */
+const validateStep = async (step: number = activeStep.value) => {
+  switch (step) {
+    case 0:
+      await fields.title.validate()
+      await fields.selectedCaseType.validate()
+      return
+    case 1:
+      await fields.selectedAssignees.validate()
+      await fields.selectedParticipants.validate()
+      await fields.selectedTeam.validate()
+      return
+    case 2:
+      await fields.description.validate()
+      await fields.solution.validate()
+      return
+    case 3:
+      await fields.selectedProducts.validate()
+      return
+  }
 }
 
+/**
+ * Check if there are any errors in the form
+ */
 const hasErrors = () => {
   return Object.keys(errors.value).length !== 0
 }
@@ -333,6 +384,7 @@ const dialogPT = {
                   :userOptions="peopleOptions"
                   v-model:selectedUsers="fields.selectedAssignees.value.value"
                   multi-select
+                  :invalid="!!errors.selectedAssignees"
                 />
                 <Message
                   v-if="errors.selectedAssignees"
@@ -350,6 +402,7 @@ const dialogPT = {
                   <TeamSelector
                     v-model:selected-team="fields.selectedTeam.value.value"
                     class="w-full"
+                    :invalid="!!errors.selectedTeam"
                   />
                   <Message
                     v-if="errors.selectedTeam"
@@ -371,6 +424,7 @@ const dialogPT = {
                     :userOptions="peopleOptions"
                     v-model:selectedUsers="fields.selectedParticipants.value.value"
                     multi-select
+                    :invalid="!!errors.selectedParticipants"
                   />
                   <Message
                     v-if="errors.selectedParticipants"
@@ -396,33 +450,55 @@ const dialogPT = {
           />
           <AccordionContent>
             <div class="h-full grid gap-y-4">
-              <div class="flex flex-col gap-y-3">
+              <div class="flex flex-col">
                 <Label
                   for="description"
                   label="Description"
                   description="Describe the case in detail, e.g. what happened, when, and why"
                   icon="pi-info-circle"
+                  class="mb-3"
                 />
                 <TempEditor
                   v-model="fields.description.value.value"
                   editorStyle="flex: 1; min-height: 180px"
                   class="flex-1 flex flex-col"
                   id="description"
+                  :invalid="!!errors.description"
                 />
+                <Message
+                  v-if="errors.description"
+                  severity="error"
+                  variant="simple"
+                  size="small"
+                  class="-mt-5 ml-1 z-10"
+                >
+                  {{ errors.description }}
+                </Message>
               </div>
-              <div class="flex flex-col gap-y-3">
+              <div class="flex flex-col">
                 <Label
                   for="solution"
                   label="Solution"
                   description="Describe the solution to the case, e.g. how the issue was resolved"
                   icon="pi-check-circle"
+                  class="mb-3"
                 />
                 <TempEditor
                   v-model="fields.solution.value.value"
                   editorStyle="flex: 1; min-height: 180px"
                   class="flex-1 flex flex-col"
                   id="solution"
+                  :invalid="!!errors.solution"
                 />
+                <Message
+                  v-if="errors.solution"
+                  severity="error"
+                  variant="simple"
+                  size="small"
+                  class="-mt-5 ml-1 z-10"
+                >
+                  {{ errors.solution }}
+                </Message>
               </div>
             </div>
           </AccordionContent>
