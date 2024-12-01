@@ -170,9 +170,16 @@ exports.createCase = [
         // **Hochgeladene Dateien verarbeiten**
         if(req.files && req.files.length > 0){
             for(const file of req.files){
-                const localFilePath = file.path;
+                const localFilePath = path.resolve(file.path);
+                const uploadsDir = path.resolve('./uploads');
+                if (!localFilePath.startsWith(uploadsDir)) {
+                    return res.status(400).json({ message: 'Invalid file path' });
+                }
+
+                
 
                 try{
+                  
                   const remoteFilePath =  await nextCloud.uploadFile(localFilePath, "/test-folder/", file.filename);
 
                   let attachment =  await Attachments.findOne({
@@ -357,6 +364,7 @@ exports.createCase = [
 
   exports.downloadAttachment = async (req, res) => {
     const { caseId, filename } = req.params;
+    caseId = parseInt(caseId, 10);
   
     try {
       // **1. Case mit Attachments abrufen**
