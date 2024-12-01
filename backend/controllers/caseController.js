@@ -302,6 +302,11 @@ exports.createCase = [
           const attachmentInstances = [];
           for (const file of req.files) {
               const localFilePath = file.path;
+              const uploadsDir = path.resolve('./uploads');
+              if (!localFilePath.startsWith(uploadsDir)) {
+                  return res.status(404);
+              }
+              
 
               try {
                   // Datei zu NextCloud hochladen
