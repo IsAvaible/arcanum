@@ -1,94 +1,122 @@
+import mimetypes
+import os
 import re
-from pathlib import Path
-from openai import OpenAI
 
 from bs4 import BeautifulSoup
-from flask import Blueprint
-from werkzeug.utils import secure_filename
+from langchain_openai import AzureChatOpenAI
+from dotenv import load_dotenv
 
 import hashlib
 
 from app import app
-from embeddings import create_embeddings
-from pdf import *
+from whisper import transcribe
+from pdf import (
+    create_text_chunks_pdfplumber,
+)
+from webdav import download_file_webdav
 
 import json
 
-upload = Blueprint('upload', __name__)
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'html', 'mp3', "wav"}
+ALLOWED_EXTENSIONS = {"txt", "pdf", "html", "mp3", "wav"}
+
+load_dotenv()
+
+AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
+AZURE_DEPLOYMENT_GPT = os.getenv("AZURE_DEPLOYMENT_GPT")
+AZURE_DEPLOYMENT_EMBEDDING = os.getenv("AZURE_DEPLOYMENT_EMBEDDING")
+AZURE_DEPLOYMENT = os.getenv("AZURE_DEPLOYMENT_WHISPER")
+OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
+
 
 
 def allowed_file(filename):
-    return '.' in filename and \
-        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def sort_attachments(item):
+    if item["mimetype"] == "application/pdf":
+        return 0
+    elif item["mimetype"] == "audio/mpeg":
+        return 2
+    return 1
 
-def upload_file_method(files, pdf_extractor, chat_id):
+llm = AzureChatOpenAI(
+    azure_endpoint=AZURE_ENDPOINT,
+    azure_deployment=AZURE_DEPLOYMENT_GPT,
+    openai_api_version=OPENAI_API_VERSION,
+    temperature=0,
+    max_tokens=None,
+    timeout=None,
+    max_retries=2,
+    streaming=False,
+)
+
+def upload_file_method_production(files, pdf_extractor):
     files_as_dicts = []
     file_as_dict = {}
     files_as_dicts_json = ""
     texts = ""
     single_text = ""
+    whisper_prompt = ""
+
+
     for file in files:
-        if file:
-            if allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                path = os.path.join(app.root_path, os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                mimetype = file.content_type
-                file.save(path)
-                clean_filename_str = clean_filename(Path(path).stem)
-                if mimetype == "audio/mpeg":
-                    texts += "Content of Audio File: " + clean_filename_str + ": "
-                    client = OpenAI()
-                    audio_file = open(path, "rb")
-                    transcription = client.audio.transcriptions.create(
-                        model="whisper-1",
-                        file=audio_file,
-                        response_format="verbose_json"
-                    )
-                    texts += transcription.text
-                    single_text = transcription.text
+
+        print (file)
+        filepath = file["filepath"]
+        mimetype = mimetypes.guess_type(filepath)
+        file["mimetype"] = mimetype[0]
 
 
-                elif mimetype == 'application/pdf':
-                    # if store_hash(file) == True:
-                    texts = "Content of PDF File: " + clean_filename_str + ": "
-                    if pdf_extractor == "pypdfloader":
-                        single_text = create_text_chunks_pypdfloader(path)
-                        texts += " " + single_text
-                    if pdf_extractor == "pdfplumber":
-                        single_text = create_text_chunks_pdfplumber(path)
-                        texts += " " + single_text
-                    if pdf_extractor == "pdfreader":
-                        single_text = create_text_chunks_pdfreader(path)
-                        texts += " " + single_text
-                    if pdf_extractor == "ocr":
-                        single_text = create_text_chunks_ocr(path)
-                        texts += " " + single_text
-                elif mimetype == "text/html":
-                    texts = "Content of HTML File: " + clean_filename_str + ": "
-                    with open(path, 'r', encoding="utf-8") as file:
-                        contents = file.read()
-                        soup = BeautifulSoup(contents)
-                        texts += soup.get_text()
-                        single_text = soup.get_text()
-                elif mimetype == "text/plain":
-                    texts = "Content of Text File: " + clean_filename_str + ": "
-                    with open(path, 'r', encoding="utf-8") as file:
-                        contents = file.read()
-                        texts += contents
-                        single_text = contents
-                
-                file_as_dict = {
-                    "filename": filename,
-                    "mimetype": mimetype,
-                    "content": single_text,
-                }
-                
-                create_embeddings(single_text, filename,chat_id)
+    #sort attachments so audio come last
+    sorted_attachments = sorted(files, key=sort_attachments)
+
+    for file in sorted_attachments:
+        filepath = file["filepath"]
+        filehash = file["filehash"]
+        file_id = file["file_id"]
+        filename = file["filename"]
+        # download file to temp folder
+        path = download_file_webdav(filepath, filename)
+        mimetype = file["mimetype"]
+
+        if allowed_file(filename):
+            if "audio" in mimetype:
+                partialTranscription = transcribe(file, texts, llm, path, filename, whisper_prompt)
+                single_text = "".join(partialTranscription)
+                texts += " " + single_text
+            elif mimetype == "application/pdf":
+                texts += f" Content of PDF File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
+                single_text = create_text_chunks_pdfplumber(path)
+                texts += " " + single_text
+            elif mimetype == "text/html":
+                texts += f" Content of HTML File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
+                with open(path, "r", encoding="utf-8") as file:
+                    contents = file.read()
+                    soup = BeautifulSoup(contents)
+                    texts += soup.get_text()
+                    single_text = soup.get_text()
+            elif mimetype == "text/plain":
+                texts += f" Content of Text File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
+                with open(path, "r", encoding="utf-8") as file:
+                    contents = file.read()
+                    texts += contents
+                    single_text = contents
+
+            file_as_dict = {
+                "filename": filename,
+                "mimetype": mimetype,
+                "filehash": filehash,
+                "filepath": filepath,
+                "file_id": file_id,
+                "content": single_text,
+            }
+
+            # HIER: CONTENT VON DATEIEN -> IN DATEI TEMPORÄR SPEICHERN
+
         files_as_dicts.append(file_as_dict)
         files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False)
-            
+
+        print(files_as_dicts_json)
     return files_as_dicts_json
 
 
@@ -96,7 +124,7 @@ def clean_filename(filepath):
     # Get the filename without the path
     filename = os.path.basename(filepath)
     # Replace disallowed special characters with blanks
-    clean_name = re.sub(r'[^a-zA-Z0-9]', ' ', filename)
+    clean_name = re.sub(r"[^a-zA-Z0-9]", " ", filename)
     return clean_name
 
 
@@ -115,7 +143,7 @@ def generate_file_hash(file_storage):
 def store_hash(file_storage):
     """Check if hash exists in file, otherwise add it to the list."""
     hash_value = generate_file_hash(file_storage)
-    hash_file_path = os.path.join(app.config['UPLOAD_FOLDER'], "hashvalues.txt")
+    hash_file_path = os.path.join(app.config["UPLOAD_FOLDER"], "hashvalues.txt")
     # Read existing hashes if the file exists
     try:
         with open(hash_file_path, "r") as hash_file:

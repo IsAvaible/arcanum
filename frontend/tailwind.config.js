@@ -8,6 +8,11 @@ export default {
   theme: {
     extend: {
       screens: {
+        'max-sm': { raw: '(max-width: 639px)' },
+        'max-md': { raw: '(max-width: 767px)' },
+        'max-lg': { raw: '(max-width: 1023px)' },
+        'max-xl': { raw: '(max-width: 1279px)' },
+        'max-2xl': { raw: '(max-width: 1535px)' },
         'sm-h': { raw: '(min-height: 640px)' },
         'md-h': { raw: '(min-height: 768px)' },
         'lg-h': { raw: '(min-height: 1024px)' },
