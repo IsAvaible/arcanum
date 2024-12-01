@@ -1,28 +1,49 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 import InputText from 'primevue/inputtext'
-import Dropdown from 'primevue/dropdown'
-import Calendar from 'primevue/calendar'
+import Select from 'primevue/select'
+import DatePicker from 'primevue/datepicker'
 import Textarea from 'primevue/textarea'
 import FileUpload from 'primevue/fileupload'
 import { useRouter } from 'vue-router'
-
-const caseNumber = ref('12345')
-const breadcrumb = ref('Cases / Servicecase / Overview')
+import { useApi } from '@/composables/useApi'
+import type { AxiosError } from 'axios'
+import { CaseCaseTypeEnum } from '@/api'
+import type { Case } from '@/api'
+import Skeleton from 'primevue/skeleton'
 
 const router = useRouter()
+const api = useApi()
 
-const caseDetails = ref({
-  type: 'Servicecase',
-  createdBy: 'Jason Nicholas Arifin',
-  createdOn: new Date('2024-10-25T10:28:00'),
-  updatedOn: new Date('2024-10-25T10:28:00'),
-  reference: '1234',
-  description: '',
-  solution: '',
-})
+const caseId = ref(router.currentRoute.value.params.id)
+const breadcrumb = ref('Cases / Servicecase / Overview')
+
+const caseDetails = ref<Case | null>(null)
+
+const loading = ref(true)
+const error = ref<string | null>(null)
+const fetchCase = async () => {
+  loading.value = true
+  error.value = null
+  try {
+    caseDetails.value = (await api.casesIdGet({ id: Number(caseId.value) })).data
+    console.log(caseDetails.value)
+  } catch (err) {
+    error.value = (err as AxiosError).message
+    console.error(err)
+  } finally {
+    loading.value = false
+  }
+}
+
+const _caseTypes = ref(
+  Object.entries(CaseCaseTypeEnum).map(([_key, value]) => ({
+    label: value,
+    value: value,
+  })),
+)
 
 const priorities = [
   { name: 'P0', code: 'p0', color: '#ef4444' },
@@ -45,8 +66,6 @@ const users = [
   { id: 5, name: 'TestUser', image: '/placeholder.svg?height=32&width=32' },
 ]
 
-const selectedPriority = ref(priorities[0])
-const selectedStatus = ref(statuses[0])
 const selectedAssignee = ref(null)
 
 const onUpload = (event: unknown) => {
@@ -88,6 +107,9 @@ const getUploadProps = (dataType: string) => {
       return {}
   }
 }
+
+// Lifecycle Hooks
+onMounted(fetchCase)
 </script>
 
 <template>
@@ -103,7 +125,7 @@ const getUploadProps = (dataType: string) => {
             rounded
             v-tooltip.top="{ value: 'Return to Case List', showDelay: 1000 }"
           />
-          <h1 class="text-2xl font-bold text-gray-900">Case #{{ caseNumber }}</h1>
+          <h1 class="text-2xl font-bold text-gray-900">Case #{{ caseId }}</h1>
         </div>
 
         <div class="flex gap-2">
@@ -115,7 +137,7 @@ const getUploadProps = (dataType: string) => {
     </div>
 
     <!-- Main Content -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 lg:min-w-[57rem] gap-6 mb-6">
       <!-- Details Card -->
       <Card>
         <template #title>
@@ -125,23 +147,42 @@ const getUploadProps = (dataType: string) => {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="field">
               <label class="block text-sm font-medium text-gray-700 mb-1">Case Type</label>
-              <InputText v-model="caseDetails.type" class="w-full" />
+              <InputText v-if="!loading" v-model="caseDetails!.case_type" class="w-full" />
+              <Skeleton v-else height="2.5rem" />
             </div>
             <div class="field">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Reference</label>
-              <InputText v-model="caseDetails.reference" class="w-full" />
+              <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+              <InputText v-if="!loading" v-model="caseDetails!.title" class="w-full" />
+              <Skeleton v-else height="2.5rem" />
             </div>
             <div class="field">
               <label class="block text-sm font-medium text-gray-700 mb-1">Created by</label>
-              <InputText v-model="caseDetails.createdBy" class="w-full" />
+              <InputText v-if="!loading" class="w-full" value="Unknown (Backend Missing)" />
+              <Skeleton v-else height="2.5rem" />
             </div>
             <div class="field">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Created on</label>
-              <Calendar v-model="caseDetails.createdOn" showTime hourFormat="24" class="w-full" />
+              <label class="block text-sm font-medium text-gray-700 mb-1">Created at</label>
+              <DatePicker
+                v-if="!loading"
+                :model-value="new Date(caseDetails!.createdAt)"
+                @update:model-value="caseDetails!.createdAt = ($event! as Date).toISOString()"
+                showTime
+                hourFormat="24"
+                class="w-full"
+              />
+              <Skeleton v-else height="2.5rem" />
             </div>
             <div class="field">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Updated on</label>
-              <Calendar v-model="caseDetails.updatedOn" showTime hourFormat="24" class="w-full" />
+              <label class="block text-sm font-medium text-gray-700 mb-1">Updated at</label>
+              <DatePicker
+                v-if="!loading"
+                :model-value="new Date(caseDetails!.updatedAt)"
+                @update:model-value="caseDetails!.updatedAt = ($event! as Date).toISOString()"
+                showTime
+                hourFormat="24"
+                class="w-full"
+              />
+              <Skeleton v-else height="2.5rem" />
             </div>
           </div>
         </template>
@@ -156,8 +197,9 @@ const getUploadProps = (dataType: string) => {
           <div class="space-y-4">
             <div class="field">
               <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-              <Dropdown
-                v-model="selectedPriority"
+              <Select
+                v-if="!loading"
+                placeholder="Unknown (Backend Missing)"
                 :options="priorities"
                 optionLabel="name"
                 class="w-full"
@@ -180,13 +222,15 @@ const getUploadProps = (dataType: string) => {
                     <span>{{ slotProps.option.name }}</span>
                   </div>
                 </template>
-              </Dropdown>
+              </Select>
+              <Skeleton v-else height="2.5rem" />
             </div>
 
             <div class="field">
               <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-              <Dropdown
-                v-model="selectedStatus"
+              <Select
+                v-if="!loading"
+                placeholder="Unknown (Backend Missing)"
                 :options="statuses"
                 optionLabel="name"
                 class="w-full"
@@ -217,42 +261,45 @@ const getUploadProps = (dataType: string) => {
                     </div>
                   </div>
                 </template>
-              </Dropdown>
+              </Select>
+              <Skeleton v-else height="2.5rem" />
             </div>
 
             <div class="field">
               <label class="block text-sm font-medium text-gray-700 mb-1">Assignee</label>
-              <Dropdown
-                v-model="selectedAssignee"
-                :options="users"
-                optionLabel="name"
-                placeholder="Select Assignee"
-                class="w-full"
-              >
-                <template #value="slotProps">
-                  <div class="flex items-center gap-2" v-if="slotProps.value">
-                    <img
-                      :src="slotProps.value.image"
-                      :alt="slotProps.value.name"
-                      class="w-6 h-6 rounded-full"
-                    />
-                    <span>{{ slotProps.value.name }}</span>
-                  </div>
-                </template>
-                <template #option="slotProps">
-                  <div class="flex items-center gap-2">
-                    <img
-                      :src="slotProps.option.image"
-                      :alt="slotProps.option.name"
-                      class="w-6 h-6 rounded-full"
-                    />
-                    <span>{{ slotProps.option.name }}</span>
-                  </div>
-                </template>
-              </Dropdown>
-              <p class="mt-2 text-sm text-gray-500" v-if="!selectedAssignee">
-                No assignee selected
-              </p>
+              <div v-if="!loading">
+                <Select
+                  :options="users"
+                  optionLabel="name"
+                  placeholder="Unknown (Backend Incomplete)"
+                  class="w-full"
+                >
+                  <template #value="slotProps">
+                    <div class="flex items-center gap-2" v-if="slotProps.value">
+                      <img
+                        :src="slotProps.value.image"
+                        :alt="slotProps.value.name"
+                        class="w-6 h-6 rounded-full"
+                      />
+                      <span>{{ slotProps.value.name }}</span>
+                    </div>
+                  </template>
+                  <template #option="slotProps">
+                    <div class="flex items-center gap-2">
+                      <img
+                        :src="slotProps.option.image"
+                        :alt="slotProps.option.name"
+                        class="w-6 h-6 rounded-full"
+                      />
+                      <span>{{ slotProps.option.name }}</span>
+                    </div>
+                  </template>
+                </Select>
+                <p class="mt-2 text-sm text-gray-500" v-if="!selectedAssignee">
+                  No assignee selected
+                </p>
+              </div>
+              <Skeleton v-else height="2.5rem" />
             </div>
           </div>
         </template>
@@ -265,7 +312,8 @@ const getUploadProps = (dataType: string) => {
         <h2 class="text-xl font-semibold mb-4">Description</h2>
       </template>
       <template #content>
-        <Textarea v-model="caseDetails.description" rows="4" class="w-full" />
+        <Textarea v-if="!loading" v-model="caseDetails!.description" rows="4" class="w-full" />
+        <Skeleton v-else height="2.5rem" />
       </template>
     </Card>
 
@@ -275,7 +323,8 @@ const getUploadProps = (dataType: string) => {
         <h2 class="text-xl font-semibold mb-4">Solution</h2>
       </template>
       <template #content>
-        <Textarea v-model="caseDetails.solution" rows="4" class="w-full" />
+        <Textarea v-if="!loading" v-model="caseDetails!.solution" rows="4" class="w-full" />
+        <Skeleton v-else height="2.5rem" />
       </template>
     </Card>
 
