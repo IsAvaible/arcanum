@@ -1,4 +1,5 @@
 import {z} from 'zod';
+const { check} = require('express-validator');
 
 export const caseSchema = z.object({
     id: zn.number().int().positive().optional(),
@@ -12,6 +13,20 @@ export const caseSchema = z.object({
     craftedAt: z.date().optional(),
     updatedAt: z.date().optional(),
     attachmentSchema: z.array(attachmentSchema).optional(),
+    }).transform((data) => {
+        return {
+            id: check(data.id).escape(),
+            title: check(data.title).escape(),
+            description: check(data.description).escape(),
+            solution: check(data.solution).escape(),
+            assignee: check(data.assignee).escape(),
+            status: check(data.status).escape(),
+            priority: check(data.priority).escape(),
+            draft: check(data.draft).escape(),
+            craftedAt: check(data.craftedAt).escape(),
+            updatedAt: check(data.updatedAt).escape(),
+            attachmentSchema: check(data.attachmentSchema).escape(),
+        };
     });
 
 export const attachmentSchema = z.object({
