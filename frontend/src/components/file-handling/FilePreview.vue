@@ -29,10 +29,12 @@ const objectURL = URL.createObjectURL(_props.file)
   </video>
 
   <!-- Audio Preview -->
-  <audio v-else-if="file.type.startsWith('audio')" controls class="w-full">
-    <source :src="objectURL" />
-    Your browser does not support the audio tag.
-  </audio>
+  <div v-else-if="file.type.startsWith('audio')" class="w-full">
+    <audio controls class="w-full">
+      <source :src="objectURL" />
+      Your browser does not support the audio tag.
+    </audio>
+  </div>
 
   <!-- Unsupported File Type -->
   <p v-else class="text-gray-500">Preview not available for this file type.</p>
