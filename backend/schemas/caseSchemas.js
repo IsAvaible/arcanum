@@ -40,4 +40,17 @@ export const attachmentSchema = z.object({
     filehash: z.string().min(3),
     createdAt: z.date().optional(),
     updatedAt: z.date().optional(),
+    }).transform((data) => {
+        return {
+            id: check(data.id).escape(),
+            filename: check(data.filename).escape(),
+            filepath: check(data.filepath).escape(),
+            mimetype: check(data.mimetype).escape(),
+            size: check(data.size).escape(),
+            description: check(data.description).escape(),
+            uploadedAt: check(data.uploadedAt).escape(),
+            filehash: check(data.filehash).escape(),
+            createdAt: check(data.createdAt).escape(),
+            updatedAt: check(data.updatedAt).escape(),
+        };
     });
