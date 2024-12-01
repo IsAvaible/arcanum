@@ -5,22 +5,21 @@ import InputText from 'primevue/inputtext'
 import Dropdown from 'primevue/dropdown'
 import Calendar from 'primevue/calendar'
 import Textarea from 'primevue/textarea'
-import Drawer from 'primevue/drawer' // Import the Drawer component
+import Dialog from 'primevue/dialog'
 import { useRouter } from 'vue-router'
-import { ref, computed, watch } from 'vue'
-
-// File interface for consistency
-interface CustomFile {
-  name: string
-  preview: string
-  description: string
-  sharedWith: string
-}
+import { ref } from 'vue'
+import FilePreviewDrawer, {
+  type FileProperties,
+} from '@/components/case-detail-view-form/FilePreviewDrawer.vue'
+import FileDropzoneUpload from '@/components/file-handling/FileDropzoneUpload.vue'
+import { useToast } from 'primevue'
+import { getFileIcon } from '@/functions/getFileIcon'
 
 const caseNumber = ref('12345')
 const breadcrumb = ref('Cases / Servicecase / Overview')
 
 const router = useRouter()
+const toast = useToast()
 
 const caseDetails = ref({
   type: 'Servicecase',
@@ -65,130 +64,54 @@ interface Assignee {
 const selectedAssignee = ref<Assignee | null>(null)
 
 /*const selectedAssignee = ref(null)*/
+const files = ref<File[]>([])
+const filesToUpload = ref<File[]>([])
+const fileUploadDialogVisible = ref(false)
+const uploading = ref(false)
 
-// File upload variables and handlers
-const files = ref<CustomFile[]>([])
-const isUploadCompleted = ref(false)
+const uploadFiles = async () => {
+  if (filesToUpload.value.length > 0) {
+    uploading.value = true
+    try {
+      // Simulate uploading files
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
-const handleUpload = () => {
-  if (files.value.length > 0) {
-    console.log('Uploading files:')
-    files.value.forEach((fileData) => {
-      console.log(`Uploading file: ${fileData.name}`)
-    })
-    isUploadCompleted.value = true
-    alert('Files uploaded successfully!')
-  } else {
-    console.error('No files selected for upload.')
-    alert('No files to upload!')
-  }
-}
+      files.value.push(...filesToUpload.value)
+      filesToUpload.value = []
 
-const onFileChange = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  if (target.files) {
-    Array.from(target.files).forEach((file) => {
-      const preview = URL.createObjectURL(file)
-      files.value.push({ name: file.name, preview, description: '', sharedWith: 'You' })
-    })
-    isUploadCompleted.value = false
-    console.log('Files selected:', files.value)
-  }
-}
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Files uploaded successfully',
+        life: 3000,
+      })
 
-const removeFile = (index: number) => {
-  files.value.splice(index, 1)
-  if (files.value.length === 0) {
-    isUploadCompleted.value = false
+      fileUploadDialogVisible.value = false
+    } catch (error) {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'An error occurred while uploading the files',
+        life: 3000,
+      })
+
+      console.error(error)
+    } finally {
+      uploading.value = false
+    }
   }
 }
 
 // Drawer variables
-const visibleRight = ref(false)
+const selectedFile = ref<File | null>(null)
+const previewDrawerVisible = ref(false)
+const selectedFileProperties = ref<FileProperties | null>(null)
 
-const isEditing = ref(false)
-const selectedFile = ref<{
-  name: string
-  description: string
-  sharedWith: string
-  preview: string
-} | null>(null)
-
-const editedFile = ref({
-  name: '',
-  description: '',
-  sharedWith: '',
-})
-
-// Computed property to bind to editable or readonly mode
-const editingFile = computed(() => {
-  if (isEditing.value) {
-    return editedFile.value // Editing mode
-  }
-  return selectedFile.value || { name: '', description: '', sharedWith: '', preview: '' } // Default structure if selectedFile is null
-})
-
-const openFileInDrawer = (file: CustomFile) => {
+const openFileInDrawer = (file: File) => {
   selectedFile.value = file
-  visibleRight.value = true
-  isEditing.value = false
-}
-
-// Function to start editing
-const editFile = () => {
-  if (selectedFile.value) {
-    editedFile.value = { ...selectedFile.value } // Copy selected file to editedFile
-    isEditing.value = true
-  }
-}
-
-// Function to save changes
-const saveFileChanges = () => {
-  if (selectedFile.value && editedFile.value) {
-    selectedFile.value.name = editedFile.value.name
-    selectedFile.value.description = editedFile.value.description
-    selectedFile.value.sharedWith = editedFile.value.sharedWith
-    isEditing.value = false
-  }
-}
-
-// Function to cancel editing
-const cancelEdit = () => {
-  isEditing.value = false
-  editedFile.value = { name: '', description: '', sharedWith: '' } // Reset editedFile
-}
-/*
-const downloadFile = () => {
-  if (selectedFile.value) {
-    const a = document.createElement('a')
-    a.href = selectedFile.value.preview
-    a.download = selectedFile.value.name
-    a.click()
-  }
-}
-*/
-
-/*
-const openFile = () => {
-  if (selectedFile.value) {
-    window.open(selectedFile.value.preview, '_blank')
-  } else {
-    alert('No file selected to open!')
-  }
-}
-*/
-
-const isDrawerExpanded = ref(false) // Controls whether the drawer is expanded
-
-// Watcher to reset the drawer size when it's closed
-watch(visibleRight, (newValue) => {
-  if (!newValue) {
-    isDrawerExpanded.value = false // Reset to default size when closed
-  }
-})
-
-const expandDrawer = () => {
-  isDrawerExpanded.value = !isDrawerExpanded.value // Toggle drawer size
+  // TODO: Get file properties from the server
+  selectedFileProperties.value = { name: file.name, description: '', sharedWith: '' }
+  previewDrawerVisible.value = true
 }
 </script>
 
@@ -394,172 +317,68 @@ const expandDrawer = () => {
     <!-- Data Card -->
     <Card class="mt-6">
       <template #title>
-        <h2 class="text-xl font-semibold mb-4">Data</h2>
-      </template>
-      <template #content>
-        <div class="flex flex-col items-center space-y-4">
-          <!-- File Input -->
-          <div class="relative flex flex-col items-center space-y-2">
-            <input
-              id="file-upload"
-              type="file"
-              @change="onFileChange"
-              multiple
-              :accept="'image/jpeg,image/png,image/gif,audio/mp3,audio/wav,video/mp4,video/avi,application/pdf'"
-              class="block border-gray-300 rounded-md shadow-sm focus:ring-blue-500 hover:border-blue-500"
-            />
-            <p class="text-gray-500 text-sm">You can upload multiple files</p>
-          </div>
-
-          <!-- Uploaded Files List -->
-          <div v-if="files.length" class="w-full mt-4">
-            <h3 class="text-md font-semibold mb-2">Uploaded Files:</h3>
-            <ul class="list-disc pl-5 space-y-1">
-              <li
-                v-for="(file, index) in files"
-                :key="index"
-                class="flex items-center text-gray-700 space-x-2"
-              >
-                <a class="text-blue-500 underline cursor-pointer" @click="openFileInDrawer(file)">
-                  {{ file.name }}
-                </a>
-                <Button
-                  icon="pi pi-trash"
-                  class="p-button-text p-button-danger ml-2"
-                  @click="removeFile(index)"
-                />
-              </li>
-            </ul>
-          </div>
-
-          <!-- Upload Button -->
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-semibold mb-4">Attachments</h2>
           <Button
-            v-if="!isUploadCompleted"
-            label="Upload Files"
-            class="p-button-success"
-            @click="handleUpload"
-            :disabled="files.length === 0"
+            v-if="files.length > 0"
+            icon="pi pi-cloud-upload"
+            rounded
+            severity="secondary"
+            @click="fileUploadDialogVisible = true"
+            v-tooltip.top="{ value: 'Upload Additional Files', showDelay: 1000 }"
           />
         </div>
       </template>
+      <template #content>
+        <div v-if="files.length > 0" class="grid grid-cols-5 gap-4">
+          <Card
+            v-for="file in files"
+            :key="file.name"
+            @click="openFileInDrawer(file)"
+            class="cursor-pointer"
+          >
+            <template #content>
+              <div class="flex flex-col items-center">
+                <i :class="`text-4xl text-gray-600 mb-5 pi ${getFileIcon(file.type)}`"></i>
+                <p class="text-gray-600 text-center break-all">{{ file.name }}</p>
+              </div>
+            </template>
+          </Card>
+        </div>
+        <FileDropzoneUpload v-else v-model:files="filesToUpload">
+          <template #file-list-footer>
+            <Button
+              icon="pi pi-cloud-upload"
+              label="Upload Files"
+              @click="uploadFiles"
+              :loading="uploading"
+            />
+          </template>
+        </FileDropzoneUpload>
+      </template>
     </Card>
 
+    <!-- File Upload Popover -->
+    <Dialog v-model:visible="fileUploadDialogVisible" modal class="lg:min-w-[50rem]">
+      <h2 class="text-xl font-semibold mb-4">Upload Additional Files</h2>
+      <FileDropzoneUpload v-model:files="filesToUpload">
+        <template #file-list-footer>
+          <Button
+            icon="pi pi-cloud-upload"
+            label="Upload Files"
+            @click="uploadFiles"
+            :loading="uploading"
+          />
+        </template>
+      </FileDropzoneUpload>
+    </Dialog>
+
     <!-- Drawer for File Preview -->
-    <Drawer
-      v-model:visible="visibleRight"
-      position="right"
-      :style="{ width: isDrawerExpanded ? '75%' : '25%' }"
-      class="bg-gray-100 text-gray-900"
-    >
-      <!-- Drawer Header -->
-      <template #header>
-        <div class="flex items-center gap-3">
-          <i class="pi pi-file text-gray-500 text-2xl"></i>
-          <span class="text-lg font-semibold text-gray-900">
-            {{ selectedFile?.name || 'File' }}
-          </span>
-        </div>
-      </template>
-
-      <!-- Drawer Content -->
-      <template v-if="selectedFile">
-        <div class="p-6">
-          <!-- File Name -->
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700">File Name</label>
-            <InputText v-model="editingFile.name" :disabled="!isEditing" class="w-full" />
-          </div>
-
-          <!-- File Description -->
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700">Description</label>
-            <InputText v-model="editingFile.description" :disabled="!isEditing" class="w-full" />
-          </div>
-
-          <!-- Shared With -->
-          <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700">Shared With</label>
-            <InputText v-model="editingFile.sharedWith" :disabled="!isEditing" class="w-full" />
-          </div>
-
-          <!-- Action Buttons -->
-          <div class="text-center">
-            <Button
-              v-if="!isEditing"
-              label="Edit"
-              icon="pi pi-pencil"
-              class="p-button-outlined p-button-success"
-              @click="editFile"
-            />
-            <Button
-              v-if="!isEditing"
-              label="Open"
-              icon="pi pi-external-link"
-              class="p-button-outlined p-button-primary"
-              @click="expandDrawer"
-              style="margin-left: 10px"
-            />
-            <div v-if="isEditing" class="flex justify-between mt-4">
-              <Button
-                label="Save"
-                icon="pi pi-check"
-                class="p-button-success"
-                @click="saveFileChanges"
-              />
-              <Button
-                label="Cancel"
-                icon="pi pi-times"
-                class="p-button-secondary"
-                @click="cancelEdit"
-              />
-            </div>
-          </div>
-
-          <!-- Inline Preview (Hidden until "Open" is clicked) -->
-          <div v-if="isDrawerExpanded" class="mt-6 border-t pt-4">
-            <h3 class="text-md font-semibold mb-4">File Preview</h3>
-            <div class="flex justify-center items-center">
-              <!-- PDF Preview -->
-              <iframe
-                v-if="selectedFile.name.endsWith('.pdf')"
-                :src="selectedFile.preview"
-                class="w-full h-96 border rounded"
-              ></iframe>
-
-              <!-- Image Preview -->
-              <img
-                v-else-if="selectedFile.name.match(/\.(png|jpg|jpeg|gif)$/)"
-                :src="selectedFile.preview"
-                alt="Image Preview"
-                class="w-full h-96 object-contain"
-              />
-
-              <!-- Video Preview -->
-              <video
-                v-else-if="selectedFile.name.endsWith('.mp4') || selectedFile.name.endsWith('.avi')"
-                controls
-                class="w-full h-96"
-              >
-                <source :src="selectedFile.preview" />
-                Your browser does not support the video tag.
-              </video>
-
-              <!-- Audio Preview -->
-              <audio
-                v-else-if="selectedFile.name.endsWith('.mp3') || selectedFile.name.endsWith('.wav')"
-                controls
-                class="w-full"
-              >
-                <source :src="selectedFile.preview" />
-                Your browser does not support the audio tag.
-              </audio>
-
-              <!-- Unsupported File Type -->
-              <p v-else class="text-gray-500">Preview not available for this file type.</p>
-            </div>
-          </div>
-        </div>
-      </template>
-    </Drawer>
+    <FilePreviewDrawer
+      v-if="previewDrawerVisible"
+      v-model:visible="previewDrawerVisible"
+      :selected-file="selectedFile"
+      :file-properties="selectedFileProperties"
+    />
   </div>
 </template>
