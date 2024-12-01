@@ -52,6 +52,20 @@ const caseTypes = ref(
   })),
 )
 
+// TODO: Replace with actual data from the API
+const statusOptions = ref(
+  ['Open', 'Closed', 'In-Progress'].map((value) => ({
+    label: value,
+    value: value,
+  })),
+)
+
+// TODO: Replace with actual data from the API
+const createdByOptions = ref([
+  { label: 'Unassigned', value: 'Unassigned' },
+  { label: 'Assigned', value: 'Assigned' },
+])
+
 // Date Range Preset Configuration
 const dateRangePresets = ref([
   {
@@ -474,10 +488,7 @@ watch(path, (newPath, oldPath) => {
           <template #filter="{ filterModel }">
             <Select
               v-model="filterModel.value"
-              :options="[
-                { label: 'Unassigned', value: 'Unassigned' },
-                { label: 'Assigned', value: 'Assigned' },
-              ]"
+              :options="createdByOptions"
               optionLabel="label"
               optionValue="value"
               placeholder="Select Creator"
@@ -495,11 +506,7 @@ watch(path, (newPath, oldPath) => {
           <template #filter="{ filterModel }">
             <Select
               v-model="filterModel.value"
-              :options="[
-                { label: 'Open', value: 'Open' },
-                { label: 'Closed', value: 'Closed' },
-                { label: 'In-Progress', value: 'In-Progress' },
-              ]"
+              :options="statusOptions"
               optionLabel="label"
               optionValue="value"
               placeholder="Select Status"
