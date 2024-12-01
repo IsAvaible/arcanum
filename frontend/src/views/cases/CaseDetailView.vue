@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 import InputText from 'primevue/inputtext'
@@ -8,6 +7,15 @@ import Calendar from 'primevue/calendar'
 import Textarea from 'primevue/textarea'
 import Drawer from 'primevue/drawer' // Import the Drawer component
 import { useRouter } from 'vue-router'
+import { ref, computed, watch } from 'vue'
+
+// File interface for consistency
+interface CustomFile {
+  name: string
+  preview: string
+  description: string
+  sharedWith: string
+}
 
 const caseNumber = ref('12345')
 const breadcrumb = ref('Cases / Servicecase / Overview')
@@ -47,10 +55,19 @@ const users = [
 
 const selectedPriority = ref(priorities[0])
 const selectedStatus = ref(statuses[0])
-const selectedAssignee = ref(null)
+
+interface Assignee {
+  id: number | null
+  name: string
+  image?: string | null
+}
+
+const selectedAssignee = ref<Assignee | null>(null)
+
+/*const selectedAssignee = ref(null)*/
 
 // File upload variables and handlers
-const files = ref<Array<{ name: string; preview: string }>>([])
+const files = ref<CustomFile[]>([])
 const isUploadCompleted = ref(false)
 
 const handleUpload = () => {
@@ -72,9 +89,9 @@ const onFileChange = (event: Event) => {
   if (target.files) {
     Array.from(target.files).forEach((file) => {
       const preview = URL.createObjectURL(file)
-      files.value.push({ name: file.name, preview })
+      files.value.push({ name: file.name, preview, description: '', sharedWith: 'You' })
     })
-    isUploadCompleted.value = false // Reset state when new files are selected
+    isUploadCompleted.value = false
     console.log('Files selected:', files.value)
   }
 }
@@ -82,49 +99,65 @@ const onFileChange = (event: Event) => {
 const removeFile = (index: number) => {
   files.value.splice(index, 1)
   if (files.value.length === 0) {
-    isUploadCompleted.value = false // Ensure the button reappears if files are removed
+    isUploadCompleted.value = false
   }
 }
 
-const tabs = ref([{ label: 'PDF' }, { label: 'Audio' }, { label: 'Video' }, { label: 'Image' }])
-
 // Drawer variables
 const visibleRight = ref(false)
-const selectedFile = ref<{ name: string; preview: string } | null>(null)
 
-const isEditing = ref(false) // Track editing mode
-const newFileName = ref('') // Temporary file name for editing
+const isEditing = ref(false)
+const selectedFile = ref<{
+  name: string
+  description: string
+  sharedWith: string
+  preview: string
+} | null>(null)
 
-const openFileInDrawer = (file: { name: string; preview: string }) => {
+const editedFile = ref({
+  name: '',
+  description: '',
+  sharedWith: '',
+})
+
+// Computed property to bind to editable or readonly mode
+const editingFile = computed(() => {
+  if (isEditing.value) {
+    return editedFile.value // Editing mode
+  }
+  return selectedFile.value || { name: '', description: '', sharedWith: '', preview: '' } // Default structure if selectedFile is null
+})
+
+const openFileInDrawer = (file: CustomFile) => {
   selectedFile.value = file
   visibleRight.value = true
-  isEditing.value = false // Reset editing mode when drawer opens
+  isEditing.value = false
 }
 
+// Function to start editing
 const editFile = () => {
   if (selectedFile.value) {
-    newFileName.value = selectedFile.value.name // Pre-fill with current file name
+    editedFile.value = { ...selectedFile.value } // Copy selected file to editedFile
     isEditing.value = true
   }
 }
 
-const saveFileName = () => {
-  if (selectedFile.value && newFileName.value.trim()) {
-    const fileIndex = files.value.findIndex((file) => file.name === selectedFile.value!.name)
-    if (fileIndex !== -1) {
-      files.value[fileIndex].name = newFileName.value.trim() // Update file name
-      selectedFile.value.name = newFileName.value.trim()
-      isEditing.value = false // Exit editing mode
-      alert('File name updated successfully!')
-    }
+// Function to save changes
+const saveFileChanges = () => {
+  if (selectedFile.value && editedFile.value) {
+    selectedFile.value.name = editedFile.value.name
+    selectedFile.value.description = editedFile.value.description
+    selectedFile.value.sharedWith = editedFile.value.sharedWith
+    isEditing.value = false
   }
 }
 
+// Function to cancel editing
 const cancelEdit = () => {
-  isEditing.value = false // Cancel editing mode
-  newFileName.value = '' // Reset file name
+  isEditing.value = false
+  editedFile.value = { name: '', description: '', sharedWith: '' } // Reset editedFile
 }
-
+/*
 const downloadFile = () => {
   if (selectedFile.value) {
     const a = document.createElement('a')
@@ -133,14 +166,29 @@ const downloadFile = () => {
     a.click()
   }
 }
+*/
 
-// Function to open the file content
+/*
 const openFile = () => {
   if (selectedFile.value) {
-    window.open(selectedFile.value.preview, '_blank') // Open in a new tab
+    window.open(selectedFile.value.preview, '_blank')
   } else {
     alert('No file selected to open!')
   }
+}
+*/
+
+const isDrawerExpanded = ref(false) // Controls whether the drawer is expanded
+
+// Watcher to reset the drawer size when it's closed
+watch(visibleRight, (newValue) => {
+  if (!newValue) {
+    isDrawerExpanded.value = false // Reset to default size when closed
+  }
+})
+
+const expandDrawer = () => {
+  isDrawerExpanded.value = !isDrawerExpanded.value // Toggle drawer size
 }
 </script>
 
@@ -215,7 +263,26 @@ const openFile = () => {
                 :options="priorities"
                 optionLabel="name"
                 class="w-full"
-              />
+              >
+                <template #value="slotProps">
+                  <div class="flex items-center gap-2" v-if="slotProps.value">
+                    <div
+                      class="w-3 h-3 rounded-full"
+                      :style="{ backgroundColor: slotProps.value.color }"
+                    ></div>
+                    <span>{{ slotProps.value.name }}</span>
+                  </div>
+                </template>
+                <template #option="slotProps">
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="w-3 h-3 rounded-full"
+                      :style="{ backgroundColor: slotProps.option.color }"
+                    ></div>
+                    <span>{{ slotProps.option.name }}</span>
+                  </div>
+                </template>
+              </Dropdown>
             </div>
             <div class="field">
               <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
@@ -224,18 +291,80 @@ const openFile = () => {
                 :options="statuses"
                 optionLabel="name"
                 class="w-full"
-              />
+              >
+                <template #value="slotProps">
+                  <div v-if="slotProps.value" class="flex items-center">
+                    <div
+                      class="px-3 py-1 rounded-md text-sm"
+                      :style="{
+                        backgroundColor: slotProps.value.color,
+                        color: slotProps.value.textColor,
+                      }"
+                    >
+                      {{ slotProps.value.name }}
+                    </div>
+                  </div>
+                </template>
+                <template #option="slotProps">
+                  <div class="flex items-center">
+                    <div
+                      class="px-3 py-1 rounded-md text-sm"
+                      :style="{
+                        backgroundColor: slotProps.option.color,
+                        color: slotProps.option.textColor,
+                      }"
+                    >
+                      {{ slotProps.option.name }}
+                    </div>
+                  </div>
+                </template>
+              </Dropdown>
             </div>
 
             <div class="field">
               <label class="block text-sm font-medium text-gray-700 mb-1">Assignee</label>
               <Dropdown
                 v-model="selectedAssignee"
-                :options="users"
+                :options="[...users, { id: null, name: 'Select Assignee', image: null }]"
                 optionLabel="name"
-                placeholder="Select Assignee"
                 class="w-full"
-              />
+                placeholder="Select Assignee"
+              >
+                <template #value="slotProps">
+                  <div
+                    class="flex items-center gap-2"
+                    v-if="slotProps.value && slotProps.value.id !== null"
+                  >
+                    <img
+                      :src="slotProps.value.image"
+                      :alt="slotProps.value.name"
+                      class="w-6 h-6 rounded-full"
+                    />
+                    <span>{{ slotProps.value.name }}</span>
+                  </div>
+                  <div v-else-if="slotProps.value && slotProps.value.id === null">
+                    <span>{{ slotProps.value.name }}</span>
+                  </div>
+                </template>
+                <template #option="slotProps">
+                  <div class="flex items-center gap-2">
+                    <template v-if="slotProps.option.id !== null">
+                      <img
+                        :src="slotProps.option.image"
+                        :alt="slotProps.option.name"
+                        class="w-6 h-6 rounded-full"
+                      />
+                    </template>
+                    <span>{{ slotProps.option.name }}</span>
+                  </div>
+                </template>
+              </Dropdown>
+              <p
+                class="mt-2 text-sm text-gray-500"
+                v-if="!selectedAssignee || selectedAssignee.id === null"
+              >
+                No assignee selected
+              </p>
             </div>
           </div>
         </template>
@@ -318,34 +447,64 @@ const openFile = () => {
     <!-- Drawer for File Preview -->
     <Drawer
       v-model:visible="visibleRight"
-      header="File Preview"
       position="right"
+      :style="{ width: isDrawerExpanded ? '75%' : '25%' }"
       class="bg-gray-100 text-gray-900"
     >
+      <!-- Drawer Header -->
+      <template #header>
+        <div class="flex items-center gap-3">
+          <i class="pi pi-file text-gray-500 text-2xl"></i>
+          <span class="text-lg font-semibold text-gray-900">
+            {{ selectedFile?.name || 'File' }}
+          </span>
+        </div>
+      </template>
+
+      <!-- Drawer Content -->
       <template v-if="selectedFile">
         <div class="p-6">
-          <!-- File Icon -->
-          <div class="flex justify-center mb-6">
-            <i class="pi pi-file text-gray-500 text-4xl"></i>
+          <!-- File Name -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">File Name</label>
+            <InputText v-model="editingFile.name" :disabled="!isEditing" class="w-full" />
           </div>
 
-          <!-- File Name and Details -->
-          <div class="text-center mb-4">
-            <h2 class="text-lg font-semibold">
-              {{ isEditing ? 'Edit File Name' : selectedFile.name }}
-            </h2>
-            <p v-if="!isEditing" class="text-sm text-gray-500">2.5 GB, 01:30:45</p>
+          <!-- File Description -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">Description</label>
+            <InputText v-model="editingFile.description" :disabled="!isEditing" class="w-full" />
           </div>
 
-          <!-- Edit Input -->
-          <div v-if="isEditing" class="mb-6">
-            <InputText v-model="newFileName" placeholder="Enter new file name" class="w-full" />
-            <div class="flex justify-around mt-2">
+          <!-- Shared With -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700">Shared With</label>
+            <InputText v-model="editingFile.sharedWith" :disabled="!isEditing" class="w-full" />
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="text-center">
+            <Button
+              v-if="!isEditing"
+              label="Edit"
+              icon="pi pi-pencil"
+              class="p-button-outlined p-button-success"
+              @click="editFile"
+            />
+            <Button
+              v-if="!isEditing"
+              label="Open"
+              icon="pi pi-external-link"
+              class="p-button-outlined p-button-primary"
+              @click="expandDrawer"
+              style="margin-left: 10px"
+            />
+            <div v-if="isEditing" class="flex justify-between mt-4">
               <Button
                 label="Save"
                 icon="pi pi-check"
                 class="p-button-success"
-                @click="saveFileName"
+                @click="saveFileChanges"
               />
               <Button
                 label="Cancel"
@@ -356,47 +515,48 @@ const openFile = () => {
             </div>
           </div>
 
-          <!-- File Description -->
-          <div v-if="!isEditing" class="mb-6">
-            <h3 class="text-sm font-bold mb-2 text-gray-700">File Description</h3>
-            <p class="text-sm text-gray-600">
-              I literally just learned that my favorite board game in the whole world (Monopoly) is
-              based on Atlantic City!
-            </p>
-          </div>
+          <!-- Inline Preview (Hidden until "Open" is clicked) -->
+          <div v-if="isDrawerExpanded" class="mt-6 border-t pt-4">
+            <h3 class="text-md font-semibold mb-4">File Preview</h3>
+            <div class="flex justify-center items-center">
+              <!-- PDF Preview -->
+              <iframe
+                v-if="selectedFile.name.endsWith('.pdf')"
+                :src="selectedFile.preview"
+                class="w-full h-96 border rounded"
+              ></iframe>
 
-          <!-- File Shared Section -->
-          <div v-if="!isEditing" class="mb-6">
-            <h3 class="text-sm font-bold mb-2 text-gray-700">File Shared With:</h3>
-            <div class="flex items-center space-x-3">
-              <div
-                class="w-8 h-8 bg-gray-300 rounded-full flex justify-center items-center text-gray-700"
+              <!-- Image Preview -->
+              <img
+                v-else-if="selectedFile.name.match(/\.(png|jpg|jpeg|gif)$/)"
+                :src="selectedFile.preview"
+                alt="Image Preview"
+                class="w-full h-96 object-contain"
+              />
+
+              <!-- Video Preview -->
+              <video
+                v-else-if="selectedFile.name.endsWith('.mp4') || selectedFile.name.endsWith('.avi')"
+                controls
+                class="w-full h-96"
               >
-                A
-              </div>
-              <span class="text-sm text-gray-800">Alexander Mikolaenko (You)</span>
-            </div>
-          </div>
+                <source :src="selectedFile.preview" />
+                Your browser does not support the video tag.
+              </video>
 
-          <!-- Action Buttons -->
-          <div v-if="!isEditing" class="flex justify-around mt-6 space-x-4">
-            <Button
-              label="Share"
-              icon="pi pi-external-link"
-              class="p-button-outlined p-button-primary"
-            />
-            <Button
-              label="Edit"
-              icon="pi pi-pencil"
-              class="p-button-outlined p-button-warning"
-              @click="editFile"
-            />
-            <Button
-              label="Open"
-              icon="pi pi-external-link"
-              class="p-button-outlined p-button-success"
-              @click="openFile"
-            />
+              <!-- Audio Preview -->
+              <audio
+                v-else-if="selectedFile.name.endsWith('.mp3') || selectedFile.name.endsWith('.wav')"
+                controls
+                class="w-full"
+              >
+                <source :src="selectedFile.preview" />
+                Your browser does not support the audio tag.
+              </audio>
+
+              <!-- Unsupported File Type -->
+              <p v-else class="text-gray-500">Preview not available for this file type.</p>
+            </div>
           </div>
         </div>
       </template>
