@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Vue and PrimeVue imports
-import { ref, reactive, computed } from 'vue'
+import { ref, useTemplateRef, reactive, computed, onMounted } from 'vue'
 import { FilterMatchMode, FilterOperator } from '@primevue/core/api'
 import { useTimeAgo } from '@vueuse/core'
 import { useToast } from 'primevue'
@@ -19,48 +19,36 @@ import DatePicker from 'primevue/datepicker'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import Card from 'primevue/card'
+import Skeleton from 'primevue/skeleton'
 
 // Custom Components
 import CaseDeleteDialog from '@/components/CaseDeleteDialog.vue'
 
-// Type Definitions
-type Case = {
-  id: number
-  titleId: string
-  caseType: string
-  status: string
-  assignee: string
-  createdBy: { initials: string; name: string; email: string }
-  updatedOn: Date
-  isArchived: boolean
-}
+// API imports
+import { useApi } from '@/composables/useApi'
+import type { Case } from '@/api/api'
+import { CaseCaseTypeEnum } from '@/api/api'
+import type { AxiosError } from 'axios'
 
 // Reactive State and References
-const menu = ref()
-const loading = ref(false)
+const api = useApi()
+const menu = useTemplateRef('menu')
 const toast = useToast()
 const route = useRoute()
 const filters = ref()
 const cases = reactive<Case[]>([])
 const selectedCase = ref<Case | null>(null)
+const loading = ref(false)
+const error = ref<string | null>(null)
 const deleteDialogVisible = ref(false)
 
 // Constants
-const caseTypes = ['Servicecase', 'Testcase']
-const statuses = ['Open', 'Closed', 'In-Progress']
-const assignees = ['Unassigned', 'Assigned']
-const names = [
-  'Toni',
-  'Owen Tate',
-  'Alex',
-  'Daniel',
-  'Chris',
-  'Pat',
-  'Jordan',
-  'Taylor',
-  'Morgan',
-  'Casey',
-]
+const caseTypes = ref(
+  Object.entries(CaseCaseTypeEnum).map(([_key, value]) => ({
+    label: value,
+    value: value,
+  })),
+)
 
 // Utility Functions
 /**
@@ -69,11 +57,11 @@ const names = [
 const initFilter = () => {
   filters.value = {
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    titleId: {
+    title: {
       operator: FilterOperator.AND,
       constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }],
     },
-    caseType: {
+    case_type: {
       operator: FilterOperator.OR,
       constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
     },
@@ -86,7 +74,7 @@ const initFilter = () => {
       constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
     },
     'createdBy.name': { value: null, matchMode: FilterMatchMode.CONTAINS },
-    updatedOn: {
+    updatedAt: {
       operator: FilterOperator.AND,
       constraints: [
         { value: null, matchMode: FilterMatchMode.DATE_AFTER },
@@ -97,34 +85,53 @@ const initFilter = () => {
 }
 initFilter()
 
-/**
- * Populates the cases array with mock data.
- */
-for (let i = 1; i <= 20; i++) {
-  const randomName = names[Math.floor(Math.random() * names.length)]
-  cases.push({
-    id: i,
-    titleId: `Test ${i}`,
-    caseType: caseTypes[Math.floor(Math.random() * caseTypes.length)],
-    status: statuses[Math.floor(Math.random() * statuses.length)],
-    assignee: assignees[Math.floor(Math.random() * assignees.length)],
-    createdBy: {
-      initials: randomName.charAt(0),
-      name: randomName,
-      email: `${randomName.toLowerCase().replace(' ', '')}@gmail.com`,
-    },
-    updatedOn: new Date(Date.now() - Math.floor(Math.random() * 10000000000)),
-    isArchived: Math.random() < 0.5,
-  })
-}
-
 // Route Initialization for Case Deletion Dialog
 if (route.path.match(/^\/cases\/\d+\/delete\/?$/g)) {
-  selectedCase.value = cases.find((item) => item.id === Number(route.params.id)) || null
-  deleteDialogVisible.value = true
+  ;(async () => {
+    try {
+      selectedCase.value = (await api.casesIdGet({ id: Number(route.params.id) })).data
+      console.log(selectedCase.value)
+      deleteDialogVisible.value = true
+    } catch (error) {
+      console.error(error)
+
+      toast.add({
+        severity: 'error',
+        summary: 'Failed to Load Case',
+        detail: 'Failed to load the case for deletion.',
+        life: 3000,
+      })
+
+      await router.push('/cases')
+    }
+  })()
 }
 
 // Helper Functions
+/**
+ * Fetches cases data from the API.
+ */
+const fetchCases = async () => {
+  loading.value = true
+  error.value = null
+  try {
+    const response = await api.casesGet()
+    cases.splice(0, cases.length, ...response.data) // Replace cases data
+  } catch (err) {
+    error.value = (err as AxiosError).message
+    console.error(err)
+  } finally {
+    loading.value = false
+  }
+}
+
+/**
+ * Handles a retry action in case of errors.
+ */
+const retryFetch = () => {
+  fetchCases()
+}
+
 /**
  * Determines the severity for a case status.
  * @param status - The status string.
@@ -139,7 +146,7 @@ const getStatusSeverity = (status: string) => {
     case 'In-Progress':
       return 'info'
     default:
-      return undefined
+      return 'secondary'
   }
 }
 
@@ -158,7 +165,7 @@ const toggleMenu = (event: Event) => {
  */
 const getMenuItems = (caseItem: Case) => [
   {
-    label: caseItem.isArchived ? 'Unarchive Item' : 'Archive Item',
+    label: caseItem.id == 0 ? 'Unarchive Item' : 'Archive Item',
     icon: 'pi pi-inbox',
     command: () => toggleArchive(caseItem.id),
   },
@@ -174,10 +181,14 @@ const getMenuItems = (caseItem: Case) => [
  * @param id - The case ID.
  */
 const toggleArchive = (id: number) => {
-  const caseItem = cases.find((item) => item.id === id)
-  if (caseItem) {
-    caseItem.isArchived = !caseItem.isArchived
-  }
+  const _caseItem = cases.find((item) => item.id === id)
+
+  toast.add({
+    severity: 'warn',
+    summary: 'Backend Functionality Missing',
+    detail: `Toggling archive status for cases is not implemented.`,
+    life: 3000,
+  })
 }
 
 /**
@@ -199,25 +210,38 @@ const onDeleteDialogClose = () => {
 
 /**
  * Deletes a case by title IDs.
- * @param titles - The list of title IDs to delete.
+ * @param caseToDelete - The case to delete.
+ *
+ * @returns - Whether the deletion was successful.
  */
-const deleteCase = async (titles: string[]) => {
+const deleteCase = async (caseToDelete: Case) => {
   try {
-    const index = cases.findIndex((item) => titles.includes(item.titleId))
-    if (index !== -1) cases.splice(index, 1)
+    await api.casesIdDelete({ id: caseToDelete.id })
+
+    // Remove the case from the list
+    cases.splice(
+      cases.findIndex((c) => c.id === caseToDelete.id),
+      1,
+    )
+
     toast.add({
       severity: 'success',
       summary: 'Case Deleted',
       detail: 'The case has been successfully deleted.',
       life: 3000,
     })
-  } catch {
+  } catch (error) {
+    console.error(error)
+
     toast.add({
       severity: 'error',
       summary: 'Deletion Failed',
       detail: 'Failed to delete the case.',
       life: 3000,
     })
+
+    // Rethrow the error to signal failure
+    throw error
   } finally {
     deleteDialogVisible.value = false
     selectedCase.value = null
@@ -248,6 +272,9 @@ const totalCasesTrend = ref(15) // Example: 15% increase
 const resolvedCasesTrend = ref(10) // Example: 10% increase
 const averageResolutionTime = ref(24) // Example: 24 hours
 const resolutionTimeTrend = ref(-5) // Example: 5% decrease
+
+// Lifecycle Hooks
+onMounted(fetchCases)
 </script>
 
 <template>
@@ -257,7 +284,7 @@ const resolutionTimeTrend = ref(-5) // Example: 5% decrease
         <div class="flex gap-4">
           <h1 class="text-3xl font-bold">Cases</h1>
         </div>
-        <Button label="Case Create" icon="pi pi-plus" @click="$router.push('/cases/create')" />
+        <Button label="Create Case" icon="pi pi-pencil" @click="$router.push('/cases/create')" />
       </div>
 
       <!-- KPI Widgets Row -->
@@ -329,20 +356,32 @@ const resolutionTimeTrend = ref(-5) // Example: 5% decrease
         responsiveLayout="scroll"
         @row-click="$router.push({ path: '/cases/' + $event.data.id })"
         dataKey="id"
-        :loading="loading"
         filterDisplay="menu"
         selection-mode="single"
-        :globalFilterFields="['titleId', 'assignee', 'caseType', 'status', 'createdBy.name']"
+        :class="{
+          '[&_tbody]:animate-pulse': loading && cases.length > 0,
+        }"
+        :globalFilterFields="['title', 'assignee', 'case_type', 'status', 'createdBy.name']"
       >
         <template #header>
-          <div class="flex justify-between items-center">
-            <Button
-              type="button"
-              icon="pi pi-filter-slash"
-              label="Clear"
-              severity="secondary"
-              @click="clearFilters()"
-            />
+          <div class="flex justify-between items-center gap-x-5">
+            <div class="flex items-center gap-x-2">
+              <Button
+                type="button"
+                icon="pi pi-filter-slash"
+                label="Clear"
+                severity="secondary"
+                @click="clearFilters()"
+              />
+              <Button
+                severity="secondary"
+                label="Refresh"
+                :icon="`pi pi-refresh ${loading ? 'pi-spin' : ''}`"
+                @click="fetchCases()"
+                :disabled="loading"
+              />
+            </div>
+
             <IconField>
               <InputIcon>
                 <i class="pi pi-search" />
@@ -354,23 +393,20 @@ const resolutionTimeTrend = ref(-5) // Example: 5% decrease
 
         <Column field="id" header="Case ID" :sortable="true" />
 
-        <Column field="titleId" header="Title ID" :sortable="true">
+        <Column field="title" header="Title" :sortable="true">
           <template #filter="{ filterModel }">
-            <InputText v-model="filterModel.value" type="text" placeholder="Search Title ID" />
+            <InputText v-model="filterModel.value" type="text" placeholder="Search Title" />
           </template>
         </Column>
 
-        <Column field="caseType" header="Case Type" :sortable="true">
+        <Column field="case_type" header="Case Type" :sortable="true">
           <template #body="slotProps">
-            <Tag :value="slotProps.data.caseType" :severity="'secondary'" />
+            <Tag :value="slotProps.data.case_type" :severity="'secondary'" />
           </template>
           <template #filter="{ filterModel }">
             <Select
               v-model="filterModel.value"
-              :options="[
-                { label: 'Servicecase', value: 'Servicecase' },
-                { label: 'Testcase', value: 'Testcase' },
-              ]"
+              :options="caseTypes"
               optionLabel="label"
               optionValue="value"
               placeholder="Select Case Type"
@@ -387,11 +423,11 @@ const resolutionTimeTrend = ref(-5) // Example: 5% decrease
           <template #body="{ data }">
             <div class="flex items-center gap-2">
               <img
-                :alt="data.createdBy.name"
+                alt="Placeholder Image"
                 src="https://placecats.com/50/50"
                 class="rounded-full w-8"
               />
-              <span>{{ data.createdBy.name }}</span>
+              <span>Unknown Cat</span>
             </div>
           </template>
           <template #filter="{ filterModel }">
@@ -412,7 +448,7 @@ const resolutionTimeTrend = ref(-5) // Example: 5% decrease
           <template #body="slotProps">
             <Tag
               :severity="getStatusSeverity(slotProps.data.status)"
-              :value="slotProps.data.status"
+              :value="slotProps.data.status || 'Unknown'"
             />
           </template>
           <template #filter="{ filterModel }">
@@ -431,14 +467,14 @@ const resolutionTimeTrend = ref(-5) // Example: 5% decrease
         </Column>
 
         <Column
-          field="updatedOn"
-          header="Updated"
+          field="updatedAt"
+          header="Last Updated"
           data-type="date"
           :sortable="true"
           :show-filter-operator="false"
         >
           <template #body="slotProps">
-            {{ formatDate(slotProps.data.updatedOn, true) }}
+            {{ formatDate(slotProps.data.updatedAt, true) }}
           </template>
           <template #filter="{ filterModel }">
             <DatePicker
@@ -457,14 +493,53 @@ const resolutionTimeTrend = ref(-5) // Example: 5% decrease
         </Column>
 
         <template #empty>
-          <div class="flex flex-col items-center">
-            <span>No cases found. Try another search query or adjust the filters.</span>
-            <Button
-              variant="text"
-              label="Clear Filters"
-              icon="pi pi-filter"
-              @click="clearFilters()"
-            />
+          <div v-if="loading" class="space-y-4 relative">
+            <Skeleton width="100%" height="3rem" />
+            <Skeleton width="100%" height="3rem" />
+            <Skeleton width="100%" height="3rem" />
+            <Skeleton width="100%" height="3rem" />
+            <Skeleton width="100%" height="3rem" />
+
+            <div
+              class="absolute text-lg pulse text-gray-700 inset-0 flex items-center justify-center !mt-0"
+            >
+              Loading...
+            </div>
+          </div>
+
+          <!-- Error State -->
+          <div v-else-if="error" class="flex flex-col items-center gap-y-3">
+            <div class="bg-red-50 p-4 rounded-lg border-x-4 border-red-500 w-full">
+              <h2 class="text-lg font-semibold mb-2">Error</h2>
+              <p class="text-red-800">Failed to load cases. Please try again.</p>
+            </div>
+            <div>
+              <Button
+                label="Retry"
+                icon="pi pi-refresh"
+                @click="retryFetch"
+                class="p-button-outlined"
+              />
+            </div>
+          </div>
+
+          <div v-else class="flex flex-col items-center">
+            <span> No cases found. Try another search query, adjust the filters or refresh. </span>
+            <div class="flex gap-x-3">
+              <Button
+                variant="text"
+                label="Clear Filters"
+                icon="pi pi-filter"
+                @click="clearFilters()"
+              />
+              <Button
+                variant="text"
+                label="Refresh"
+                icon="pi pi-refresh"
+                @click="fetchCases()"
+                :disabled="loading"
+              />
+            </div>
           </div>
         </template>
       </DataTable>
@@ -474,7 +549,7 @@ const resolutionTimeTrend = ref(-5) // Example: 5% decrease
   <CaseDeleteDialog
     v-if="deleteDialogVisible"
     v-model:visible="deleteDialogVisible"
-    :titles="selectedCase?.titleId || ''"
+    :cases="[selectedCase!]"
     :on-delete="deleteCase"
     @update:visible="onDeleteDialogClose()"
   />
