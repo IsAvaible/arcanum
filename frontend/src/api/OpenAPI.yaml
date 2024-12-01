@@ -1,8 +1,8 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
-  title: Cases API
+  title: Oculavis Arcanum API
   description: |
-    The Cases API allows you to manage cases by creating, retrieving, updating, and deleting them. It also supports file attachments associated with cases.
+    The Oculavis Arcanum API allows you to manage cases by creating, retrieving, updating, and deleting them. It also supports file attachments associated with cases.
   version: '1.0.0'
 servers:
   - url: http://localhost:3000/api
@@ -34,48 +34,14 @@ paths:
         content:
           multipart/form-data:
             schema:
-              type: object
+              $ref: '#/components/schemas/CasePost'
               properties:
-                title:
-                  type: string
-                  description: Title of the case.
-                description:
-                  type: string
-                  description: Description of the case.
-                solution:
-                  type: string
-                  description: Solution for the case.
-                assignee:
-                  type: string
-                  description: Person responsible for the case.
-                status:
-                  type: string
-                  description: Status of the case.
-                  enum:
-                    - Open
-                    - In Progress
-                    - Closed
-                case_type:
-                  type: string
-                  description: Type of the case.
-                  enum:
-                    - Problem
-                    - Incident
-                    - Change
-                    - FAQ
-                priority:
-                  type: string
-                  description: Priority level of the case.
-                  enum:
-                    - Low
-                    - Medium
-                    - High
                 files:
                   type: array
                   items:
                     type: string
                     format: binary
-                  description: Files to upload.
+                  description: Attached files on upload.
       responses:
         201:
           description: Case successfully created.
@@ -145,24 +111,16 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              type: object
+              $ref: '#/components/schemas/CasePut'
               properties:
-                title:
-                  type: string
-                description:
-                  type: string
-                solution:
-                  type: string
-                assignee:
-                  type: string
-                status:
-                  type: string
-                case_type:
-                  type: string
-                priority:
-                  type: string
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Attached files on upload.
       responses:
         200:
           description: Case successfully updated.
@@ -182,6 +140,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+            multipart/form-data:
+              schema:
+                type: object
+                properties:
+                  filename:
+                    type: array
+                    items:
+                      type: string
+                      format: binary
     delete:
       summary: Delete a case by ID
       description: Delete a specific case by its ID.
@@ -299,40 +266,59 @@ paths:
 components:
   schemas:
     Case:
+      allOf:
+        - $ref: '#/components/schemas/CasePost'
       type: object
+      required: [id, draft, createdAt, updatedAt, attachments]
       properties:
         id:
           type: integer
-        title:
-          type: string
-        description:
-          type: string
-        solution:
-          type: string
-          nullable: true
-        assignee:
-          type: string
-          nullable: true
-        status:
-          type: string
-          nullable: true
-        case_type:
-          type: string
-          nullable: true
-        priority:
-          type: string
-          nullable: true
-        attachment:
-          type: array
-          items:
-            type: string
-          nullable: true
+        draft:
+          type: boolean
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
+        attachments:
+          type: array
+          items:
+            type: string
+          description: List of file names attached to the case.
+
+    CasePost:
+      allOf:
+        - $ref: '#/components/schemas/CasePut'
+
+    CasePut:
+      type: object
+      required: [title, description]
+      properties:
+        title:
+          type: string
+          description: Title of the case.
+        description:
+          type: string
+          description: Description of the case.
+        solution:
+          type: string
+          description: Solution for the case.
+        assignee:
+          type: string
+          description: Person responsible for the case.
+        status:
+          type: string
+          description: Status of the case.
+          enum: [Open, In Progress, Solved, Closed]
+        case_type:
+          type: string
+          description: Type of the case.
+          enum: [Problem, Incident, Change, FAQ]
+        priority:
+          type: string
+          description: Priority level of the case.
+          enum: [Low, Medium, High]
     Error:
       type: object
       properties:

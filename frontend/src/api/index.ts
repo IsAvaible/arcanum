@@ -1,8 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * Cases API
- * The Cases API allows you to manage cases by creating, retrieving, updating, and deleting them. It also supports file attachments associated with cases. 
+ * Oculavis Arcanum API
+ * The Oculavis Arcanum API allows you to manage cases by creating, retrieving, updating, and deleting them. It also supports file attachments associated with cases. 
  *
  * The version of the OpenAPI document: 1.0.0
  * 
