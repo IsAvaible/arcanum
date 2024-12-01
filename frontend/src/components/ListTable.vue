@@ -1,9 +1,9 @@
 <script setup lang="ts">
 // Vue and PrimeVue imports
-import { ref, useTemplateRef, reactive, computed, onMounted } from 'vue'
+import { ref, useTemplateRef, reactive, computed, onMounted, watch } from 'vue'
 import { FilterMatchMode, FilterOperator } from '@primevue/core/api'
 import { useTimeAgo } from '@vueuse/core'
-import { useToast } from 'primevue'
+import { type SelectChangeEvent, useToast } from 'primevue'
 import { useRoute } from 'vue-router'
 import router from '@/router'
 
@@ -18,8 +18,9 @@ import Menu from 'primevue/menu'
 import DatePicker from 'primevue/datepicker'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
-import Card from 'primevue/card'
 import Skeleton from 'primevue/skeleton'
+import Divider from 'primevue/divider'
+import FloatLabel from 'primevue/floatlabel'
 
 // Custom Components
 import CaseDeleteDialog from '@/components/CaseDeleteDialog.vue'
@@ -29,6 +30,7 @@ import { useApi } from '@/composables/useApi'
 import type { Case } from '@/api/api'
 import { CaseCaseTypeEnum } from '@/api/api'
 import type { AxiosError } from 'axios'
+import KpiWidget from '@/components/case-list-view/KpiWidget.vue'
 
 // Reactive State and References
 const api = useApi()
@@ -49,6 +51,41 @@ const caseTypes = ref(
     value: value,
   })),
 )
+
+// Date Range Preset Configuration
+const dateRangePresets = ref([
+  {
+    label: 'All Time',
+    value: [],
+  },
+  {
+    label: 'Today',
+    value: [new Date(new Date().setHours(0, 0, 0, 0)), new Date()],
+  },
+  {
+    label: 'Last 7 Days',
+    value: [new Date(new Date().setDate(new Date().getDate() - 7)), new Date()],
+  },
+  {
+    label: 'Last 30 Days',
+    value: [new Date(new Date().setDate(new Date().getDate() - 30)), new Date()],
+  },
+  {
+    label: 'This Month',
+    value: [new Date(new Date().getFullYear(), new Date().getMonth(), 1), new Date()],
+  },
+  {
+    label: 'Last Month',
+    value: [
+      new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
+      new Date(new Date().getFullYear(), new Date().getMonth(), 0),
+    ],
+  },
+  {
+    label: 'This Year',
+    value: [new Date(new Date().getFullYear(), 0, 1), new Date()],
+  },
+])
 
 // Utility Functions
 /**
@@ -74,23 +111,48 @@ const initFilter = () => {
       constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
     },
     'createdBy.name': { value: null, matchMode: FilterMatchMode.CONTAINS },
-    updatedAt: {
-      operator: FilterOperator.AND,
-      constraints: [
-        { value: null, matchMode: FilterMatchMode.DATE_AFTER },
-        { value: null, matchMode: FilterMatchMode.DATE_BEFORE },
-      ],
-    },
+    updatedAt: { value: null, matchMode: FilterMatchMode.BETWEEN },
   }
 }
 initFilter()
+
+const selectedUpdatedPreset = ref<{ label: string; value: Date[] } | null>(
+  dateRangePresets.value[0],
+)
+const onUpdatedPresetChange = (event: SelectChangeEvent) => {
+  selectedUpdatedPreset.value = event.value
+  filters.value.updatedAt.value = event.value.value
+
+  // Remove the custom range if a preset is selected
+  if (event.value.label !== 'Custom Range') {
+    const customRangeIndex = dateRangePresets.value.findIndex(
+      (preset) => preset.label === 'Custom Range',
+    )
+    if (customRangeIndex !== -1) {
+      dateRangePresets.value.splice(customRangeIndex, 1)
+    }
+  }
+}
+const onUpdatedRangeChange = (_event: Date) => {
+  selectedUpdatedPreset.value = {
+    label: 'Custom Range',
+    value: [],
+  }
+  // Add to options if not already present
+  if (!dateRangePresets.value.find((preset) => preset.label === 'Custom Range')) {
+    dateRangePresets.value.push(selectedUpdatedPreset.value)
+  }
+}
+
+const onUpdatedClear = () => {
+  onUpdatedPresetChange({ value: dateRangePresets.value[0] } as SelectChangeEvent)
+}
 
 // Route Initialization for Case Deletion Dialog
 if (route.path.match(/^\/cases\/\d+\/delete\/?$/g)) {
   ;(async () => {
     try {
       selectedCase.value = (await api.casesIdGet({ id: Number(route.params.id) })).data
-      console.log(selectedCase.value)
       deleteDialogVisible.value = true
     } catch (error) {
       console.error(error)
@@ -275,6 +337,13 @@ const resolutionTimeTrend = ref(-5) // Example: 5% decrease
 
 // Lifecycle Hooks
 onMounted(fetchCases)
+
+const path = computed(() => route.path)
+watch(path, (newPath, oldPath) => {
+  if (oldPath === '/cases/create' && newPath !== '/cases/create') {
+    fetchCases()
+  }
+})
 </script>
 
 <template>
@@ -289,59 +358,29 @@ onMounted(fetchCases)
 
       <!-- KPI Widgets Row -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card>
-          <template #content>
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="text-lg font-semibold text-gray-600">Total Cases</h3>
-                <p class="text-3xl font-bold text-primary-600">{{ totalCases }}</p>
-              </div>
-              <i class="pi pi-file text-4xl text-primary-600"></i>
-            </div>
-            <div class="mt-2 text-sm text-gray-500">
-              <span :class="totalCasesTrend > 0 ? 'text-green-500' : 'text-red-500'">
-                {{ totalCasesTrend > 0 ? '▲' : '▼' }} {{ Math.abs(totalCasesTrend) }}%
-              </span>
-              from last month
-            </div>
-          </template>
-        </Card>
+        <KpiWidget
+          title="Total Cases"
+          :value="totalCases"
+          :trend="totalCasesTrend"
+          trend-description="from last month"
+          icon="pi pi-file"
+        />
 
-        <Card>
-          <template #content>
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="text-lg font-semibold text-gray-600">Resolved Cases</h3>
-                <p class="text-3xl font-bold text-primary-600">{{ resolvedCases }}</p>
-              </div>
-              <i class="pi pi-check-circle text-4xl text-primary-600"></i>
-            </div>
-            <div class="mt-2 text-sm text-gray-500">
-              <span :class="resolvedCasesTrend > 0 ? 'text-green-500' : 'text-red-500'">
-                {{ resolvedCasesTrend > 0 ? '▲' : '▼' }} {{ Math.abs(resolvedCasesTrend) }}%
-              </span>
-              resolution rate this month
-            </div>
-          </template>
-        </Card>
+        <KpiWidget
+          title="Resolved Cases"
+          :value="resolvedCases"
+          :trend="resolvedCasesTrend"
+          trend-description="resolution rate this month"
+          icon="pi pi-check-circle"
+        />
 
-        <Card>
-          <template #content>
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="text-lg font-semibold text-gray-600">Avg. Resolution Time</h3>
-                <p class="text-3xl font-bold text-primary-600">{{ averageResolutionTime }} hrs</p>
-              </div>
-              <i class="pi pi-clock text-4xl text-primary-600"></i>
-            </div>
-            <div class="mt-2 text-sm text-gray-500">
-              <span :class="resolutionTimeTrend > 0 ? 'text-red-500' : 'text-green-500'">
-                {{ resolutionTimeTrend > 0 ? '▲' : '▼' }} {{ Math.abs(resolutionTimeTrend) }}%
-              </span>
-              from previous period
-            </div>
-          </template>
-        </Card>
+        <KpiWidget
+          title="Avg. Resolution Time"
+          :value="averageResolutionTime"
+          :trend="resolutionTimeTrend"
+          trend-description="from previous period"
+          icon="pi pi-clock"
+        />
       </div>
 
       <DataTable
@@ -362,6 +401,8 @@ onMounted(fetchCases)
           '[&_tbody]:animate-pulse': loading && cases.length > 0,
         }"
         :globalFilterFields="['title', 'assignee', 'case_type', 'status', 'createdBy.name']"
+        sortField="updatedAt"
+        :sortOrder="-1"
       >
         <template #header>
           <div class="flex justify-between items-center gap-x-5">
@@ -472,16 +513,43 @@ onMounted(fetchCases)
           data-type="date"
           :sortable="true"
           :show-filter-operator="false"
+          :show-filter-match-modes="false"
         >
           <template #body="slotProps">
             {{ formatDate(slotProps.data.updatedAt, true) }}
           </template>
           <template #filter="{ filterModel }">
-            <DatePicker
-              v-model="filterModel.value"
-              dateFormat="mm/dd/yy"
-              placeholder="Select Date"
-            />
+            <FloatLabel class="w-full mt-3">
+              <Select
+                :options="dateRangePresets"
+                optionLabel="label"
+                :model-value="selectedUpdatedPreset"
+                @change="onUpdatedPresetChange"
+                class="w-full"
+                id="updated-preset"
+              />
+              <label for="updated-preset"> Select Date Range </label>
+            </FloatLabel>
+            <Divider class="my-1.5">
+              <span class="text-gray-500">or</span>
+            </Divider>
+            <FloatLabel>
+              <DatePicker
+                v-model="filterModel.value"
+                dateFormat="dd/mm/yy"
+                selectionMode="range"
+                :hideOnRangeSelection="true"
+                :manualInput="false"
+                @date-select="onUpdatedRangeChange"
+                id="updated-range"
+              />
+              <label for="updated-range" class="z-10">Set Date Range</label>
+            </FloatLabel>
+          </template>
+          <template #filterclear>
+            <Button size="small" variant="outlined" type="button" @click="onUpdatedClear">
+              Clear
+            </Button>
           </template>
         </Column>
 
