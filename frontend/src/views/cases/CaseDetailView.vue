@@ -132,8 +132,8 @@ const openFileInDrawer = (file: File) => {
         </div>
 
         <div class="flex gap-2">
-          <Button label="Generate PDF" icon="pi pi-file-pdf" class="p-button-success" />
-          <Button label="Plan Call" icon="pi pi-phone" class="p-button-success" />
+          <Button label="Generate PDF" icon="pi pi-file-pdf" />
+          <Button label="Plan Call" icon="pi pi-phone" />
         </div>
       </div>
       <p class="text-sm text-gray-500">{{ breadcrumb }}</p>

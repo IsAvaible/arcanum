@@ -22,7 +22,7 @@ const files = useVModel(props, 'files', emit)
 
 // References and State
 const popover = useTemplateRef('popover')
-const maxFileSize = 10 * 1024 * 1024 // 10 MB
+const maxFileSize = 100 * 1024 * 1024 // 100 MB
 // All image types, audio types, pdf and text files
 const accept = 'image/*, audio/*, application/pdf, text/*'
 const toast = useToast()
@@ -59,7 +59,6 @@ const _onClearTemplatingUpload = (clear: () => void) => {
 }
 const onSelectedFiles = (event: FileUploadSelectEvent) => {
   files.value = event.files
-  console.log(event.files)
   files.value.forEach((file) => {
     totalSize.value += parseInt(formatSize(file.size))
   })

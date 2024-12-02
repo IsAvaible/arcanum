@@ -54,11 +54,11 @@ export interface Case {
      */
     'updatedAt': string;
     /**
-     * List of file names attached to the case.
-     * @type {Array<string>}
+     * List of attachments associated with the case.
+     * @type {Array<object>}
      * @memberof Case
      */
-    'attachments': Array<string>;
+    'attachments': Array<object>;
     /**
      * Title of the case.
      * @type {string}
@@ -651,6 +651,92 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * Update a draft case with additional details and mark it as confirmed.
+         * @summary Confirm and update a draft case.
+         * @param {number} id ID of the case to confirm.
+         * @param {CasePut} casePut 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        confirmCaseIdPut: async (id: number, casePut: CasePut, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('confirmCaseIdPut', 'id', id)
+            // verify required parameter 'casePut' is not null or undefined
+            assertParamExists('confirmCaseIdPut', 'casePut', casePut)
+            const localVarPath = `/confirmCase/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(casePut, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Upload files, process them, and create draft cases.
+         * @summary Create cases from uploaded files.
+         * @param {Array<File>} [files] Files to be uploaded.
+         * @param {number} [socketId] Socket ID for real-time communication.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createCaseFromFilesPost: async (files?: Array<File>, socketId?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/createCaseFromFiles`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
+
+            if (files) {
+                files.forEach((element) => {
+                    localVarFormParams.append('files', element as any);
+                })
+            }
+
+    
+            if (socketId !== undefined) { 
+                localVarFormParams.append('socket_id', socketId as any);
+            }
+    
+    
+            localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = localVarFormParams;
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -766,6 +852,34 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.casesPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * Update a draft case with additional details and mark it as confirmed.
+         * @summary Confirm and update a draft case.
+         * @param {number} id ID of the case to confirm.
+         * @param {CasePut} casePut 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async confirmCaseIdPut(id: number, casePut: CasePut, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Case>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.confirmCaseIdPut(id, casePut, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.confirmCaseIdPut']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Upload files, process them, and create draft cases.
+         * @summary Create cases from uploaded files.
+         * @param {Array<File>} [files] Files to be uploaded.
+         * @param {number} [socketId] Socket ID for real-time communication.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createCaseFromFilesPost(files?: Array<File>, socketId?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<Case>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createCaseFromFilesPost(files, socketId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.createCaseFromFilesPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -844,6 +958,26 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          */
         casesPost(requestParameters: DefaultApiCasesPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Case> {
             return localVarFp.casesPost(requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Update a draft case with additional details and mark it as confirmed.
+         * @summary Confirm and update a draft case.
+         * @param {DefaultApiConfirmCaseIdPutRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        confirmCaseIdPut(requestParameters: DefaultApiConfirmCaseIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<Case> {
+            return localVarFp.confirmCaseIdPut(requestParameters.id, requestParameters.casePut, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Upload files, process them, and create draft cases.
+         * @summary Create cases from uploaded files.
+         * @param {DefaultApiCreateCaseFromFilesPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createCaseFromFilesPost(requestParameters: DefaultApiCreateCaseFromFilesPostRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<Array<Case>> {
+            return localVarFp.createCaseFromFilesPost(requestParameters.files, requestParameters.socketId, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -1038,6 +1172,48 @@ export interface DefaultApiCasesPostRequest {
 }
 
 /**
+ * Request parameters for confirmCaseIdPut operation in DefaultApi.
+ * @export
+ * @interface DefaultApiConfirmCaseIdPutRequest
+ */
+export interface DefaultApiConfirmCaseIdPutRequest {
+    /**
+     * ID of the case to confirm.
+     * @type {number}
+     * @memberof DefaultApiConfirmCaseIdPut
+     */
+    readonly id: number
+
+    /**
+     * 
+     * @type {CasePut}
+     * @memberof DefaultApiConfirmCaseIdPut
+     */
+    readonly casePut: CasePut
+}
+
+/**
+ * Request parameters for createCaseFromFilesPost operation in DefaultApi.
+ * @export
+ * @interface DefaultApiCreateCaseFromFilesPostRequest
+ */
+export interface DefaultApiCreateCaseFromFilesPostRequest {
+    /**
+     * Files to be uploaded.
+     * @type {Array<File>}
+     * @memberof DefaultApiCreateCaseFromFilesPost
+     */
+    readonly files?: Array<File>
+
+    /**
+     * Socket ID for real-time communication.
+     * @type {number}
+     * @memberof DefaultApiCreateCaseFromFilesPost
+     */
+    readonly socketId?: number
+}
+
+/**
  * DefaultApi - object-oriented interface
  * @export
  * @class DefaultApi
@@ -1125,6 +1301,30 @@ export class DefaultApi extends BaseAPI {
      */
     public casesPost(requestParameters: DefaultApiCasesPostRequest, options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).casesPost(requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Update a draft case with additional details and mark it as confirmed.
+     * @summary Confirm and update a draft case.
+     * @param {DefaultApiConfirmCaseIdPutRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public confirmCaseIdPut(requestParameters: DefaultApiConfirmCaseIdPutRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).confirmCaseIdPut(requestParameters.id, requestParameters.casePut, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Upload files, process them, and create draft cases.
+     * @summary Create cases from uploaded files.
+     * @param {DefaultApiCreateCaseFromFilesPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public createCaseFromFilesPost(requestParameters: DefaultApiCreateCaseFromFilesPostRequest = {}, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).createCaseFromFilesPost(requestParameters.files, requestParameters.socketId, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

@@ -1,15 +1,20 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Dialog, Button, Divider } from 'primevue'
+import { Dialog, Button, Divider, useToast } from 'primevue'
 import FileDropzoneUpload from '@/components/file-handling/FileDropzoneUpload.vue'
 import { useVModel } from '@vueuse/core'
+import { useApi } from '@/composables/useApi'
+import { AxiosError } from 'axios'
 
 const props = defineProps<{
   /** The visibility of the dialog */
   visible?: boolean
 }>()
 const emit = defineEmits(['update:visible'])
+
+const toast = useToast()
+const api = useApi()
 
 // References and State
 const router = useRouter()
@@ -20,6 +25,41 @@ const showDialog = useVModel(props, 'visible', emit)
 const openManualCaseCreation = () => {
   showDialog.value = false
   router.push({ name: 'case-create-manual' })
+}
+
+const loading = ref(false)
+const openAICaseCreation = async () => {
+  if (files.value.length === 0) {
+    toast.add({
+      severity: 'error',
+      summary: 'No files selected',
+      detail: 'Please select files to generate a case from',
+      life: 3000,
+    })
+  } else {
+    loading.value = true
+    try {
+      const result = await api.createCaseFromFilesPost({ files: files.value })
+      toast.add({
+        severity: 'success',
+        summary: 'Case Created',
+        detail: `The case ${result.data[0].title} has been created`,
+        life: 3000,
+      })
+      console.log(result)
+      await router.push('/cases/case/' + result.data[0].id)
+    } catch (error) {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'An error occurred while creating the case:\n\t' + (error as AxiosError).message,
+        life: 3000,
+      })
+      console.error(error)
+    } finally {
+      loading.value = false
+    }
+  }
 }
 </script>
 
@@ -36,10 +76,15 @@ const openManualCaseCreation = () => {
       <div class="flex flex-col space-y-4">
         <FileDropzoneUpload v-model:files="files" />
         <Button
-          label="Generate Case From Files"
+          :loading="loading"
+          :disabled="loading"
+          :label="`Generat${loading ? 'ing' : 'e'} Case From Files`"
           icon="pi pi-sparkles"
-          class="w-full bg-gradient-to-tr from-green-500 via-blue-600 to-purple-700 border-none opacity-85 hover:opacity-100 transition-opacity"
-          @click="openManualCaseCreation"
+          class="w-full bg-gradient-to-tr from-green-500 via-blue-600 to-purple-700 border-none opacity-85 transition-opacity"
+          :class="{
+            'hover:opacity-100': !loading,
+          }"
+          @click="openAICaseCreation"
         />
         <Divider>
           <b>or</b>

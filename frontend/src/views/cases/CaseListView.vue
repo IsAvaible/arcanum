@@ -12,7 +12,6 @@ const createManualDialogVisible = ref(false)
 watch(
   () => route.name,
   (name) => {
-    console.log(name)
     switch (name) {
       case 'case-create':
         createDialogVisible.value = true

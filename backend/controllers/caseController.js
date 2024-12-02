@@ -173,7 +173,7 @@ exports.createCase = [
                 const localFilePath = file.path;
 
                 try{
-                  const remoteFilePath =  await nextCloud.uploadFile(localFilePath, "/test-folder/", file.filename);
+                  const remoteFilePath =  await nextCloud.uploadFile(localFilePath, "/IP_WKS/", file.filename);
 
                   let attachment =  await Attachments.findOne({
                     where: {
@@ -298,7 +298,7 @@ exports.createCase = [
 
               try {
                   // Datei zu NextCloud hochladen
-                  const remoteFilePath =  await nextCloud.uploadFile(localFilePath, "/test-folder/", file.filename);
+                  const remoteFilePath =  await nextCloud.uploadFile(localFilePath, "/IP_WKS/", file.filename);
 
                   let attachment =  await Attachments.findOne({
                     where: {

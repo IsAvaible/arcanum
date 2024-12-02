@@ -12,7 +12,12 @@ app.set('view engine', 'ejs');
 
 // Use CORS middleware, see: https://expressjs.com/en/resources/middleware/cors.html
 app.use(cors({
-  origin: ['http://localhost:4173', 'http://localhost:5173'], // Allow only these origins
+  origin: [
+    'http://localhost:8080', // Frontend (Docker)
+    'http://localhost:4173', // Frontend (Production)
+    'http://localhost:5173', // Frontend (Development)
+    'http://localhost:63342' // PHPStorm
+  ],
 }));
 
 // Middleware (optional)

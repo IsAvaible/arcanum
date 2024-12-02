@@ -4,6 +4,7 @@ const path = require('path');
 const fileUploadController = require('../controllers/fileuploadController');
 const multer = require('multer');
 const { body, validationResult } = require('express-validator');
+const axios = require('axios')
 
 
 const upload = multer({
@@ -13,7 +14,7 @@ const upload = multer({
             cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
         }
     }),
-    limits: { fileSize: 1000000 }, // Dateigrößenbeschränkung pro Datei
+    limits: { fileSize: 100 * 1024 * 1024 }, // Dateigrößenbeschränkung pro Datei - 100 MB
     fileFilter: function (req, file, cb) {
         fileUploadController.checkFileName(file);
         fileUploadController.checkFileType(file, cb);
@@ -60,7 +61,7 @@ exports.createCaseFromFiles = [
                 const localFilePath = file.path;
 
                 try{
-                      const remoteFilePath =   await nextCloud.uploadFile(localFilePath, "/test-folder/", file.filename);
+                      const remoteFilePath =   await nextCloud.uploadFile(localFilePath, "/IP_WKS/", file.filename);
 
                       let attachment =  await Attachments.findOne({
                         where: {
@@ -81,7 +82,6 @@ exports.createCaseFromFiles = [
 
                       attachment = await Attachments.create(attachmentData);
                     }
-
                       //Attachment.Instanzen sammeln
                       attachmentInstances.push(attachment);
 
@@ -101,8 +101,8 @@ exports.createCaseFromFiles = [
       console.log( "Sende ans LLM: ",JSON.stringify(llmRequestData));
       //Daten an das LLM senden 
       try{
-        const llmResponse = await axios.post('localhost:5001/generate_case', llmRequestData);    
-        const responseData = llmResponse;
+        const llmResponse = await axios.post('http://host.docker.internal:5001/generate_case', llmRequestData);
+        const responseData = llmResponse.data;
         console.log( "Empange vom LLM: ", llmResponse);
 
 
@@ -117,7 +117,6 @@ exports.createCaseFromFiles = [
           'attachments'
         ];
 
-
         if (responseData.cases) {
           // Sicherstellen, dass cases ein Array ist
           const casesArray = Array.isArray(responseData.cases) ? responseData.cases : [responseData.cases];
@@ -128,9 +127,12 @@ exports.createCaseFromFiles = [
             let extrCase = {};
             allowedFields.forEach((field) => {
               if (caseData[field] !== undefined) {
-                if(field === 'attachments'){
+                if (field === 'attachments') {
                   attachments = caseData[field];
-                }else{
+                } else if (field === 'assignee' && Array.isArray(caseData[field]) && caseData[field].length > 0) {
+                  // Extrahiere den ersten String aus dem Array
+                  extrCase[field] = caseData[field][0];
+                } else {
                   extrCase[field] = caseData[field];
                 }
               }
@@ -168,13 +170,13 @@ exports.createCaseFromFiles = [
           console.log( "Erstellter Case: ", JSON.stringify(casesAll));
             // Antwort an das Frontend senden
             res.status(201).json(casesAll);
-        } else if(responseData.message){
+        } else if (responseData.message){
             res.status(200).json({ message: responseData.message });
         } else {
-            res.status(500).json({ error: 'Error creating case.' });
+            res.status(500).json({ message: 'LLM returned no data' });
           }
         } catch (error) {
-          res.status(500).json({ error: 'Error creating case.' });
+          res.status(500).json({ message: error });
         }
 
       

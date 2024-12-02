@@ -73,7 +73,7 @@ def upload_file_method_production(files, pdf_extractor):
     for file in sorted_attachments:
         filepath = file["filepath"]
         filehash = file["filehash"]
-        file_id = file["file_id"]
+        file_id = file["id"] if "id" in file else file["file_id"]
         filename = file["filename"]
         # download file to temp folder
         path = download_file_webdav(filepath, filename)
