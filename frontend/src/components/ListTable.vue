@@ -240,6 +240,12 @@ const toggleMenu = (event: Event) => {
  * @returns - Menu item configuration.
  */
 const getMenuItems = (caseItem: Case) => [
+  // TODO: caseItem is always the last item in the list
+  {
+    label: 'View Case',
+    icon: 'pi pi-eye',
+    command: () => router.push(`/cases/${caseItem.id}`),
+  },
   {
     label: caseItem.id == 0 ? 'Unarchive Item' : 'Archive Item',
     icon: 'pi pi-inbox',
