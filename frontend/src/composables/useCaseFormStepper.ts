@@ -50,7 +50,7 @@ export const useCaseFormStepper = (
       case 1:
         return isFieldDirty('selectedAssignees') || !stepValid(1)
       case 2:
-        return maxStep.value >= 2
+        return isFieldDirty('description') || !stepValid(2)
       case 3:
         return maxStep.value >= 3
       case 4:

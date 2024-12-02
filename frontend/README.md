@@ -59,6 +59,16 @@ Also consult with the team before adding any new libraries to the project.
 To use environment variables in the project, add them to the `.env.development` file and access them in the code using `import.meta.env`.
 See the [Vite documentation](https://vite.dev/guide/env-and-mode) for more information.
 
+### Generating API Client
+
+To regenerate the API client from the OpenAPI specification, run the following command:
+
+```bash
+npm run generate:api
+```
+
+This command requires Java Runtime Environment (JRE) v.55.0^ to be installed on your machine.
+
 ### Building for Production
 
 To build the project for production, run:

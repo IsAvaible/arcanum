@@ -1,5 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Serve Frontend" type="CompoundRunConfigurationType">
+    <toRun name="Docker Run" type="docker-deploy" />
     <toRun name="dev" type="js.build_tools.npm" />
     <toRun name="test:unit:watch" type="js.build_tools.npm" />
     <method v="2" />
