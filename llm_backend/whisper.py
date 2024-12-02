@@ -91,7 +91,7 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
             data["segments"].append(generate_segment_dict(combined_segments, idx))
 
         # JSON besser als String
-        formatted_string = ""
+        #formatted_string = ""
         #for seg in data["segments"]:
         #    for s in seg:
         #        formatted_string += f"Von {s.get('start')} bis {s.get('end')}:\n{s.get('text')}\n\n"
