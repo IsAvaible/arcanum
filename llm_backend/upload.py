@@ -1,34 +1,22 @@
 import mimetypes
 import os
 import re
-from pathlib import Path
 
 from bs4 import BeautifulSoup
-from flask import Blueprint
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import AzureChatOpenAI
-from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 
 import hashlib
 
 from app import app
-from embeddings import create_embeddings
-from audio import split_audio_with_overlap
+from whisper import transcribe
 from pdf import (
     create_text_chunks_pdfplumber,
-    create_text_chunks_pypdfloader,
-    create_text_chunks_pdfreader,
-    create_text_chunks_ocr,
 )
-from prompts import get_system_prompt
 from webdav import download_file_webdav
-from langchain_core.documents.base import Blob
-from langchain_community.document_loaders.parsers.audio import AzureOpenAIWhisperParser
 
 import json
 
-upload = Blueprint("upload", __name__)
 ALLOWED_EXTENSIONS = {"txt", "pdf", "html", "mp3", "wav"}
 
 load_dotenv()
@@ -93,69 +81,7 @@ def upload_file_method_production(files, pdf_extractor):
 
         if allowed_file(filename):
             if "audio" in mimetype:
-                # if texts not empty -> try to get model numbers etc. by Text content
-                if texts != "":
-                    system_prompt_langchain_parser = get_system_prompt("models")
-                    messages = [
-                        ("system", "{system_prompt}"),
-                        ("human", "CONTEXT: {context}"),
-                    ]
-                    promptLangchain = ChatPromptTemplate.from_messages(messages).partial(
-                        system_prompt=system_prompt_langchain_parser
-                    )
-                    promptLangchainInvoked = promptLangchain.invoke(
-                        {"context": texts, "query": "Please give me the list back!"}
-                    )
-                    chain = llm
-                    response = chain.invoke(promptLangchainInvoked)
-                    whisper_prompt = response.content
-
-                file_size_mb = os.stat(path).st_size / (1024 * 1024)
-                texts += f" NEW AUDIO FILE {json.dumps(file)} - CONTENT: "
-                # split if 24mb or greater
-
-                partialTranscription = []
-                partial_transcript_to_context = ""
-
-                if float(file_size_mb) > 24.0:
-                    # split files
-                    segments = split_audio_with_overlap(path, segment_length_ms=300000, overlap_ms=500)
-                    # save segments to filesystem
-                    for idx, segment in enumerate(segments):
-                        if partialTranscription:
-                            partial_transcript_to_context = partialTranscription[-1][-200:]
-                            print("partialTranscription:"+str(partial_transcript_to_context)+"\n\n")
-                        print(f"segment {idx}")
-                        path = os.path.join(
-                            app.root_path, os.path.join(app.config["UPLOAD_FOLDER"], f"{filename}_{idx}.mp3")
-                        )
-                        segment.export(path, format="mp3")
-                        audio_blob = Blob(path=path)
-                        # Set up AzureChatOpenAI with the required configurations
-                        parser = AzureOpenAIWhisperParser(
-                            azure_endpoint=AZURE_ENDPOINT,
-                            deployment_name=AZURE_DEPLOYMENT,
-                            api_version=OPENAI_API_VERSION,
-                            prompt=whisper_prompt#+" Text: "+ partial_transcript_to_context
-                        )
-                        # Assuming the client has a method to handle audio transcription similar to the OpenAI client
-                        transcription_documents = parser.parse(blob=audio_blob)
-
-                        partialTranscription.append(transcription_documents[0].page_content)
-                else:
-                    # transcribe full file
-                    audio_blob = Blob(path=path)
-                    # Set up AzureChatOpenAI with the required configurations
-                    parser = AzureOpenAIWhisperParser(
-                        azure_endpoint=AZURE_ENDPOINT,
-                        deployment_name=AZURE_DEPLOYMENT,
-                        api_version=OPENAI_API_VERSION,
-                        prompt=whisper_prompt
-                    )
-                    # Assuming the client has a method to handle audio transcription similar to the OpenAI client
-                    transcription_documents = parser.parse(blob=audio_blob)
-                    partialTranscription.append(transcription_documents[0].page_content)
-
+                partialTranscription = transcribe(file, texts, llm, path, filename, whisper_prompt)
                 single_text = "".join(partialTranscription)
                 texts += " " + single_text
             elif mimetype == "application/pdf":
@@ -191,81 +117,6 @@ def upload_file_method_production(files, pdf_extractor):
         files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False)
 
         print(files_as_dicts_json)
-    return files_as_dicts_json
-
-
-def upload_file_method(files, pdf_extractor, chat_id):
-    files_as_dicts = []
-    file_as_dict = {}
-    files_as_dicts_json = ""
-    texts = ""
-    single_text = ""
-    for file in files:
-        if file:
-            if allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                path = os.path.join(
-                    app.root_path, os.path.join(app.config["UPLOAD_FOLDER"], filename)
-                )
-                mimetype = file.content_type
-                file.save(path)
-                clean_filename_str = clean_filename(Path(path).stem)
-                if mimetype == "audio/mpeg":
-                    texts += "Content of Audio File: " + clean_filename_str + ": "
-                    # audio_file = open(path, "rb")
-                    audio_blob = Blob(path=path)
-
-                    # Set up AzureChatOpenAI with the required configurations
-                    parser = AzureOpenAIWhisperParser(
-                        azure_endpoint=AZURE_ENDPOINT,
-                        deployment_name=AZURE_DEPLOYMENT,
-                        api_version=OPENAI_API_VERSION,
-                    )
-
-                    # Assuming the client has a method to handle audio transcription similar to the OpenAI client
-                    transcription_documents = parser.parse(blob=audio_blob)
-                    # texts += transcription['text']
-                    single_text = transcription_documents[0].page_content
-
-                elif mimetype == "application/pdf":
-                    # if store_hash(file) == True:
-                    texts = "Content of PDF File: " + clean_filename_str + ": "
-                    if pdf_extractor == "pypdfloader":
-                        single_text = create_text_chunks_pypdfloader(path)
-                        texts += " " + single_text
-                    if pdf_extractor == "pdfplumber":
-                        single_text = create_text_chunks_pdfplumber(path)
-                        texts += " " + single_text
-                    if pdf_extractor == "pdfreader":
-                        single_text = create_text_chunks_pdfreader(path)
-                        texts += " " + single_text
-                    if pdf_extractor == "ocr":
-                        single_text = create_text_chunks_ocr(path)
-                        texts += " " + single_text
-                elif mimetype == "text/html":
-                    texts = "Content of HTML File: " + clean_filename_str + ": "
-                    with open(path, "r", encoding="utf-8") as file:
-                        contents = file.read()
-                        soup = BeautifulSoup(contents)
-                        texts += soup.get_text()
-                        single_text = soup.get_text()
-                elif mimetype == "text/plain":
-                    texts = "Content of Text File: " + clean_filename_str + ": "
-                    with open(path, "r", encoding="utf-8") as file:
-                        contents = file.read()
-                        texts += contents
-                        single_text = contents
-
-                file_as_dict = {
-                    "filename": filename,
-                    "mimetype": mimetype,
-                    "content": single_text,
-                }
-
-                create_embeddings(single_text, filename, chat_id)
-        files_as_dicts.append(file_as_dict)
-        files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False)
-
     return files_as_dicts_json
 
 
