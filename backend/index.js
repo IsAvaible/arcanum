@@ -18,6 +18,9 @@ app.use(cors({
     'http://localhost:5173', // Frontend (Development)
     'http://localhost:63342' // PHPStorm
   ],
+  allowedHeaders: '*',
+  exposedHeaders: '*',
+  credentials: true,
 }));
 
 // Middleware (optional)
@@ -26,7 +29,7 @@ app.use(exampleMiddleware);
 
 
 app.use(express.json()); // Fügt die JSON-Parsing-Middleware hinzu
-app.use(express.urlencoded({ extended: true })); 
+app.use(express.urlencoded({ extended: true }));
 
 //Routen verwenden
 app.use('/api/cases', caseRoutes);

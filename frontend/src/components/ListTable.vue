@@ -31,10 +31,12 @@ import type { Case } from '@/api/api'
 import { CaseCaseTypeEnum } from '@/api/api'
 import type { AxiosError } from 'axios'
 import KpiWidget from '@/components/case-list-view/KpiWidget.vue'
+import type { MenuItem } from 'primevue/menuitem'
 
 // Reactive State and References
 const api = useApi()
 const menu = useTemplateRef('menu')
+const menuModel = ref<MenuItem[] | undefined>(undefined)
 const toast = useToast()
 const route = useRoute()
 const filters = ref()
@@ -229,8 +231,10 @@ const getStatusSeverity = (status: string) => {
 /**
  * Toggles the menu visibility.
  * @param event - The DOM event.
+ * @param caseItem - The case object.
  */
-const toggleMenu = (event: Event) => {
+const toggleMenu = (event: Event, caseItem: Case) => {
+  menuModel.value = getMenuItems(caseItem)
   menu.value?.toggle(event)
 }
 
@@ -240,7 +244,6 @@ const toggleMenu = (event: Event) => {
  * @returns - Menu item configuration.
  */
 const getMenuItems = (caseItem: Case) => [
-  // TODO: caseItem is always the last item in the list
   {
     label: 'View Case',
     icon: 'pi pi-eye',
@@ -568,8 +571,13 @@ watch(path, (newPath, oldPath) => {
 
         <Column :exportable="false" style="min-width: 4rem">
           <template #body="slotProps">
-            <Menu ref="menu" :model="getMenuItems(slotProps.data)" :popup="true" appendTo="body" />
-            <Button icon="pi pi-ellipsis-v" @click="toggleMenu($event)" text rounded />
+            <Menu ref="menu" :model="menuModel" :popup="true" appendTo="body" />
+            <Button
+              icon="pi pi-ellipsis-v"
+              @click="toggleMenu($event, slotProps.data)"
+              text
+              rounded
+            />
           </template>
         </Column>
 

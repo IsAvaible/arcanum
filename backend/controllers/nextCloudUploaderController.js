@@ -132,7 +132,11 @@ async function downloadFileAndReturn(remoteFilePath) {
     } catch (error) {
         console.error('Error downloading file:', error);
     }
-    
+
+}
+
+async function streamFile(remoteFilePath) {
+    return nextcloudClient.createReadStream(remoteFilePath);
 }
 
 async function deleteFile(remoteFilePath) {
@@ -147,6 +151,7 @@ async function deleteFile(remoteFilePath) {
 
 module.exports = {
     downloadFileAndReturn,
+    streamFile,
     listFiles,
     uploadFile,
     downloadFile,
