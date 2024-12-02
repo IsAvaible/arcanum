@@ -250,36 +250,36 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
     delete:
-        summary: Delete an attachment
-        description: Delete an attachment associated with a case.
-        parameters:
-          - name: id
-            in: path
-            required: true
-            description: ID of the case.
-            schema:
-              type: integer
-          - name: filename
-            in: path
-            required: true
-            description: Name of the attachment file.
-            schema:
-              type: string
-        responses:
-          204:
-            description: File successfully deleted.
-          404:
-            description: Case or attachment not found.
-            content:
-              application/json:
-                schema:
-                    $ref: '#/components/schemas/Error'
-          500:
-            description: Error deleting the attachment.
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Error'
+      summary: Delete an attachment
+      description: Delete an attachment associated with a case.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case.
+          schema:
+            type: integer
+        - name: filename
+          in: path
+          required: true
+          description: Name of the attachment file.
+          schema:
+            type: string
+      responses:
+        204:
+          description: File successfully deleted.
+        404:
+          description: Case or attachment not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error deleting the attachment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     Case:
@@ -343,7 +343,6 @@ components:
                 type: string
                 format: binary
               description: Attached files on upload.
-
 
     CaseBase:
       type: object
