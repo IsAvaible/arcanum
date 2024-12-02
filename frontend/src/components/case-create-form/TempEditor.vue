@@ -21,7 +21,12 @@ const onChange = (v: string) => {
 </script>
 
 <template>
-  <Editor v-bind="props" @load="onLoad" @update:modelValue="onChange" />
+  <Editor
+    v-bind="props"
+    @load="onLoad"
+    @update:modelValue="onChange"
+    :class="{ 'rounded-lg ring-1 ring-red-400': props.invalid }"
+  />
 </template>
 
 <style scoped></style>

@@ -4,6 +4,7 @@ const multer = require('multer');
 const nextCloud = require('./nextCloudUploaderController.js');
 const path = require('path');
 const fileUploadController = require('../controllers/fileuploadController');
+const sanitizeFilename = require('sanitize-filename');
 
 
 
@@ -298,7 +299,7 @@ exports.createCase = [
 
               try {
                   // Datei zu NextCloud hochladen
-                  const remoteFilePath =  await nextCloud.uploadFile(localFilePath, "/test-folder/", file.filename);
+                  const remoteFilePath =  await nextCloud.uploadFile(localFilePath, "/IP_WKS/", file.filename);
 
                   let attachment =  await Attachments.findOne({
                     where: {
@@ -384,17 +385,34 @@ exports.createCase = [
 
   
       // **3. Datei aus Nextcloud abrufen**
-      const fileContent = await nextCloud.downloadFileAndReturn(attachment.filepath);
+      let fileContent;
+      try {
+        fileContent = await nextCloud.streamFile(attachment.filepath);
+      } catch {
+        fileContent = await nextCloud.downloadFileAndReturn(attachment.filepath);
+      }
+
+      if (!fileContent) {
+        return res.status(404).json({ message: 'File content not found' });
+      }
 
   
       // **4. Datei an den Client senden**
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      const sanitizedFilename = sanitizeFilename(filename); // Sanitize filename to prevent unsafe characters.
+
+      // Set headers to trigger download in the browser.
+      res.setHeader('Content-Disposition', `attachment; filename="${sanitizedFilename}"`);
       res.setHeader('Content-Type', attachment.mimetype);
-      res.send(fileContent);
-      
-  
+      res.setHeader('Content-Length', attachment.size);
+
+      if (Buffer.isBuffer(fileContent)) {
+        res.send(fileContent);
+      } else {
+        // If fileContent is a stream (e.g., a read stream from Nextcloud or file system)
+        fileContent.pipe(res);
+      }
     } catch (error) {
       console.error('Error downloading attachment:', error);
-      res.status(500).json({ message: 'Error downloading attachment' });
+      res.status(500).json({ message: error });
     }
   };
