@@ -1,4 +1,4 @@
-import {z} from 'zod';
+const z  = require('zod');
 const { check} = require('express-validator');
 
 export const caseSchema = z.object({
