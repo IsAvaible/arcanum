@@ -14,6 +14,7 @@ router.get('/:id', caseController.showCaseDetail);
 router.post('/', caseController.createCase);
 router.put('/:id', caseController.updateCase);
 router.delete('/:id', caseController.deleteCase);
+router.post('/:id/attachments', caseController.updateCase);
 router.get('/:caseId/attachments/:filename', caseController.downloadAttachment);
 
 

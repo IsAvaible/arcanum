@@ -30,36 +30,6 @@ import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError, operationServerM
  */
 export interface Case {
     /**
-     * 
-     * @type {number}
-     * @memberof Case
-     */
-    'id': number;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof Case
-     */
-    'draft': boolean;
-    /**
-     * 
-     * @type {string}
-     * @memberof Case
-     */
-    'createdAt': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof Case
-     */
-    'updatedAt': string;
-    /**
-     * List of file names attached to the case.
-     * @type {Array<string>}
-     * @memberof Case
-     */
-    'attachments': Array<string>;
-    /**
      * Title of the case.
      * @type {string}
      * @memberof Case
@@ -101,6 +71,36 @@ export interface Case {
      * @memberof Case
      */
     'priority'?: CasePriorityEnum;
+    /**
+     * 
+     * @type {number}
+     * @memberof Case
+     */
+    'id': number;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof Case
+     */
+    'draft': boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof Case
+     */
+    'createdAt': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof Case
+     */
+    'updatedAt': string;
+    /**
+     * List of file names attached to the case.
+     * @type {Array<CaseAllOfAttachments>}
+     * @memberof Case
+     */
+    'attachments': Array<CaseAllOfAttachments>;
 }
 
 export const CaseStatusEnum = {
@@ -130,150 +130,131 @@ export type CasePriorityEnum = typeof CasePriorityEnum[keyof typeof CasePriority
 /**
  * 
  * @export
- * @interface CasePost
+ * @interface CaseAllOfAttachments
  */
-export interface CasePost {
+export interface CaseAllOfAttachments {
     /**
-     * Title of the case.
-     * @type {string}
-     * @memberof CasePost
+     * ID of the attachment.
+     * @type {number}
+     * @memberof CaseAllOfAttachments
      */
-    'title': string;
+    'id': number;
     /**
-     * Description of the case.
+     * 
      * @type {string}
-     * @memberof CasePost
+     * @memberof CaseAllOfAttachments
      */
-    'description': string;
+    'filename': string;
     /**
-     * Solution for the case.
+     * Path to the attachment file.
      * @type {string}
-     * @memberof CasePost
+     * @memberof CaseAllOfAttachments
      */
-    'solution'?: string;
+    'filepath': string;
     /**
-     * Person responsible for the case.
+     * Hash of the attachment file.
      * @type {string}
-     * @memberof CasePost
+     * @memberof CaseAllOfAttachments
      */
-    'assignee'?: string;
+    'filehash': string;
     /**
-     * Status of the case.
+     * MIME type of the attachment file.
      * @type {string}
-     * @memberof CasePost
+     * @memberof CaseAllOfAttachments
      */
-    'status'?: CasePostStatusEnum;
+    'mimetype': string;
     /**
-     * Type of the case.
-     * @type {string}
-     * @memberof CasePost
+     * Size of the attachment file in bytes.
+     * @type {number}
+     * @memberof CaseAllOfAttachments
      */
-    'case_type'?: CasePostCaseTypeEnum;
+    'size': number;
     /**
-     * Priority level of the case.
+     * 
      * @type {string}
-     * @memberof CasePost
+     * @memberof CaseAllOfAttachments
      */
-    'priority'?: CasePostPriorityEnum;
+    'createdAt': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CaseAllOfAttachments
+     */
+    'updatedAt': string;
 }
-
-export const CasePostStatusEnum = {
-    Open: 'Open',
-    InProgress: 'In Progress',
-    Solved: 'Solved',
-    Closed: 'Closed'
-} as const;
-
-export type CasePostStatusEnum = typeof CasePostStatusEnum[keyof typeof CasePostStatusEnum];
-export const CasePostCaseTypeEnum = {
-    Problem: 'Problem',
-    Incident: 'Incident',
-    Change: 'Change',
-    Faq: 'FAQ'
-} as const;
-
-export type CasePostCaseTypeEnum = typeof CasePostCaseTypeEnum[keyof typeof CasePostCaseTypeEnum];
-export const CasePostPriorityEnum = {
-    Low: 'Low',
-    Medium: 'Medium',
-    High: 'High'
-} as const;
-
-export type CasePostPriorityEnum = typeof CasePostPriorityEnum[keyof typeof CasePostPriorityEnum];
-
 /**
  * 
  * @export
- * @interface CasePut
+ * @interface CaseBase
  */
-export interface CasePut {
+export interface CaseBase {
     /**
      * Title of the case.
      * @type {string}
-     * @memberof CasePut
+     * @memberof CaseBase
      */
     'title': string;
     /**
      * Description of the case.
      * @type {string}
-     * @memberof CasePut
+     * @memberof CaseBase
      */
     'description': string;
     /**
      * Solution for the case.
      * @type {string}
-     * @memberof CasePut
+     * @memberof CaseBase
      */
     'solution'?: string;
     /**
      * Person responsible for the case.
      * @type {string}
-     * @memberof CasePut
+     * @memberof CaseBase
      */
     'assignee'?: string;
     /**
      * Status of the case.
      * @type {string}
-     * @memberof CasePut
+     * @memberof CaseBase
      */
-    'status'?: CasePutStatusEnum;
+    'status'?: CaseBaseStatusEnum;
     /**
      * Type of the case.
      * @type {string}
-     * @memberof CasePut
+     * @memberof CaseBase
      */
-    'case_type'?: CasePutCaseTypeEnum;
+    'case_type'?: CaseBaseCaseTypeEnum;
     /**
      * Priority level of the case.
      * @type {string}
-     * @memberof CasePut
+     * @memberof CaseBase
      */
-    'priority'?: CasePutPriorityEnum;
+    'priority'?: CaseBasePriorityEnum;
 }
 
-export const CasePutStatusEnum = {
+export const CaseBaseStatusEnum = {
     Open: 'Open',
     InProgress: 'In Progress',
     Solved: 'Solved',
     Closed: 'Closed'
 } as const;
 
-export type CasePutStatusEnum = typeof CasePutStatusEnum[keyof typeof CasePutStatusEnum];
-export const CasePutCaseTypeEnum = {
+export type CaseBaseStatusEnum = typeof CaseBaseStatusEnum[keyof typeof CaseBaseStatusEnum];
+export const CaseBaseCaseTypeEnum = {
     Problem: 'Problem',
     Incident: 'Incident',
     Change: 'Change',
     Faq: 'FAQ'
 } as const;
 
-export type CasePutCaseTypeEnum = typeof CasePutCaseTypeEnum[keyof typeof CasePutCaseTypeEnum];
-export const CasePutPriorityEnum = {
+export type CaseBaseCaseTypeEnum = typeof CaseBaseCaseTypeEnum[keyof typeof CaseBaseCaseTypeEnum];
+export const CaseBasePriorityEnum = {
     Low: 'Low',
     Medium: 'Medium',
     High: 'High'
 } as const;
 
-export type CasePutPriorityEnum = typeof CasePutPriorityEnum[keyof typeof CasePutPriorityEnum];
+export type CaseBasePriorityEnum = typeof CaseBasePriorityEnum[keyof typeof CaseBasePriorityEnum];
 
 /**
  * 
@@ -336,6 +317,44 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             }
 
             const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Delete an attachment associated with a case.
+         * @summary Delete an attachment
+         * @param {number} id ID of the case.
+         * @param {string} filename Name of the attachment file.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        casesIdAttachmentsFilenameDelete: async (id: number, filename: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('casesIdAttachmentsFilenameDelete', 'id', id)
+            // verify required parameter 'filename' is not null or undefined
+            assertParamExists('casesIdAttachmentsFilenameDelete', 'filename', filename)
+            const localVarPath = `/cases/{id}/attachments/{filename}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)))
+                .replace(`{${"filename"}}`, encodeURIComponent(String(filename)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -512,10 +531,11 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {CasesIdPutStatusEnum} [status] Status of the case.
          * @param {CasesIdPutCaseTypeEnum} [caseType] Type of the case.
          * @param {CasesIdPutPriorityEnum} [priority] Priority level of the case.
+         * @param {Array<File>} [files] Attached files on upload.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        casesIdPut: async (id: number, title: string, description: string, solution?: string, assignee?: string, status?: CasesIdPutStatusEnum, caseType?: CasesIdPutCaseTypeEnum, priority?: CasesIdPutPriorityEnum, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        casesIdPut: async (id: number, title: string, description: string, solution?: string, assignee?: string, status?: CasesIdPutStatusEnum, caseType?: CasesIdPutCaseTypeEnum, priority?: CasesIdPutPriorityEnum, files?: Array<File>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
             assertParamExists('casesIdPut', 'id', id)
             // verify required parameter 'title' is not null or undefined
@@ -564,6 +584,12 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             if (priority !== undefined) { 
                 localVarFormParams.append('priority', priority as any);
             }
+                if (files) {
+                files.forEach((element) => {
+                    localVarFormParams.append('files', element as any);
+                })
+            }
+
     
     
             localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
@@ -588,10 +614,11 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {CasesPostStatusEnum} [status] Status of the case.
          * @param {CasesPostCaseTypeEnum} [caseType] Type of the case.
          * @param {CasesPostPriorityEnum} [priority] Priority level of the case.
+         * @param {Array<File>} [files] Attached files on upload.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        casesPost: async (title: string, description: string, solution?: string, assignee?: string, status?: CasesPostStatusEnum, caseType?: CasesPostCaseTypeEnum, priority?: CasesPostPriorityEnum, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        casesPost: async (title: string, description: string, solution?: string, assignee?: string, status?: CasesPostStatusEnum, caseType?: CasesPostCaseTypeEnum, priority?: CasesPostPriorityEnum, files?: Array<File>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'title' is not null or undefined
             assertParamExists('casesPost', 'title', title)
             // verify required parameter 'description' is not null or undefined
@@ -637,6 +664,12 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             if (priority !== undefined) { 
                 localVarFormParams.append('priority', priority as any);
             }
+                if (files) {
+                files.forEach((element) => {
+                    localVarFormParams.append('files', element as any);
+                })
+            }
+
     
     
             localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
@@ -671,6 +704,20 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.casesGet(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.casesGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Delete an attachment associated with a case.
+         * @summary Delete an attachment
+         * @param {number} id ID of the case.
+         * @param {string} filename Name of the attachment file.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async casesIdAttachmentsFilenameDelete(id: number, filename: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.casesIdAttachmentsFilenameDelete(id, filename, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.casesIdAttachmentsFilenameDelete']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -738,11 +785,12 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {CasesIdPutStatusEnum} [status] Status of the case.
          * @param {CasesIdPutCaseTypeEnum} [caseType] Type of the case.
          * @param {CasesIdPutPriorityEnum} [priority] Priority level of the case.
+         * @param {Array<File>} [files] Attached files on upload.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async casesIdPut(id: number, title: string, description: string, solution?: string, assignee?: string, status?: CasesIdPutStatusEnum, caseType?: CasesIdPutCaseTypeEnum, priority?: CasesIdPutPriorityEnum, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Case>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.casesIdPut(id, title, description, solution, assignee, status, caseType, priority, options);
+        async casesIdPut(id: number, title: string, description: string, solution?: string, assignee?: string, status?: CasesIdPutStatusEnum, caseType?: CasesIdPutCaseTypeEnum, priority?: CasesIdPutPriorityEnum, files?: Array<File>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Case>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.casesIdPut(id, title, description, solution, assignee, status, caseType, priority, files, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.casesIdPut']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -757,11 +805,12 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {CasesPostStatusEnum} [status] Status of the case.
          * @param {CasesPostCaseTypeEnum} [caseType] Type of the case.
          * @param {CasesPostPriorityEnum} [priority] Priority level of the case.
+         * @param {Array<File>} [files] Attached files on upload.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async casesPost(title: string, description: string, solution?: string, assignee?: string, status?: CasesPostStatusEnum, caseType?: CasesPostCaseTypeEnum, priority?: CasesPostPriorityEnum, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Case>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.casesPost(title, description, solution, assignee, status, caseType, priority, options);
+        async casesPost(title: string, description: string, solution?: string, assignee?: string, status?: CasesPostStatusEnum, caseType?: CasesPostCaseTypeEnum, priority?: CasesPostPriorityEnum, files?: Array<File>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Case>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.casesPost(title, description, solution, assignee, status, caseType, priority, files, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.casesPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -784,6 +833,16 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          */
         casesGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<Case>> {
             return localVarFp.casesGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Delete an attachment associated with a case.
+         * @summary Delete an attachment
+         * @param {DefaultApiCasesIdAttachmentsFilenameDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        casesIdAttachmentsFilenameDelete(requestParameters: DefaultApiCasesIdAttachmentsFilenameDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.casesIdAttachmentsFilenameDelete(requestParameters.id, requestParameters.filename, options).then((request) => request(axios, basePath));
         },
         /**
          * Download an attachment associated with a case.
@@ -833,7 +892,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         casesIdPut(requestParameters: DefaultApiCasesIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<Case> {
-            return localVarFp.casesIdPut(requestParameters.id, requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, options).then((request) => request(axios, basePath));
+            return localVarFp.casesIdPut(requestParameters.id, requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(axios, basePath));
         },
         /**
          * Create a new case.
@@ -843,10 +902,31 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         casesPost(requestParameters: DefaultApiCasesPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Case> {
-            return localVarFp.casesPost(requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, options).then((request) => request(axios, basePath));
+            return localVarFp.casesPost(requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(axios, basePath));
         },
     };
 };
+
+/**
+ * Request parameters for casesIdAttachmentsFilenameDelete operation in DefaultApi.
+ * @export
+ * @interface DefaultApiCasesIdAttachmentsFilenameDeleteRequest
+ */
+export interface DefaultApiCasesIdAttachmentsFilenameDeleteRequest {
+    /**
+     * ID of the case.
+     * @type {number}
+     * @memberof DefaultApiCasesIdAttachmentsFilenameDelete
+     */
+    readonly id: number
+
+    /**
+     * Name of the attachment file.
+     * @type {string}
+     * @memberof DefaultApiCasesIdAttachmentsFilenameDelete
+     */
+    readonly filename: string
+}
 
 /**
  * Request parameters for casesIdAttachmentsFilenameGet operation in DefaultApi.
@@ -979,6 +1059,13 @@ export interface DefaultApiCasesIdPutRequest {
      * @memberof DefaultApiCasesIdPut
      */
     readonly priority?: CasesIdPutPriorityEnum
+
+    /**
+     * Attached files on upload.
+     * @type {Array<File>}
+     * @memberof DefaultApiCasesIdPut
+     */
+    readonly files?: Array<File>
 }
 
 /**
@@ -1035,6 +1122,13 @@ export interface DefaultApiCasesPostRequest {
      * @memberof DefaultApiCasesPost
      */
     readonly priority?: CasesPostPriorityEnum
+
+    /**
+     * Attached files on upload.
+     * @type {Array<File>}
+     * @memberof DefaultApiCasesPost
+     */
+    readonly files?: Array<File>
 }
 
 /**
@@ -1053,6 +1147,18 @@ export class DefaultApi extends BaseAPI {
      */
     public casesGet(options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).casesGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Delete an attachment associated with a case.
+     * @summary Delete an attachment
+     * @param {DefaultApiCasesIdAttachmentsFilenameDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public casesIdAttachmentsFilenameDelete(requestParameters: DefaultApiCasesIdAttachmentsFilenameDeleteRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).casesIdAttachmentsFilenameDelete(requestParameters.id, requestParameters.filename, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -1112,7 +1218,7 @@ export class DefaultApi extends BaseAPI {
      * @memberof DefaultApi
      */
     public casesIdPut(requestParameters: DefaultApiCasesIdPutRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).casesIdPut(requestParameters.id, requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, options).then((request) => request(this.axios, this.basePath));
+        return DefaultApiFp(this.configuration).casesIdPut(requestParameters.id, requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -1124,7 +1230,7 @@ export class DefaultApi extends BaseAPI {
      * @memberof DefaultApi
      */
     public casesPost(requestParameters: DefaultApiCasesPostRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).casesPost(requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, options).then((request) => request(this.axios, this.basePath));
+        return DefaultApiFp(this.configuration).casesPost(requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

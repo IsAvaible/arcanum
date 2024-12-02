@@ -10,7 +10,7 @@ import Dialog from 'primevue/dialog'
 import { useRouter } from 'vue-router'
 import { useApi } from '@/composables/useApi'
 import type { AxiosError } from 'axios'
-import { CaseCaseTypeEnum } from '@/api'
+import { type CaseAllOfAttachments, CaseCaseTypeEnum } from '@/api'
 import type { Case } from '@/api'
 import Skeleton from 'primevue/skeleton'
 import FilePreviewDrawer, {
@@ -19,6 +19,7 @@ import FilePreviewDrawer, {
 import FileDropzoneUpload from '@/components/file-handling/FileDropzoneUpload.vue'
 import { getFileIcon } from '@/functions/getFileIcon'
 import { useToast } from 'primevue'
+import { apiBlobToFile } from '@/functions/apiBlobToFile'
 
 const router = useRouter()
 const api = useApi()
@@ -36,7 +37,6 @@ const fetchCase = async () => {
   error.value = null
   try {
     caseDetails.value = (await api.casesIdGet({ id: Number(caseId.value) })).data
-    console.log(caseDetails.value)
   } catch (err) {
     error.value = (err as AxiosError).message
     console.error(err)
@@ -84,8 +84,11 @@ const uploadFiles = async () => {
   if (filesToUpload.value.length > 0) {
     uploading.value = true
     try {
-      // Simulate uploading files
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const response = await api.casesIdAttachmentsPost({
+        id: Number(caseId.value),
+        files: filesToUpload.value,
+      })
+      console.log(response)
 
       files.value.push(...filesToUpload.value)
       filesToUpload.value = []
@@ -102,7 +105,7 @@ const uploadFiles = async () => {
       toast.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'An error occurred while uploading the files',
+        detail: 'An error occurred while uploading the files\n' + (error as AxiosError).message,
         life: 3000,
       })
 
@@ -113,15 +116,66 @@ const uploadFiles = async () => {
   }
 }
 
+const deleteAttachment = async (attachment: CaseAllOfAttachments) => {
+  try {
+    await api.casesIdAttachmentsFilenameDelete({
+      id: Number(caseId.value),
+      filename: attachment.filename,
+    })
+
+    files.value = files.value.filter((f) => f.name !== attachment.filename)
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'An error occurred while deleting the file\n' + (error as AxiosError).message,
+      life: 3000,
+    })
+    console.error(error)
+  }
+}
+
 // Drawer variables
 const selectedFile = ref<File | null>(null)
 const previewDrawerVisible = ref(false)
 const selectedFileProperties = ref<FileProperties | null>(null)
+const loadingFile = ref<string | null>(null)
 
-const openFileInDrawer = (file: File) => {
-  selectedFile.value = file
+const openAttachmentInDrawer = async (attachment: CaseAllOfAttachments) => {
+  // Check if the attachment is already in the files array
+  let file = files.value.find((f) => f.name === attachment.filename)
+  if (!file) {
+    loadingFile.value = attachment.filename
+    // If not, download the file from the server
+    try {
+      file = await apiBlobToFile(
+        await api.casesIdAttachmentsFilenameGet(
+          {
+            id: Number(caseId.value),
+            filename: attachment.filename,
+          },
+          { responseType: 'blob' },
+        ),
+      )
+
+      files.value.push(file)
+    } catch (error) {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'An error occurred while downloading the file\n' + (error as AxiosError).message,
+        life: 3000,
+      })
+      console.error(error)
+      return
+    } finally {
+      loadingFile.value = null
+    }
+  }
+
+  selectedFile.value = file!
   // TODO: Get file properties from the server
-  selectedFileProperties.value = { name: file.name, description: '', sharedWith: '' }
+  selectedFileProperties.value = { name: file!.name, description: '', sharedWith: '' }
   previewDrawerVisible.value = true
 }
 
@@ -154,7 +208,7 @@ onMounted(fetchCase)
     </div>
 
     <!-- Main Content -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 lg:min-w-[57rem] gap-6 mb-6">
+    <div v-if="!error" class="grid grid-cols-1 lg:grid-cols-2 lg:min-w-[57rem] gap-6 mb-6">
       <!-- Details Card -->
       <Card>
         <template #title>
@@ -322,6 +376,7 @@ onMounted(fetchCase)
         </template>
       </Card>
     </div>
+    <Message v-else severity="error" text="An error occurred while fetching the case details" />
 
     <!-- Description Card -->
     <Card class="mt-6">
@@ -351,7 +406,7 @@ onMounted(fetchCase)
         <div class="flex items-center justify-between">
           <h2 class="text-xl font-semibold mb-4">Attachments</h2>
           <Button
-            v-if="files.length > 0"
+            v-if="caseDetails?.attachments.length ?? 0 > 0"
             icon="pi pi-cloud-upload"
             rounded
             severity="secondary"
@@ -361,22 +416,35 @@ onMounted(fetchCase)
         </div>
       </template>
       <template #content>
-        <div v-if="files.length > 0" class="grid grid-cols-5 gap-4">
+        <div v-if="caseDetails?.attachments.length ?? 0 > 0" class="grid grid-cols-5 gap-4">
           <Card
-            v-for="file in files"
-            :key="file.name"
-            @click="openFileInDrawer(file)"
-            class="cursor-pointer"
+            v-for="file in caseDetails!.attachments"
+            :key="file.id"
+            @click="openAttachmentInDrawer(file)"
+            class="cursor-pointer relative"
           >
             <template #content>
-              <div class="flex flex-col items-center">
-                <i :class="`text-4xl text-gray-600 mb-5 pi ${getFileIcon(file.type)}`"></i>
-                <p class="text-gray-600 text-center break-all">{{ file.name }}</p>
+              <div
+                class="flex flex-col items-center"
+                :class="{ 'animate-pulse': file.filename == loadingFile }"
+              >
+                <i :class="`text-4xl text-gray-600 mb-5 pi ${getFileIcon(file.mimetype)}`"></i>
+                <p class="text-gray-600 text-center break-all">{{ file.filename }}</p>
+              </div>
+              <div class="absolute top-0 left-0 w-full flex justify-end">
+                <Button
+                  icon="pi pi-times"
+                  size="small"
+                  severity="secondary"
+                  rounded
+                  variant="text"
+                  @click.stop="deleteAttachment(file)"
+                />
               </div>
             </template>
           </Card>
         </div>
-        <FileDropzoneUpload v-else v-model:files="filesToUpload">
+        <FileDropzoneUpload v-else-if="!loading" v-model:files="filesToUpload">
           <template #file-list-footer>
             <Button
               icon="pi pi-cloud-upload"
@@ -386,6 +454,7 @@ onMounted(fetchCase)
             />
           </template>
         </FileDropzoneUpload>
+        <Skeleton v-else height="10rem" />
       </template>
     </Card>
 

@@ -1,4 +1,4 @@
-openapi: 3.1.0
+openapi: 3.0.3
 info:
   title: Oculavis Arcanum API
   description: |
@@ -35,13 +35,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/CasePost'
-              properties:
-                files:
-                  type: array
-                  items:
-                    type: string
-                    format: binary
-                  description: Attached files on upload.
       responses:
         201:
           description: Case successfully created.
@@ -114,13 +107,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/CasePut'
-              properties:
-                files:
-                  type: array
-                  items:
-                    type: string
-                    format: binary
-                  description: Attached files on upload.
       responses:
         200:
           description: Case successfully updated.
@@ -263,35 +249,103 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    delete:
+        summary: Delete an attachment
+        description: Delete an attachment associated with a case.
+        parameters:
+          - name: id
+            in: path
+            required: true
+            description: ID of the case.
+            schema:
+              type: integer
+          - name: filename
+            in: path
+            required: true
+            description: Name of the attachment file.
+            schema:
+              type: string
+        responses:
+          204:
+            description: File successfully deleted.
+          404:
+            description: Case or attachment not found.
+            content:
+              application/json:
+                schema:
+                    $ref: '#/components/schemas/Error'
+          500:
+            description: Error deleting the attachment.
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Error'
 components:
   schemas:
     Case:
       allOf:
-        - $ref: '#/components/schemas/CasePost'
-      type: object
-      required: [id, draft, createdAt, updatedAt, attachments]
-      properties:
-        id:
-          type: integer
-        draft:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-        attachments:
-          type: array
-          items:
-            type: string
-          description: List of file names attached to the case.
+        - $ref: '#/components/schemas/CaseBase'
+        - type: object
+          required: [id, draft, createdAt, updatedAt, attachments]
+          properties:
+            id:
+              type: integer
+            draft:
+              type: boolean
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+            attachments:
+              type: array
+              items:
+                type: object
+                required: [id, filename, filepath, filehash, mimetype, size, createdAt, updatedAt]
+                properties:
+                  id:
+                    type: integer
+                    description: ID of the attachment.
+                  filename:
+                    type: string
+                  filepath:
+                    type: string
+                    description: Path to the attachment file.
+                  filehash:
+                    type: string
+                    description: Hash of the attachment file.
+                  mimetype:
+                    type: string
+                    description: MIME type of the attachment file.
+                  size:
+                    type: integer
+                    description: Size of the attachment file in bytes.
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+              description: List of file names attached to the case.
 
     CasePost:
       allOf:
         - $ref: '#/components/schemas/CasePut'
 
     CasePut:
+      allOf:
+        - $ref: '#/components/schemas/CaseBase'
+        - type: object
+          properties:
+            files:
+              type: array
+              items:
+                type: string
+                format: binary
+              description: Attached files on upload.
+
+
+    CaseBase:
       type: object
       required: [title, description]
       properties:
