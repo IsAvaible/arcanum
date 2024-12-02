@@ -29,7 +29,7 @@ const objectURL = URL.createObjectURL(_props.file)
   </video>
 
   <!-- Audio Preview -->
-  <div v-else-if="file.type.startsWith('audio')" class="w-full">
+  <div v-else-if="file.type.startsWith('audio')" class="w-full !h-14">
     <audio controls class="w-full">
       <source :src="objectURL" />
       Your browser does not support the audio tag.

@@ -176,8 +176,8 @@ const toggleRequirements = (event: MouseEvent) => {
     <div v-if="displayRequirements">
       <h4 class="font-semibold">Requirements</h4>
       <ul class="list-disc list-inside">
-        <li>File size must be less than 10 MB</li>
-        <li>File type must be an image or PDF</li>
+        <li>File size must be less than {{ formatSize(maxFileSize) }} MB</li>
+        <li>File type must be an image, audio, video, PDF or text</li>
       </ul>
     </div>
   </Popover>

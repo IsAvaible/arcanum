@@ -47,7 +47,7 @@ const openAICaseCreation = async () => {
         life: 3000,
       })
       console.log(result)
-      await router.push('/cases/case/' + result.data[0].id)
+      await router.push('/cases/' + result.data[0].id)
     } catch (error) {
       toast.add({
         severity: 'error',
