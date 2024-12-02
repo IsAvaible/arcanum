@@ -3,16 +3,23 @@ import ListTable from '@/components/ListTable.vue'
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import CaseCreateDialog from '@/components/CaseCreateDialog.vue'
+import CaseFromFileModal from '@/components/CaseFromFileModal.vue'
 
 const route = useRoute()
 const createDialogVisible = ref(false)
+const createManualDialogVisible = ref(false)
 
 watch(
-  () => route.path,
-  (newPath) => {
-    if (newPath === '/cases/create') {
-      console.log('Opening create dialog')
-      createDialogVisible.value = true
+  () => route.name,
+  (name) => {
+    console.log(name)
+    switch (name) {
+      case 'case-create':
+        createDialogVisible.value = true
+        break
+      case 'case-create-manual':
+        createManualDialogVisible.value = true
+        break
     }
   },
   { immediate: true },
@@ -21,9 +28,13 @@ watch(
 
 <template>
   <ListTable />
-  <CaseCreateDialog
+  <CaseFromFileModal
     v-model:visible="createDialogVisible"
-    @update:visible="$router.push('/cases')"
+    @update:visible="$router.push({ name: 'cases' })"
+  />
+  <CaseCreateDialog
+    v-model:visible="createManualDialogVisible"
+    @update:visible="$router.push({ name: 'cases' })"
   />
 </template>
 
