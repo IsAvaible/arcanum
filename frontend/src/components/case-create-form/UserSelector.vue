@@ -13,6 +13,7 @@ const props = defineProps<{
   userOptions: User[]
   selectedUsers: User[]
   multiSelect: boolean
+  invalid?: boolean
 }>()
 
 // Group people by first letter of their name add Suggestions
@@ -80,6 +81,7 @@ const hidePopover = () => {
     display="chip"
     filter
     filter-placeholder="Search users"
+    :invalid="props.invalid"
   >
     <template #option="slotProps">
       <div class="flex items-center w-full gap-x-3 pl-2">

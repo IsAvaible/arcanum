@@ -6,6 +6,8 @@ const path = require('path');
 const fileUploadController = require('../controllers/fileuploadController');
 const attachmentService = require('../services/attachmentService');
 const multerMiddleware = require('../middlewares/multerMiddleware');
+const sanitizeFilename = require('sanitize-filename');
+
 
 
 
@@ -197,11 +199,13 @@ exports.createCase = [
       // **Aktualisierten Case abrufen**
       const updatedCase = await Cases.findByPk(caseId);
 
+
       const attachmentInstances = await attachmentService.uploadFilesAndCreateAttachments(req.files);
 
       if (attachmentInstances.length > 0) {
         await updatedCase.addAttachments(attachmentInstances);
     }
+
 
        // **Case mit Attachments abrufen und zurückgeben**
        const caseWithAttachments = await Cases.findByPk(caseId, {
@@ -259,17 +263,31 @@ exports.createCase = [
 
   
       // **3. Datei aus Nextcloud abrufen**
-      const fileContent = await nextCloud.downloadFileAndReturn(attachment.filepath);
+      let fileContent;
+      try {
+        fileContent = await nextCloud.streamFile(attachment.filepath);
+      } catch {
+        fileContent = await nextCloud.downloadFileAndReturn(attachment.filepath);
+      }
+
+      if (!fileContent) {
+        return res.status(404).json({ message: 'File content not found' });
+      }
 
   
       // **4. Datei an den Client senden**
       res.setHeader('Content-Disposition', `attachment; filename="${attachment.filename}"`);
       res.setHeader('Content-Type', attachment.mimetype);
-      res.send(fileContent);
-      
-  
+      res.setHeader('Content-Length', attachment.size);
+
+      if (Buffer.isBuffer(fileContent)) {
+        res.send(fileContent);
+      } else {
+        // If fileContent is a stream (e.g., a read stream from Nextcloud or file system)
+        fileContent.pipe(res);
+      }
     } catch (error) {
       console.error('Error downloading attachment:', error);
-      res.status(500).json({ message: 'Error downloading attachment' });
+      res.status(500).json({ message: error });
     }
   };
