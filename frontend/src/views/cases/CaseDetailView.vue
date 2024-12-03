@@ -15,6 +15,8 @@ import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import UserSelector, { type User } from '@/components/case-create-form/UserSelector.vue'
 import Divider from 'primevue/divider'
+import ConfirmDialog from 'primevue/confirmdialog'
+import { useConfirm } from 'primevue/useconfirm'
 
 // Define interfaces for type safety
 interface CaseDetails {
@@ -45,6 +47,7 @@ interface Status {
 
 const toast = useToast()
 const router = useRouter()
+const confirm = useConfirm()
 
 const caseNumber = ref('12345')
 const breadcrumb = ref('Cases / Servicecase / Overview')
@@ -172,7 +175,7 @@ const hasUnsavedChanges = computed(() => {
 })
 
 // User role and permissions
-const userRole = ref('user')
+const userRole = ref('admin')
 const userPermissions = ref(['view'])
 
 // Implement access control
@@ -242,23 +245,28 @@ const handleSave = handleSubmit(
 
 const handleCancel = () => {
   if (hasUnsavedChanges.value) {
-    if (confirm('You have unsaved changes. Are you sure you want to cancel?')) {
-      resetForm()
-      Object.assign(caseDetails, originalCaseDetails.value)
-      selectedPriority.value = originalPriority.value
-      selectedStatus.value = originalStatus.value
-      selectedAssignees.value = [...originalAssignees.value]
-      selectedParticipants.value = [...originalParticipants.value]
-      isEditMode.value = false
-      showUnsavedChanges.value = false
-      toast.add({
-        severity: 'info',
-        summary: 'Edit Cancelled',
-        detail: 'Your changes have been discarded.',
-        life: 3000,
-        closable: true,
-      })
-    }
+    confirm.require({
+      message: 'You have unsaved changes. Are you sure you want to cancel?',
+      header: 'Confirm Cancel',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        resetForm()
+        Object.assign(caseDetails, originalCaseDetails.value)
+        selectedPriority.value = originalPriority.value
+        selectedStatus.value = originalStatus.value
+        selectedAssignees.value = [...originalAssignees.value]
+        selectedParticipants.value = [...originalParticipants.value]
+        isEditMode.value = false
+        showUnsavedChanges.value = false
+        toast.add({
+          severity: 'info',
+          summary: 'Edit Cancelled',
+          detail: 'Your changes have been discarded.',
+          life: 3000,
+          closable: true,
+        })
+      },
+    })
   } else {
     isEditMode.value = false
   }
@@ -316,12 +324,10 @@ const toggleMenu = (event: Event) => {
 
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <ConfirmDialog />
     <!-- Unsaved changes banner -->
-    <div
-      v-if="showUnsavedChanges"
-      class="fixed top-0 left-0 right-0 bg-blue-50 border-b border-blue-200 p-4 z-50"
-    >
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+    <div v-if="showUnsavedChanges" class="unsaved-banner">
+      <div class="banner-content">
         <div class="flex items-center">
           <i class="pi pi-info-circle text-blue-500 mr-2"></i>
           <span class="text-blue-700">You have unsaved changes</span>
@@ -353,7 +359,6 @@ const toggleMenu = (event: Event) => {
         </div>
 
         <div class="flex gap-2">
-          <!-- hinzufügen in Button :disabled="!canEdit" falls man Edit nicht sehen möchte -->
           <Button v-if="!isEditMode" label="Edit" icon="pi pi-pencil" @click="handleEdit" />
           <Button v-if="isEditMode" label="Save" icon="pi pi-check" @click="handleSave" />
           <Button
@@ -423,16 +428,7 @@ const toggleMenu = (event: Event) => {
             </div>
             <div class="field">
               <label class="block text-sm font-medium text-gray-700 mb-1">Reference</label>
-              <InputText
-                v-model="caseDetails.reference"
-                class="w-full"
-                :class="{ 'p-invalid': errors.reference }"
-                :disabled="!isEditMode"
-                @update:modelValue="setFieldValue('reference', $event)"
-              />
-              <small v-if="errors.reference" class="p-error block mt-1">{{
-                errors.reference
-              }}</small>
+              <InputText v-model="caseDetails.reference" class="w-full" disabled />
             </div>
             <div class="field">
               <label class="block text-sm font-medium text-gray-700 mb-1">Created by</label>
@@ -462,10 +458,10 @@ const toggleMenu = (event: Event) => {
         </template>
       </Card>
 
-      <!-- Status & Assignee Card -->
+      <!-- Status & People Card -->
       <Card>
         <template #title>
-          <h2 class="text-xl font-semibold mb-4">Status & Assignee</h2>
+          <h2 class="text-xl font-semibold mb-4">Status & People</h2>
         </template>
         <template #content>
           <div class="space-y-4">
@@ -537,6 +533,8 @@ const toggleMenu = (event: Event) => {
               </Dropdown>
             </div>
 
+            <Divider />
+
             <div class="field">
               <label class="block text-sm font-medium text-gray-700 mb-1">Assignees (*)</label>
               <div class="w-full">
@@ -553,8 +551,6 @@ const toggleMenu = (event: Event) => {
                 </small>
               </div>
             </div>
-
-            <Divider />
 
             <div class="field">
               <label class="block text-sm font-medium text-gray-700 mb-1">Participants</label>
@@ -718,5 +714,49 @@ const toggleMenu = (event: Event) => {
 
 .p-invalid {
   border-color: #ef4444 !important;
+}
+
+:deep(.p-component:disabled):not(.p-button),
+:deep(.p-disabled) {
+  @apply bg-slate-50;
+}
+
+/* Add styles for confirm dialog */
+:deep(.p-confirm-dialog) {
+  @apply max-w-md;
+}
+
+:deep(.p-confirm-dialog-message) {
+  @apply text-gray-600;
+}
+
+.unsaved-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: #e6f7ff;
+  border-bottom: 1px solid #b3d8ff;
+  z-index: 1000;
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Add margin-top to main content container */
+.max-w-7xl {
+  margin-top: 60px;
 }
 </style>
