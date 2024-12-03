@@ -19,16 +19,19 @@ import CaseTypeSelector from '@/components/case-create-form/CaseTypeSelector.vue
 import UserSelector, { type User } from '@/components/case-create-form/UserSelector.vue'
 import TempEditor from '@/components/case-create-form/TempEditor.vue'
 import ProductSelector from '@/components/case-create-form/ProductSelector.vue'
-import TeamSelector from '@/components/case-create-form/TeamSelector.vue'
+import TeamSelector, { type Team } from '@/components/case-create-form/TeamSelector.vue'
 
-import { useCaseFormValidation } from '@/composables/useCaseFormValidation'
 import { useCaseFormStepper } from '@/composables/useCaseFormStepper'
 import StepHeader from '@/components/case-create-form/StepHeader.vue'
 import CaseCreateStepper from '@/components/case-create-form/CaseCreateStepper.vue'
 import { toTypedSchema } from '@vee-validate/zod'
 import * as zod from 'zod'
-import { useForm } from 'vee-validate'
+import { useField, useForm } from 'vee-validate'
+import { ref } from 'vue'
 import { useVModel } from '@vueuse/core'
+import { useApi } from '@/composables/useApi'
+import type { CasesPostCaseTypeEnum } from '@/api'
+import ScrollFadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
 
 const toast = useToast()
 
@@ -37,6 +40,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['update:visible'])
+
+const api = useApi()
 
 const dialogVisible = useVModel(props, 'visible', emit)
 
@@ -88,7 +93,10 @@ const schema = toTypedSchema(
       .nonempty('Please select at least one assignee'),
     selectedParticipants: zod.array(zod.any()).optional(),
     selectedTeam: zod.any().optional(),
-    details: zod.string().optional(),
+    description: zod
+      .string({ required_error: 'Please provide a description' })
+      .min(1, 'Please provide a description'),
+    solution: zod.string().optional(),
     selectedProducts: zod.array(zod.number()).default([]),
   }),
 )
@@ -102,21 +110,71 @@ const {
   validationSchema: schema,
 })
 
-// Form validation composable
-const {
-  fields,
-  stepValid: stepValidInner,
-  validateStep: validateStepInner,
-} = useCaseFormValidation(errors)
+// Form validation
+const fields = {
+  title: useField<string>('title'),
+  selectedCaseType: useField<string>('selectedCaseType'),
+  selectedAssignees: useField<User[]>('selectedAssignees'),
+  selectedParticipants: useField<User[]>('selectedParticipants'),
+  selectedTeam: useField<Team>('selectedTeam'),
+  description: useField<string>('description'),
+  solution: useField<string>('solution'),
+  selectedProducts: useField<number[]>('selectedProducts'),
+}
 
+/**
+ * Check if the current step is valid
+ * @param step The step to check
+ */
 const stepValid = (step: number = activeStep.value): boolean => {
-  return stepValidInner(step)
+  switch (step) {
+    case 0:
+      return !(errors.value.title || errors.value.selectedCaseType)
+    case 1:
+      return !(
+        errors.value.selectedAssignees ||
+        errors.value.selectedParticipants ||
+        errors.value.selectedTeam
+      )
+    case 2:
+      return !(errors.value.description || errors.value.solution)
+    case 3:
+      return !errors.value.selectedProducts
+    case 4:
+      return true
+    default:
+      return false
+  }
 }
 
-const validateStep = async (step: number = activeStep.value): Promise<void> => {
-  await validateStepInner(step)
+/**
+ * Validate the current step
+ * @param step The step to validate
+ */
+const validateStep = async (step: number = activeStep.value) => {
+  switch (step) {
+    case 0:
+      await fields.title.validate()
+      await fields.selectedCaseType.validate()
+      return
+    case 1:
+      await fields.selectedAssignees.validate()
+      await fields.selectedParticipants.validate()
+      await fields.selectedTeam.validate()
+      return
+    case 2:
+      await fields.description.validate()
+      await fields.solution.validate()
+      return
+    case 3:
+      await fields.selectedProducts.validate()
+      return
+  }
 }
 
+/**
+ * Check if there are any errors in the form
+ */
 const hasErrors = () => {
   return Object.keys(errors.value).length !== 0
 }
@@ -159,14 +217,61 @@ const isClickable = (step: number) => {
   }
 }
 
+enum SubmitState {
+  IDLE,
+  SUBMITTING,
+  SUCCESS,
+  ERROR,
+}
+const submitState = ref<SubmitState>(SubmitState.IDLE)
 // Form submission
-const onSubmit = handleSubmit((_values) => {
+const onSubmit = handleSubmit(async (_values) => {
+  console.log('Submitting form', _values)
+  submitState.value = SubmitState.SUBMITTING
+  try {
+    await api.casesPost(
+      {
+        title: fields.title.value.value,
+        caseType: fields.selectedCaseType.value.value as CasesPostCaseTypeEnum,
+        assignee: fields.selectedAssignees.value.value[0]!.name,
+        // assignees: fields.selectedAssignees.value.value,
+        // participants: fields.selectedParticipants.value.value,
+        // team: fields.selectedTeam.value.value,
+        // details: fields.details.value.value,
+        description: fields.description.value.value,
+        solution: fields.solution.value.value,
+        priority: 'Low',
+        // products: fields.selectedProducts.value.value,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    )
+  } catch (error) {
+    submitState.value = SubmitState.ERROR
+    setTimeout(() => {
+      submitState.value = SubmitState.IDLE
+    }, 3000)
+    console.error('Error creating case', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Error Creating Case',
+      detail: 'There was an error creating your case',
+      life: 3000,
+    })
+    return
+  }
+
+  submitState.value = SubmitState.SUCCESS
   toast.add({
     severity: 'success',
     summary: 'Case Created',
     detail: 'Your case has been successfully created',
     life: 3000,
   })
+  dialogVisible.value = false
 })
 
 const dialogPT = {
@@ -279,6 +384,7 @@ const dialogPT = {
                   :userOptions="peopleOptions"
                   v-model:selectedUsers="fields.selectedAssignees.value.value"
                   multi-select
+                  :invalid="!!errors.selectedAssignees"
                 />
                 <Message
                   v-if="errors.selectedAssignees"
@@ -296,6 +402,7 @@ const dialogPT = {
                   <TeamSelector
                     v-model:selected-team="fields.selectedTeam.value.value"
                     class="w-full"
+                    :invalid="!!errors.selectedTeam"
                   />
                   <Message
                     v-if="errors.selectedTeam"
@@ -317,6 +424,7 @@ const dialogPT = {
                     :userOptions="peopleOptions"
                     v-model:selectedUsers="fields.selectedParticipants.value.value"
                     multi-select
+                    :invalid="!!errors.selectedParticipants"
                   />
                   <Message
                     v-if="errors.selectedParticipants"
@@ -341,17 +449,57 @@ const dialogPT = {
             title="Details"
           />
           <AccordionContent>
-            <div class="h-full flex flex-col gap-y-3">
-              <Label
-                for="details"
-                label="Details"
-                description="Provide additional information about the case"
-              />
-              <TempEditor
-                v-model="fields.details.value.value"
-                editorStyle="flex: 1; min-height: 200px"
-                class="flex-1 flex flex-col"
-              />
+            <div class="h-full grid gap-y-4">
+              <div class="flex flex-col">
+                <Label
+                  for="description"
+                  label="Description"
+                  description="Describe the case in detail, e.g. what happened, when, and why"
+                  icon="pi-info-circle"
+                  class="mb-3"
+                />
+                <TempEditor
+                  v-model="fields.description.value.value"
+                  editorStyle="flex: 1; min-height: 180px"
+                  class="flex-1 flex flex-col"
+                  id="description"
+                  :invalid="!!errors.description"
+                />
+                <Message
+                  v-if="errors.description"
+                  severity="error"
+                  variant="simple"
+                  size="small"
+                  class="-mt-5 ml-1 z-10"
+                >
+                  {{ errors.description }}
+                </Message>
+              </div>
+              <div class="flex flex-col">
+                <Label
+                  for="solution"
+                  label="Solution"
+                  description="Describe the solution to the case, e.g. how the issue was resolved"
+                  icon="pi-check-circle"
+                  class="mb-3"
+                />
+                <TempEditor
+                  v-model="fields.solution.value.value"
+                  editorStyle="flex: 1; min-height: 180px"
+                  class="flex-1 flex flex-col"
+                  id="solution"
+                  :invalid="!!errors.solution"
+                />
+                <Message
+                  v-if="errors.solution"
+                  severity="error"
+                  variant="simple"
+                  size="small"
+                  class="-mt-5 ml-1 z-10"
+                >
+                  {{ errors.solution }}
+                </Message>
+              </div>
             </div>
           </AccordionContent>
         </AccordionPanel>
@@ -387,7 +535,118 @@ const dialogPT = {
           />
           <!-- Review and confirmation content -->
           <AccordionContent>
-            <p>Review your case information before submitting.</p>
+            <div class="grid gap-y-6">
+              <div class="bg-slate-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">Basic Information</h2>
+                <div class="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <p class="text-sm text-slate-600">Case Title</p>
+                    <p class="font-medium">{{ fields.title.value.value || 'Not provided' }}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-slate-600">Case Type</p>
+                    <p class="font-medium">
+                      {{
+                        caseTypes.find((type) => type.title === fields.selectedCaseType.value.value)
+                          ?.title || 'Not selected'
+                      }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-slate-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">People</h2>
+                <div class="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <p class="text-sm text-slate-600">Assignees</p>
+                    <p class="font-medium">
+                      {{
+                        fields.selectedAssignees.value.value
+                          ?.map((assignee) => assignee.name)
+                          .join(', ') || 'No assignees'
+                      }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-slate-600">Team</p>
+                    <p class="font-medium">
+                      {{ fields.selectedTeam.value.value?.name || 'No team selected' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-slate-600">Participants</p>
+                    <p class="font-medium">
+                      {{
+                        fields.selectedParticipants.value.value
+                          ?.map((participant) => participant.name)
+                          .join(', ') || 'No participants'
+                      }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-slate-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">Details</h2>
+                <div class="grid gap-4">
+                  <div>
+                    <p class="text-sm text-slate-600">Description</p>
+                    <ScrollFadeOverlay
+                      axis="vertical"
+                      content-class="max-h-[150px]"
+                      fade-from="from-slate-50"
+                      class="ql-snow"
+                    >
+                      <div
+                        v-if="fields.description.value.value"
+                        class="ql-editor p-0 max-w-full overflow-auto"
+                        v-html="fields.description.value.value"
+                      ></div>
+                      <p v-else class="font-medium">No description provided</p>
+                    </ScrollFadeOverlay>
+                  </div>
+                  <div>
+                    <p class="text-sm text-slate-600">Solution</p>
+                    <ScrollFadeOverlay
+                      axis="vertical"
+                      content-class="max-h-[150px]"
+                      fade-from="from-slate-50"
+                      class="ql-snow"
+                    >
+                      <div
+                        v-if="fields.solution.value.value"
+                        class="ql-editor p-0 max-w-full max-h-[10px] overflow-auto"
+                        v-html="fields.solution.value.value"
+                      ></div>
+                      <p v-else class="font-medium">No solution provided</p>
+                    </ScrollFadeOverlay>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-slate-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">Products</h2>
+                <div>
+                  <p class="text-sm text-slate-600">Selected Products</p>
+                  <p class="font-medium">
+                    {{
+                      fields.selectedProducts.value.value?.length
+                        ? fields.selectedProducts.value.value.join(', ')
+                        : 'No products selected'
+                    }}
+                  </p>
+                </div>
+              </div>
+
+              <div class="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                <h2 class="text-lg font-semibold mb-2">Confirmation</h2>
+                <p class="text-yellow-800">
+                  Please review all information carefully before submitting. Once submitted, you may
+                  not be able to edit all details.
+                </p>
+              </div>
+            </div>
           </AccordionContent>
         </AccordionPanel>
       </Accordion>
@@ -410,6 +669,18 @@ const dialogPT = {
             :disabled="!stepValid(activeStep) || activeStep == steps.length - 1"
           />
           <Button
+            :loading="submitState === SubmitState.SUBMITTING"
+            :icon="`pi ${
+              submitState === SubmitState.SUCCESS
+                ? 'pi-check'
+                : submitState === SubmitState.ERROR
+                  ? 'pi-times'
+                  : 'pi-send'
+            }`"
+            :class="{
+              'p-button-success pulse': submitState === SubmitState.SUCCESS,
+              'p-button-danger pulse': submitState === SubmitState.ERROR,
+            }"
             label="Submit"
             @click="onSubmit"
             :disabled="!form.valid"

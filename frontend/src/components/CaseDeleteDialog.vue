@@ -1,20 +1,19 @@
 <script setup lang="ts">
-import { useToast } from 'primevue'
 import { ref } from 'vue'
 import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
 import { WarningTriangleSolid } from '@iconoir/vue'
 import { useVModel } from '@vueuse/core'
+import type { Case } from '@/api'
 
-const toast = useToast()
 const dialog = ref()
 
 interface Props {
   /** The title(s) of the case(s) to delete */
-  titles: string | string[]
+  cases: Case[]
   /** The function to call when the case is deleted */
-  onDelete: (title: string[]) => Promise<void>
+  onDelete: (caseToDelete: Case) => Promise<void>
   /** The visibility of the dialog */
   visible?: boolean
 }
@@ -25,24 +24,26 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits(['update:visible'])
 
 const dialogVisible = useVModel(props, 'visible', emit)
-const titles = ref<string[]>(Array.isArray(props.titles) ? props.titles : [props.titles])
+const titles = ref<string[]>(props.cases.map((c) => c.title))
 const confirm = ref(false)
 const confirmMissing = ref(false)
+const deleting = ref(false)
 
 const deleteCase = async () => {
   if (!confirm.value) {
     confirmMissing.value = true
     return
   }
-  // Call the delete function
-  await props.onDelete(titles.value)
-  // Show a success toast
-  toast.add({
-    severity: 'success',
-    summary: 'Case deleted',
-    detail: 'The case has been successfully deleted',
-    life: 3000,
-  })
+
+  deleting.value = true
+
+  try {
+    // Call the onDelete function for each case
+    await Promise.all(props.cases.map(props.onDelete))
+  } catch (_error) {
+    deleting.value = false
+  }
+
   // Close the dialog
   dialogVisible.value = false
 }
@@ -92,9 +93,12 @@ const deleteCase = async () => {
       <div class="flex justify-center gap-2 w-full">
         <Button label="No, Cancel" @click="dialogVisible = false" severity="secondary" />
         <Button
+          :disabled="deleting"
+          :loading="deleting"
           label="Delete"
           @click="deleteCase"
           icon="pi pi-trash"
+          loading-icon="pi pi-trash"
           class="bg-red-700 border-red-700 hover:enabled:bg-red-800 hover:enabled:border-red-800"
         />
       </div>

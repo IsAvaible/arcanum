@@ -9,6 +9,7 @@ export type Team = {
 
 const props = defineProps<{
   selectedTeam: Team | null
+  invalid?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -54,6 +55,7 @@ const teamOptions = ref([
     optionValue="id"
     placeholder="Select a Team"
     dropdown-icon="pi pi-users"
+    :invalid="props.invalid"
   >
   </CascadeSelect>
 </template>

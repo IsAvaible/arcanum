@@ -1,6 +1,5 @@
 const express = require('express')
 const https = require('https');
-const hostname =  "192.168.0.114";
 const app = express();
 const port = 3000;
 const cors = require('cors');
@@ -24,6 +23,13 @@ app.use(cors({
 // for development only
 app.set('view engine', 'ejs');
 
+// Use CORS middleware, see: https://expressjs.com/en/resources/middleware/cors.html
+app.use(cors({
+  origin: ['http://localhost:4173', 'http://localhost:5173'], // Allow only these origins
+  allowedHeaders: '*',
+  exposedHeaders: '*',
+  credentials: true,
+}));
 
 // Middleware (optional)
 const exampleMiddleware = require('./middlewares/exampleLogger');
