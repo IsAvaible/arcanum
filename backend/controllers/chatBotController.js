@@ -172,7 +172,7 @@ exports.createCaseFromFiles = [
   
 
 
-      const llmResponse = await axios.post('host.docker.internal:5001/safe_case', updatedCaseWithAttachments);
+      const llmResponse = await axios.post('http://host.docker.internal:5001/safe_case', updatedCaseWithAttachments);
       res.json(updatedCaseWithAttachments);
       //res.json(llmResponse);
     } catch (error) {
