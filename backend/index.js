@@ -1,10 +1,25 @@
-const express = require('express');
+const express = require('express')
+const https = require('https');
+const hostname =  "192.168.0.114";
 const app = express();
 const port = 3000;
+const cors = require('cors');
+//const port = 443;
 const caseRoutes = require('./routes/caseRoutes');
 const chatBotRoutes = require('./routes/chatBotRoutes');
 const uploadRoutes = require('./routes/exampleFileUpload');
 const env = require('dotenv').config();
+const fs = require('fs');
+const { DEFAULT_MIN_VERSION } = require('tls');
+app.use(cors({
+  origin: [
+    'http://localhost:8080', // Frontend (Docker)
+    'http://localhost:4173', // Frontend (Production)
+    'http://localhost:5173', // Frontend (Development)
+    'http://localhost:63342' // PHPStorm
+  ],
+}));
+
 
 // for development only
 app.set('view engine', 'ejs');
@@ -29,6 +44,25 @@ app.use('/', uploadRoutes);
 app.get('/', (req, res) => {
   res.send('Hello World!')
 })
+
+
+const options = {
+  key: fs.readFileSync('./certs/localhost-dev-key.pem'),
+  cert: fs.readFileSync('./certs/localhost.pem'),
+  //ca: fs.readFileSync('./certs/ca.pem')
+};
+
+// for https uncomment the following lines
+/* try{
+  const server = https.createServer(options, app).listen(port, function(req, res){
+  console.log(`Example app listening on port ${port}`)
+});
+}catch(err){
+  console.error(err);
+}
+ */
+
+// for https comment the following line
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)

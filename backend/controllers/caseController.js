@@ -4,30 +4,8 @@ const multer = require('multer');
 const nextCloud = require('./nextCloudUploaderController.js');
 const path = require('path');
 const fileUploadController = require('../controllers/fileuploadController');
-
-
-
-
-const upload = multer({
-    storage: multer.diskStorage({
-        destination: './uploads/',
-        filename: function (req, file, cb) {
-            cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
-        }
-    }),
-    limits: { fileSize: 1000000 }, // Dateigrößenbeschränkung pro Datei
-    fileFilter: function (req, file, cb) {
-        fileUploadController.checkFileName(file);
-        fileUploadController.checkFileType(file, cb);
-        //try {
-        //    fileUploadController.scanFileWithAzure(file);
-        //    cb(null, true);
-        //} catch (error) {
-        //    cb(error);
-        //}
-    }
-}).array('files', 10); // 'files' ist der Feldname, bis zu 10 Dateien
-
+const attachmentService = require('../services/attachmentService');
+const multerMiddleware = require('../middlewares/multerMiddleware');
 
 
 
@@ -96,24 +74,8 @@ exports.deleteCase = async (req, res) => {
 
       if(attachments && attachments.length > 0){
         for(const attachment of attachments){
-          try {
-            console.log(`attachemt From Case to delete${attachment}`);
-            // Überprüfen, ob das Attachment mit anderen Cases verknüpft ist
-            const attachmentCases = await attachment.getCases();
-            if (attachmentCases.length <= 1) { // Nur mit diesem Case verknüpft
-                // Datei aus NextCloud löschen
-                const remoteFilePath = attachment.filepath;
-                await nextCloud.deleteFile(remoteFilePath);
-                console.log(`File deleted: ${remoteFilePath}`);
-                // Attachment aus der Datenbank löschen
-                await attachment.destroy();
-          }else {
-            // Nur die Verknüpfung entfernen
-            await caseItemToDelete.removeAttachment(attachment)
-          }
-        } catch(error){
-          console.error(`Error processing attachment ${attachment.id}:`, error);
-        }
+          await caseItemToDelete.removeAttachment(attachment)
+          await attachmentService.deleteAttachmentIfOrphaned(attachment);
       }
     }
 
@@ -135,15 +97,7 @@ exports.createCase = [
     // Füge weitere Validierungen für andere Felder hinzu, falls nötig
 
     // **Multer-Middleware**
-    (req, res, next) => {
-        upload(req, res, function (err) {
-            if (err) {
-                return res.status(400).json({ message: err.message });
-            }
-            
-        next();
-    });
-  },
+    multerMiddleware,
 
 
     // **Anfrage-Handler**
@@ -161,56 +115,18 @@ exports.createCase = [
           case_type,
           priority
         } = req.body;
-
-        const caseDetails = { title, description, solution, assignee, status, case_type, priority };
-
-        // **Array zum Speichern der Remote-Dateipfade**
-        const attachmentInstances = [];
+        
+        console.log(req.fileData);
 
         // **Hochgeladene Dateien verarbeiten**
-        if(req.files && req.files.length > 0){
-            for(const file of req.files){
-                const localFilePath = file.path;
-
-                try{
-                  const remoteFilePath =  await nextCloud.uploadFile(localFilePath, "/test-folder/", file.filename);
-
-                  let attachment =  await Attachments.findOne({
-                    where: {
-                      filepath: remoteFilePath
-                    }
-                  });
-                
-                    if(!attachment){
-                    // Attachment-Datensatz erstellen
-                    const attachmentData = {
-                      filename: file.filename,
-                      filepath: remoteFilePath,
-                      mimetype: file.mimetype,
-                      size: file.size,
-                      uploadedAt: new Date(),
-                      filehash: remoteFilePath.substring(remoteFilePath.lastIndexOf('/') +1, remoteFilePath.lastIndexOf('.')), 
-                  };
-
-                  attachment = await Attachments.create(attachmentData);
-                }
-
-                      //Attachment.Instanzen sammeln
-                  attachmentInstances.push(attachment);
-
-                }catch (error) {
-                    console.error('Error uploading file to NextCloud:', error);
-                    return res.status(500).json({ message: 'Error uploading files to NextCloud' });
-                }        
-            }
-        }
+        const attachmentInstances = await attachmentService.uploadFilesAndCreateAttachments(req.files);
   
         // **Neuen Fall erstellen**
         const newCase = await Cases.create({
           title,
           description,
           solution,
-          assignee,
+          assignee: JSON.parse(assignee),
           status,
           case_type,
           priority,
@@ -223,8 +139,6 @@ exports.createCase = [
           await newCase.addAttachments(attachmentInstances);
       }
 
-
-  
         // **Erfolgsantwort senden**
         const caseWithAttachments = await Cases.findByPk(newCase.id, {
           include: [{
@@ -245,14 +159,7 @@ exports.createCase = [
 
   exports.updateCase = [
   // **Multer-Middleware**
-  (req, res, next) => {
-    upload(req, res, function (err) {
-        if (err) {
-            return res.status(400).json({ message: err.message });
-        }
-        next();
-    });
-},
+  multerMiddleware,
   
   async (req, res) => {
     const caseId = parseInt(req.params.id, 10);
@@ -290,50 +197,11 @@ exports.createCase = [
       // **Aktualisierten Case abrufen**
       const updatedCase = await Cases.findByPk(caseId);
 
-      // **Neue Attachments verarbeiten (falls vorhanden)**
-      if (req.files && req.files.length > 0) {
-          const attachmentInstances = [];
-          for (const file of req.files) {
-              const localFilePath = file.path;
+      const attachmentInstances = await attachmentService.uploadFilesAndCreateAttachments(req.files);
 
-              try {
-                  // Datei zu NextCloud hochladen
-                  const remoteFilePath =  await nextCloud.uploadFile(localFilePath, "/test-folder/", file.filename);
-
-                  let attachment =  await Attachments.findOne({
-                    where: {
-                      filepath: remoteFilePath
-                    }
-                  });
-                
-                    if(!attachment){
-                    // Attachment-Datensatz erstellen
-                    const attachmentData = {
-                      filename: file.filename,
-                      filepath: remoteFilePath,
-                      mimetype: file.mimetype,
-                      size: file.size,
-                      uploadedAt: new Date(),
-                      filehash: remoteFilePath.substring(remoteFilePath.lastIndexOf('/') +1, remoteFilePath.lastIndexOf('.')), // Optional: Hash berechnen
-                  };
-
-                  attachment = await Attachments.create(attachmentData);
-                }
-
-                  // Attachment-Instanz sammeln
-                  attachmentInstances.push(attachment);
-
-              } catch (error) {
-                  console.error('Error uploading file to NextCloud:', error);
-                  return res.status(500).json({ message: 'Error uploading files to NextCloud' });
-              }
-          }
-
-          // **Attachments mit dem Case verknüpfen**
-          if (attachmentInstances.length > 0) {
-              await updatedCase.addAttachments(attachmentInstances);
-          }
-      }
+      if (attachmentInstances.length > 0) {
+        await updatedCase.addAttachments(attachmentInstances);
+    }
 
        // **Case mit Attachments abrufen und zurückgeben**
        const caseWithAttachments = await Cases.findByPk(caseId, {
@@ -356,10 +224,12 @@ exports.createCase = [
 
 
   exports.downloadAttachment = async (req, res) => {
-    const { caseId, filename } = req.params;
-  
+    const { caseId, fileId } = req.params;
+    //const caseId = parseInt(req.params.id, 10);
+    //const fileId = parseInt(req.params.fileId, 10);
+
     try {
-      // **1. Case mit Attachments abrufen**
+
       const caseItem = await Cases.findByPk(caseId, {
         include: [{
             model: Attachments,
@@ -367,17 +237,22 @@ exports.createCase = [
             through: { attributes: [] }
         }]
     });
-      
-  
-      if (!caseItem) {
+
+    if (!caseItem) {
         return res.status(404).json({ message: 'Case not found' });
-      }
-  
-      const attachments = caseItem.attachments;
-  
-      // **2. Attachment mit passendem Dateinamen finden**
-      const attachment = attachments.find(att => att.filename === filename);
-  
+    }
+
+      // **Attachment abrufen und prüfen, ob es mit dem Case verknüpft ist**
+      const attachment = await Attachments.findOne({
+        where: { id: fileId },
+        include: [{
+            model: Cases,
+            as: 'cases',
+            where: { id: caseId },
+            through: { attributes: [] }
+        }]
+    });
+
       if (!attachment) {
         return res.status(404).json({ message: 'Attachment not found' });
       }
@@ -388,7 +263,7 @@ exports.createCase = [
 
   
       // **4. Datei an den Client senden**
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${attachment.filename}"`);
       res.setHeader('Content-Type', attachment.mimetype);
       res.send(fileContent);
       
