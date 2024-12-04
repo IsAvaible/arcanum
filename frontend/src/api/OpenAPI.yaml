@@ -5,7 +5,7 @@ info:
     The Oculavis Arcanum API allows you to manage cases by creating, retrieving, updating, and deleting them. It also supports file attachments associated with cases.
   version: '1.0.0'
 servers:
-  - url: http://localhost:3000/api
+  - url: https://localhost:3000/api
 paths:
   /cases:
     get:
