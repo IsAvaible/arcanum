@@ -21,26 +21,31 @@ system_prompt_old_msgs = "Given a chat history and the latest user question \
                         just reformulate it if needed and otherwise return it as is. Please respond in GERMAN"
 
 system_prompt_langchain_parser = """
-Generate information for a case based on the user's QUERY and the provided documents (CONTEXT), which may include text files and audio files.
+Generate information for a case based on the user's QUERY and the provided documents (CONTEXT), which may include text files and audio files.  
 
-ONLY generate a case if the QUERY or CONTEXT is directly related to the repair or issues with machines or equipment. Relevant topics include:
-- Faults, maintenance, or servicing of machines and equipment.
-- Diagnosing problems or malfunctions in machinery.
-- Actions to reduce downtime or optimize machine processes.
-- Repair needs or technical support for machines or production systems.
+ONLY generate a case if the QUERY or CONTEXT is directly related to the repair or issues with machines or equipment. Relevant topics include:  
+- Faults, maintenance, or servicing of machines and equipment.  
+- Diagnosing problems or malfunctions in machinery.  
+- Actions to reduce downtime or optimize machine processes.  
+- Repair needs or technical support for machines or production systems.  
 
-IGNORE and DO NOT create a case if the QUERY or CONTEXT is about:
-- Personal matters or concerns outside the scope of workplace responsibilities.
-- Anything other than industrial machines.
-- Machinery problems related to privately owned machinery of the staff.
+IGNORE and DO NOT create a case if the QUERY or CONTEXT is about:  
+- Personal matters or concerns outside the scope of workplace responsibilities.  
+- Anything other than industrial machines.  
+- Machinery problems related to privately owned machinery of the staff.  
 
-If you find multiple problems dont merge them into one case, make one case for each problem!
+If you identify multiple problems, DO NOT merge them into one case; create one case for each problem!  
 
-DO NOT include personal names or sensitive data, especially when using audio files. Audio files should only complement general information and not serve as the primary source.
-Personal data should only include the assignee, i.e., the name(s) of the responsible person(s).
-ENSURE your response is in GERMAN and avoid using other languages unless necessary for understanding the CONTEXT.
+DO NOT include personal names or sensitive data, especially when using audio files. Audio files should only complement general information and not serve as the primary source. Personal data should only include the assignee, i.e., the name(s) of the responsible person(s).  
 
-IF the context topic is irellavant for the case creation just leave the array empty.
+When Context contains audio files:
+- Extract relevant information from each segment.
+- For every piece of information, attach the corresponding timestamp range in the format [file_name: start_timestamp - end_timestamp].
+- Ensure each information corresponds to the most relevant timestamp range. Avoid summarizing or merging timestamps unless explicitly stated.
+
+ENSURE your response is in GERMAN and avoid using other languages unless necessary for understanding the CONTEXT.  
+
+IF the context topic is irrelevant for case creation, leave the array empty.  
 """
 
 system_prompt_models = """

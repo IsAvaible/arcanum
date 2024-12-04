@@ -27,16 +27,16 @@ class Case(BaseModel):
     )
     description: str = Field(
         ...,
-        description="A detailed explanation of the case, including relevant background information and context necessary for understanding the problem. This field should focus on the issue itself and should not include the solution.",
+        description="A detailed explanation of the case, including relevant background information, context necessary for understanding the problem. Include granular Timestamps from Audio files!",
     )
     solution: str = Field(
         ...,
-        description="A proposed or implemented solution to address the case. If not yet resolved, this can include potential steps or approaches to consider.",
+        description="A proposed or implemented solution to address the case. If not yet resolved, this can include potential steps or approaches to consider. Include granular Timestamps from Audio files!",
     )
-    assignee: list[str] = Field(
+    """assignee: list[str] = Field(
         ...,
         description="The name or identifier of the person responsible for handling or resolving the case.",
-    )
+    )"""
     status: str = Field(
         ...,
         description="The current state of the case, such as 'open', 'in progress' or 'resolved' to track its progression.",
@@ -49,7 +49,6 @@ class Case(BaseModel):
 
 class CaseArray(BaseModel):
     cases: list[Case] = Field(..., description="A list of one or multiple cases.")
-
 
 def check_if_output_is_valid(chain_output):
     try:
