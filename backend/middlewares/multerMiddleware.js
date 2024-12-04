@@ -28,10 +28,10 @@ module.exports = (req, res, next) => {
     upload(req, res, function (err) {
         if (err instanceof multer.MulterError) {
             // Multer-spezifischer Fehler
-            return res.status(400).json({ error: err.message });
+            return res.status(400).json({ message: err.message });
         } else if (err) {
             // Unbekannter Fehler
-            return res.status(500).json({ error: 'Ein unbekannter Fehler ist aufgetreten.' });
+            return res.status(500).json({ message: 'Ein unbekannter Fehler ist aufgetreten.' });
         }
         // Erfolgreich hochgeladen, weiter zur nächsten Middleware
         next();
