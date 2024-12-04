@@ -4,27 +4,10 @@ const path = require('path');
 const fileUploadController = require('../controllers/fileuploadController');
 const multer = require('multer');
 const { body, validationResult } = require('express-validator');
+const attachmentService = require('../services/attachmentService');
+const multerMiddleware = require('../middlewares/multerMiddleware');
+const axios = require('axios')
 
-
-const upload = multer({
-    storage: multer.diskStorage({
-        destination: './uploads/',
-        filename: function (req, file, cb) {
-            cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
-        }
-    }),
-    limits: { fileSize: 1000000 }, // Dateigrößenbeschränkung pro Datei
-    fileFilter: function (req, file, cb) {
-        fileUploadController.checkFileName(file);
-        fileUploadController.checkFileType(file, cb);
-        //try {
-        //    fileUploadController.scanFileWithAzure(file);
-        //    cb(null, true);
-        //} catch (error) {
-        //    cb(error);
-        //}
-    }
-}).array('files', 10); // 'files' ist der Feldname, bis zu 10 Dateien
 
 
 
@@ -33,64 +16,18 @@ exports.createCaseFromFiles = [
 
 
     // **Multer-Middleware**
-    (req, res, next) => {
-        upload(req, res, function (err) {
-            if (err) {
-                return res.status(400).json({ message: err.message });
-            }
-            
-        next();
-    });
-  },
+    multerMiddleware,
 
 
     // **Anfrage-Handler**
     async (req, res) => {
 
-        const files = req.files;
         //const socket_id = req.body.socket_id;
         const socket_id = 123;
 
-        // **Array zum Speichern der Attachment Objects**
-        const attachmentInstances = [];
-
         // **Hochgeladene Dateien verarbeiten**
-        if(files && files.length > 0){
-            for(const file of files){
-                const localFilePath = file.path;
+        const attachmentInstances = await attachmentService.uploadFilesAndCreateAttachments(req.files);
 
-                try{
-                      const remoteFilePath =   await nextCloud.uploadFile(localFilePath, "/test-folder/", file.filename);
-
-                      let attachment =  await Attachments.findOne({
-                        where: {
-                          filepath: remoteFilePath
-                        }
-                      });
-                    
-                        if(!attachment){
-                        // Attachment-Datensatz erstellen
-                        const attachmentData = {
-                          filename: file.filename,
-                          filepath: remoteFilePath,
-                          mimetype: file.mimetype,
-                          size: file.size,
-                          uploadedAt: new Date(),
-                          filehash: remoteFilePath.substring(remoteFilePath.lastIndexOf('/') +1, remoteFilePath.lastIndexOf('.')), 
-                      };
-
-                      attachment = await Attachments.create(attachmentData);
-                    }
-
-                      //Attachment.Instanzen sammeln
-                      attachmentInstances.push(attachment);
-
-                }catch (error) {
-                    console.error('Error uploading file to NextCloud:', error);
-                    return res.status(500).json({ message: 'Error uploading files to NextCloud' });
-                }        
-            }
-        }
   
             // Daten für das LLM vorbereiten
         const llmRequestData = {
@@ -101,9 +38,13 @@ exports.createCaseFromFiles = [
       console.log( "Sende ans LLM: ",JSON.stringify(llmRequestData));
       //Daten an das LLM senden 
       try{
-        const llmResponse = await axios.post('localhost:5001/generate_case', llmRequestData);    
-        const responseData = llmResponse;
-        console.log( "Empange vom LLM: ", llmResponse);
+
+        
+        const llmResponse = await axios.post('http://host.docker.internal:5001/generate_case', llmRequestData);   
+        
+
+        const responseData = llmResponse.data;
+        console.log( "Empange vom LLM: ", JSON.stringify(llmResponse.data));
 
 
         const allowedFields = [
@@ -128,10 +69,12 @@ exports.createCaseFromFiles = [
             let extrCase = {};
             allowedFields.forEach((field) => {
               if (caseData[field] !== undefined) {
-                if(field === 'attachments'){
-                  attachments = caseData[field];
-                }else{
-                  extrCase[field] = caseData[field];
+                if (field === 'attachments') {
+                    attachments = caseData[field];
+                } else if(field === 'assignee' && typeof caseData[field] === 'string'){
+                  extrCase[field] = JSON.parse(caseData[field]);
+                }else {
+                    extrCase[field] = caseData[field];
                 }
               }
             });
@@ -229,7 +172,7 @@ exports.createCaseFromFiles = [
   
 
 
-      const llmResponse = await axios.post('localhost:5001/safe_case', updatedCaseWithAttachments);
+      const llmResponse = await axios.post('http://host.docker.internal:5001/safe_case', updatedCaseWithAttachments);
       res.json(updatedCaseWithAttachments);
       //res.json(llmResponse);
     } catch (error) {
