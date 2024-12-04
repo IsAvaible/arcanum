@@ -1,35 +1,7 @@
 const z  = require('zod');
-const { check} = require('express-validator');
+const { check } = require('express-validator');
 
-export const caseSchema = z.object({
-    id: zn.number().int().positive().optional(),
-    title: z.string().min(3),
-    description: z.string().min(1),
-    solution: z.string().nullable().min(1),
-    assignee: z.array(z.string()).min(1).optional(),
-    status: z.enum(['open', 'closed']).optional(),
-    priority: z.enum(['low', 'medium', 'high']).optional(),
-    draft: z.boolean().optional(),
-    craftedAt: z.date().optional(),
-    updatedAt: z.date().optional(),
-    attachmentSchema: z.array(attachmentSchema).optional(),
-    }).transform((data) => {
-        return {
-            id: check(data.id).escape(),
-            title: check(data.title).escape(),
-            description: check(data.description).escape(),
-            solution: check(data.solution).escape(),
-            assignee: check(data.assignee).escape(),
-            status: check(data.status).escape(),
-            priority: check(data.priority).escape(),
-            draft: check(data.draft).escape(),
-            craftedAt: check(data.craftedAt).escape(),
-            updatedAt: check(data.updatedAt).escape(),
-            attachmentSchema: check(data.attachmentSchema).escape(),
-        };
-    });
-
-export const attachmentSchema = z.object({
+const attachmentSchema = z.object({
     id: z.number().int().positive().optional(),
     filename: z.string().min(3),
     filepath: z.string().min(3),
@@ -40,17 +12,20 @@ export const attachmentSchema = z.object({
     filehash: z.string().min(3),
     createdAt: z.date().optional(),
     updatedAt: z.date().optional(),
-    }).transform((data) => {
-        return {
-            id: check(data.id).escape(),
-            filename: check(data.filename).escape(),
-            filepath: check(data.filepath).escape(),
-            mimetype: check(data.mimetype).escape(),
-            size: check(data.size).escape(),
-            description: check(data.description).escape(),
-            uploadedAt: check(data.uploadedAt).escape(),
-            filehash: check(data.filehash).escape(),
-            createdAt: check(data.createdAt).escape(),
-            updatedAt: check(data.updatedAt).escape(),
-        };
     });
+
+    const caseSchema = z.object({
+        id: z.number().int().positive().optional(),
+        title: z.string().min(3),
+        description: z.string().min(1),
+        solution: z.string().min(1).nullable(),
+        assignee: z.string().min(1).optional(),
+        status: z.enum(['Offen', 'in Bearbeitung', 'Abgeschlossen']).optional(),
+        priority: z.enum(['low', 'medium', 'high']).optional(),
+        draft: z.string().optional(),
+        craftedAt: z.date().optional(),
+        updatedAt: z.date().optional(),
+        attachmentSchema: z.array(attachmentSchema).optional(),
+        });
+
+module.exports = {caseSchema, attachmentSchema};

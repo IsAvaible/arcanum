@@ -3,6 +3,8 @@ const router = express.Router();
 //const caseListController = require('../controllers/caseListController');
 //const caseDetailController = require('../controllers/caseDetailController');
 const caseController = require('../controllers/caseController');
+const { validateData, escapeData } = require('../middlewares/validationMiddleware');
+const { caseSchema } = require('../schemas/caseSchemas');
 
 
 
@@ -11,7 +13,13 @@ const caseController = require('../controllers/caseController');
 router.get('/', caseController.showCaseList);
 router.get('/:id', caseController.showCaseDetail);
 
-router.post('/', caseController.createCase);
+router.post(
+    '/',
+    escapeData(['title', 'description', 'solution', 'assignee', 'status', 'priority', 'draft']),
+    validateData(caseSchema),
+    caseController.createCase
+);
+
 router.put('/:id', caseController.updateCase);
 router.delete('/:id', caseController.deleteCase);
 router.get('/:caseId/attachments/:filename', caseController.downloadAttachment);
