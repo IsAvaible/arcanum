@@ -212,7 +212,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /cases/{id}/attachments/{filename}:
+  /cases/{id}/attachments/{fileId}:
     get:
       summary: Download an attachment
       description: Download an attachment associated with a case.
@@ -223,12 +223,12 @@ paths:
           description: ID of the case.
           schema:
             type: integer
-        - name: filename
+        - name: fileId
           in: path
           required: true
-          description: Name of the attachment file.
+          description: ID of the attachment file.
           schema:
-            type: string
+            type: number
       responses:
         200:
           description: File successfully downloaded.
@@ -259,12 +259,12 @@ paths:
           description: ID of the case.
           schema:
             type: integer
-        - name: filename
+        - name: fileId
           in: path
           required: true
-          description: Name of the attachment file.
+          description: ID of the attachment file.
           schema:
-            type: string
+            type: number
       responses:
         204:
           description: File successfully deleted.
