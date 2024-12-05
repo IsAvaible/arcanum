@@ -1,17 +1,36 @@
-const https = require('https');
-const hostname =  "192.168.0.114";
-const express = require('express');
 const fs = require('fs');
-const app = express();
 const port = 443;
+const express = require('express')
+const https = require('https');
+const app = express();
+const cors = require('cors');
 const caseRoutes = require('./routes/caseRoutes');
 const chatBotRoutes = require('./routes/chatBotRoutes');
 const uploadRoutes = require('./routes/exampleFileUpload');
 const env = require('dotenv').config();
+const fs = require('fs');
+const { DEFAULT_MIN_VERSION } = require('tls');
+//const hostname =  "192.168.0.114";
+app.use(cors({
+  origin: [
+    'http://localhost:8080', // Frontend (Docker)
+    'http://localhost:4173', // Frontend (Production)
+    'http://localhost:5173', // Frontend (Development)
+    'http://localhost:63342' // PHPStorm
+  ],
+}));
+
 
 // for development only
 app.set('view engine', 'ejs');
 
+// Use CORS middleware, see: https://expressjs.com/en/resources/middleware/cors.html
+app.use(cors({
+  origin: ['http://localhost:4173', 'http://localhost:5173'], // Allow only these origins
+  allowedHeaders: '*',
+  exposedHeaders: '*',
+  credentials: true,
+}));
 
 // Middleware (optional)
 const exampleMiddleware = require('./middlewares/exampleLogger');
@@ -33,6 +52,7 @@ app.use('/', uploadRoutes);
 app.get('/', (req, res) => {
   res.send('Hello World!')
 })
+
 
 
 const options = {

@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
-//const caseListController = require('../controllers/caseListController');
-//const caseDetailController = require('../controllers/caseDetailController');
-const caseController = require('../controllers/caseController');
+const caseController = require('../controllers/caseControlle
 const { validateData, escapeData } = require('../middlewares/validationMiddleware');
 const { caseSchema } = require('../schemas/caseSchemas');
+const attachmentController = require('../controllers/attachmentController')
+//const caseListController = require('../controllers/caseListController');
+//const caseDetailController = require('../controllers/caseDetailController');
 
 
 
@@ -22,15 +23,12 @@ router.post(
 
 router.put('/:id', caseController.updateCase);
 router.delete('/:id', caseController.deleteCase);
-router.get('/:caseId/attachments/:filename', caseController.downloadAttachment);
+
+router.get('/:id/attachments/:fileId', attachmentController.downloadAttachment);
+router.post('/:id/attachments', attachmentController.addAttachmentsToCase);
+router.delete('/:id/attachments/:fileId', attachmentController.deleteAttachmentFromCase);
 
 
-
-// Route für die Details eines Falls
-//router.get('/:id', caseDetailController.showCaseDetail);
-
-// Route zum Löschen eines Falls
-//router.post('/:id/delete', caseListController.deleteCase);
 
 
 

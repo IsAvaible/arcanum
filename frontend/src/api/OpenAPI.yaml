@@ -1,0 +1,383 @@
+openapi: 3.0.3
+info:
+  title: Oculavis Arcanum API
+  description: |
+    The Oculavis Arcanum API allows you to manage cases by creating, retrieving, updating, and deleting them. It also supports file attachments associated with cases.
+  version: '1.0.0'
+servers:
+  - url: http://localhost:3000/api
+paths:
+  /cases:
+    get:
+      summary: Retrieve all cases
+      description: Retrieve a list of all cases.
+      responses:
+        200:
+          description: Successfully retrieved a list of cases.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Case'
+        500:
+          description: Error retrieving cases.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create a new case
+      description: Create a new case.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CasePost'
+      responses:
+        201:
+          description: Case successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        400:
+          description: Validation error or file upload error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error creating the case.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cases/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Unique identifier of the case.
+        schema:
+          type: integer
+    get:
+      summary: Retrieve a case by ID
+      description: Retrieve a specific case by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case to retrieve.
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Successfully retrieved the case.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        404:
+          description: Case not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error retrieving the case.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update a case by ID
+      description: Update an existing case by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case to update.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CasePut'
+      responses:
+        200:
+          description: Case successfully updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        404:
+          description: Case with specified ID not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error updating the case.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            multipart/form-data:
+              schema:
+                type: object
+                properties:
+                  filename:
+                    type: array
+                    items:
+                      type: string
+                      format: binary
+    delete:
+      summary: Delete a case by ID
+      description: Delete a specific case by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case to delete.
+          schema:
+            type: integer
+      responses:
+        204:
+          description: Case successfully deleted.
+        404:
+          description: Case with specified ID not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error deleting the case.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cases/{id}/attachments:
+    post:
+      summary: Upload attachments for a case
+      description: Upload one or more files as attachments for a specific case.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case to which the files will be attached.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Files to upload.
+      responses:
+        200:
+          description: Files successfully uploaded and associated with the case.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: ID of the case.
+                  uploadedFiles:
+                    type: array
+                    items:
+                      type: string
+                      description: List of successfully uploaded file names.
+        400:
+          description: Validation error or unsupported file type.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error uploading the files.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cases/{id}/attachments/{filename}:
+    get:
+      summary: Download an attachment
+      description: Download an attachment associated with a case.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case.
+          schema:
+            type: integer
+        - name: filename
+          in: path
+          required: true
+          description: Name of the attachment file.
+          schema:
+            type: string
+      responses:
+        200:
+          description: File successfully downloaded.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        404:
+          description: Case or attachment not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error downloading the attachment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete an attachment
+      description: Delete an attachment associated with a case.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case.
+          schema:
+            type: integer
+        - name: filename
+          in: path
+          required: true
+          description: Name of the attachment file.
+          schema:
+            type: string
+      responses:
+        204:
+          description: File successfully deleted.
+        404:
+          description: Case or attachment not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error deleting the attachment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Case:
+      allOf:
+        - $ref: '#/components/schemas/CaseBase'
+        - type: object
+          required: [id, draft, createdAt, updatedAt, attachments]
+          properties:
+            id:
+              type: integer
+            draft:
+              type: boolean
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+            attachments:
+              type: array
+              items:
+                type: object
+                required: [id, filename, filepath, filehash, mimetype, size, createdAt, updatedAt]
+                properties:
+                  id:
+                    type: integer
+                    description: ID of the attachment.
+                  filename:
+                    type: string
+                  filepath:
+                    type: string
+                    description: Path to the attachment file.
+                  filehash:
+                    type: string
+                    description: Hash of the attachment file.
+                  mimetype:
+                    type: string
+                    description: MIME type of the attachment file.
+                  size:
+                    type: integer
+                    description: Size of the attachment file in bytes.
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+              description: List of file names attached to the case.
+
+    CasePost:
+      allOf:
+        - $ref: '#/components/schemas/CasePut'
+
+    CasePut:
+      allOf:
+        - $ref: '#/components/schemas/CaseBase'
+        - type: object
+          properties:
+            files:
+              type: array
+              items:
+                type: string
+                format: binary
+              description: Attached files on upload.
+
+    CaseBase:
+      type: object
+      required: [title, description]
+      properties:
+        title:
+          type: string
+          description: Title of the case.
+        description:
+          type: string
+          description: Description of the case.
+        solution:
+          type: string
+          description: Solution for the case.
+        assignee:
+          type: string
+          description: Person responsible for the case.
+        status:
+          type: string
+          description: Status of the case.
+          enum: [Open, In Progress, Solved, Closed]
+        case_type:
+          type: string
+          description: Type of the case.
+          enum: [Problem, Incident, Change, FAQ]
+        priority:
+          type: string
+          description: Priority level of the case.
+          enum: [Low, Medium, High]
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message.
+        code:
+          type: integer
+          description: HTTP status code for the error.
