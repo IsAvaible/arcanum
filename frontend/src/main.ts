@@ -3,6 +3,8 @@ import './app.css'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
+import { ApiClientPlugin } from '@/plugins/ApiClientPlugin'
+
 import PrimeVue from 'primevue/config'
 import { Tooltip } from 'primevue'
 import ToastService from 'primevue/toastservice'
@@ -15,6 +17,7 @@ const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
+app.use(ApiClientPlugin)
 app.use(PrimeVue, {
   theme: 'none',
 })

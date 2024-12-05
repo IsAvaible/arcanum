@@ -5,10 +5,10 @@ flask_session==0.8.0
 Flask_SocketIO==5.4.1
 langchain==0.3.9
 langchain_chroma==0.1.4
-langchain_community==0.3.8
 langchain_core==0.3.21
 langchain_openai==0.2.10
 langchain_text_splitters==0.3.2
+openai==1.55.3
 pdf2image==1.17.0
 pdfplumber==0.11.4
 pydantic==2.10.2

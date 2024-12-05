@@ -1,16 +1,19 @@
-from flasgger import Swagger
 from flask import Flask
-from flask_session import Session
 from flask_socketio import SocketIO
+import os
+
 
 app = Flask(__name__)
-swagger = Swagger(app)
 app.secret_key = "super secret key"
 app.config["SECRET_KEY"] = "super secret key"
 socketio = SocketIO(app)
-
 app.config["UPLOAD_FOLDER"] = "upload"
-app.config["SESSION_PERMANENT"] = True
-app.config["SESSION_FILE_DIR"] = ".flask_session"
-app.config["SESSION_TYPE"] = "filesystem"
-Session(app)
+
+
+upload_folder = os.path.join(app.root_path, "upload")
+temp_folder = os.path.join(app.root_path, "temp")
+
+if not os.path.exists(upload_folder):
+    os.makedirs(upload_folder)
+if not os.path.exists(temp_folder):
+    os.makedirs(temp_folder)

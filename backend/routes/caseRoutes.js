@@ -3,7 +3,7 @@ const router = express.Router();
 //const caseListController = require('../controllers/caseListController');
 //const caseDetailController = require('../controllers/caseDetailController');
 const caseController = require('../controllers/caseController');
-
+const attachmentController = require('../controllers/attachmentController')
 
 
 // Route für die Liste aller Fälle
@@ -14,15 +14,12 @@ router.get('/:id', caseController.showCaseDetail);
 router.post('/', caseController.createCase);
 router.put('/:id', caseController.updateCase);
 router.delete('/:id', caseController.deleteCase);
-router.get('/:caseId/attachments/:filename', caseController.downloadAttachment);
+
+router.get('/:id/attachments/:fileId', attachmentController.downloadAttachment);
+router.post('/:id/attachments', attachmentController.addAttachmentsToCase);
+router.delete('/:id/attachments/:fileId', attachmentController.deleteAttachmentFromCase);
 
 
-
-// Route für die Details eines Falls
-//router.get('/:id', caseDetailController.showCaseDetail);
-
-// Route zum Löschen eines Falls
-//router.post('/:id/delete', caseListController.deleteCase);
 
 
 

@@ -10,6 +10,7 @@ export type User = { id: number; name: string; image: string }
 
 const props = defineProps<{
   assigneeLabel: string
+  placeholder?: string
   userOptions: User[]
   selectedUsers: User[]
   multiSelect: boolean
@@ -74,16 +75,16 @@ const hidePopover = () => {
     :disabled="props.disabled"
     id="{{ assigneeLabel.toLowerCase() }}"
     :options="groupedUserOptions"
-    :class="{ 'p-invalid': invalid }"
     option-group-label="label"
     option-label="name"
     optionGroupChildren="users"
     :model-value="props.selectedUsers"
     @update:modelValue="emit('update:selectedUsers', $event)"
-    :placeholder="`Select ${assigneeLabel}`"
+    :placeholder="placeholder ?? `Select ${assigneeLabel}`"
     display="chip"
     filter
     filter-placeholder="Search users"
+    :invalid="props.invalid"
   >
     <template #option="slotProps">
       <div class="flex items-center w-full gap-x-3 pl-2">
@@ -153,9 +154,4 @@ const hidePopover = () => {
   </Popover>
 </template>
 
-<style scoped>
-:deep(.p-disabled) {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-</style>
+<style scoped></style>

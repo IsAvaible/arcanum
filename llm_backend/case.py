@@ -1,0 +1,62 @@
+from pydantic import Field, BaseModel, ValidationError
+
+#maybe for future use
+class CaseAttachment(BaseModel):
+    file_id: int = Field(
+        ...,
+        description="A unique numeric identifier for the file within the system."
+    )
+    filename: str = Field(
+        ...,
+        description="The name of the file, including its extension (e.g., 'document.pdf'), as stored in the system."
+    )
+    filepath: str = Field(
+        ...,
+        description="The full path to the file's location on the system, specifying where the file is stored."
+    )
+    filehash: str = Field(
+        ...,
+        description="A unique hash generated for the file to verify its integrity and identify its contents."
+    )
+
+# defining the desired output of the llm
+class Case(BaseModel):
+    title: str = Field(
+        ...,
+        description="A short, clear summary of the case. This should provide a concise idea of the issue at hand.",
+    )
+    description: str = Field(
+        ...,
+        description="A detailed explanation of the case, including relevant background information, context necessary for understanding the problem. Include granular Timestamps from Audio files!",
+    )
+    solution: str = Field(
+        ...,
+        description="A proposed or implemented solution to address the case. If not yet resolved, this can include potential steps or approaches to consider. Include granular Timestamps from Audio files!",
+    )
+    """assignee: list[str] = Field(
+        ...,
+        description="The name or identifier of the person responsible for handling or resolving the case.",
+    )"""
+    status: str = Field(
+        ...,
+        description="The current state of the case, such as 'open', 'in progress' or 'resolved' to track its progression.",
+    )
+    attachments: list[int] = Field(
+        ...,
+        description="All the File-Ids that were used to generate this Case.",
+    )
+
+
+class CaseArray(BaseModel):
+    cases: list[Case] = Field(..., description="A list of one or multiple cases.")
+
+def check_if_output_is_valid(chain_output):
+    try:
+        # This will validate the output and raise an error if any required field is missing
+        CaseArray.model_validate(chain_output)
+
+        return True
+    except ValidationError as e:
+        print("Validation error", e.json())
+
+        return False

@@ -46,11 +46,11 @@ export const useCaseFormStepper = (
   const stepInteracted = (step: number = activeStep.value): boolean => {
     switch (step) {
       case 0:
-        return (isFieldDirty('title') && isFieldDirty('selectedCaseType')) || !stepValid(0)
+        return (isFieldDirty('title') && isFieldDirty('case_type')) || !stepValid(0)
       case 1:
-        return isFieldDirty('selectedAssignees') || !stepValid(1)
+        return isFieldDirty('assignees') || !stepValid(1)
       case 2:
-        return maxStep.value >= 2
+        return isFieldDirty('description') || !stepValid(2)
       case 3:
         return maxStep.value >= 3
       case 4:

@@ -16,15 +16,15 @@ module.exports = {
       },
       description: {
         allowNull: false,
-        type: Sequelize.STRING
+        type: Sequelize.TEXT
       },
       solution: {
         allowNull: true,
-        type: Sequelize.STRING
+        type: Sequelize.TEXT
       },
       assignee: {
         allowNull: true,
-        type: Sequelize.STRING
+        type: Sequelize.JSON
       },
       status: {
         allowNull: true,
