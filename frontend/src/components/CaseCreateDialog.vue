@@ -19,19 +19,20 @@ import CaseTypeSelector from '@/components/case-create-form/CaseTypeSelector.vue
 import UserSelector, { type User } from '@/components/case-create-form/UserSelector.vue'
 import TempEditor from '@/components/case-create-form/TempEditor.vue'
 import ProductSelector from '@/components/case-create-form/ProductSelector.vue'
-import TeamSelector, { type Team } from '@/components/case-create-form/TeamSelector.vue'
+import TeamSelector from '@/components/case-create-form/TeamSelector.vue'
 
 import { useCaseFormStepper } from '@/composables/useCaseFormStepper'
 import StepHeader from '@/components/case-create-form/StepHeader.vue'
 import CaseCreateStepper from '@/components/case-create-form/CaseCreateStepper.vue'
 import { toTypedSchema } from '@vee-validate/zod'
-import * as zod from 'zod'
-import { useField, useForm } from 'vee-validate'
+import { useForm } from 'vee-validate'
 import { ref } from 'vue'
 import { useVModel } from '@vueuse/core'
 import { useApi } from '@/composables/useApi'
 import type { CasesPostCaseTypeEnum } from '@/api'
 import ScrollFadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
+import { caseSchema } from '@/validation/schemas'
+import { useCaseFields } from '@/validation/fields'
 
 const toast = useToast()
 
@@ -79,48 +80,17 @@ const peopleOptions: User[] = Array.from({ length: 15 }, (_, i) => ({
 }))
 
 // Form validation setup
-// Couldn't move to composable because of https://github.com/microsoft/TypeScript/pull/58176#issuecomment-2052698294
-const schema = toTypedSchema(
-  zod.object({
-    title: zod
-      .string({ required_error: 'Please provide a title' })
-      .min(1, 'Please provide a title'),
-    selectedCaseType: zod
-      .string({ required_error: 'Please select at least one case type' })
-      .min(1, 'Please select at least one case type'),
-    selectedAssignees: zod
-      .array(zod.any(), { required_error: 'Please select at least one assignee' })
-      .nonempty('Please select at least one assignee'),
-    selectedParticipants: zod.array(zod.any()).optional(),
-    selectedTeam: zod.any().optional(),
-    description: zod
-      .string({ required_error: 'Please provide a description' })
-      .min(1, 'Please provide a description'),
-    solution: zod.string().optional(),
-    selectedProducts: zod.array(zod.number()).default([]),
-  }),
-)
-
 const {
   handleSubmit,
   errors,
   meta: form,
   isFieldDirty,
 } = useForm({
-  validationSchema: schema,
+  validationSchema: toTypedSchema(caseSchema),
 })
 
 // Form validation
-const fields = {
-  title: useField<string>('title'),
-  selectedCaseType: useField<string>('selectedCaseType'),
-  selectedAssignees: useField<User[]>('selectedAssignees'),
-  selectedParticipants: useField<User[]>('selectedParticipants'),
-  selectedTeam: useField<Team>('selectedTeam'),
-  description: useField<string>('description'),
-  solution: useField<string>('solution'),
-  selectedProducts: useField<number[]>('selectedProducts'),
-}
+const fields = useCaseFields()
 
 /**
  * Check if the current step is valid
@@ -129,17 +99,13 @@ const fields = {
 const stepValid = (step: number = activeStep.value): boolean => {
   switch (step) {
     case 0:
-      return !(errors.value.title || errors.value.selectedCaseType)
+      return !(errors.value.title || errors.value.case_type)
     case 1:
-      return !(
-        errors.value.selectedAssignees ||
-        errors.value.selectedParticipants ||
-        errors.value.selectedTeam
-      )
+      return !(errors.value.assignees || errors.value.participants || errors.value.team)
     case 2:
       return !(errors.value.description || errors.value.solution)
     case 3:
-      return !errors.value.selectedProducts
+      return !errors.value.products
     case 4:
       return true
     default:
@@ -155,12 +121,12 @@ const validateStep = async (step: number = activeStep.value) => {
   switch (step) {
     case 0:
       await fields.title.validate()
-      await fields.selectedCaseType.validate()
+      await fields.type.validate()
       return
     case 1:
-      await fields.selectedAssignees.validate()
-      await fields.selectedParticipants.validate()
-      await fields.selectedTeam.validate()
+      await fields.assignees.validate()
+      await fields.participants.validate()
+      await fields.team.validate()
       return
     case 2:
       await fields.description.validate()
@@ -232,15 +198,14 @@ const onSubmit = handleSubmit(async (_values) => {
     await api.casesPost(
       {
         title: fields.title.value.value,
-        caseType: fields.selectedCaseType.value.value as CasesPostCaseTypeEnum,
-        assignee: fields.selectedAssignees.value.value[0]!.name,
+        caseType: fields.type.value.value as CasesPostCaseTypeEnum,
         // assignees: fields.selectedAssignees.value.value,
         // participants: fields.selectedParticipants.value.value,
         // team: fields.selectedTeam.value.value,
-        // details: fields.details.value.value,
         description: fields.description.value.value,
         solution: fields.solution.value.value,
-        priority: 'Low',
+        priority: fields.priority.value.value,
+        status: 'Open',
         // products: fields.selectedProducts.value.value,
       },
       {
@@ -345,17 +310,9 @@ const dialogPT = {
                 description="The kind of case you are creating"
               />
               <div class="w-full">
-                <CaseTypeSelector
-                  :caseTypes="caseTypes"
-                  v-model="fields.selectedCaseType.value.value"
-                />
-                <Message
-                  v-if="errors.selectedCaseType"
-                  severity="error"
-                  variant="simple"
-                  size="small"
-                >
-                  {{ errors.selectedCaseType }}
+                <CaseTypeSelector :caseTypes="caseTypes" v-model="fields.type.value.value" />
+                <Message v-if="errors.case_type" severity="error" variant="simple" size="small">
+                  {{ errors.case_type }}
                 </Message>
               </div>
             </div>
@@ -381,36 +338,22 @@ const dialogPT = {
               <div class="w-full">
                 <UserSelector
                   assigneeLabel="Assignees"
+                  :selected-users="[]"
                   :userOptions="peopleOptions"
-                  v-model:selectedUsers="fields.selectedAssignees.value.value"
                   multi-select
-                  :invalid="!!errors.selectedAssignees"
+                  :invalid="!!errors.assignees"
                 />
-                <Message
-                  v-if="errors.selectedAssignees"
-                  severity="error"
-                  variant="simple"
-                  size="small"
-                >
-                  {{ errors.selectedAssignees }}
+                <Message v-if="errors.assignees" severity="error" variant="simple" size="small">
+                  {{ errors.assignees }}
                 </Message>
               </div>
               <Divider />
               <div class="grid sm:grid-flow-col sm:grid-rows-2 gap-y-3 gap-x-5">
                 <Label for="team" label="Team" description="The team responsible for this case" />
                 <div>
-                  <TeamSelector
-                    v-model:selected-team="fields.selectedTeam.value.value"
-                    class="w-full"
-                    :invalid="!!errors.selectedTeam"
-                  />
-                  <Message
-                    v-if="errors.selectedTeam"
-                    severity="error"
-                    variant="simple"
-                    size="small"
-                  >
-                    {{ errors.selectedTeam }}
+                  <TeamSelector :selected-team="null" class="w-full" :invalid="!!errors.team" />
+                  <Message v-if="errors.team" severity="error" variant="simple" size="small">
+                    {{ errors.team }}
                   </Message>
                 </div>
                 <Label
@@ -420,19 +363,19 @@ const dialogPT = {
                 />
                 <div>
                   <UserSelector
+                    :selected-users="[]"
                     assigneeLabel="Participants"
                     :userOptions="peopleOptions"
-                    v-model:selectedUsers="fields.selectedParticipants.value.value"
                     multi-select
-                    :invalid="!!errors.selectedParticipants"
+                    :invalid="!!errors.participants"
                   />
                   <Message
-                    v-if="errors.selectedParticipants"
+                    v-if="errors.participants"
                     severity="error"
                     variant="simple"
                     size="small"
                   >
-                    {{ errors.selectedParticipants }}
+                    {{ errors.participants }}
                   </Message>
                 </div>
               </div>
@@ -547,8 +490,8 @@ const dialogPT = {
                     <p class="text-sm text-slate-600">Case Type</p>
                     <p class="font-medium">
                       {{
-                        caseTypes.find((type) => type.title === fields.selectedCaseType.value.value)
-                          ?.title || 'Not selected'
+                        caseTypes.find((type) => type.title === fields.type.value.value)?.title ||
+                        'Not selected'
                       }}
                     </p>
                   </div>
@@ -562,24 +505,23 @@ const dialogPT = {
                     <p class="text-sm text-slate-600">Assignees</p>
                     <p class="font-medium">
                       {{
-                        fields.selectedAssignees.value.value
-                          ?.map((assignee) => assignee.name)
-                          .join(', ') || 'No assignees'
+                        fields.assignees.value.value?.map((assignee) => assignee).join(', ') ||
+                        'No assignees'
                       }}
                     </p>
                   </div>
                   <div>
                     <p class="text-sm text-slate-600">Team</p>
                     <p class="font-medium">
-                      {{ fields.selectedTeam.value.value?.name || 'No team selected' }}
+                      {{ fields.team.value.value || 'No team selected' }}
                     </p>
                   </div>
                   <div>
                     <p class="text-sm text-slate-600">Participants</p>
                     <p class="font-medium">
                       {{
-                        fields.selectedParticipants.value.value
-                          ?.map((participant) => participant.name)
+                        fields.participants.value.value
+                          ?.map((participant) => participant)
                           .join(', ') || 'No participants'
                       }}
                     </p>
