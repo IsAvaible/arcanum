@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useApi } from '@/composables/useApi'
 import { useToast } from 'primevue/usetoast' // Import useToast only once
@@ -97,6 +97,9 @@ const fetchCase = async () => {
 
     if (!caseDetails.value.draft) {
       resetForm({ values: caseDetails.value })
+      nextTick(() => {
+        form.value.dirty = false
+      })
     } else {
       setValues(caseDetails.value)
       inEditMode.value = true
@@ -156,9 +159,15 @@ const handleEdit = () => {
 const handleSave = handleSubmit(
   async (values) => {
     try {
-      // @ts-expect-error - The updated API is in a pull request. TODO remove this line
-      await api.casesIdPut({ id: Number(caseId.value), ...values, draft: false })
-
+      if (caseDetails.value!.draft) {
+        await api.confirmCaseIdPut({ id: Number(caseId.value), casePut: values })
+      } else {
+        await api.casesIdPut({ id: Number(caseId.value), ...values })
+      }
+      resetForm({ values: values })
+      nextTick(() => {
+        form.value.dirty = false
+      })
       inEditMode.value = false
       toast.add({
         severity: 'success',
@@ -564,9 +573,8 @@ const toggleMenu = (event: Event) => {
                 <label>Status</label>
                 <Select
                   v-if="!loading"
-                  placeholder="Unknown (Backend Missing)"
                   :options="statuses"
-                  :model-value="fields.status.value.value"
+                  :model-value="statuses.find((s) => s.name === caseDetails!.status)"
                   @update:model-value="fields.status.value.value = $event.name"
                   optionLabel="name"
                   class="w-full min-h-10"
@@ -608,7 +616,7 @@ const toggleMenu = (event: Event) => {
                 <label>Priority</label>
                 <Select
                   v-if="!loading"
-                  :bind="fields.priority.value.value"
+                  :model-value="priorities.find((p) => p.name === caseDetails!.priority)"
                   @update:model-value="fields.priority.value.value = $event.name"
                   :options="priorities"
                   optionLabel="name"

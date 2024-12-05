@@ -165,7 +165,8 @@ exports.updateCase = [
         "assignee",
         "status",
         "case_type",
-        "priority", //,
+        "priority",
+        "draft",
         //'attachment'
       ];
 

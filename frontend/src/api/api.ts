@@ -72,25 +72,25 @@ export interface Case {
      */
     'priority'?: CasePriorityEnum;
     /**
-     * 
+     * ID of the case.
      * @type {number}
      * @memberof Case
      */
     'id': number;
     /**
-     * 
+     * Indicates whether the case is a draft.
      * @type {boolean}
      * @memberof Case
      */
     'draft': boolean;
     /**
-     * 
+     * Date and time the case was created.
      * @type {string}
      * @memberof Case
      */
     'createdAt': string;
     /**
-     * 
+     * Date and time the case was last updated.
      * @type {string}
      * @memberof Case
      */

@@ -351,14 +351,18 @@ components:
           properties:
             id:
               type: integer
+              description: ID of the case.
             draft:
               type: boolean
+              description: Indicates whether the case is a draft.
             createdAt:
               type: string
               format: date-time
+              description: Date and time the case was created.
             updatedAt:
               type: string
               format: date-time
+              description: Date and time the case was last updated.
             attachments:
               type: array
               items:
