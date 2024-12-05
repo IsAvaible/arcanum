@@ -9,7 +9,7 @@ import Sidebar from '@/components/site-structure/Sidebar.vue'
   <div class="flex flex-row min-h-screen">
     <Sidebar />
     <div class="flex-1 ml-20 lg:ml-64 min-h-screen flex">
-      <div class="m-auto">
+      <div class="m-auto w-full">
         <RouterView />
       </div>
     </div>
