@@ -22,6 +22,7 @@ services:
       - ./backend/.env
     volumes:
       - ./backend:/node_backend
+      - ./backend/certs:/node_backend/certs
   llm-backend:
     build: llm_backend
     container_name: llm_backend

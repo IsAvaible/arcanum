@@ -61,6 +61,9 @@ See the [Vite documentation](https://vite.dev/guide/env-and-mode) for more infor
 
 ### Using the API
 
+The API uses a self-signed https certificate. To use the API in development, you need to trust the certificate by visiting
+`https://localhost:3000` in your browser and accepting the certificate (Advanced -> Proceed to localhost).
+
 The API can be accessed by using the composable useAPI() from the `@/composable` folder.
 
 ```ts
