@@ -5,7 +5,7 @@ import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import { useVModel } from '@vueuse/core'
 import FilePreview from '@/components/file-handling/FilePreview.vue'
-import { formatSize } from '../../functions/formatSize'
+import { formatSize } from '@/functions/formatSize'
 
 export type FileProperties = {
   name: string

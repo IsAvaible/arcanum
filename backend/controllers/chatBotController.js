@@ -28,6 +28,7 @@ exports.createCaseFromFiles = [
         const socket_id = 123;
 
         // **Hochgeladene Dateien verarbeiten**
+
         const attachmentInstances = await attachmentService.uploadFilesAndCreateAttachments(req.files);
 
   
@@ -59,7 +60,6 @@ exports.createCaseFromFiles = [
           'priority',
           'attachments'
         ];
-
 
         if (responseData.cases) {
           // Sicherstellen, dass cases ein Array ist
@@ -113,13 +113,13 @@ exports.createCaseFromFiles = [
           console.log( "Erstellter Case: ", JSON.stringify(casesAll));
             // Antwort an das Frontend senden
             res.status(201).json(casesAll);
-        } else if(responseData.message){
+        } else if (responseData.message){
             res.status(200).json({ message: responseData.message });
         } else {
-            res.status(500).json({ error: 'Error creating case.' });
+            res.status(500).json({ message: 'LLM returned no data' });
           }
         } catch (error) {
-          res.status(500).json({ error: 'Error creating case.' });
+          res.status(500).json({ message: error });
         }
 
       

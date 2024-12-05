@@ -10,9 +10,11 @@ export type User = { id: number; name: string; image: string }
 
 const props = defineProps<{
   assigneeLabel: string
+  placeholder?: string
   userOptions: User[]
   selectedUsers: User[]
   multiSelect: boolean
+  disabled?: boolean
   invalid?: boolean
 }>()
 
@@ -70,6 +72,7 @@ const hidePopover = () => {
   <component
     :is="multiSelect ? MultiSelect : Select"
     class="w-full"
+    :disabled="props.disabled"
     id="{{ assigneeLabel.toLowerCase() }}"
     :options="groupedUserOptions"
     option-group-label="label"
@@ -77,7 +80,7 @@ const hidePopover = () => {
     optionGroupChildren="users"
     :model-value="props.selectedUsers"
     @update:modelValue="emit('update:selectedUsers', $event)"
-    :placeholder="`Select ${assigneeLabel}`"
+    :placeholder="placeholder ?? `Select ${assigneeLabel}`"
     display="chip"
     filter
     filter-placeholder="Search users"
@@ -101,7 +104,6 @@ const hidePopover = () => {
       </div>
     </template>
 
-    f
     <!-- @vue-ignore Only the MultiSelect component has the chip slot -->
     <template
       v-if="multiSelect"

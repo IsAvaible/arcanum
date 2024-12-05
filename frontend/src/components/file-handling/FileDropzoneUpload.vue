@@ -22,7 +22,7 @@ const files = useVModel(props, 'files', emit)
 
 // References and State
 const popover = useTemplateRef('popover')
-const maxFileSize = 10 * 1024 * 1024 // 10 MB
+const maxFileSize = 100 * 1024 * 1024 // 100 MB
 // All image types, audio types, pdf and text files
 const accept = 'image/*, audio/*, application/pdf, text/*'
 const toast = useToast()
@@ -59,7 +59,6 @@ const _onClearTemplatingUpload = (clear: () => void) => {
 }
 const onSelectedFiles = (event: FileUploadSelectEvent) => {
   files.value = event.files
-  console.log(event.files)
   files.value.forEach((file) => {
     totalSize.value += parseInt(formatSize(file.size))
   })
@@ -177,8 +176,8 @@ const toggleRequirements = (event: MouseEvent) => {
     <div v-if="displayRequirements">
       <h4 class="font-semibold">Requirements</h4>
       <ul class="list-disc list-inside">
-        <li>File size must be less than 10 MB</li>
-        <li>File type must be an image or PDF</li>
+        <li>File size must be less than {{ formatSize(maxFileSize) }} MB</li>
+        <li>File type must be an image, audio, video, PDF or text</li>
       </ul>
     </div>
   </Popover>
