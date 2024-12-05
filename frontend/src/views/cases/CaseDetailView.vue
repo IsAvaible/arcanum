@@ -196,6 +196,10 @@ const handleCancel = () => {
         : "The case hasn't been saved and will be deleted. Are you sure you want to discard?",
       header: 'Confirm Cancel',
       icon: 'pi pi-exclamation-triangle',
+      rejectProps: {
+        severity: 'secondary',
+        outlined: true,
+      },
       accept: async () => {
         if (caseDetails.value!.draft) {
           if (await deleteDraft()) {
@@ -252,6 +256,10 @@ const navigateTo = async (name: string) => {
       message: 'You have unsaved changes. Are you sure you want to leave?',
       header: 'Confirm Navigation',
       icon: 'pi pi-exclamation-triangle',
+      rejectProps: {
+        severity: 'secondary',
+        outlined: true,
+      },
       accept: async () => {
         if (caseDetails.value!.draft) {
           if (!(await deleteDraft())) {
@@ -558,6 +566,7 @@ const toggleMenu = (event: Event) => {
                   optionLabel="name"
                   class="w-full min-h-10"
                   :disabled="!inEditMode"
+                  :invalid="!!errors.status"
                 >
                   <template #value="slotProps">
                     <div v-if="slotProps.value" class="flex items-center">
@@ -600,6 +609,7 @@ const toggleMenu = (event: Event) => {
                   optionLabel="name"
                   class="w-full"
                   :disabled="!inEditMode"
+                  :invalid="!!errors.priority"
                 >
                   <template #value="slotProps">
                     <div class="flex items-center gap-2" v-if="slotProps.value">
@@ -808,14 +818,6 @@ const toggleMenu = (event: Event) => {
 <style scoped>
 .field > label {
   @apply block text-sm font-medium text-gray-700 mb-1;
-}
-
-.p-error {
-  color: #ef4444;
-}
-
-.p-invalid {
-  border-color: #ef4444 !important;
 }
 
 :deep(.p-component:disabled):not(.p-button),
