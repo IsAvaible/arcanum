@@ -7,6 +7,8 @@ const { body, validationResult } = require('express-validator');
 const attachmentService = require('../services/attachmentService');
 const multerMiddleware = require('../middlewares/multerMiddleware');
 const axios = require('axios')
+//const upload = require('../configs/multerConfig.js');
+
 
 
 

@@ -1,9 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const caseController = require('../controllers/caseController');
+const { validateData, escapeData } = require('../middlewares/validationMiddleware');
+const { caseSchema } = require('../schemas/caseSchemas');
+const attachmentController = require('../controllers/attachmentController')
 //const caseListController = require('../controllers/caseListController');
 //const caseDetailController = require('../controllers/caseDetailController');
-const caseController = require('../controllers/caseController');
-const attachmentController = require('../controllers/attachmentController')
+
 
 
 // Route für die Liste aller Fälle
@@ -11,7 +14,13 @@ const attachmentController = require('../controllers/attachmentController')
 router.get('/', caseController.showCaseList);
 router.get('/:id', caseController.showCaseDetail);
 
-router.post('/', caseController.createCase);
+router.post(
+    '/',
+    escapeData(['title', 'description', 'solution', 'assignee', 'status', 'case_type','priority']),
+    validateData(caseSchema),
+    caseController.createCase
+);
+
 router.put('/:id', caseController.updateCase);
 router.delete('/:id', caseController.deleteCase);
 

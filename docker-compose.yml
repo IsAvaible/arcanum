@@ -15,7 +15,7 @@ services:
     working_dir: /node_backend
     command: sh -c "npm install && npx sequelize-cli db:migrate --config ./configs/config.js && npm run start-backend"
     ports:
-      - "3000:3000"
+      - "3000:443"
     depends_on:
       - db
     env_file:

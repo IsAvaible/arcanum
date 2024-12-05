@@ -1,5 +1,9 @@
 const { Cases, Attachments }  = require('../models');
 const { body, validationResult } = require('express-validator');
+const nextCloud = require('./nextCloudUploaderController.js');
+const path = require('path');
+const fileUploadController = require('../controllers/fileuploadController');
+const upload = require('../configs/multerConfig.js');
 const attachmentService = require('../services/attachmentService');
 const multerMiddleware = require('../middlewares/multerMiddleware');
 
@@ -114,9 +118,10 @@ exports.createCase = [
         } = req.body;
         
         console.log(req.fileData);
-
+        
         // **Hochgeladene Dateien verarbeiten**
         const attachmentInstances = await attachmentService.uploadFilesAndCreateAttachments(req.files);
+
   
         // **Neuen Fall erstellen**
         const newCase = await Cases.create({
@@ -219,6 +224,3 @@ exports.createCase = [
     }
   }
   ];
-
-
-
