@@ -5,7 +5,7 @@ info:
     The Oculavis Arcanum API allows you to manage cases by creating, retrieving, updating, and deleting them. It also supports file attachments associated with cases.
   version: '1.0.0'
 servers:
-  - url: http://localhost:3000/api
+  - url: https://localhost:3000/api
 paths:
   /cases:
     get:
@@ -212,7 +212,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /cases/{id}/attachments/{filename}:
+  /cases/{id}/attachments/{fileId}:
     get:
       summary: Download an attachment
       description: Download an attachment associated with a case.
@@ -223,12 +223,12 @@ paths:
           description: ID of the case.
           schema:
             type: integer
-        - name: filename
+        - name: fileId
           in: path
           required: true
-          description: Name of the attachment file.
+          description: ID of the attachment file.
           schema:
-            type: string
+            type: number
       responses:
         200:
           description: File successfully downloaded.
@@ -259,12 +259,12 @@ paths:
           description: ID of the case.
           schema:
             type: integer
-        - name: filename
+        - name: fileId
           in: path
           required: true
-          description: Name of the attachment file.
+          description: ID of the attachment file.
           schema:
-            type: string
+            type: number
       responses:
         204:
           description: File successfully deleted.
@@ -280,6 +280,67 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /createCaseFromFiles:
+    post:
+      summary: Create cases from uploaded files.
+      description: Upload files, process them, and create draft cases.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Files to be uploaded.
+                socket_id:
+                  type: integer
+                  description: Socket ID for real-time communication.
+      responses:
+        '201':
+          description: Cases created successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Case'
+        '400':
+          description: Bad request, invalid file upload or input.
+        '500':
+          description: Server error during file processing or case creation.
+  /confirmCase/{id}:
+    put:
+      summary: Confirm and update a draft case.
+      description: Update a draft case with additional details and mark it as confirmed.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case to confirm.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CasePut'
+      responses:
+        '200':
+          description: Case updated and confirmed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        '404':
+          description: Case not found.
+        '500':
+          description: Server error during case update.
 components:
   schemas:
     Case:

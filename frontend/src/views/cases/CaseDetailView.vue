@@ -309,9 +309,9 @@ const uploadFiles = async () => {
 
 const deleteAttachment = async (attachment: CaseAllOfAttachments) => {
   try {
-    await api.casesIdAttachmentsFilenameDelete({
+    await api.casesIdAttachmentsFileIdDelete({
       id: Number(caseId.value),
-      filename: attachment.filename,
+      fileId: attachment.id,
     })
 
     files.value = files.value.filter((f) => f.name !== attachment.filename)
@@ -341,10 +341,10 @@ const openAttachmentInDrawer = async (attachment: CaseAllOfAttachments) => {
     // If not, download the file from the server
     try {
       file = await apiBlobToFile(
-        await api.casesIdAttachmentsFilenameGet(
+        await api.casesIdAttachmentsFileIdGet(
           {
             id: Number(caseId.value),
-            filename: attachment.filename,
+            fileId: attachment.id,
           },
           { responseType: 'blob' },
         ),

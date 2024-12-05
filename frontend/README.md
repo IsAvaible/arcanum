@@ -59,9 +59,29 @@ Also consult with the team before adding any new libraries to the project.
 To use environment variables in the project, add them to the `.env.development` file and access them in the code using `import.meta.env`.
 See the [Vite documentation](https://vite.dev/guide/env-and-mode) for more information.
 
-### Generating API Client
+### Using the API
 
-To regenerate the API client from the OpenAPI specification, run the following command:
+The API can be accessed by using the composable useAPI() from the `@/composable` folder.
+
+```ts
+import { useAPI } from '@/composables/useAPI'
+
+const api = useAPI()
+```
+
+You can find the [OpenAPI specification](src/api/OpenAPI.yaml) in the `api` folder.
+
+To edit the specification, use the Swagger Editor or any other OpenAPI editor.
+You can run the Swagger Editor locally by running the following command:
+
+```bash
+npm run swagger-editor
+```
+
+The editor will be available at `http://localhost:5174`.
+
+The API client is generated from this specification.
+To regenerate the API client after changes to the specification, run the following command:
 
 ```bash
 npm run generate:api
