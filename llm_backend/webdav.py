@@ -1,9 +1,8 @@
-###
 import os
+
 from dotenv import load_dotenv
 from app import app
 from webdav3.client import Client
-
 load_dotenv()
 
 options = {
@@ -21,6 +20,9 @@ def download_file_webdav(filepath, filename):
     path = os.path.join(
         app.root_path, os.path.join(app.config["UPLOAD_FOLDER"], filename)
     )
+    upload_path = os.path.join(app.root_path, os.path.join(app.config["UPLOAD_FOLDER"]))
+    if not os.path.exists(upload_path):
+        os.makedirs(upload_path)
     client.download_sync(remote_path=filepath, local_path=path)
     return path
 
@@ -30,4 +32,21 @@ def download_folder_webdav(filepath):
         app.root_path, os.path.join(app.config["UPLOAD_FOLDER"]), filepath
     )
     client.download_sync(remote_path=filepath, local_path=path)
+    return path
+
+
+def upload_cache_file(file_path, hash):
+    client.upload_sync(remote_path="/IP_WKS/LLM_CACHE/"+hash, local_path=file_path)
+
+def check_if_cached(hash):
+    return client.check("/IP_WKS/LLM_CACHE/"+hash)
+
+def download_cache(hash):
+    path = os.path.join(
+        app.root_path, os.path.join("temp", hash)
+    )
+    upload_path = os.path.join(app.root_path, os.path.join("temp"))
+    if not os.path.exists(upload_path):
+        os.makedirs(upload_path)
+    client.download_sync(remote_path="/IP_WKS/LLM_CACHE/"+hash, local_path=path)
     return path

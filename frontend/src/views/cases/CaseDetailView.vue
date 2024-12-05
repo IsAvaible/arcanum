@@ -1,363 +1,860 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useApi } from '@/composables/useApi'
+import { useToast } from 'primevue/usetoast' // Import useToast only once
+import { useConfirm } from 'primevue/useconfirm'
+import { toTypedSchema } from '@vee-validate/zod'
+import { useForm } from 'vee-validate'
+
+// PrimeVue components
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 import InputText from 'primevue/inputtext'
-import Dropdown from 'primevue/dropdown'
-import Calendar from 'primevue/calendar'
+import Select from 'primevue/select'
+import DatePicker from 'primevue/datepicker'
 import Textarea from 'primevue/textarea'
-import FileUpload from 'primevue/fileupload'
-import { useRouter } from 'vue-router'
+import Menu from 'primevue/menu'
+import Dialog from 'primevue/dialog'
+import Skeleton from 'primevue/skeleton'
+import Divider from 'primevue/divider'
+import ConfirmDialog from 'primevue/confirmdialog'
 
-const caseNumber = ref('12345')
-const breadcrumb = ref('Cases / Servicecase / Overview')
+// Custom components
+import FilePreviewDrawer, {
+  type FileProperties,
+} from '@/components/case-detail-view-form/FilePreviewDrawer.vue'
+import FileDropzoneUpload from '@/components/file-handling/FileDropzoneUpload.vue'
+import UserSelector, { type User } from '@/components/case-create-form/UserSelector.vue'
 
-const router = useRouter()
+// Types
+import type { AxiosError } from 'axios'
+import type { Case, CaseAllOfAttachments } from '@/api'
+import { CaseCaseTypeEnum } from '@/api'
 
-const caseDetails = ref({
-  type: 'Servicecase',
-  createdBy: 'Jason Nicholas Arifin',
-  createdOn: new Date('2024-10-25T10:28:00'),
-  updatedOn: new Date('2024-10-25T10:28:00'),
-  reference: '1234',
-  description: '',
-  solution: '',
-})
+// Functions
+import { getFileIcon } from '@/functions/getFileIcon'
+import { apiBlobToFile } from '@/functions/apiBlobToFile'
 
-const priorities = [
-  { name: 'P0', code: 'p0', color: '#ef4444' },
-  { name: 'P1', code: 'p1', color: '#f97316' },
-  { name: 'P2', code: 'p2', color: '#eab308' },
-  { name: 'P3', code: 'p3', color: '#22c55e' },
-]
+// Validation
+import { caseSchema } from '@/validation/schemas'
+import { useCaseFields } from '@/validation/fields'
 
-const statuses = [
-  { name: 'Offen', code: 'open', color: '#e6f4ff', textColor: '#0284c7' },
-  { name: 'In Bearbeitung', code: 'in-progress', color: '#fff7ed', textColor: '#ea580c' },
-  { name: 'Abgeschlossen', code: 'completed', color: '#f0fdf4', textColor: '#16a34a' },
-]
-
-const users = [
-  { id: 1, name: 'Dragnee1Natsu', image: '/placeholder.svg?height=32&width=32' },
-  { id: 2, name: 'Simon Conrad', image: '/placeholder.svg?height=32&width=32' },
-  { id: 3, name: 'emre440', image: '/placeholder.svg?height=32&width=32' },
-  { id: 4, name: 'AdminUser', image: '/placeholder.svg?height=32&width=32' },
-  { id: 5, name: 'TestUser', image: '/placeholder.svg?height=32&width=32' },
-]
-
-const selectedPriority = ref(priorities[0])
-const selectedStatus = ref(statuses[0])
-const selectedAssignee = ref(null)
-
-const onUpload = (event: unknown) => {
-  console.log('File uploaded:', event)
+interface Priority {
+  name: string
+  color: string
 }
 
-const dataTypes = [
-  { label: 'Text', value: 'text' },
-  { label: 'XML', value: 'xml' },
-  { label: 'JSON', value: 'json' },
-  { label: 'Image', value: 'image' },
-  { label: 'Audio', value: 'audio' },
-  { label: 'Video', value: 'video' },
+interface Status {
+  name: string
+  color: string
+  textColor: string
+}
+
+const router = useRouter()
+const api = useApi()
+const toast = useToast()
+const confirm = useConfirm()
+
+const caseId = ref(router.currentRoute.value.params.id)
+const breadcrumb = ref(`Cases / Case #${caseId.value}`)
+
+const caseDetails = ref<Case | null>(null)
+
+const caseTypes = ref(
+  Object.entries(CaseCaseTypeEnum).map(([_key, value]) => ({
+    label: value,
+    value: value,
+  })),
+)
+
+const priorities: Priority[] = [
+  { name: 'High', color: '#ef4444' },
+  { name: 'Medium', color: '#eab308' },
+  { name: 'Low', color: '#22c55e' },
 ]
 
-const selectedDataType = ref('image')
+const statuses: Status[] = [
+  { name: 'Open', color: '#e6f4ff', textColor: '#0284c7' },
+  { name: 'In Progress', color: '#fff7ed', textColor: '#ea580c' },
+  { name: 'Closed', color: '#f0fdf4', textColor: '#16a34a' },
+]
 
-const getUploadProps = (dataType: string) => {
-  switch (dataType) {
-    case 'image':
-      return {
-        accept: 'image/*',
-        maxFileSize: 1000000,
-        chooseLabel: 'Choose Image',
-      }
-    case 'audio':
-      return {
-        accept: 'audio/*',
-        maxFileSize: 1000000,
-        chooseLabel: 'Choose Audio',
-      }
-    case 'video':
-      return {
-        accept: 'video/*',
-        maxFileSize: 10000000,
-        chooseLabel: 'Choose Video',
-      }
-    default:
-      return {}
+const users: User[] = Array.from({ length: 15 }, (_, i) => ({
+  id: i + 1,
+  name: `User ${i + 1}`,
+  image: `https://placecats.com/${50 + i}/${50 + i}`,
+}))
+
+/// Fetch Case Details from the API
+const loading = ref(true)
+const error = ref<string | null>(null)
+const fetchCase = async () => {
+  loading.value = true
+  error.value = null
+  try {
+    caseDetails.value = (await api.casesIdGet({ id: Number(caseId.value) })).data
+
+    if (!caseDetails.value.draft) {
+      resetForm({ values: caseDetails.value })
+    } else {
+      setValues(caseDetails.value)
+      inEditMode.value = true
+    }
+  } catch (err) {
+    error.value = (err as AxiosError).message
+  } finally {
+    loading.value = false
   }
+}
+
+// Lifecycle Hooks
+onMounted(fetchCase)
+
+/// Editing Mode
+const inEditMode = ref(false)
+const moreMenu = ref()
+
+const {
+  handleSubmit,
+  errors,
+  meta: form,
+  resetForm,
+  setValues,
+} = useForm({
+  validationSchema: toTypedSchema(caseSchema),
+})
+
+const fields = useCaseFields()
+
+// User role and permissions
+const userRole = ref('admin')
+const userPermissions = ref(['view'])
+
+// Implement access control
+const canEdit = computed(() => {
+  return (
+    userRole.value === 'admin' ||
+    userRole.value === 'manager' ||
+    userPermissions.value.includes('edit')
+  )
+})
+
+const handleEdit = () => {
+  if (!canEdit.value) {
+    toast.add({
+      severity: 'error',
+      summary: 'Permission Denied',
+      detail: 'You do not have permissions to edit this case.',
+      life: 3000,
+    })
+    return
+  }
+  inEditMode.value = true
+}
+
+const handleSave = handleSubmit(
+  async (values) => {
+    try {
+      // @ts-expect-error - The updated API is in a pull request. TODO remove this line
+      await api.casesIdPut({ id: Number(caseId.value), ...values, draft: false })
+
+      inEditMode.value = false
+      toast.add({
+        severity: 'success',
+        summary: 'Changes Saved',
+        detail: 'Your changes have been successfully saved.',
+        life: 3000,
+      })
+    } catch (error) {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'An error occurred while saving the case\n' + (error as AxiosError).message,
+        life: 3000,
+      })
+      console.error(error)
+    }
+  },
+  ({ errors }) => {
+    // This callback is called when there are validation errors
+    console.log('Validation errors:', errors)
+    toast.add({
+      severity: 'error',
+      summary: 'Validation Error',
+      detail: 'Please fix the errors before saving.',
+      life: 3000,
+    })
+  },
+)
+
+const handleCancel = () => {
+  if (form.value.dirty) {
+    confirm.require({
+      message: !caseDetails.value!.draft
+        ? 'You have unsaved changes. Are you sure you want to cancel?'
+        : "The case hasn't been saved and will be deleted. Are you sure you want to discard?",
+      header: 'Confirm Cancel',
+      icon: 'pi pi-exclamation-triangle',
+      accept: async () => {
+        if (caseDetails.value!.draft) {
+          if (await deleteDraft()) {
+            await router.push({ name: 'cases' })
+          }
+        } else {
+          resetForm()
+          inEditMode.value = false
+          toast.add({
+            severity: 'info',
+            summary: 'Edit Cancelled',
+            detail: 'Your changes have been discarded.',
+            life: 3000,
+            closable: true,
+          })
+        }
+      },
+    })
+  } else {
+    inEditMode.value = false
+  }
+}
+
+const deleteDraft = async () => {
+  try {
+    await api.casesIdDelete({ id: Number(caseId.value) })
+
+    toast.add({
+      severity: 'info',
+      summary: 'Draft Deleted',
+      detail: 'The draft has been deleted.',
+      life: 3000,
+      closable: true,
+    })
+
+    return true
+  } catch (e) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'An error occurred while deleting the draft\n' + (e as AxiosError).message,
+      life: 3000,
+    })
+
+    return false
+  }
+}
+
+const navigateTo = async (name: string) => {
+  if (!form.value.dirty) {
+    await router.push({ name: name })
+  } else {
+    confirm.require({
+      message: 'You have unsaved changes. Are you sure you want to leave?',
+      header: 'Confirm Navigation',
+      icon: 'pi pi-exclamation-triangle',
+      accept: async () => {
+        if (caseDetails.value!.draft) {
+          if (!(await deleteDraft())) {
+            return // Don't navigate if the draft couldn't be deleted
+          }
+        }
+        await router.push({ name: name })
+      },
+    })
+  }
+}
+
+/// File / Attachment Handling
+
+const files = ref<File[]>([])
+const filesToUpload = ref<File[]>([])
+const fileUploadDialogVisible = ref(false)
+const uploading = ref(false)
+
+const uploadFiles = async () => {
+  if (filesToUpload.value.length > 0) {
+    uploading.value = true
+    try {
+      const response = await api.casesIdAttachmentsPost({
+        id: Number(caseId.value),
+        files: filesToUpload.value,
+      })
+      console.log(response)
+
+      files.value.push(...filesToUpload.value)
+      filesToUpload.value = []
+
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Files uploaded successfully',
+        life: 3000,
+      })
+
+      fileUploadDialogVisible.value = false
+    } catch (error) {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'An error occurred while uploading the files\n' + (error as AxiosError).message,
+        life: 3000,
+      })
+
+      console.error(error)
+    } finally {
+      uploading.value = false
+    }
+  }
+}
+
+const deleteAttachment = async (attachment: CaseAllOfAttachments) => {
+  try {
+    await api.casesIdAttachmentsFileIdDelete({
+      id: Number(caseId.value),
+      fileId: attachment.id,
+    })
+
+    files.value = files.value.filter((f) => f.name !== attachment.filename)
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'An error occurred while deleting the file\n' + (error as AxiosError).message,
+      life: 3000,
+    })
+    console.error(error)
+  }
+}
+
+/// File Preview Drawer Logic
+
+const selectedFile = ref<File | null>(null)
+const previewDrawerVisible = ref(false)
+const selectedFileProperties = ref<FileProperties | null>(null)
+const loadingFile = ref<string | null>(null)
+
+const openAttachmentInDrawer = async (attachment: CaseAllOfAttachments) => {
+  // Check if the attachment is already in the files array
+  let file = files.value.find((f) => f.name === attachment.filename)
+  if (!file) {
+    loadingFile.value = attachment.filename
+    // If not, download the file from the server
+    try {
+      file = await apiBlobToFile(
+        await api.casesIdAttachmentsFileIdGet(
+          {
+            id: Number(caseId.value),
+            fileId: attachment.id,
+          },
+          { responseType: 'blob' },
+        ),
+      )
+
+      files.value.push(file)
+    } catch (error) {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'An error occurred while downloading the file\n' + (error as AxiosError).message,
+        life: 3000,
+      })
+      console.error(error)
+      return
+    } finally {
+      loadingFile.value = null
+    }
+  }
+
+  selectedFile.value = file!
+  // TODO: Get file properties from the server
+  selectedFileProperties.value = { name: file!.name, description: '', sharedWith: '' }
+  previewDrawerVisible.value = true
+}
+
+/// Menu
+const menuItems = [
+  {
+    label: 'Export as CSV',
+    icon: 'pi pi-file-excel',
+    command: () => {
+      console.log('Exporting as CSV')
+    },
+  },
+  {
+    label: 'Share Case',
+    icon: 'pi pi-share-alt',
+    command: () => {
+      console.log('Sharing case')
+    },
+  },
+  {
+    label: 'Print',
+    icon: 'pi pi-print',
+    command: () => {
+      console.log('Printing case')
+    },
+  },
+]
+
+const toggleMenu = (event: Event) => {
+  moreMenu.value.toggle(event)
 }
 </script>
 
 <template>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="max-w-7xl w-[80vw] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <ConfirmDialog />
+    <!-- Unsaved changes banner -->
+    <div v-if="inEditMode && form.dirty" class="unsaved-banner">
+      <div class="banner-content">
+        <div class="flex items-center">
+          <i class="pi pi-info-circle text-blue-500 mr-2"></i>
+          <span class="text-blue-700">{{
+            caseDetails?.draft ? 'You are editing an AI Draft' : 'You have unsaved changes'
+          }}</span>
+        </div>
+      </div>
+    </div>
     <!-- Header -->
     <div class="mb-8">
-      <div class="flex justify-between items-center mb-2">
-        <div class="flex gap-3 items-center">
+      <div class="flex justify-between items-center mb-2 gap-x-4">
+        <div class="flex min-w-10 gap-3 items-center">
           <Button
-            @click="router.push('/cases')"
+            @click="navigateTo('cases')"
+            class="flex-shrink-0"
             icon="pi pi-chevron-left"
             outlined
             rounded
             v-tooltip.top="{ value: 'Return to Case List', showDelay: 1000 }"
           />
-          <h1 class="text-2xl font-bold text-gray-900">Case #{{ caseNumber }}</h1>
+          <h1 class="text-2xl font-bold text-gray-900 truncate">
+            Case #{{ caseId
+            }}<span class="font-semibold" v-if="caseDetails?.title">
+              - {{ caseDetails?.title }}</span
+            >
+          </h1>
         </div>
 
         <div class="flex gap-2">
-          <Button label="Generate PDF" icon="pi pi-file-pdf" class="p-button-success" />
-          <Button label="Plan Call" icon="pi pi-phone" class="p-button-success" />
+          <Button v-if="!inEditMode" label="Edit" icon="pi pi-pencil" @click="handleEdit" />
+          <Button v-if="inEditMode" label="Save" icon="pi pi-check" @click="handleSave" />
+          <Button
+            v-if="inEditMode"
+            :label="caseDetails?.draft ? 'Discard' : 'Cancel'"
+            icon="pi pi-times"
+            severity="secondary"
+            @click="handleCancel"
+          />
+          <Button
+            icon="pi pi-ellipsis-v"
+            @click="toggleMenu"
+            aria-haspopup="true"
+            aria-controls="more_actions_menu"
+            :disabled="inEditMode"
+          />
+          <Menu ref="moreMenu" id="more_actions_menu" :model="menuItems" :popup="true" />
         </div>
       </div>
       <p class="text-sm text-gray-500">{{ breadcrumb }}</p>
     </div>
 
-    <!-- Main Content -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-      <!-- Details Card -->
-      <Card>
+    <div v-if="!error">
+      <!-- Main Content -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 lg:min-w-[57rem] gap-6 mb-6">
+        <!-- Details Card -->
+        <Card>
+          <template #title>
+            <h2 class="text-xl font-semibold mb-4">Details</h2>
+          </template>
+          <template #content>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="field">
+                <label>Title</label>
+                <InputText
+                  v-if="!loading"
+                  v-model="fields.title.value.value"
+                  :disabled="!inEditMode"
+                  :invalid="!!errors.title"
+                  class="w-full"
+                />
+                <Skeleton v-else height="2.5rem" />
+                <small v-if="errors.title" class="p-error block mt-1">{{ errors.title }}</small>
+              </div>
+              <div class="field">
+                <label>Case Type</label>
+                <Select
+                  v-if="!loading"
+                  v-model="fields.type.value.value"
+                  :options="caseTypes"
+                  option-label="label"
+                  option-value="value"
+                  :disabled="!inEditMode"
+                  :invalid="!!errors.case_type"
+                  class="w-full"
+                />
+                <Skeleton v-else height="2.5rem" />
+                <small v-if="errors.case_type" class="p-error block mt-1">{{
+                  errors.case_type
+                }}</small>
+              </div>
+              <div class="field">
+                <label>Reference</label>
+                <InputText
+                  v-if="!loading"
+                  :model-value="String(caseDetails!.id)"
+                  class="w-full"
+                  disabled
+                />
+                <Skeleton v-else height="2.5rem" />
+              </div>
+              <div class="field">
+                <label>Created by</label>
+                <InputText v-if="!loading" model-value="Backend Missing" class="w-full" disabled />
+                <Skeleton v-else height="2.5rem" />
+              </div>
+              <div class="field">
+                <label>Created at</label>
+                <DatePicker
+                  v-if="!loading"
+                  :model-value="new Date(caseDetails!.createdAt)"
+                  disabled
+                  showTime
+                  hourFormat="24"
+                  class="w-full"
+                />
+                <Skeleton v-else height="2.5rem" />
+              </div>
+              <div class="field">
+                <label>Updated at</label>
+                <DatePicker
+                  v-if="!loading"
+                  :model-value="new Date(caseDetails!.updatedAt)"
+                  showTime
+                  hourFormat="24"
+                  class="w-full"
+                  disabled
+                />
+                <Skeleton v-else height="2.5rem" />
+              </div>
+            </div>
+          </template>
+        </Card>
+
+        <!-- Status & People Card -->
+        <Card>
+          <template #title>
+            <h2 class="text-xl font-semibold mb-4">Status & People</h2>
+          </template>
+          <template #content>
+            <div class="space-y-4">
+              <div class="field">
+                <label>Status</label>
+                <Select
+                  v-if="!loading"
+                  placeholder="Unknown (Backend Missing)"
+                  :options="statuses"
+                  :model-value="fields.status.value.value"
+                  @update:model-value="fields.status.value.value = $event.name"
+                  optionLabel="name"
+                  class="w-full min-h-10"
+                  :disabled="!inEditMode"
+                >
+                  <template #value="slotProps">
+                    <div v-if="slotProps.value" class="flex items-center">
+                      <div
+                        class="px-3 py-1 rounded-md text-sm"
+                        :style="{
+                          backgroundColor: slotProps.value.color,
+                          color: slotProps.value.textColor,
+                        }"
+                      >
+                        {{ slotProps.value.name }}
+                      </div>
+                    </div>
+                  </template>
+                  <template #option="slotProps">
+                    <div class="flex items-center">
+                      <div
+                        class="px-3 py-1 rounded-md text-sm"
+                        :style="{
+                          backgroundColor: slotProps.option.color,
+                          color: slotProps.option.textColor,
+                        }"
+                      >
+                        {{ slotProps.option.name }}
+                      </div>
+                    </div>
+                  </template>
+                </Select>
+                <Skeleton v-else height="2.5rem" />
+                <small v-if="errors.status" class="p-error block mt-1">{{ errors.status }}</small>
+              </div>
+
+              <div class="field">
+                <label>Priority</label>
+                <Select
+                  v-if="!loading"
+                  :bind="fields.priority.value.value"
+                  @update:model-value="fields.priority.value.value = $event.name"
+                  :options="priorities"
+                  optionLabel="name"
+                  class="w-full"
+                  :disabled="!inEditMode"
+                >
+                  <template #value="slotProps">
+                    <div class="flex items-center gap-2" v-if="slotProps.value">
+                      <div
+                        class="w-3 h-3 rounded-full"
+                        :style="{ backgroundColor: slotProps.value.color }"
+                      ></div>
+                      <span>{{ slotProps.value.name }}</span>
+                    </div>
+                  </template>
+                  <template #option="slotProps">
+                    <div class="flex items-center gap-2">
+                      <div
+                        class="w-3 h-3 rounded-full"
+                        :style="{ backgroundColor: slotProps.option.color }"
+                      ></div>
+                      <span>{{ slotProps.option.name }}</span>
+                    </div>
+                  </template>
+                </Select>
+                <Skeleton v-else height="2.5rem" />
+                <small v-if="errors.priority" class="p-error block mt-1">{{
+                  errors.priority
+                }}</small>
+              </div>
+
+              <Divider />
+
+              <div class="field">
+                <label>Assignee</label>
+                <div v-if="!loading">
+                  <UserSelector
+                    :selected-users="[]"
+                    assigneeLabel="Assignees"
+                    :placeholder="inEditMode ? 'Select Assignees' : ''"
+                    :userOptions="users"
+                    multi-select
+                    :disabled="!inEditMode"
+                    :invalid="!!errors.assignees"
+                  />
+                  <small v-if="errors.assignees" class="p-error block mt-1">
+                    {{ errors.assignees }}
+                  </small>
+                </div>
+                <Skeleton v-else height="2.5rem" />
+              </div>
+
+              <div class="field">
+                <label>Participants</label>
+                <div v-if="!loading">
+                  <UserSelector
+                    :selected-users="[]"
+                    assigneeLabel="Participants"
+                    :placeholder="inEditMode ? 'Select Participants' : ''"
+                    :userOptions="users"
+                    multi-select
+                    :disabled="!inEditMode"
+                    :invalid="!!errors.participants"
+                  />
+                  <small v-if="errors.participants" class="p-error block mt-1">
+                    {{ errors.participants }}
+                  </small>
+                </div>
+                <Skeleton v-else height="2.5rem" />
+              </div>
+            </div>
+          </template>
+        </Card>
+      </div>
+
+      <!-- Description Card -->
+      <Card class="mt-6">
         <template #title>
-          <h2 class="text-xl font-semibold mb-4">Details</h2>
+          <h2 class="text-xl font-semibold mb-4">Description</h2>
         </template>
         <template #content>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="field">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Case Type</label>
-              <InputText v-model="caseDetails.type" class="w-full" />
-            </div>
-            <div class="field">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Reference</label>
-              <InputText v-model="caseDetails.reference" class="w-full" />
-            </div>
-            <div class="field">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Created by</label>
-              <InputText v-model="caseDetails.createdBy" class="w-full" />
-            </div>
-            <div class="field">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Created on</label>
-              <Calendar v-model="caseDetails.createdOn" showTime hourFormat="24" class="w-full" />
-            </div>
-            <div class="field">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Updated on</label>
-              <Calendar v-model="caseDetails.updatedOn" showTime hourFormat="24" class="w-full" />
-            </div>
-          </div>
+          <Textarea
+            v-if="!loading"
+            v-model="fields.description.value.value"
+            rows="4"
+            class="w-full"
+            :class="{ 'p-invalid': errors.description }"
+            :disabled="!inEditMode"
+          />
+          <Skeleton v-else height="2.5rem" />
+          <small v-if="errors.description" class="p-error block mt-1">{{
+            errors.description
+          }}</small>
         </template>
       </Card>
 
-      <!-- Status & Assignee Card -->
-      <Card>
+      <!-- Solution Card -->
+      <Card class="mt-6">
         <template #title>
-          <h2 class="text-xl font-semibold mb-4">Status & Assignee</h2>
+          <h2 class="text-xl font-semibold mb-4">Solution</h2>
         </template>
         <template #content>
-          <div class="space-y-4">
-            <div class="field">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-              <Dropdown
-                v-model="selectedPriority"
-                :options="priorities"
-                optionLabel="name"
-                class="w-full"
-              >
-                <template #value="slotProps">
-                  <div class="flex items-center gap-2" v-if="slotProps.value">
-                    <div
-                      class="w-3 h-3 rounded-full"
-                      :style="{ backgroundColor: slotProps.value.color }"
-                    ></div>
-                    <span>{{ slotProps.value.name }}</span>
-                  </div>
-                </template>
-                <template #option="slotProps">
-                  <div class="flex items-center gap-2">
-                    <div
-                      class="w-3 h-3 rounded-full"
-                      :style="{ backgroundColor: slotProps.option.color }"
-                    ></div>
-                    <span>{{ slotProps.option.name }}</span>
-                  </div>
-                </template>
-              </Dropdown>
-            </div>
+          <Textarea
+            v-if="!loading"
+            v-model="fields.solution.value.value"
+            rows="4"
+            class="w-full"
+            :class="{ 'p-invalid': errors.solution }"
+            :disabled="!inEditMode"
+          />
+          <Skeleton v-else height="2.5rem" />
+          <small v-if="errors.solution" class="p-error block mt-1">{{ errors.solution }}</small>
+        </template>
+      </Card>
 
-            <div class="field">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-              <Dropdown
-                v-model="selectedStatus"
-                :options="statuses"
-                optionLabel="name"
-                class="w-full"
-              >
-                <template #value="slotProps">
-                  <div v-if="slotProps.value" class="flex items-center">
-                    <div
-                      class="px-3 py-1 rounded-md text-sm"
-                      :style="{
-                        backgroundColor: slotProps.value.color,
-                        color: slotProps.value.textColor,
-                      }"
-                    >
-                      {{ slotProps.value.name }}
-                    </div>
-                  </div>
-                </template>
-                <template #option="slotProps">
-                  <div class="flex items-center">
-                    <div
-                      class="px-3 py-1 rounded-md text-sm"
-                      :style="{
-                        backgroundColor: slotProps.option.color,
-                        color: slotProps.option.textColor,
-                      }"
-                    >
-                      {{ slotProps.option.name }}
-                    </div>
-                  </div>
-                </template>
-              </Dropdown>
-            </div>
-
-            <div class="field">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Assignee</label>
-              <Dropdown
-                v-model="selectedAssignee"
-                :options="users"
-                optionLabel="name"
-                placeholder="Select Assignee"
-                class="w-full"
-              >
-                <template #value="slotProps">
-                  <div class="flex items-center gap-2" v-if="slotProps.value">
-                    <img
-                      :src="slotProps.value.image"
-                      :alt="slotProps.value.name"
-                      class="w-6 h-6 rounded-full"
-                    />
-                    <span>{{ slotProps.value.name }}</span>
-                  </div>
-                </template>
-                <template #option="slotProps">
-                  <div class="flex items-center gap-2">
-                    <img
-                      :src="slotProps.option.image"
-                      :alt="slotProps.option.name"
-                      class="w-6 h-6 rounded-full"
-                    />
-                    <span>{{ slotProps.option.name }}</span>
-                  </div>
-                </template>
-              </Dropdown>
-              <p class="mt-2 text-sm text-gray-500" v-if="!selectedAssignee">
-                No assignee selected
-              </p>
-            </div>
+      <!-- Data Card -->
+      <Card class="mt-6">
+        <template #title>
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-semibold mb-4">Attachments</h2>
+            <Button
+              v-if="caseDetails?.attachments.length ?? 0 > 0"
+              icon="pi pi-cloud-upload"
+              rounded
+              severity="secondary"
+              @click="fileUploadDialogVisible = true"
+              v-tooltip.top="{ value: 'Upload Additional Files', showDelay: 1000 }"
+            />
           </div>
+        </template>
+        <template #content>
+          <div v-if="caseDetails?.attachments.length ?? 0 > 0" class="grid grid-cols-5 gap-4">
+            <Card
+              v-for="file in caseDetails!.attachments"
+              :key="file.id"
+              @click="openAttachmentInDrawer(file)"
+              class="cursor-pointer relative"
+            >
+              <template #content>
+                <div
+                  class="flex flex-col items-center"
+                  :class="{ 'animate-pulse': file.filename == loadingFile }"
+                >
+                  <i :class="`text-4xl text-gray-600 mb-5 pi ${getFileIcon(file.mimetype)}`"></i>
+                  <p class="text-gray-600 text-center break-all">{{ file.filename }}</p>
+                </div>
+                <div class="absolute top-0 left-0 w-full flex justify-end">
+                  <Button
+                    icon="pi pi-times"
+                    size="small"
+                    severity="secondary"
+                    rounded
+                    variant="text"
+                    @click.stop="deleteAttachment(file)"
+                  />
+                </div>
+              </template>
+            </Card>
+          </div>
+          <FileDropzoneUpload v-else-if="!loading" v-model:files="filesToUpload">
+            <template #file-list-footer>
+              <Button
+                icon="pi pi-cloud-upload"
+                label="Upload Files"
+                @click="uploadFiles"
+                :loading="uploading"
+              />
+            </template>
+          </FileDropzoneUpload>
+          <Skeleton v-else height="10rem" />
         </template>
       </Card>
     </div>
+    <div
+      v-else
+      aria-errormessage="An error occurred while fetching the case details"
+      class="flex items-center justify-center gap-x-3 bg-red-100 text-red-600 p-4 rounded-lg"
+    >
+      <i class="pi pi-exclamation-triangle text-3xl" />
+      <span class="text-center font-semibold">
+        An error occurred while fetching the case details<br />
+        <span class="font-bold">Error</span>: {{ error }}
+      </span>
+    </div>
 
-    <!-- Description Card -->
-    <Card class="mb-6">
-      <template #title>
-        <h2 class="text-xl font-semibold mb-4">Description</h2>
-      </template>
-      <template #content>
-        <Textarea v-model="caseDetails.description" rows="4" class="w-full" />
-      </template>
-    </Card>
+    <!-- File Upload Popover -->
+    <Dialog v-model:visible="fileUploadDialogVisible" modal class="lg:min-w-[50rem]">
+      <h2 class="text-xl font-semibold mb-4">Upload Additional Files</h2>
+      <FileDropzoneUpload v-model:files="filesToUpload">
+        <template #file-list-footer>
+          <Button
+            icon="pi pi-cloud-upload"
+            label="Upload Files"
+            @click="uploadFiles"
+            :loading="uploading"
+          />
+        </template>
+      </FileDropzoneUpload>
+    </Dialog>
 
-    <!-- Solution Card -->
-    <Card class="mb-6">
-      <template #title>
-        <h2 class="text-xl font-semibold mb-4">Solution</h2>
-      </template>
-      <template #content>
-        <Textarea v-model="caseDetails.solution" rows="4" class="w-full" />
-      </template>
-    </Card>
-
-    <!-- Data Card -->
-    <Card>
-      <template #title>
-        <h2 class="text-xl font-semibold mb-4">Data</h2>
-      </template>
-      <template #content>
-        <div class="space-y-6">
-          <div class="flex justify-between items-center">
-            <div v-for="dataType in dataTypes" :key="dataType.value" class="text-center">
-              <button
-                @click="selectedDataType = dataType.value"
-                class="px-4 py-2 rounded-md transition-colors duration-200 ease-in-out"
-                :class="{
-                  'bg-blue-100 text-blue-700': selectedDataType === dataType.value,
-                  'hover:bg-gray-100': selectedDataType !== dataType.value,
-                }"
-              >
-                {{ dataType.label }}
-              </button>
-            </div>
-          </div>
-
-          <div class="mt-4">
-            <div v-if="['text', 'xml', 'json'].includes(selectedDataType)">
-              <Textarea
-                :placeholder="`Enter ${selectedDataType.toUpperCase()} data`"
-                rows="4"
-                class="w-full"
-              />
-            </div>
-            <div v-else class="flex justify-center">
-              <FileUpload
-                mode="basic"
-                :auto="true"
-                @upload="onUpload"
-                v-bind="getUploadProps(selectedDataType)"
-              />
-            </div>
-          </div>
-        </div>
-      </template>
-    </Card>
+    <!-- Drawer for File Preview -->
+    <FilePreviewDrawer
+      v-if="previewDrawerVisible"
+      v-model:visible="previewDrawerVisible"
+      :selected-file="selectedFile"
+      :file-properties="selectedFileProperties"
+    />
   </div>
 </template>
 
 <style scoped>
-:deep(.p-card) {
-  background-color: white;
-  border-radius: 0.5rem;
+.field > label {
+  @apply block text-sm font-medium text-gray-700 mb-1;
 }
 
-:deep(.p-dropdown),
-:deep(.p-calendar),
-:deep(.p-inputtext),
-:deep(.p-textarea) {
-  width: 100%;
+.p-error {
+  color: #ef4444;
 }
 
-:deep(.p-fileupload-buttonbar) {
-  background-color: transparent;
-  border: none;
+.p-invalid {
+  border-color: #ef4444 !important;
+}
+
+:deep(.p-component:disabled):not(.p-button),
+:deep(.p-disabled) {
+  @apply bg-slate-50;
+}
+
+:deep(.p-disabled) [data-pc-section='dropdown'] {
+  @apply hidden;
+}
+
+.unsaved-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: #e6f7ff;
+  border-bottom: 1px solid #b3d8ff;
+  z-index: 1000;
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
   justify-content: center;
+  width: 100%;
+  max-width: 80rem;
+  height: 3rem;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
-:deep(.p-button.p-fileupload-choose) {
-  background-color: #3b82f6;
-  border-color: #3b82f6;
-}
-
-:deep(.p-button.p-fileupload-choose:hover) {
-  background-color: #2563eb;
-  border-color: #2563eb;
-}
-
-:deep(.p-dropdown-item) {
-  padding: 0.5rem !important;
-}
-
-:deep(.p-dropdown-label) {
-  padding: 0.5rem !important;
+/* Add margin-top to main content container */
+.max-w-7xl {
+  margin-top: 60px;
 }
 </style>

@@ -17,11 +17,9 @@ const nextcloudClientPromise = (async () => {
 // Example function to list files in the root directory
 async function listFiles(remoteFilePath) {
     try {
-        const directoryItems = await nextcloudClient.getDirectoryContents(remoteFilePath.toString());
-      //  console.log(directoryItems);
-        return directoryItems;
+        // Return the directory contents
+        return await nextcloudClient.getDirectoryContents(remoteFilePath);
     } catch (error) {
-        
         console.error('Error listing files:', error);
     }
 }
@@ -49,7 +47,7 @@ async function uploadFile(localFilePath, remoteFilePath, fileName) {
         console.error('Error hashing file content:', error);
     }
     
-    const folder = ["Audio/", "Bilder/","Text/" ];
+    const folder = ["Audio/", "Bilder/", "Text/"];
     const fileExtension = fileName.split('.').pop().toLowerCase();
     let folderPath = '';
 
@@ -134,7 +132,11 @@ async function downloadFileAndReturn(remoteFilePath) {
     } catch (error) {
         console.error('Error downloading file:', error);
     }
-    
+
+}
+
+async function streamFile(remoteFilePath) {
+    return nextcloudClient.createReadStream(remoteFilePath);
 }
 
 async function deleteFile(remoteFilePath) {
@@ -149,6 +151,7 @@ async function deleteFile(remoteFilePath) {
 
 module.exports = {
     downloadFileAndReturn,
+    streamFile,
     listFiles,
     uploadFile,
     downloadFile,

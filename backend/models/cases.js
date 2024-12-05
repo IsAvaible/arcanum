@@ -29,16 +29,16 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     description: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false
     },
     solution: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: true
     },
     assignee: {
-      type: DataTypes.STRING,
-      allowNull: true
+      type: DataTypes.JSON,
+      allowNull: true,
     },
     status: {
       type: DataTypes.STRING,
