@@ -122,9 +122,10 @@ def upload_file_method_production(files, pdf_extractor):
             content_dict = text_to_dict(txt) # file to dict
         else:
             print("NOT USING CACHE")
-            content_dict = {"content": single_dict}
+            #content_dict = {"content": single_dict}
+            content_dict = single_dict
             # write file to cache
-            file_path = write_to_file(filehash, json.dumps(content_dict, ensure_ascii=False))
+            file_path = write_to_file(filehash, json.dumps(content_dict, ensure_ascii=False, indent=2))
             upload_cache_file(file_path, filehash)
 
 

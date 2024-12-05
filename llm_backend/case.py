@@ -39,7 +39,7 @@ class Case(BaseModel):
     )"""
     status: str = Field(
         ...,
-        description="The current state of the case, such as 'open', 'in progress' or 'resolved' to track its progression.",
+        description="The current state of the case, such as 'Open', 'In Progress', 'Solved' or 'Closed' to track its progression.",
     )
     attachments: list[int] = Field(
         ...,
