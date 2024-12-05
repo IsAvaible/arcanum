@@ -316,6 +316,8 @@ const uploadFiles = async () => {
 }
 
 const deleteAttachment = async (attachment: CaseAllOfAttachments) => {
+  deletingFileId.value = attachment.id
+
   try {
     await api.casesIdAttachmentsFileIdDelete({
       id: Number(caseId.value),
@@ -331,6 +333,8 @@ const deleteAttachment = async (attachment: CaseAllOfAttachments) => {
       life: 3000,
     })
     console.error(error)
+  } finally {
+    deletingFileId.value = null
   }
 }
 
@@ -339,13 +343,14 @@ const deleteAttachment = async (attachment: CaseAllOfAttachments) => {
 const selectedFile = ref<File | null>(null)
 const previewDrawerVisible = ref(false)
 const selectedFileProperties = ref<FileProperties | null>(null)
-const loadingFile = ref<string | null>(null)
+const loadingFileId = ref<number | null>(null)
+const deletingFileId = ref<number | null>(null)
 
 const openAttachmentInDrawer = async (attachment: CaseAllOfAttachments) => {
   // Check if the attachment is already in the files array
   let file = files.value.find((f) => f.name === attachment.filename)
   if (!file) {
-    loadingFile.value = attachment.filename
+    loadingFileId.value = attachment.id
     // If not, download the file from the server
     try {
       file = await apiBlobToFile(
@@ -369,7 +374,7 @@ const openAttachmentInDrawer = async (attachment: CaseAllOfAttachments) => {
       console.error(error)
       return
     } finally {
-      loadingFile.value = null
+      loadingFileId.value = null
     }
   }
 
@@ -744,11 +749,17 @@ const toggleMenu = (event: Event) => {
               class="cursor-pointer relative"
             >
               <template #content>
-                <div
-                  class="flex flex-col items-center"
-                  :class="{ 'animate-pulse': file.filename == loadingFile }"
-                >
-                  <i :class="`text-4xl text-gray-600 mb-5 pi ${getFileIcon(file.mimetype)}`"></i>
+                <div class="flex flex-col items-center">
+                  <i
+                    :class="`text-4xl text-gray-600 mb-5 pi
+                      ${
+                        file.id == loadingFileId
+                          ? 'pi-spin pi-spinner'
+                          : file.id == deletingFileId
+                            ? 'pi-trash pulse'
+                            : getFileIcon(file.mimetype)
+                      }`"
+                  ></i>
                   <p class="text-gray-600 text-center break-all">{{ file.filename }}</p>
                 </div>
                 <div class="absolute top-0 left-0 w-full flex justify-end">
