@@ -7,7 +7,6 @@ const attachmentSchema = z.object({
     filepath: z.string().min(3),
     mimetype: z.string().min(3),
     size: z.number().int().positive(),
-    description: z.string().min(3),
     uploadedAt: z.date().optional(),
     filehash: z.string().min(3),
     createdAt: z.date().optional(),

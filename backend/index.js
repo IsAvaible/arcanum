@@ -1,9 +1,11 @@
-const fs = require('fs')
 const port = 443
 const express = require('express')
-const https = require('https')
 const app = express()
 const cors = require('cors')
+
+const https = require('https')
+const fs = require('fs')
+
 const caseRoutes = require('./routes/caseRoutes')
 const chatBotRoutes = require('./routes/chatBotRoutes')
 const uploadRoutes = require('./routes/exampleFileUpload')

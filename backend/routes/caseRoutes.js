@@ -16,7 +16,7 @@ router.get('/:id', caseController.showCaseDetail);
 
 router.post(
     '/',
-    escapeData(['title', 'description', 'solution', 'assignee', 'status', 'priority', 'draft']),
+    escapeData(['title', 'description', 'solution', 'assignee', 'status', 'case_type','priority']),
     validateData(caseSchema),
     caseController.createCase
 );
