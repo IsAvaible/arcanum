@@ -1,4 +1,3 @@
-const fs = require('fs');
 const port = 443;
 const express = require('express')
 const https = require('https');
