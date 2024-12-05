@@ -16,12 +16,13 @@ const attachmentSchema = z.object({
 
     const caseSchema = z.object({
         id: z.number().int().positive().optional(),
+        case_type: z.enum(['Problem', 'Incident', 'Change', 'FAQ']),
         title: z.string().min(3),
         description: z.string().min(1),
         solution: z.string().min(1).nullable(),
         assignee: z.string().min(1).optional(),
-        status: z.enum(['Offen', 'in Bearbeitung', 'Abgeschlossen']).optional(),
-        priority: z.enum(['low', 'medium', 'high']).optional(),
+        status: z.enum(['Open', 'inProgress', 'Solved', 'Closed']).optional(),
+        priority: z.enum(['Low', 'Medium', 'High']).optional(),
         draft: z.string().optional(),
         craftedAt: z.date().optional(),
         updatedAt: z.date().optional(),
