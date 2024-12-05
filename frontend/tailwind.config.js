@@ -1,10 +1,11 @@
-/** @type {import('tailwindcss').Config} */
 import tailwindcssPrimeui from 'tailwindcss-primeui'
 import tailwindScrollbar from 'tailwind-scrollbar'
 
+/** @type {import('tailwindcss').Config} */
 export default {
   mode: 'jit',
   content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       screens: {
