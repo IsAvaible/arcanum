@@ -1,9 +1,11 @@
 from flask import Flask
+from flask_cors import CORS
 from flask_socketio import SocketIO
 import os
 
 
 app = Flask(__name__)
+CORS(app)
 app.secret_key = "super secret key"
 app.config["SECRET_KEY"] = "super secret key"
 socketio = SocketIO(app)

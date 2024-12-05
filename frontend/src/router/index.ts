@@ -28,6 +28,11 @@ const router = createRouter({
       component: CaseListView,
     },
     {
+      path: '/cases/create/manual',
+      name: 'case-create-manual',
+      component: CaseListView,
+    },
+    {
       path: '/cases/:id(\\d+)/delete',
       name: 'case-delete',
       component: CaseListView,
