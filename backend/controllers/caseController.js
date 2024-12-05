@@ -1,184 +1,174 @@
-const { Cases, Attachments }  = require('../models');
-const { body, validationResult } = require('express-validator');
-const nextCloud = require('./nextCloudUploaderController.js');
-const path = require('path');
-const fileUploadController = require('../controllers/fileuploadController');
-const upload = require('../configs/multerConfig.js');
-const attachmentService = require('../services/attachmentService');
-const multerMiddleware = require('../middlewares/multerMiddleware');
-
-
-
+const { Cases, Attachments } = require("../models");
+const { body, validationResult } = require("express-validator");
+const nextCloud = require("./nextCloudUploaderController.js");
+const path = require("path");
+const fileUploadController = require("../controllers/fileuploadController");
+const upload = require("../configs/multerConfig.js");
+const attachmentService = require("../services/attachmentService");
+const multerMiddleware = require("../middlewares/multerMiddleware");
 
 exports.showCaseDetail = async (req, res) => {
-    const caseId = parseInt(req.params.id, 10);
-    try {
-        const caseItem = await Cases.findByPk(caseId, {
-          include: [{
-            model: Attachments,
-            as: 'attachments',
-            through: { attributes: [] } //Daten aus der Zwischentabelle ausblenden
-          }]
-        });
+  const caseId = parseInt(req.params.id, 10);
+  try {
+    const caseItem = await Cases.findByPk(caseId, {
+      include: [
+        {
+          model: Attachments,
+          as: "attachments",
+          through: { attributes: [] }, //Daten aus der Zwischentabelle ausblenden
+        },
+      ],
+    });
 
-        if (!caseItem) {
-            return res.status(404).json({ message: 'Case not found' });
-        }
-
-        res.json(caseItem);
-
-    } catch (error) {
-        console.error('Error fetching case detail:', error);
-        res.status(500).json({ message: 'Error fetching case detail' });
+    if (!caseItem) {
+      return res.status(404).json({ message: "Case not found" });
     }
+
+    res.json(caseItem);
+  } catch (error) {
+    console.error("Error fetching case detail:", error);
+    res.status(500).json({ message: "Error fetching case detail" });
+  }
 };
-
-
 
 exports.showCaseList = async (req, res) => {
-    try {
-        const casesAll = await Cases.findAll({
-          include: [{
-            model: Attachments,
-            as: 'attachments',
-            through: { attributes: [] }
-          }]
-        });
-        res.json(casesAll);
-    } catch (error) {
-        console.error('Error fetching cases:', error);
-        res.status(500).json({ message: 'Error fetching cases' });
-    }
+  try {
+    const casesAll = await Cases.findAll({
+      include: [
+        {
+          model: Attachments,
+          as: "attachments",
+          through: { attributes: [] },
+        },
+      ],
+    });
+    res.json(casesAll);
+  } catch (error) {
+    console.error("Error fetching cases:", error);
+    res.status(500).json({ message: "Error fetching cases" });
+  }
 };
-
-
-
 
 exports.deleteCase = async (req, res) => {
-    const caseId = parseInt(req.params.id, 10);
-    try {
-
-      const caseItemToDelete = await Cases.findByPk(caseId, {
-        include: [{
+  const caseId = parseInt(req.params.id, 10);
+  try {
+    const caseItemToDelete = await Cases.findByPk(caseId, {
+      include: [
+        {
           model: Attachments,
-          as: 'attachments',
-          through: { attributes: [] } //Daten aus der Zwischentabelle ausblenden
-        }]
-      });
+          as: "attachments",
+          through: { attributes: [] }, //Daten aus der Zwischentabelle ausblenden
+        },
+      ],
+    });
 
-        if (!caseItemToDelete) {
-          return res.status(404).json({ message: 'Case not found' });
-      }
+    if (!caseItemToDelete) {
+      return res.status(404).json({ message: "Case not found" });
+    }
 
-      const attachments = caseItemToDelete.attachments;
-      console.log(`attachemtens From Case to delete${attachments}`);
+    const attachments = caseItemToDelete.attachments;
+    console.log(`attachemtens From Case to delete${attachments}`);
 
-      if(attachments && attachments.length > 0){
-        for(const attachment of attachments){
-          await caseItemToDelete.removeAttachment(attachment)
-          await attachmentService.deleteAttachmentIfOrphaned(attachment);
+    if (attachments && attachments.length > 0) {
+      for (const attachment of attachments) {
+        await caseItemToDelete.removeAttachment(attachment);
+        await attachmentService.deleteAttachmentIfOrphaned(attachment);
       }
     }
 
-        await caseItemToDelete.destroy()
-        res.status(204).send();
-    } catch (error) {
-        console.error('Error deleting case:', error);
-        res.status(500).json({ message: 'Error deleting case' });
-    }
+    await caseItemToDelete.destroy();
+    res.status(204).send();
+  } catch (error) {
+    console.error("Error deleting case:", error);
+    res.status(500).json({ message: "Error deleting case" });
+  }
 };
 
-
-
-
 exports.createCase = [
-    // **Validierungsregeln**
-    body('title').notEmpty().withMessage('Title is required'),
-    body('description').notEmpty().withMessage('Description is required'),
-    // Füge weitere Validierungen für andere Felder hinzu, falls nötig
+  // **Validierungsregeln**
+  body("title").notEmpty().withMessage("Title is required"),
+  body("description").notEmpty().withMessage("Description is required"),
+  // Füge weitere Validierungen für andere Felder hinzu, falls nötig
 
-    // **Multer-Middleware**
-    multerMiddleware,
-
-
-    // **Anfrage-Handler**
-    async (req, res) => {
-
-  
-      try {
-        // **Eingabedaten aus dem Request extrahieren**
-        const {
-          title,
-          description,
-          solution,
-          assignee,
-          status,
-          case_type,
-          priority
-        } = req.body;
-        
-        console.log(req.fileData);
-        
-        // **Hochgeladene Dateien verarbeiten**
-        const attachmentInstances = await attachmentService.uploadFilesAndCreateAttachments(req.files);
-
-  
-        // **Neuen Fall erstellen**
-        const newCase = await Cases.create({
-          title,
-          description,
-          solution,
-          assignee: JSON.parse(assignee),
-          status,
-          case_type,
-          priority,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        });
-
-        // **Attachments mit dem Case verknüpfen**
-        if (attachmentInstances.length > 0) {
-          await newCase.addAttachments(attachmentInstances);
-      }
-
-        // **Erfolgsantwort senden**
-        const caseWithAttachments = await Cases.findByPk(newCase.id, {
-          include: [{
-              model: Attachments,
-              as: 'attachments',
-              through: { attributes: [] }
-          }]
-      });
-        res.status(201).json(caseWithAttachments);
-      } catch (error) {
-        console.error('Error creating case:', error);
-        res.status(500).json({ message: 'Error creating case' });
-      }
-    }
-  ];
-
-
-
-  exports.updateCase = [
   // **Multer-Middleware**
   multerMiddleware,
-  
+
+  // **Anfrage-Handler**
+  async (req, res) => {
+    try {
+      // **Eingabedaten aus dem Request extrahieren**
+      const {
+        title,
+        description,
+        solution,
+        assignee,
+        status,
+        case_type,
+        priority,
+      } = req.body;
+
+      console.log(req.fileData);
+
+      // **Hochgeladene Dateien verarbeiten**
+      const attachmentInstances =
+        await attachmentService.uploadFilesAndCreateAttachments(req.files);
+
+      // **Neuen Fall erstellen**
+      const newCase = await Cases.create({
+        title,
+        description,
+        solution,
+        assignee: JSON.parse(assignee),
+        status,
+        case_type,
+        priority,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // **Attachments mit dem Case verknüpfen**
+      if (attachmentInstances.length > 0) {
+        await newCase.addAttachments(attachmentInstances);
+      }
+
+      // **Erfolgsantwort senden**
+      const caseWithAttachments = await Cases.findByPk(newCase.id, {
+        include: [
+          {
+            model: Attachments,
+            as: "attachments",
+            through: { attributes: [] },
+          },
+        ],
+      });
+      res.status(201).json(caseWithAttachments);
+    } catch (error) {
+      console.error("Error creating case:", error);
+      res.status(500).json({ message: "Error creating case" });
+    }
+  },
+];
+
+exports.updateCase = [
+  // **Multer-Middleware**
+  multerMiddleware,
+
   async (req, res) => {
     const caseId = parseInt(req.params.id, 10);
-  
+
     try {
       // **Zulässige Felder definieren**
       const allowedFields = [
-        'title',
-        'description',
-        'solution',
-        'assignee',
-        'status',
-        'case_type',
-        'priority'//,
+        "title",
+        "description",
+        "solution",
+        "assignee",
+        "status",
+        "case_type",
+        "priority", //,
         //'attachment'
       ];
-  
+
       // **Eingabedaten filtern**
       const updateData = {};
       allowedFields.forEach((field) => {
@@ -186,41 +176,41 @@ exports.createCase = [
           updateData[field] = req.body[field];
         }
       });
-  
+
       // **Case aktualisieren**
       const [updatedRows] = await Cases.update(updateData, {
-        where: { id: caseId }
+        where: { id: caseId },
       });
-  
+
       if (updatedRows === 0) {
-        return res.status(404).json({ message: 'Case not found' });
+        return res.status(404).json({ message: "Case not found" });
       }
-  
+
       // **Aktualisierten Case abrufen**
       const updatedCase = await Cases.findByPk(caseId);
 
-
-      const attachmentInstances = await attachmentService.uploadFilesAndCreateAttachments(req.files);
+      const attachmentInstances =
+        await attachmentService.uploadFilesAndCreateAttachments(req.files);
 
       if (attachmentInstances.length > 0) {
         await updatedCase.addAttachments(attachmentInstances);
-    }
+      }
 
-
-       // **Case mit Attachments abrufen und zurückgeben**
-       const caseWithAttachments = await Cases.findByPk(caseId, {
-        include: [{
+      // **Case mit Attachments abrufen und zurückgeben**
+      const caseWithAttachments = await Cases.findByPk(caseId, {
+        include: [
+          {
             model: Attachments,
-            as: 'attachments',
-            through: { attributes: [] }
-        }]
-    });
-
+            as: "attachments",
+            through: { attributes: [] },
+          },
+        ],
+      });
 
       res.json(caseWithAttachments);
     } catch (error) {
-      console.error('Error updating case:', error);
-      res.status(500).json({ message: 'Error updating case' });
+      console.error("Error updating case:", error);
+      res.status(500).json({ message: "Error updating case" });
     }
-  }
-  ];
+  },
+];

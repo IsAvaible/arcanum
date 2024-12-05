@@ -1,159 +1,160 @@
-const crypto = require('crypto');
-const fs = require('fs');
+const crypto = require("crypto");
+const fs = require("fs");
 
 let nextcloudClient;
 const nextcloudClientPromise = (async () => {
-    const { createClient } = await import('webdav');
-  
-    nextcloudClient = createClient(
-        process.env.NEXTCLOUD_URL,
-        {
-            username: process.env.NEXTCLOUD_USERNAME,
-            password: process.env.NEXTCLOUD_PASSWORD
-        }
-    );
-  })();
+  const { createClient } = await import("webdav");
+
+  nextcloudClient = createClient(process.env.NEXTCLOUD_URL, {
+    username: process.env.NEXTCLOUD_USERNAME,
+    password: process.env.NEXTCLOUD_PASSWORD,
+  });
+})();
 
 // Example function to list files in the root directory
 async function listFiles(remoteFilePath) {
-    try {
-        // Return the directory contents
-        return await nextcloudClient.getDirectoryContents(remoteFilePath);
-    } catch (error) {
-        console.error('Error listing files:', error);
-    }
+  try {
+    // Return the directory contents
+    return await nextcloudClient.getDirectoryContents(remoteFilePath);
+  } catch (error) {
+    console.error("Error listing files:", error);
+  }
 }
 
 // list file in a specific folder and check if the file is already in the folder
 async function listFilesSpec(remoteFolder, fileName) {
-    try {
-        const directoryItems = await nextcloudClient.getDirectoryContents(remoteFolder);
-        console.log(directoryItems);
-    } catch (error) {
-        console.error('Error listing files:', error);
-    }
+  try {
+    const directoryItems =
+      await nextcloudClient.getDirectoryContents(remoteFolder);
+    console.log(directoryItems);
+  } catch (error) {
+    console.error("Error listing files:", error);
+  }
 }
 
 // Example function to upload a file
 async function uploadFile(localFilePath, remoteFilePath, fileName) {
-    await nextcloudClientPromise;
-    const fileContent = fs.readFileSync(localFilePath);
-    let hashedFileContent = '';
+  await nextcloudClientPromise;
+  const fileContent = fs.readFileSync(localFilePath);
+  let hashedFileContent = "";
 
-    try{
-        hashedFileContent = crypto.createHash('sha256').update(fileContent).digest('hex');
-        console.log('Hashed file content:', hashedFileContent);
-    } catch (error) {   
-        console.error('Error hashing file content:', error);
-    }
-    
-    const folder = ["Audio/", "Bilder/", "Text/"];
-    const fileExtension = fileName.split('.').pop().toLowerCase();
-    let folderPath = '';
+  try {
+    hashedFileContent = crypto
+      .createHash("sha256")
+      .update(fileContent)
+      .digest("hex");
+    console.log("Hashed file content:", hashedFileContent);
+  } catch (error) {
+    console.error("Error hashing file content:", error);
+  }
 
-    console.log("Fieltype: " + fileExtension);
-    switch (fileExtension) {
-        case 'mp3':
-        case 'wav':
-            folderPath = folder[0]; // Audio/
-            break;
-        case 'jpg':
-        case 'jpeg':
-        case 'png':
-        case 'gif':
-            folderPath = folder[1]; // Bilder/
-            break;
-        case 'txt':
-        case 'doc':
-        case 'pdf':
-            folderPath = folder[2]; // Text/
-            break;
-    }
-    if(folderPath === ''){
-        console.log('File type not found');
-        return -1;
-    }
-    
-    try {
-        const directoryItems = await listFiles(remoteFilePath + folderPath);
-        remoteFilePath = remoteFilePath + folderPath + hashedFileContent.toString() + '.' + fileExtension;
-        
-        if(directoryItems !== undefined){
-            for (const item of directoryItems) {
-                    //console.log('Item:', item.basename + " == " + hashedFileContent.toString()+ "." + fileExtension);
-                    if (item.basename === hashedFileContent.toString() + "." + fileExtension) {
-                        console.log('File already exists in the folder, skipping upload');
-                        return remoteFilePath;
-                    }
-                }
-            } else {
-                console.log('Can not list Folder content');
-            }
-    
-        
-        await nextcloudClient.putFileContents(remoteFilePath, fileContent);
-        console.log('File uploaded successfully');
+  const folder = ["Audio/", "Bilder/", "Text/"];
+  const fileExtension = fileName.split(".").pop().toLowerCase();
+  let folderPath = "";
 
-    } catch (error) {
-        console.error('Error uploading file:', error);
-    } finally {
-        
-        fs.unlink(localFilePath, (err) => {
-            if (err) {
-              console.error('Error deleting file:', err);
-            } else {
-              console.log('File deleted successfully');
-            }
-          });
+  console.log("Fieltype: " + fileExtension);
+  switch (fileExtension) {
+    case "mp3":
+    case "wav":
+      folderPath = folder[0]; // Audio/
+      break;
+    case "jpg":
+    case "jpeg":
+    case "png":
+    case "gif":
+      folderPath = folder[1]; // Bilder/
+      break;
+    case "txt":
+    case "doc":
+    case "pdf":
+      folderPath = folder[2]; // Text/
+      break;
+  }
+  if (folderPath === "") {
+    console.log("File type not found");
+    return -1;
+  }
+
+  try {
+    const directoryItems = await listFiles(remoteFilePath + folderPath);
+    remoteFilePath =
+      remoteFilePath +
+      folderPath +
+      hashedFileContent.toString() +
+      "." +
+      fileExtension;
+
+    if (directoryItems !== undefined) {
+      for (const item of directoryItems) {
+        //console.log('Item:', item.basename + " == " + hashedFileContent.toString()+ "." + fileExtension);
+        if (
+          item.basename ===
+          hashedFileContent.toString() + "." + fileExtension
+        ) {
+          console.log("File already exists in the folder, skipping upload");
+          return remoteFilePath;
+        }
+      }
+    } else {
+      console.log("Can not list Folder content");
     }
 
-    return remoteFilePath;
+    await nextcloudClient.putFileContents(remoteFilePath, fileContent);
+    console.log("File uploaded successfully");
+  } catch (error) {
+    console.error("Error uploading file:", error);
+  } finally {
+    fs.unlink(localFilePath, (err) => {
+      if (err) {
+        console.error("Error deleting file:", err);
+      } else {
+        console.log("File deleted successfully");
+      }
+    });
+  }
+
+  return remoteFilePath;
 }
 
 // Example function to download a file
 async function downloadFile(remoteFilePath, localFilePath) {
-
-    try {
-        const fileContent = await nextcloudClient.getFileContents(remoteFilePath);
-        fs.writeFileSync(localFilePath, fileContent);
-        console.log('File downloaded successfully');
-    } catch (error) {
-        console.error('Error downloading file:', error);
-    }
+  try {
+    const fileContent = await nextcloudClient.getFileContents(remoteFilePath);
+    fs.writeFileSync(localFilePath, fileContent);
+    console.log("File downloaded successfully");
+  } catch (error) {
+    console.error("Error downloading file:", error);
+  }
 }
 
-
 async function downloadFileAndReturn(remoteFilePath) {
-
-    try {
-        const fileContent = await nextcloudClient.getFileContents(remoteFilePath);
-        console.log('File downloaded successfully');
-        return fileContent
-    } catch (error) {
-        console.error('Error downloading file:', error);
-    }
-
+  try {
+    const fileContent = await nextcloudClient.getFileContents(remoteFilePath);
+    console.log("File downloaded successfully");
+    return fileContent;
+  } catch (error) {
+    console.error("Error downloading file:", error);
+  }
 }
 
 async function streamFile(remoteFilePath) {
-    return nextcloudClient.createReadStream(remoteFilePath);
+  return nextcloudClient.createReadStream(remoteFilePath);
 }
 
 async function deleteFile(remoteFilePath) {
-    try {
-        await nextcloudClient.deleteFile(remoteFilePath);
-        console.log('File deleted successfully');
-    } catch (error) {
-        console.error('Error deleting file:', error);
-    }
+  try {
+    await nextcloudClient.deleteFile(remoteFilePath);
+    console.log("File deleted successfully");
+  } catch (error) {
+    console.error("Error deleting file:", error);
+  }
 }
 
-
 module.exports = {
-    downloadFileAndReturn,
-    streamFile,
-    listFiles,
-    uploadFile,
-    downloadFile,
-    deleteFile
+  downloadFileAndReturn,
+  streamFile,
+  listFiles,
+  uploadFile,
+  downloadFile,
+  deleteFile,
 };
