@@ -1,28 +1,25 @@
-const fs = require('fs');
-const port = 443;
+const fs = require('fs')
+const port = 443
 const express = require('express')
-const https = require('https');
-const app = express();
-const cors = require('cors');
-const caseRoutes = require('./routes/caseRoutes');
-const chatBotRoutes = require('./routes/chatBotRoutes');
-const uploadRoutes = require('./routes/exampleFileUpload');
-const env = require('dotenv').config();
-const fs = require('fs');
-const { DEFAULT_MIN_VERSION } = require('tls');
-//const hostname =  "192.168.0.114";
+const https = require('https')
+const app = express()
+const cors = require('cors')
+const caseRoutes = require('./routes/caseRoutes')
+const chatBotRoutes = require('./routes/chatBotRoutes')
+const uploadRoutes = require('./routes/exampleFileUpload')
+
 app.use(cors({
   origin: [
     'http://localhost:8080', // Frontend (Docker)
     'http://localhost:4173', // Frontend (Production)
     'http://localhost:5173', // Frontend (Development)
     'http://localhost:63342' // PHPStorm
-  ],
-}));
+  ]
+}))
 
 
 // for development only
-app.set('view engine', 'ejs');
+app.set('view engine', 'ejs')
 
 // Use CORS middleware, see: https://expressjs.com/en/resources/middleware/cors.html
 app.use(cors({
@@ -35,24 +32,21 @@ app.use(cors({
   ],
   allowedHeaders: '*',
   exposedHeaders: '*',
-  credentials: true,
-}));
+  credentials: true
+}))
 
 // Middleware (optional)
-const exampleMiddleware = require('./middlewares/exampleLogger');
-const { DEFAULT_MIN_VERSION } = require('tls');
-app.use(exampleMiddleware);
+const exampleMiddleware = require('./middlewares/exampleLogger')
+app.use(exampleMiddleware)
 
 
-app.use(express.json()); // Fügt die JSON-Parsing-Middleware hinzu
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json()) // Fügt die JSON-Parsing-Middleware hinzu
+app.use(express.urlencoded({ extended: true }))
 
 //Routen verwenden
-app.use('/api/cases', caseRoutes);
-app.use('/api', chatBotRoutes);
-app.use('/', uploadRoutes);
-
-
+app.use('/api/cases', caseRoutes)
+app.use('/api', chatBotRoutes)
+app.use('/', uploadRoutes)
 
 
 app.get('/', (req, res) => {
@@ -60,25 +54,24 @@ app.get('/', (req, res) => {
 })
 
 
-
-const options = {
-  key: fs.readFileSync('./certs/localhost-dev-key.pem'),
-  cert: fs.readFileSync('./certs/localhost.pem'),
+const credentials = {
+  key: fs.readFileSync('./certs/localhost-dev-key.pem', 'utf-8'),
+  cert: fs.readFileSync('./certs/localhost.pem', 'utf-8')
   //ca: fs.readFileSync('./certs/ca.pem')
-};
+}
+
 
 // for https uncomment the following lines
-/* try{
-  const server = https.createServer(options, app).listen(port, function(req, res){
-
-  console.log(`Example app listening on port ${port}`)
-});
-}catch(err){
-  console.error(err);
+try {
+  const server = https.createServer(credentials, app)
+    server.listen(port, function(req, res) {
+      console.log(`Example app listening on port 3000 (${port})`)
+    })
+} catch (err) {
+  console.error(err)
 }
- */
 
 // for https comment the following line
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
+// app.listen(port, () => {
+//   console.log(`Example app listening on port ${port}`)
+// })

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const caseController = require('../controllers/caseControlle
+const caseController = require('../controllers/caseController');
 const { validateData, escapeData } = require('../middlewares/validationMiddleware');
 const { caseSchema } = require('../schemas/caseSchemas');
 const attachmentController = require('../controllers/attachmentController')
