@@ -84,11 +84,12 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
 
             segments = response.segments
             combined_segments = []
-            n = 2
+            n = 4
             for i in range(0, len(segments), n):
                 group_segments = list(islice(segments, i, i + n))
                 combined_segments.append(combine_segments(group_segments))
-            data["segments"].append(generate_segment_dict(combined_segments, idx))
+            generated_dict = generate_segment_dict(combined_segments, idx)
+            data["segments"].extend(generated_dict)
 
         # JSON besser als String
         #formatted_string = ""
@@ -111,7 +112,7 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
 
         segments = response.segments
         combined_segments = []
-        n = 2
+        n = 3
         for i in range(0, len(segments), n):
             group_segments = list(islice(segments, i, i + n))
             combined_segments.append(combine_segments(group_segments))
