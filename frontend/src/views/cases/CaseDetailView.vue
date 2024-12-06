@@ -841,7 +841,7 @@ const toggleMenu = (event: Event) => {
 
 :deep(.p-component:disabled):not(.p-button),
 :deep(.p-disabled) {
-  @apply bg-slate-50;
+  @apply bg-slate-50 text-slate-600 opacity-100;
 }
 
 :deep(.p-disabled) [data-pc-section='dropdown'] {
