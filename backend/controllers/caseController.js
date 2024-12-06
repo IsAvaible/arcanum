@@ -118,7 +118,7 @@ exports.createCase = [
         title,
         description,
         solution,
-        assignee: JSON.parse(assignee),
+        assignee,
         status,
         case_type,
         priority,
