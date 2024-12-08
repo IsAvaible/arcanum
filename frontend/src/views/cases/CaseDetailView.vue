@@ -77,6 +77,7 @@ const priorities: Priority[] = [
 const statuses: Status[] = [
   { name: 'Open', color: '#e6f4ff', textColor: '#0284c7' },
   { name: 'In Progress', color: '#fff7ed', textColor: '#ea580c' },
+  { name: 'Solved', color: '#f0fdf4', textColor: '#16a34a' },
   { name: 'Closed', color: '#f0fdf4', textColor: '#16a34a' },
 ]
 
@@ -165,7 +166,7 @@ const handleSave = handleSubmit(
         await api.casesIdPut({ id: Number(caseId.value), ...values })
       }
       resetForm({ values: values })
-      nextTick(() => {
+      await nextTick(() => {
         form.value.dirty = false
       })
       inEditMode.value = false
@@ -655,7 +656,9 @@ const toggleMenu = (event: Event) => {
                 <label>Assignee</label>
                 <div v-if="!loading">
                   <UserSelector
-                    :selected-users="[]"
+                    @update:selected-users="
+                      (fields.assignees.value.value = $event.map((u) => u.name))
+                    "
                     assigneeLabel="Assignees"
                     :placeholder="inEditMode ? 'Select Assignees' : ''"
                     :userOptions="users"
@@ -674,7 +677,9 @@ const toggleMenu = (event: Event) => {
                 <label>Participants</label>
                 <div v-if="!loading">
                   <UserSelector
-                    :selected-users="[]"
+                    @update:selected-users="
+                      fields.participants.value.value = $event.map((u) => u.name)
+                    "
                     assigneeLabel="Participants"
                     :placeholder="inEditMode ? 'Select Participants' : ''"
                     :userOptions="users"
