@@ -367,8 +367,8 @@ const dialogPT = {
               />
               <div class="w-full">
                 <UserSelector
+                  @update:selected-users="fields.assignees.value.value = $event.map((u) => u.name)"
                   assigneeLabel="Assignees"
-                  :selected-users="[]"
                   :userOptions="peopleOptions"
                   multi-select
                   :invalid="!!errors.assignees"
@@ -381,7 +381,11 @@ const dialogPT = {
               <div class="grid sm:grid-flow-col sm:grid-rows-2 gap-y-3 gap-x-5">
                 <Label for="team" label="Team" description="The team responsible for this case" />
                 <div>
-                  <TeamSelector :selected-team="null" class="w-full" :invalid="!!errors.team" />
+                  <TeamSelector
+                    @update:selected-team="fields.team.value.value = $event.name"
+                    class="w-full"
+                    :invalid="!!errors.team"
+                  />
                   <Message v-if="errors.team" severity="error" variant="simple" size="small">
                     {{ errors.team }}
                   </Message>
@@ -393,7 +397,9 @@ const dialogPT = {
                 />
                 <div>
                   <UserSelector
-                    :selected-users="[]"
+                    @update:selected-users="
+                      fields.participants.value.value = $event.map((u) => u.name)
+                    "
                     assigneeLabel="Participants"
                     :userOptions="peopleOptions"
                     multi-select

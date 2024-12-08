@@ -8,7 +8,7 @@ export type Team = {
 }
 
 const props = defineProps<{
-  selectedTeam: Team | null
+  selectedTeam?: Team
   invalid?: boolean
 }>()
 

@@ -15,8 +15,9 @@ export const caseSchema = z.object({
   solution: z.string().optional(),
 
   assignees: z
-    .array(z.string(), { required_error: 'Please select at least one assignee' })
-    .nonempty(),
+    .string({ required_error: 'Please select at least one assignee' })
+    .array()
+    .nonempty({ message: 'Please select at least one assignee' }),
   participants: z.array(z.string()).optional(),
   team: z.string().optional(),
 
