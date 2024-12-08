@@ -423,7 +423,9 @@ components:
           type: string
           description: Solution for the case.
         assignee:
-          type: string
+          type: array
+          items:
+            type: string
           description: Person responsible for the case.
         status:
           type: string
