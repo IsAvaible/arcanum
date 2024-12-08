@@ -52,7 +52,6 @@ const teamOptions = ref([
     optionGroupLabel="label"
     :optionGroupChildren="['teams']"
     optionLabel="name"
-    optionValue="id"
     placeholder="Select a Team"
     dropdown-icon="pi pi-users"
     :invalid="props.invalid"
