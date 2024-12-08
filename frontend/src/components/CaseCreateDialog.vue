@@ -202,7 +202,7 @@ const onSubmit = handleSubmit(async (_values) => {
       {
         title: fields.title.value.value,
         caseType: fields.type.value.value as CasesPostCaseTypeEnum,
-        // assignees: fields.selectedAssignees.value.value,
+        assignee: fields.assignees.value.value,
         // participants: fields.selectedParticipants.value.value,
         // team: fields.selectedTeam.value.value,
         description: fields.description.value.value,
@@ -664,6 +664,7 @@ const dialogPT = {
             :disabled="!!Object.keys(errors).length"
             v-if="activeStep == steps.length - 1 || formEndReached"
           />
+          {{ errors }}
         </div>
       </div>
     </template>
