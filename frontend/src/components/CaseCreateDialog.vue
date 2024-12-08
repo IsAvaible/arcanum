@@ -661,7 +661,7 @@ const dialogPT = {
             }"
             label="Submit"
             @click="onSubmit"
-            :disabled="!form.valid"
+            :disabled="!!Object.keys(errors).length"
             v-if="activeStep == steps.length - 1 || formEndReached"
           />
         </div>
