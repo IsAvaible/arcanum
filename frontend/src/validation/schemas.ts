@@ -14,7 +14,7 @@ export const caseSchema = z.object({
     .min(1, 'Please provide a description'),
   solution: z.string().optional(),
 
-  assignees: z.array(z.any()).optional(),
+  assignees: z.array(z.any(), { required_error: 'Please select at least one assignee' }).nonempty(),
   participants: z.array(z.any()).optional(),
   team: z.any().optional(),
 
