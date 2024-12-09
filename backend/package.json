@@ -46,13 +46,14 @@
   },
   "devDependencies": {
     "eslint": "^8.57.1",
+<<<<<<< HEAD
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.31.0",
+=======
+>>>>>>> c1c12f5 (chore(ci): added linter file)
     "globals": "^15.13.0",
     "jest": "^29.0.0",
     "prettier": "3.4.2",
-    "sequelize-cli": "^6.6.2",
-    "eslint": "^8.0.0",
-    "jest": "^29.0.0"
+    "sequelize-cli": "^6.6.2"
   }
 }
