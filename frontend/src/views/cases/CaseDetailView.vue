@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useApi } from '@/composables/useApi'
 import { useToast } from 'primevue/usetoast' // Import useToast only once
@@ -77,6 +77,7 @@ const priorities: Priority[] = [
 const statuses: Status[] = [
   { name: 'Open', color: '#e6f4ff', textColor: '#0284c7' },
   { name: 'In Progress', color: '#fff7ed', textColor: '#ea580c' },
+  { name: 'Solved', color: '#f0fdf4', textColor: '#16a34a' },
   { name: 'Closed', color: '#f0fdf4', textColor: '#16a34a' },
 ]
 
@@ -97,6 +98,9 @@ const fetchCase = async () => {
 
     if (!caseDetails.value.draft) {
       resetForm({ values: caseDetails.value })
+      nextTick(() => {
+        form.value.dirty = false
+      })
     } else {
       setValues(caseDetails.value)
       inEditMode.value = true
@@ -156,9 +160,15 @@ const handleEdit = () => {
 const handleSave = handleSubmit(
   async (values) => {
     try {
-      // @ts-expect-error - The updated API is in a pull request. TODO remove this line
-      await api.casesIdPut({ id: Number(caseId.value), ...values, draft: false })
-
+      if (caseDetails.value!.draft) {
+        await api.confirmCaseIdPut({ id: Number(caseId.value), casePut: values })
+      } else {
+        await api.casesIdPut({ id: Number(caseId.value), ...values })
+      }
+      resetForm({ values: values })
+      await nextTick(() => {
+        form.value.dirty = false
+      })
       inEditMode.value = false
       toast.add({
         severity: 'success',
@@ -196,6 +206,10 @@ const handleCancel = () => {
         : "The case hasn't been saved and will be deleted. Are you sure you want to discard?",
       header: 'Confirm Cancel',
       icon: 'pi pi-exclamation-triangle',
+      rejectProps: {
+        severity: 'secondary',
+        outlined: true,
+      },
       accept: async () => {
         if (caseDetails.value!.draft) {
           if (await deleteDraft()) {
@@ -252,6 +266,10 @@ const navigateTo = async (name: string) => {
       message: 'You have unsaved changes. Are you sure you want to leave?',
       header: 'Confirm Navigation',
       icon: 'pi pi-exclamation-triangle',
+      rejectProps: {
+        severity: 'secondary',
+        outlined: true,
+      },
       accept: async () => {
         if (caseDetails.value!.draft) {
           if (!(await deleteDraft())) {
@@ -308,6 +326,8 @@ const uploadFiles = async () => {
 }
 
 const deleteAttachment = async (attachment: CaseAllOfAttachments) => {
+  deletingFileId.value = attachment.id
+
   try {
     await api.casesIdAttachmentsFileIdDelete({
       id: Number(caseId.value),
@@ -323,6 +343,8 @@ const deleteAttachment = async (attachment: CaseAllOfAttachments) => {
       life: 3000,
     })
     console.error(error)
+  } finally {
+    deletingFileId.value = null
   }
 }
 
@@ -331,13 +353,14 @@ const deleteAttachment = async (attachment: CaseAllOfAttachments) => {
 const selectedFile = ref<File | null>(null)
 const previewDrawerVisible = ref(false)
 const selectedFileProperties = ref<FileProperties | null>(null)
-const loadingFile = ref<string | null>(null)
+const loadingFileId = ref<number | null>(null)
+const deletingFileId = ref<number | null>(null)
 
 const openAttachmentInDrawer = async (attachment: CaseAllOfAttachments) => {
   // Check if the attachment is already in the files array
   let file = files.value.find((f) => f.name === attachment.filename)
   if (!file) {
-    loadingFile.value = attachment.filename
+    loadingFileId.value = attachment.id
     // If not, download the file from the server
     try {
       file = await apiBlobToFile(
@@ -361,7 +384,7 @@ const openAttachmentInDrawer = async (attachment: CaseAllOfAttachments) => {
       console.error(error)
       return
     } finally {
-      loadingFile.value = null
+      loadingFileId.value = null
     }
   }
 
@@ -551,13 +574,13 @@ const toggleMenu = (event: Event) => {
                 <label>Status</label>
                 <Select
                   v-if="!loading"
-                  placeholder="Unknown (Backend Missing)"
                   :options="statuses"
-                  :model-value="fields.status.value.value"
+                  :model-value="statuses.find((s) => s.name === caseDetails!.status)"
                   @update:model-value="fields.status.value.value = $event.name"
                   optionLabel="name"
                   class="w-full min-h-10"
                   :disabled="!inEditMode"
+                  :invalid="!!errors.status"
                 >
                   <template #value="slotProps">
                     <div v-if="slotProps.value" class="flex items-center">
@@ -594,12 +617,13 @@ const toggleMenu = (event: Event) => {
                 <label>Priority</label>
                 <Select
                   v-if="!loading"
-                  :bind="fields.priority.value.value"
+                  :model-value="priorities.find((p) => p.name === caseDetails!.priority)"
                   @update:model-value="fields.priority.value.value = $event.name"
                   :options="priorities"
                   optionLabel="name"
                   class="w-full"
                   :disabled="!inEditMode"
+                  :invalid="!!errors.priority"
                 >
                   <template #value="slotProps">
                     <div class="flex items-center gap-2" v-if="slotProps.value">
@@ -632,7 +656,9 @@ const toggleMenu = (event: Event) => {
                 <label>Assignee</label>
                 <div v-if="!loading">
                   <UserSelector
-                    :selected-users="[]"
+                    @update:selected-users="
+                      (fields.assignees.value.value = $event.map((u) => u.name))
+                    "
                     assigneeLabel="Assignees"
                     :placeholder="inEditMode ? 'Select Assignees' : ''"
                     :userOptions="users"
@@ -651,7 +677,9 @@ const toggleMenu = (event: Event) => {
                 <label>Participants</label>
                 <div v-if="!loading">
                   <UserSelector
-                    :selected-users="[]"
+                    @update:selected-users="
+                      fields.participants.value.value = $event.map((u) => u.name)
+                    "
                     assigneeLabel="Participants"
                     :placeholder="inEditMode ? 'Select Participants' : ''"
                     :userOptions="users"
@@ -734,11 +762,17 @@ const toggleMenu = (event: Event) => {
               class="cursor-pointer relative"
             >
               <template #content>
-                <div
-                  class="flex flex-col items-center"
-                  :class="{ 'animate-pulse': file.filename == loadingFile }"
-                >
-                  <i :class="`text-4xl text-gray-600 mb-5 pi ${getFileIcon(file.mimetype)}`"></i>
+                <div class="flex flex-col items-center">
+                  <i
+                    :class="`text-4xl text-gray-600 mb-5 pi
+                      ${
+                        file.id == loadingFileId
+                          ? 'pi-spin pi-spinner'
+                          : file.id == deletingFileId
+                            ? 'pi-trash pulse'
+                            : getFileIcon(file.mimetype)
+                      }`"
+                  ></i>
                   <p class="text-gray-600 text-center break-all">{{ file.filename }}</p>
                 </div>
                 <div class="absolute top-0 left-0 w-full flex justify-end">
@@ -810,17 +844,9 @@ const toggleMenu = (event: Event) => {
   @apply block text-sm font-medium text-gray-700 mb-1;
 }
 
-.p-error {
-  color: #ef4444;
-}
-
-.p-invalid {
-  border-color: #ef4444 !important;
-}
-
 :deep(.p-component:disabled):not(.p-button),
 :deep(.p-disabled) {
-  @apply bg-slate-50;
+  @apply bg-slate-50 text-slate-600 opacity-100;
 }
 
 :deep(.p-disabled) [data-pc-section='dropdown'] {

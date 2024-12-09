@@ -9,6 +9,7 @@ import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import Button from 'primevue/button'
 import Divider from 'primevue/divider'
+import ConfirmDialog from 'primevue/confirmdialog'
 
 import { useToast } from 'primevue'
 
@@ -33,8 +34,10 @@ import type { CasesPostCaseTypeEnum } from '@/api'
 import ScrollFadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
+import { useConfirm } from 'primevue/useconfirm'
 
 const toast = useToast()
+const confirm = useConfirm()
 
 const props = defineProps<{
   visible: boolean
@@ -199,7 +202,7 @@ const onSubmit = handleSubmit(async (_values) => {
       {
         title: fields.title.value.value,
         caseType: fields.type.value.value as CasesPostCaseTypeEnum,
-        // assignees: fields.selectedAssignees.value.value,
+        assignee: fields.assignees.value.value,
         // participants: fields.selectedParticipants.value.value,
         // team: fields.selectedTeam.value.value,
         description: fields.description.value.value,
@@ -239,6 +242,32 @@ const onSubmit = handleSubmit(async (_values) => {
   dialogVisible.value = false
 })
 
+const cancelCaseCreation = async () => {
+  if (!form.value.dirty) {
+    dialogVisible.value = false
+  } else {
+    confirm.require({
+      message: 'You have unsaved changes. Are you sure you want to cancel?',
+      header: 'Confirm Cancel',
+      icon: 'pi pi-exclamation-triangle',
+      rejectProps: {
+        severity: 'secondary',
+        outlined: true,
+      },
+      accept: async () => {
+        dialogVisible.value = false
+        toast.add({
+          severity: 'info',
+          summary: 'Creation Cancelled',
+          detail: 'Your changes have been discarded.',
+          life: 3000,
+          closable: true,
+        })
+      },
+    })
+  }
+}
+
 const dialogPT = {
   content: {
     class: 'flex-1',
@@ -252,11 +281,12 @@ const dialogPT = {
 <template>
   <Dialog
     v-model:visible="dialogVisible"
-    class="w-[calc(100%-3rem)] max-w-7xl bg-slate-100 h-[calc(100%-3rem)] max-h-[min(1024px, calc(100%-3rem))] flex flex-col"
+    class="neutral-primary bg-slate-100 flex flex-col h-[calc(100%-3rem)] w-[calc(100%-3rem)] max-w-7xl max-h-[min(1024px, calc(100%-3rem))]"
     :modal="true"
     :closable="false"
     :pt="dialogPT"
   >
+    <ConfirmDialog></ConfirmDialog>
     <template #header>
       <div class="w-full -m-5 p-5 box-content bg-white rounded-t-xl overflow-x-auto">
         <CaseCreateStepper
@@ -337,8 +367,8 @@ const dialogPT = {
               />
               <div class="w-full">
                 <UserSelector
+                  @update:selected-users="fields.assignees.value.value = $event.map((u) => u.name)"
                   assigneeLabel="Assignees"
-                  :selected-users="[]"
                   :userOptions="peopleOptions"
                   multi-select
                   :invalid="!!errors.assignees"
@@ -351,7 +381,11 @@ const dialogPT = {
               <div class="grid sm:grid-flow-col sm:grid-rows-2 gap-y-3 gap-x-5">
                 <Label for="team" label="Team" description="The team responsible for this case" />
                 <div>
-                  <TeamSelector :selected-team="null" class="w-full" :invalid="!!errors.team" />
+                  <TeamSelector
+                    @update:selected-team="fields.team.value.value = $event.name"
+                    class="w-full"
+                    :invalid="!!errors.team"
+                  />
                   <Message v-if="errors.team" severity="error" variant="simple" size="small">
                     {{ errors.team }}
                   </Message>
@@ -363,7 +397,9 @@ const dialogPT = {
                 />
                 <div>
                   <UserSelector
-                    :selected-users="[]"
+                    @update:selected-users="
+                      fields.participants.value.value = $event.map((u) => u.name)
+                    "
                     assigneeLabel="Participants"
                     :userOptions="peopleOptions"
                     multi-select
@@ -597,7 +633,7 @@ const dialogPT = {
     <template #footer>
       <div class="w-full -m-5 p-5 box-content bg-white flex justify-between rounded-b-xl">
         <!-- Cancel Button with RouterLink -->
-        <Button label="Cancel" variant="text" @click="dialogVisible = false" />
+        <Button label="Cancel" variant="text" @click="cancelCaseCreation" />
         <div class="flex gap-x-5">
           <Button
             label="Previous"
@@ -625,9 +661,10 @@ const dialogPT = {
             }"
             label="Submit"
             @click="onSubmit"
-            :disabled="!form.valid"
+            :disabled="!!Object.keys(errors).length"
             v-if="activeStep == steps.length - 1 || formEndReached"
           />
+          {{ errors }}
         </div>
       </div>
     </template>
@@ -649,34 +686,5 @@ const dialogPT = {
 
 :deep(.p-accordioncontent-content) {
   @apply flex-1;
-}
-
-:deep(*) {
-  --p-primary-50: #eff6ff;
-  --p-primary-100: #dbeafe;
-  --p-primary-200: #bfdbfe;
-  --p-primary-300: #93c5fd;
-  --p-primary-400: #60a5fa;
-  --p-primary-500: #3b82f6;
-  --p-primary-600: #2563eb;
-  --p-primary-700: #1d4ed8;
-  --p-primary-800: #1e40af;
-  --p-primary-900: #1e3a8a;
-  --p-primary-950: #1e3a8a;
-  --p-primary-color: var(--p-primary-500);
-  --p-primary-contrast-color: var(--p-surface-0);
-  --p-primary-hover-color: var(--p-primary-600);
-  --p-primary-active-color: var(--p-primary-700);
-  --p-content-border-color: var(--p-surface-200);
-  --p-content-hover-background: var(--p-surface-100);
-  --p-content-hover-color: var(--p-surface-800);
-  --p-highlight-background: var(--p-primary-50);
-  --p-highlight-color: var(--p-primary-700);
-  --p-highlight-focus-background: var(--p-primary-100);
-  --p-highlight-focus-color: var(--p-primary-800);
-  --p-text-color: var(--p-surface-700);
-  --p-text-hover-color: var(--p-surface-800);
-  --p-text-muted-color: var(--p-surface-500);
-  --p-text-hover-muted-color: var(--p-surface-600);
 }
 </style>

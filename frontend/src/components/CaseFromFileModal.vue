@@ -40,12 +40,6 @@ const openAICaseCreation = async () => {
     loading.value = true
     try {
       const result = await api.createCaseFromFilesPost({ files: files.value })
-      toast.add({
-        severity: 'success',
-        summary: 'Case Created',
-        detail: `The case ${result.data[0].title} has been created`,
-        life: 3000,
-      })
       console.log(result)
       await router.push('/cases/' + result.data[0].id)
     } catch (error) {

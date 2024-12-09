@@ -11,9 +11,9 @@ export const useCaseFields = () => {
     description: useField<string>('description'),
     solution: useField<string>('solution'),
 
-    assignees: useField<object[]>('assignees'),
-    participants: useField<object[]>('participants'),
-    team: useField<object>('team'),
+    assignees: useField<string[]>('assignees'),
+    participants: useField<string[]>('participants'),
+    team: useField<string>('team'),
 
     selectedProducts: useField<number[]>('products'),
 
