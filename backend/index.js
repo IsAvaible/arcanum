@@ -10,16 +10,6 @@ const caseRoutes = require("./routes/caseRoutes");
 const chatBotRoutes = require("./routes/chatBotRoutes");
 const uploadRoutes = require("./routes/exampleFileUpload");
 
-app.use(
-  cors({
-    origin: [
-      "http://localhost:8080", // Frontend (Docker)
-      "http://localhost:4173", // Frontend (Production)
-      "http://localhost:5173", // Frontend (Development)
-      "http://localhost:63342", // PHPStorm
-    ],
-  }),
-);
 
 // for development only
 app.set("view engine", "ejs");
@@ -66,13 +56,9 @@ const credentials = {
 try {
   const server = https.createServer(credentials, app);
   server.listen(port, function (req, res) {
-    console.log(`Example app listening on port 3000 (${port})`);
+    console.log(`Server listening on port 3000 (${port})`);
   });
 } catch (err) {
   console.error(err);
 }
 
-// for https comment the following line
-// app.listen(port, () => {
-//   console.log(`Example app listening on port ${port}`)
-// })
