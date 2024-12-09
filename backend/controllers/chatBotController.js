@@ -7,39 +7,44 @@ const { body, validationResult } = require("express-validator");
 const attachmentService = require("../services/attachmentService");
 const multerMiddleware = require("../middlewares/multerMiddleware");
 const axios = require("axios");
-//const upload = require('../configs/multerConfig.js');
 
+/**
+ * Creates a new case from uploaded files and data received from an external LLM.
+ * @param {Object} req - Express request object, containing uploaded files and optional socket_id in `req.body`.
+ * @param {Object} res - Express response object to send the created case(s) or error messages.
+ * @returns {Object} JSON response with the created case(s) or an error message.
+ */
 exports.createCaseFromFiles = [
-  // **Multer-Middleware**
+  // Middleware for handling file uploads.
   multerMiddleware,
 
-  // **Anfrage-Handler**
+  // Main request handler.
   async (req, res) => {
-    //const socket_id = req.body.socket_id;
     const socket_id = 123;
 
-    // **Hochgeladene Dateien verarbeiten**
-
-    const attachmentInstances =
-      await attachmentService.uploadFilesAndCreateAttachments(req.files);
-
-    // Daten für das LLM vorbereiten
-    const llmRequestData = {
-      socket_id: socket_id,
-      attachments: attachmentInstances,
-    };
-
-    console.log("Sende ans LLM: ", JSON.stringify(llmRequestData));
-    //Daten an das LLM senden
     try {
+      // Process uploaded files and create attachments.
+      const attachmentInstances =
+        await attachmentService.uploadFilesAndCreateAttachments(req.files);
+
+      // Prepare data to send to the LLM.
+      const llmRequestData = {
+        socket_id: socket_id,
+        attachments: attachmentInstances,
+      };
+
+      console.log("Sending to LLM: ", JSON.stringify(llmRequestData));
+
+      // Send data to the LLM endpoint.
       const llmResponse = await axios.post(
         "http://host.docker.internal:5001/generate_case",
         llmRequestData,
       );
 
       const responseData = llmResponse.data;
-      console.log("Empange vom LLM: ", JSON.stringify(llmResponse.data));
+      console.log("Received from LLM: ", JSON.stringify(llmResponse.data));
 
+      // Define allowed fields for creating cases.
       const allowedFields = [
         "title",
         "description",
@@ -52,15 +57,18 @@ exports.createCaseFromFiles = [
       ];
 
       if (responseData.cases) {
-        // Sicherstellen, dass cases ein Array ist
+        // Ensure cases is always an array.
         const casesArray = Array.isArray(responseData.cases)
           ? responseData.cases
           : [responseData.cases];
+
         let newIds = [];
+
         for (const caseData of casesArray) {
-          // Attachments aus caseData extrahieren
           let attachments = [];
           let extrCase = {};
+
+          // Extract only allowed fields from the response.
           allowedFields.forEach((field) => {
             if (caseData[field] !== undefined) {
               if (field === "attachments") {
@@ -76,27 +84,25 @@ exports.createCaseFromFiles = [
             }
           });
 
-          extrCase["draft"] = true;
-          // Neuen Case erstellen
+          extrCase["draft"] = true; // Mark as draft initially.
+
+          // Create a new case in the database.
           const newCase = await Cases.create(extrCase);
           newIds.push(newCase.id);
 
-          // Attachments zuordnen
+          // Link attachments to the new case.
           if (attachments && attachments.length > 0) {
             const attachmentInstances = await Attachments.findAll({
-              where: {
-                id: attachments,
-              },
+              where: { id: attachments },
             });
 
             await newCase.addAttachments(attachmentInstances);
           }
         }
 
+        // Fetch all created cases with their attachments.
         const casesAll = await Cases.findAll({
-          where: {
-            id: newIds,
-          },
+          where: { id: newIds },
           include: [
             {
               model: Attachments,
@@ -106,26 +112,35 @@ exports.createCaseFromFiles = [
           ],
         });
 
-        console.log("Erstellter Case: ", JSON.stringify(casesAll));
-        // Antwort an das Frontend senden
+        console.log("Created Case(s): ", JSON.stringify(casesAll));
+
+        // Send the created cases as the response.
         res.status(201).json(casesAll);
       } else if (responseData.message) {
+        // If the LLM returned a message, send it to the client.
         res.status(200).json({ message: responseData.message });
       } else {
+        // Handle cases where the LLM returned no data.
         res.status(500).json({ message: "LLM returned no data" });
       }
     } catch (error) {
-      res.status(500).json({ message: error });
+      console.error("Error in createCaseFromFiles:", error);
+      res.status(500).json({ message: error.message || "Error creating case" });
     }
   },
 ];
 
+/**
+ * Confirms and updates a draft case, marking it as finalized.
+ * @param {Object} req - Express request object, containing case ID in `req.params.id` and update data in `req.body`.
+ * @param {Object} res - Express response object to send the updated case or an error message.
+ * @returns {Object} JSON response with the updated case or an error message.
+ */
 exports.confirmCase = [
   async (req, res) => {
     const caseId = parseInt(req.params.id, 10);
 
     try {
-      // **Zulässige Felder definieren**
       const allowedFields = [
         "title",
         "description",
@@ -133,19 +148,20 @@ exports.confirmCase = [
         "assignee",
         "status",
         "case_type",
-        "priority", //,
-        //'attachment'
+        "priority",
       ];
 
-      // **Eingabedaten filtern**
+      // Extract only allowed fields from the request body.
       const updateData = {};
       allowedFields.forEach((field) => {
         if (req.body[field] !== undefined) {
           updateData[field] = req.body[field];
         }
       });
+
       updateData["draft"] = false;
-      // **Case aktualisieren**
+
+      // Update the case in the database.
       const [updatedRows] = await Cases.update(updateData, {
         where: { id: caseId },
       });
@@ -154,23 +170,19 @@ exports.confirmCase = [
         return res.status(404).json({ message: "Case not found" });
       }
 
-      // **Aktualisierten Case abrufen**
+      // Fetch the updated case with its attachments.
       const updatedCaseWithAttachments = await Cases.findByPk(caseId, {
         include: [
           {
             model: Attachments,
             as: "attachments",
-            through: { attributes: [] },
+            through: { attributes: [] }, // Exclude join table attributes.
           },
         ],
       });
 
-      // const llmResponse = await axios.post(
-      //   "http://host.docker.internal:5001/safe_case",
-      //   updatedCaseWithAttachments,
-      // );
+      // Send the updated case as the response.
       res.json(updatedCaseWithAttachments);
-      //res.json(llmResponse);
     } catch (error) {
       console.error("Error updating case:", error);
       res.status(500).json({ message: "Error updating case" });
