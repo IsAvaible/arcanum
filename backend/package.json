@@ -4,24 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-<<<<<<< HEAD
-    "start-backend": "node index.js & echo $! > server.pid",
-    "format": "prettier . --write",
-    "lint": "eslint .",
-    "test": "echo \"No tests defined\" && exit 0",
-    "shutdown": "kill $(cat server.pid) && rm server.pid"
-=======
     "test": "echo \"Error: no test specified\" && exit 1",
     "start-backend": "node index.js",
     "format": "prettier . --write",
     "lint": "eslint .",
-<<<<<<< HEAD
     "test": "jest"
->>>>>>> d0e87b1 (chore(ci): add backend CI pipeline)
-=======
-    "test": "echo \"No tests defined\" && exit 0",
-    "build": "scripts/buildRun.js"
->>>>>>> 3657b8e (chore(build): add script to validate current application state)
   },
   "keywords": [],
   "author": "",
@@ -64,6 +51,8 @@
     "globals": "^15.13.0",
     "jest": "^29.0.0",
     "prettier": "3.4.2",
-    "sequelize-cli": "^6.6.2"
+    "sequelize-cli": "^6.6.2",
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0"
   }
 }
