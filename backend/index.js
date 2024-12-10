@@ -7,7 +7,6 @@ const https = require("https");
 const fs = require("fs");
 
 const caseRoutes = require("./routes/caseRoutes");
-const chatBotRoutes = require("./routes/chatBotRoutes");
 const uploadRoutes = require("./routes/exampleFileUpload");
 
 
@@ -38,8 +37,7 @@ app.use(express.json()); // Fügt die JSON-Parsing-Middleware hinzu
 app.use(express.urlencoded({ extended: true }));
 
 //Routen verwenden
-app.use("/api/cases", caseRoutes);
-app.use("/api", chatBotRoutes);
+app.use("/api", caseRoutes);
 app.use("/", uploadRoutes);
 
 app.get("/", (req, res) => {
