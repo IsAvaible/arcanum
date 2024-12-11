@@ -19,7 +19,6 @@ import Label from '@/components/case-create-form/Label.vue'
 import CaseTypeSelector from '@/components/case-create-form/CaseTypeSelector.vue'
 import UserSelector, { type User } from '@/components/case-create-form/UserSelector.vue'
 import TempEditor from '@/components/case-create-form/TempEditor.vue'
-import ProductSelector from '@/components/case-create-form/ProductSelector.vue'
 import TeamSelector from '@/components/case-create-form/TeamSelector.vue'
 
 import { useCaseFormStepper } from '@/composables/useCaseFormStepper'
@@ -135,9 +134,6 @@ const validateStep = async (step: number = activeStep.value) => {
       await fields.description.validate()
       await fields.solution.validate()
       return
-    case 3:
-      await fields.selectedProducts.validate()
-      return
   }
 }
 
@@ -162,7 +158,6 @@ const steps = [
   { label: 'Basics', icon: 'pi-info-circle' },
   { label: 'People', icon: 'pi-user' },
   { label: 'Details', icon: 'pi-pen-to-square' },
-  { label: 'Products', icon: 'pi-warehouse' },
   { label: 'Review', icon: 'pi-star' },
 ]
 
@@ -483,27 +478,6 @@ const dialogPT = {
           </AccordionContent>
         </AccordionPanel>
 
-        <AccordionPanel :value="3" :disabled="!isClickable(3)">
-          <StepHeader
-            :step="3"
-            :activeStep="activeStep"
-            :stepValid="stepValid"
-            :stepInteracted="stepInteracted"
-            title="Products"
-          />
-          <!-- Content for Products -->
-          <AccordionContent>
-            <div class="flex flex-col gap-y-3">
-              <Label
-                for="products"
-                label="Products"
-                description="Select the products related to this case"
-              />
-              <ProductSelector v-model="fields.selectedProducts.value.value" />
-            </div>
-          </AccordionContent>
-        </AccordionPanel>
-
         <AccordionPanel :value="4" :disabled="!isClickable(4)">
           <StepHeader
             :step="4"
@@ -600,20 +574,6 @@ const dialogPT = {
                       <p v-else class="font-medium">No solution provided</p>
                     </ScrollFadeOverlay>
                   </div>
-                </div>
-              </div>
-
-              <div class="bg-slate-50 p-4 rounded-lg">
-                <h2 class="text-xl font-semibold mb-4">Products</h2>
-                <div>
-                  <p class="text-sm text-slate-600">Selected Products</p>
-                  <p class="font-medium">
-                    {{
-                      fields.selectedProducts.value.value?.length
-                        ? fields.selectedProducts.value.value.join(', ')
-                        : 'No products selected'
-                    }}
-                  </p>
                 </div>
               </div>
 
