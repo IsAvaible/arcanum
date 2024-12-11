@@ -18,7 +18,6 @@ AZURE_DEPLOYMENT_EMBEDDING = os.getenv("AZURE_DEPLOYMENT_EMBEDDING")
 OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
 
 
-
 def start_quering_llm(invokedPrompt, llm, parser, max_tries=3) -> dict:
     """
     Queries the LLM with the given prompt template, LLM, and parser to generate a valid case.
@@ -30,7 +29,6 @@ def start_quering_llm(invokedPrompt, llm, parser, max_tries=3) -> dict:
     """
     chain = llm | parser
     chain_output = chain.invoke(invokedPrompt)
-
     is_valid = False
     for try_number in range(1, max_tries + 1):
         is_valid = check_if_output_is_valid(chain_output)
@@ -46,7 +44,7 @@ def start_quering_llm(invokedPrompt, llm, parser, max_tries=3) -> dict:
         print(f"Couldn't get valid output in {try_number} tries")
         return {}
     else:
-        print(f"Generated valid ouput with {try_number} tries: {chain_output}")
+        print(f"Generated valid output with {try_number} tries: {chain_output}")
 
     return chain_output
 
