@@ -18,6 +18,7 @@ import { CoinsSwap, CpuWarning, QuestionMark, WarningTriangle } from '@iconoir/v
 import Label from '@/components/case-create-form/Label.vue'
 import CaseTypeSelector from '@/components/case-create-form/CaseTypeSelector.vue'
 import UserSelector, { type User } from '@/components/case-create-form/UserSelector.vue'
+import TempEditor from '@/components/case-create-form/TempEditor.vue'
 import TeamSelector from '@/components/case-create-form/TeamSelector.vue'
 import CasePrioritySelect from '@/components/case-form-fields/CaseStatusSelect/CasePrioritySelect.vue'
 import CaseStatusSelect from '@/components/case-form-fields/CaseStatusSelect/CaseStatusSelect.vue'
@@ -544,9 +545,9 @@ const dialogPT = {
           </AccordionContent>
         </AccordionPanel>
 
-        <AccordionPanel :value="3" :disabled="!isClickable(3)">
+        <AccordionPanel :value="4" :disabled="!isClickable(4)">
           <StepHeader
-            :step="3"
+            :step="4"
             :activeStep="activeStep"
             :stepValid="stepValid"
             :stepInteracted="stepInteracted"
