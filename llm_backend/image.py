@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import AzureChatOpenAI
 
-from llm_backend.prompts import get_system_prompt
+from prompts import get_system_prompt
 
 load_dotenv()
 
