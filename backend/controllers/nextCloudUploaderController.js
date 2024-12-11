@@ -47,7 +47,7 @@ async function uploadFile(localFilePath, remoteFilePath, fileName) {
         console.error('Error hashing file content:', error);
     }
     
-    const folder = ["Audio/", "Bilder/", "Text/"];
+    const folder = ["Audio/", "Bilder/", "Text/", "Videos/"];
     const fileExtension = fileName.split('.').pop().toLowerCase();
     let folderPath = '';
 
@@ -67,6 +67,9 @@ async function uploadFile(localFilePath, remoteFilePath, fileName) {
         case 'doc':
         case 'pdf':
             folderPath = folder[2]; // Text/
+            break;
+        case 'mp4':
+            folderPath = folder[3]; // Videos/
             break;
     }
     if(folderPath === ''){
