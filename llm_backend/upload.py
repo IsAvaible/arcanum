@@ -1,3 +1,4 @@
+import base64
 import mimetypes
 import os
 
@@ -5,6 +6,7 @@ from bs4 import BeautifulSoup
 from langchain_openai import AzureChatOpenAI
 from dotenv import load_dotenv
 
+from llm_backend.image import encode_image, image_to_openai
 from readwrite import write_to_file, read_from_file, text_to_dict
 from webdav import check_if_cached, download_cache, upload_cache_file
 from whisper import transcribe
@@ -15,7 +17,7 @@ from webdav import download_file_webdav
 
 import json
 
-ALLOWED_EXTENSIONS = {"txt", "pdf", "html", "mp3", "wav"}
+ALLOWED_EXTENSIONS = {"txt", "pdf", "html", "mp3", "wav", "png"}
 
 load_dotenv()
 
@@ -26,9 +28,9 @@ AZURE_DEPLOYMENT = os.getenv("AZURE_DEPLOYMENT_WHISPER")
 OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
 
 
-
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 def sort_attachments(item):
     if item["mimetype"] == "application/pdf":
@@ -36,6 +38,7 @@ def sort_attachments(item):
     elif item["mimetype"] == "audio/mpeg":
         return 2
     return 1
+
 
 llm = AzureChatOpenAI(
     azure_endpoint=AZURE_ENDPOINT,
@@ -48,6 +51,7 @@ llm = AzureChatOpenAI(
     streaming=False,
 )
 
+
 def upload_file_method_production(files, pdf_extractor):
     files_as_dicts = []
     single_dict = {}
@@ -59,13 +63,12 @@ def upload_file_method_production(files, pdf_extractor):
     USE_CACHE = True
 
     for file in files:
-        print (file)
+        print(file)
         filepath = file["filepath"]
         mimetype = mimetypes.guess_type(filepath)
         file["mimetype"] = mimetype[0]
 
-
-    #sort attachments so audio come last
+    # sort attachments so audio come last
     sorted_attachments = sorted(files, key=sort_attachments)
 
     for file in sorted_attachments:
@@ -78,7 +81,7 @@ def upload_file_method_production(files, pdf_extractor):
         mimetype = file["mimetype"]
 
         is_cached = check_if_cached(filehash)
-
+        print(mimetype)
         if allowed_file(filename) and (not is_cached or not USE_CACHE):
             if "audio" in mimetype:
                 transcription = transcribe(file, texts, llm, path, filename, whisper_prompt)
@@ -113,21 +116,42 @@ def upload_file_method_production(files, pdf_extractor):
                     "type": "txt",
                     "text": single_text
                 }
+            elif mimetype == "image/png":
+                texts += f" Content of Text File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
+                encoding = encode_image(path)
+                mime_type = mimetypes.guess_type(path)[0]
+                prompt_dict = [
+                    {
+                        "type": "text",
+                        "text": "What is this image showing, be as detailed as possible"
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:{mime_type};base64,{encoding}",
+                            "detail": "auto"
+                        }
+                    }
+                ]
+                single_text = image_to_openai(prompt_dict)
+                single_dict = {
+                    "type": mimetype,
+                    "text": single_text
+                }
 
         ### CACHE TO MINIMIZE AZURE API CALLS
         if is_cached and USE_CACHE:
             print("USING CACHE")
-            cache_path = download_cache(filehash) # download cache file
-            txt = read_from_file(cache_path) # read cache file
-            content_dict = text_to_dict(txt) # file to dict
+            cache_path = download_cache(filehash)  # download cache file
+            txt = read_from_file(cache_path)  # read cache file
+            content_dict = text_to_dict(txt)  # file to dict
         else:
             print("NOT USING CACHE")
-            #content_dict = {"content": single_dict}
+            # content_dict = {"content": single_dict}
             content_dict = single_dict
             # write file to cache
             file_path = write_to_file(filehash, json.dumps(content_dict, ensure_ascii=False, indent=2))
             upload_cache_file(file_path, filehash)
-
 
         file_as_dict = {
             "filename": filename,
@@ -149,5 +173,3 @@ def upload_file_method_production(files, pdf_extractor):
         print(files_as_dicts_json)
         print("file_as_dict END")
     return files_as_dicts_json
-
-
