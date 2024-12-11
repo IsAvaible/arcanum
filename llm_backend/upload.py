@@ -7,6 +7,7 @@ from langchain_openai import AzureChatOpenAI
 from dotenv import load_dotenv
 
 from image import encode_image, image_to_openai
+from video import extract_frames_with_ffmpeg, get_all_frames_in_dir
 from readwrite import write_to_file, read_from_file, text_to_dict
 from webdav import check_if_cached, download_cache, upload_cache_file
 from whisper import transcribe
@@ -17,7 +18,7 @@ from webdav import download_file_webdav
 
 import json
 
-ALLOWED_EXTENSIONS = {"txt", "pdf", "html", "mp3", "wav", "png"}
+ALLOWED_EXTENSIONS = {"txt", "pdf", "html", "mp3", "wav", "png", "jpg", "jpeg", "gif", "bmp", "mp4"}
 
 load_dotenv()
 
@@ -116,8 +117,8 @@ def upload_file_method_production(files, pdf_extractor):
                     "type": "txt",
                     "text": single_text
                 }
-            elif mimetype == "image/png":
-                texts += f" Content of Text File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
+            elif mimetype == "image/png" or mimetype == "image/jpeg":
+                texts += f" Content of Image File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 encoding = encode_image(path)
                 mime_type = mimetypes.guess_type(path)[0]
                 prompt_dict = [
@@ -138,6 +139,38 @@ def upload_file_method_production(files, pdf_extractor):
                     "type": mimetype,
                     "text": single_text
                 }
+            elif mimetype == "video/mp4":
+                texts += f" Content of Video File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
+
+                success = extract_frames_with_ffmpeg(path, filehash)
+                mime_type = mimetypes.guess_type(path)[0]
+
+                prompt_dict = [
+                    {
+                        "type": "text",
+                        "text": "What are all frames showing, be as detailed as possible"
+                    }
+                ]
+                if success:
+                    frames = get_all_frames_in_dir(filehash)
+                    for frame in frames:
+                        encoding = encode_image(frame)
+                        p = {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:{mime_type};base64,{encoding}",
+                                "detail": "auto"
+                            }
+                        }
+                        prompt_dict.append(p)
+
+                        single_text = image_to_openai(prompt_dict)
+                        single_dict = {
+                            "type": mimetype,
+                            "text": single_text
+                        }
+                        break
+
 
         ### CACHE TO MINIMIZE AZURE API CALLS
         if is_cached and USE_CACHE:
@@ -173,3 +206,4 @@ def upload_file_method_production(files, pdf_extractor):
         print(files_as_dicts_json)
         print("file_as_dict END")
     return files_as_dicts_json
+
