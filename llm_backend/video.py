@@ -3,39 +3,65 @@ import os
 
 from app import app
 
+import cv2
 
-def extract_frames_with_ffmpeg(video_path, filehash ,scale=0.5):
-    interval = 2
+def extract_frames_with_ffmpeg(video_path, filehash):
     # Erstelle den Ausgabeordner, falls er nicht existiert
     path = os.path.join(
-        app.root_path, os.path.join(app.config["UPLOAD_FOLDER"], f"temp/{filehash}_frames")
+        app.root_path, os.path.join("temp", f"{filehash}_frames")
     )
-
+    if not os.path.exists(path):
+        os.makedirs(path)
     # Berechne die Skalierung
-    scale_filter = f"scale=iw*{scale}:ih*{scale}" if scale != 1 else ""
-    vf_filter = f"fps=1/{interval}" + (f",{scale_filter}" if scale_filter else "")
+    cam = cv2.VideoCapture(video_path)
+    fps = cam.get(cv2.CAP_PROP_FPS)
+    total_frames = int(cam.get(cv2.CAP_PROP_FRAME_COUNT))
+    duration = total_frames / fps  # Dauer des Videos in Sekunden
+
+    # Maximal 50 Frames extrahieren
+    max_frames = 50
+    frame_interval = duration / max_frames  # Intervall zwischen Frames in Sekunden
+
+    vf_filter = f"fps=1/{frame_interval} ,scale=320:-1"
 
     # FFmpeg-Befehl ausführen
     output_pattern = os.path.join(path, f"frame_%04d.jpg")
     command = [
         "ffmpeg",
+        "-y",
         "-i", video_path,
         "-vf", vf_filter,
-        "-q:v", "2",
         output_pattern
     ]
-
     try:
         subprocess.run(command, check=True)
         print(f"Bilder erfolgreich in {path} gespeichert.")
-        return True
     except subprocess.CalledProcessError as e:
         print(f"Fehler beim Ausführen von FFmpeg: {e}")
+
+
+    output = os.path.join(path, f"audio.mp3")
+    command2 = [
+        "ffmpeg",
+        "-y",
+        "-i", video_path,
+        "-vn",
+        output
+    ]
+
+    try:
+        subprocess.run(command2, check=True)
+        print(f"Audio erfolgreich in {path} gespeichert.")
+    except subprocess.CalledProcessError as e:
+        print(f"Fehler beim Ausführen von FFmpeg: {e}")
+
+
+    return path
 
 
 def get_all_frames_in_dir(path):
     f = []
     for (dirpath, dirnames, filenames) in os.walk(path):
-        f.extend(filenames)
-        break
+        for file in filenames:
+            f.append(os.path.join(dirpath, file))
     return f
