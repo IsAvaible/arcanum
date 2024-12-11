@@ -61,7 +61,7 @@ def upload_file_method_production(files, pdf_extractor):
     single_text = None
     whisper_prompt = ""
     # SET TRUE IF CACHING SHOULD BE ACTIVATED -> FALSE IF NOT
-    USE_CACHE = True
+    USE_CACHE = False
 
     for file in files:
         print(file)
@@ -140,37 +140,42 @@ def upload_file_method_production(files, pdf_extractor):
                     "text": single_text
                 }
             elif mimetype == "video/mp4":
+                print("VIDEO")
                 texts += f" Content of Video File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
 
-                success = extract_frames_with_ffmpeg(path, filehash)
-                mime_type = mimetypes.guess_type(path)[0]
+                frame_path = extract_frames_with_ffmpeg(path, filehash)
 
                 prompt_dict = [
                     {
                         "type": "text",
-                        "text": "What are all frames showing, be as detailed as possible"
+                        "text": "What are all frames showing, be as detailed as possible but please combine everything in a normal text"
                     }
                 ]
-                if success:
-                    frames = get_all_frames_in_dir(filehash)
+                if frame_path:
+                    transcription = None
+                    frames = get_all_frames_in_dir(frame_path)
                     for frame in frames:
-                        encoding = encode_image(frame)
-                        p = {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:{mime_type};base64,{encoding}",
-                                "detail": "auto"
+                        if ".mp3" not in frame:
+                            encoding = encode_image(frame)
+                            p = {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{encoding}",
+                                    "detail": "auto"
+                                }
                             }
-                        }
-                        prompt_dict.append(p)
+                            prompt_dict.append(p)
+                        else:
+                            transcription = transcribe(file, texts, llm, path, filename, whisper_prompt)
+                            texts += "  " + json.dumps(single_text, ensure_ascii=False)
 
-                        single_text = image_to_openai(prompt_dict)
-                        single_dict = {
-                            "type": mimetype,
-                            "text": single_text
-                        }
-                        break
-
+                    single_text = image_to_openai(prompt_dict)
+                    single_dict = {
+                        "type": mimetype,
+                        "text": single_text
+                    }
+                    print(transcription)
+                    single_dict = merge_two_dicts(single_dict, transcription)
 
         ### CACHE TO MINIMIZE AZURE API CALLS
         if is_cached and USE_CACHE:
@@ -186,6 +191,7 @@ def upload_file_method_production(files, pdf_extractor):
             file_path = write_to_file(filehash, json.dumps(content_dict, ensure_ascii=False, indent=2))
             upload_cache_file(file_path, filehash)
 
+        print(single_dict)
         file_as_dict = {
             "filename": filename,
             "mimetype": mimetype,
@@ -199,11 +205,17 @@ def upload_file_method_production(files, pdf_extractor):
         except ValueError:
             file_as_dict["content"] = single_text
 
+
+
         files_as_dicts.append(file_as_dict)
-        files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False)
+        files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False,indent=2)
 
         print("file_as_dict")
         print(files_as_dicts_json)
         print("file_as_dict END")
     return files_as_dicts_json
 
+def merge_two_dicts(x, y):
+    z = x.copy()   # start with keys and values of x
+    z.update(y)    # modifies z with keys and values of y
+    return z
