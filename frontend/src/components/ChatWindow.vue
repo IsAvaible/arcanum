@@ -1,3 +1,156 @@
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
+import Avatar from 'primevue/avatar'
+import myImage from '@/assets/images/arcanum-ai.jpg'
+import { useApi } from '@/composables/useApi'
+import type { Case } from '@/api'
+import CaseReference from '@/components/chat-view/CaseReference.vue'
+import DynamicRouterLinkText from '@/components/misc/DynamicRouterLinkText.vue'
+
+const notification = ref(true)
+const sound = ref(false)
+const saveToDownloads = ref(false)
+const search = ref('')
+const value = ref('Chat')
+const options = ['Chat', 'Call']
+const media = ref('Media')
+const mediaOptions = ['Media', 'Link', 'Docs']
+const messageInput = ref('')
+const activeChat = ref<Chat | null>(null)
+
+const api = useApi()
+
+type Chat = {
+  name: string
+  image?: string
+  capName: string
+  time: string
+  lastMessage: string
+  unreadMessageCount?: number
+  messages?: Array<{ id: number; type: string; message: string; capName?: string; image?: string }>
+  isGroup?: boolean
+  members?: { name: string; image: string }[]
+}
+
+const chats = ref<Chat[]>([
+  {
+    name: 'ARCANUM AI',
+    image: myImage,
+    capName: 'AI',
+    time: '',
+    isGroup: false,
+    members: [],
+    lastMessage: 'Ask me about anything',
+    messages: [
+      {
+        id: 1,
+        type: 'received',
+        message: 'Hello! How can I assist you today? #22 #9999',
+        capName: 'AI',
+      },
+    ],
+  },
+  {
+    name: 'Cody Fisher',
+    image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar12.jpg',
+    capName: 'CF',
+    time: '12:30',
+    isGroup: false,
+    members: [],
+    lastMessage: "Hey there! I've heard about PrimeVue. Any cool tips for getting started?",
+    messages: [
+      { id: 1, type: 'received', message: 'Hi, how can I help you?', capName: 'CF' },
+      { id: 2, type: 'sent', message: 'I have a question about PrimeVue.', capName: 'You' },
+    ],
+  },
+  {
+    image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar-primetek.png',
+    name: 'PrimeTek Team',
+    capName: 'PT',
+    unreadMessageCount: 0,
+    time: '11.15',
+    isGroup: true,
+    members: [
+      {
+        name: 'Cody Fisher',
+        image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar12.jpg',
+      },
+      {
+        name: 'Esther Howard',
+        image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar13.jpg',
+      },
+      {
+        name: 'Darlene Robertson',
+        image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar11.jpg',
+      },
+    ],
+    lastMessage: "Let's implement PrimeVue. Elevating our UI game! \ud83d\ude80",
+  },
+  {
+    name: 'Esther Howard',
+    image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar13.jpg',
+    capName: 'EH',
+    time: '12:30',
+    isGroup: false,
+    members: [],
+    lastMessage: 'Do you have a moment to discuss our project?',
+    messages: [
+      { id: 1, type: 'received', message: 'Sure, what’s the issue?', capName: 'EH' },
+      { id: 2, type: 'sent', message: "It's about the deadline.", capName: 'You' },
+    ],
+  },
+  {
+    name: 'Darlene Robertson',
+    image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar9.jpg',
+    capName: 'DR',
+    time: '12:30',
+    isGroup: false,
+    members: [],
+    lastMessage: 'Just checking in for updates on our project!',
+    messages: [],
+  },
+])
+
+const filteredChats = computed(() => {
+  return chats.value.filter((chat) => chat.name.toLowerCase().includes(search.value.toLowerCase()))
+})
+
+const setActiveChat = (chat: Chat) => {
+  activeChat.value = chat
+}
+setActiveChat(chats.value[0])
+
+const sendMessage = () => {
+  if (messageInput.value.trim() !== '' && activeChat.value) {
+    if (!activeChat.value.messages || !Array.isArray(activeChat.value.messages)) {
+      activeChat.value.messages = []
+    }
+    activeChat.value.messages.push({
+      id: activeChat.value.messages.length + 1,
+      type: 'sent',
+      message: messageInput.value.trim(),
+    })
+    messageInput.value = ''
+  }
+}
+
+const getCaseReferences = (message: string): { id: number; case: Promise<Case> }[] => {
+  const caseReferences = message.match(/#(\d+)/g)
+
+  return (
+    caseReferences?.map((reference) => {
+      const id = Number(reference.replace('#', ''))
+      return {
+        id,
+        case: api.casesIdGet({ id }).then((response) => response.data),
+      }
+    }) || []
+  )
+}
+</script>
+
 <template>
   <div class="flex h-screen bg-white">
     <!-- Sidebar -->
@@ -43,7 +196,6 @@
           :key="chat.name"
           class="flex items-center gap-4 p-3 cursor-pointer hover:bg-gray-100 transition-all"
           :class="{
-            'bg-blue-100': chat.name === 'ARCANUM AI',
             'bg-gray-200': chat.name === activeChat?.name,
           }"
           @click="setActiveChat(chat)"
@@ -106,11 +258,22 @@
           />
           <div
             :class="
-              message.type === 'received' ? 'bg-gray-100 text-gray-800' : 'bg-blue-500 text-white'
+              message.type === 'received' ? 'bg-gray-50 text-gray-800' : 'bg-blue-500 text-white'
             "
-            class="px-4 py-2 rounded-lg shadow-sm w-fit max-w-xs text-sm"
+            class="px-4 py-2 rounded-lg shadow-sm w-fit max-w-xs flex flex-col gap-y-2"
           >
-            <p>{{ message.message }}</p>
+            <p>
+              <DynamicRouterLinkText :text="message.message" :regex="/#(\d+)/g" to="/cases/" />
+            </p>
+            <CaseReference
+              v-for="caseReference in getCaseReferences(message.message)"
+              :reference="caseReference"
+              class="min-w-40"
+              :class="{
+                'bg-gray-100': message.type === 'received',
+                'bg-white': message.type === 'sent',
+              }"
+            />
           </div>
         </div>
       </div>
@@ -265,155 +428,3 @@
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import Dialog from 'primevue/dialog'
-import ToggleSwitch from 'primevue/toggleswitch'
-import Button from 'primevue/button'
-import InputText from 'primevue/inputtext'
-import Avatar from 'primevue/avatar'
-import myImage from '@/assets/images/arcanum-ai.jpg'
-
-type Chat = {
-  name: string
-  image?: string
-  capName: string
-  time: string
-  lastMessage: string
-  messages?: Array<{ id: number; type: string; message: string; capName?: string; image?: string }>
-  isGroup?: boolean
-  members?: { name: string; image: string }[]
-}
-
-export default {
-  name: 'Chat',
-  components: {
-    Dialog,
-    ToggleSwitch,
-    Button,
-    InputText,
-    Avatar,
-  },
-  data() {
-    return {
-      notification: true,
-      sound: false,
-      saveToDownloads: false,
-      search: '',
-      download: false,
-      value: 'Chat',
-      value2: '',
-      options: ['Chat', 'Call'],
-      media: 'Media',
-      mediaOptions: ['Media', 'Link', 'Docs'],
-      messageInput: '',
-      activeChat: null as Chat | null,
-      chats: [
-        {
-          name: 'ARCANUM AI',
-          image: myImage,
-          capName: 'AI',
-          time: '',
-          isGroup: false,
-          members: [],
-          lastMessage: 'Ask me anything about',
-          messages: [
-            {
-              id: 1,
-              type: 'received',
-              message: 'Hello! How can I assist you today?',
-              capName: 'AI',
-            },
-          ],
-        },
-        {
-          name: 'Cody Fisher',
-          image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar12.jpg',
-          capName: 'CF',
-          time: '12:30',
-          isGroup: false,
-          members: [],
-          lastMessage: "Hey there! I've heard about PrimeVue. Any cool tips for getting started?",
-          messages: [
-            { id: 1, type: 'received', message: 'Hi, how can I help you?', capName: 'CF' },
-            { id: 2, type: 'sent', message: 'I have a question about PrimeVue.', capName: 'You' },
-          ],
-        },
-        {
-          image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar-primetek.png',
-          name: 'PrimeTek Team',
-          capName: 'PT',
-          active: undefined,
-          unreadMessageCount: 0,
-          time: '11.15',
-          isGroup: true,
-          members: [
-            {
-              name: 'Cody Fisher',
-              image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar12.jpg',
-            },
-            {
-              name: 'Esther Howard',
-              image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar13.jpg',
-            },
-            {
-              name: 'Darlene Robertson',
-              image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar11.jpg',
-            },
-          ],
-          lastMessage: "Let's implement PrimeVue. Elevating our UI game! 🚀",
-        },
-        {
-          name: 'Esther Howard',
-          image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar13.jpg',
-          capName: 'EH',
-          time: '12:30',
-          isGroup: false,
-          members: [],
-          lastMessage: 'Do you have a moment to discuss our project?',
-          messages: [
-            { id: 1, type: 'received', message: 'Sure, what’s the issue?', capName: 'EH' },
-            { id: 2, type: 'sent', message: "It's about the deadline.", capName: 'You' },
-          ],
-        },
-        {
-          name: 'Darlene Robertson',
-          image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar9.jpg',
-          capName: 'DR',
-          time: '12:30',
-          isGroup: false,
-          members: [],
-          lastMessage: 'Just checking in for updates on our project!',
-          messages: [],
-        },
-      ],
-    }
-  },
-  computed: {
-    filteredChats() {
-      return this.chats.filter((chat) =>
-        chat.name.toLowerCase().includes(this.search.toLowerCase()),
-      )
-    },
-  },
-
-  methods: {
-    setActiveChat(chat: Chat) {
-      this.activeChat = chat
-    },
-    sendMessage() {
-      if (this.messageInput.trim() !== '' && this.activeChat) {
-        if (!this.activeChat.messages || !Array.isArray(this.activeChat.messages)) {
-          this.activeChat.messages = []
-        }
-        this.activeChat.messages.push({
-          id: this.activeChat.messages.length + 1,
-          type: 'sent',
-          message: this.messageInput.trim(),
-        })
-        this.messageInput = '' // Eingabefeld leeren
-      }
-    },
-  },
-}
-</script>
