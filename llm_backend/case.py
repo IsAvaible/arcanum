@@ -1,4 +1,6 @@
 from pydantic import Field, BaseModel, ValidationError
+from pydantic.v1 import root_validator
+
 
 #maybe for future use
 class CaseAttachment(BaseModel):
@@ -27,11 +29,11 @@ class Case(BaseModel):
     )
     description: str = Field(
         ...,
-        description="A detailed explanation of the case, including relevant background information, context necessary for understanding the problem but no solution. Include granular Timestamps from Audio files!",
+        description="A detailed explanation of the case, including relevant background information, context necessary for understanding the problem but no solution. Include granular Timestamps from Audio files! Do not include personal information!",
     )
     solution: str = Field(
         ...,
-        description="A proposed or implemented solution to address the case. Include all possible solution you can find! If not yet resolved, this can include potential steps or approaches to consider. Include granular Timestamps from Audio files!",
+        description="A proposed or implemented solution to address the case. Include all possible solution you can find! If not yet resolved, this can include potential steps or approaches to consider. Include granular Timestamps from Audio files! Do not include personal information!",
     )
     """assignee: list[str] = Field(
         ...,
@@ -48,8 +50,7 @@ class Case(BaseModel):
 
 
 class CaseArray(BaseModel):
-    cases: list[Case] = Field(..., description="A list of one or multiple cases.")
-
+    cases: list[Case] = Field(..., description="A list of one or multiple cases.", min_length=1)
 def check_if_output_is_valid(chain_output):
     try:
         # This will validate the output and raise an error if any required field is missing
