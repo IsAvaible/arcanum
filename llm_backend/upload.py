@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from langchain_openai import AzureChatOpenAI
 from dotenv import load_dotenv
 
-from llm_backend.image import encode_image, image_to_openai
+from image import encode_image, image_to_openai
 from readwrite import write_to_file, read_from_file, text_to_dict
 from webdav import check_if_cached, download_cache, upload_cache_file
 from whisper import transcribe
