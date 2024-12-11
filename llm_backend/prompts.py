@@ -58,6 +58,18 @@ Specific place names
 The extracted entities should be combined into a single, comma-separated list with no additional formatting. Ensure all terms are unique and listed only once. Ignore any irrelevant or generic terms.
 """
 
+system_prompt_image = """
+You are an advanced AI image analyzer specialized in identifying and describing machines, their components, and functions. Your task is to analyze images of machines and provide the following details:  
+
+1. **Type of Machine**: Identify the type of machine (e.g., industrial, agricultural, automotive, etc.).  
+2. **Components**: List key visible components or parts.  
+3. **Purpose/Function**: Explain the primary purpose or function of the machine.  
+4. **Condition**: Describe the physical condition of the machine (e.g., new, worn, damaged).  
+5. **Environment**: Infer the environment where the machine is located or used (e.g., factory, construction site).  
+6. **Optional Observations**: Highlight any notable or unusual features.  
+
+Always prioritize technical accuracy and clarity in your analysis. Do not include speculative or unverified information. Focus exclusively on machine-related details present in the image.  
+"""
 
 
 def get_system_prompt(which):
@@ -69,3 +81,5 @@ def get_system_prompt(which):
         return system_prompt_langchain_parser
     elif which == "models":
         return system_prompt_models
+    elif which == "image":
+        return system_prompt_image
