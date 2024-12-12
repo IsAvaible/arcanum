@@ -157,8 +157,10 @@ const handleEdit = () => {
   inEditMode.value = true
 }
 
+const saveLoading = ref(false)
 const handleSave = handleSubmit(
   async (values) => {
+    saveLoading.value = true
     try {
       if (caseDetails.value!.draft) {
         await api.confirmCaseIdPut({ id: Number(caseId.value), casePut: values })
@@ -184,6 +186,8 @@ const handleSave = handleSubmit(
         life: 3000,
       })
       console.error(error)
+    } finally {
+      saveLoading.value = false
     }
   },
   ({ errors }) => {
@@ -460,7 +464,14 @@ const toggleMenu = (event: Event) => {
 
         <div class="flex gap-2">
           <Button v-if="!inEditMode" label="Edit" icon="pi pi-pencil" @click="handleEdit" />
-          <Button v-if="inEditMode" label="Save" icon="pi pi-check" @click="handleSave" />
+          <Button
+            v-if="inEditMode"
+            label="Save"
+            icon="pi pi-check"
+            @click="handleSave"
+            :loading="saveLoading"
+            :disabled="saveLoading"
+          />
           <Button
             v-if="inEditMode"
             :label="caseDetails?.draft ? 'Discard' : 'Cancel'"
