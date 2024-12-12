@@ -51,6 +51,7 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
         response = chain.invoke(promptLangchainInvoked)
         whisper_prompt = response.content
 
+
     file_size_mb = os.stat(path).st_size / (1024 * 1024)
     texts += f" NEW AUDIO FILE {json.dumps(file)} - CONTENT: "
 
