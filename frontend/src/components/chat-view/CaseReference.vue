@@ -85,13 +85,14 @@ const clearHideTimer = () => {
   <component
     :is="caseData ? 'router-link' : 'div'"
     :to="`/cases/${caseID}`"
+    target="_blank"
     ref="component"
     @mouseenter="showPopover"
     @mouseleave="hidePopover"
     class="flex items-center gap-2 h-12 w-full rounded-md px-2 border-l-2"
     :class="{
       'text-gray-500': loading || error,
-      'text-gray-700': !loading && !error,
+      'text-gray-800': !loading && !error,
     }"
   >
     <i
@@ -148,7 +149,7 @@ const clearHideTimer = () => {
         </div>
 
         <div class="mt-4">
-          <router-link :to="`/cases/${caseData!.id}`">
+          <router-link :to="`/cases/${caseData!.id}`" target="_blank">
             <Button
               class="w-full"
               severity="secondary"
