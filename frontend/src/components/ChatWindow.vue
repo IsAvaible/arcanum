@@ -139,7 +139,7 @@
     </div>
 
     <!-- User Details -->
-    <div class="w-3/12 min-w-[300px] bg-white px-4 py-6 flex flex-col">
+    <div class="w-3/12 min-w-[300px] border-l border-gray-300 bg-white px-4 py-6 flex flex-col">
       <div class="flex flex-col items-center">
         <!-- Avatar -->
         <Avatar

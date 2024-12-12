@@ -12,7 +12,7 @@ const props = defineProps<{
   assigneeLabel: string
   placeholder?: string
   userOptions: User[]
-  selectedUsers: User[]
+  selectedUsers?: User[]
   multiSelect: boolean
   disabled?: boolean
   invalid?: boolean

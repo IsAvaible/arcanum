@@ -49,10 +49,10 @@ export interface Case {
     'solution'?: string;
     /**
      * Person responsible for the case.
-     * @type {string}
+     * @type {Array<string>}
      * @memberof Case
      */
-    'assignee'?: string;
+    'assignee'?: Array<string>;
     /**
      * Status of the case.
      * @type {string}
@@ -72,25 +72,25 @@ export interface Case {
      */
     'priority'?: CasePriorityEnum;
     /**
-     * 
+     * ID of the case.
      * @type {number}
      * @memberof Case
      */
     'id': number;
     /**
-     * 
+     * Indicates whether the case is a draft.
      * @type {boolean}
      * @memberof Case
      */
     'draft': boolean;
     /**
-     * 
+     * Date and time the case was created.
      * @type {string}
      * @memberof Case
      */
     'createdAt': string;
     /**
-     * 
+     * Date and time the case was last updated.
      * @type {string}
      * @memberof Case
      */
@@ -208,10 +208,10 @@ export interface CaseBase {
     'solution'?: string;
     /**
      * Person responsible for the case.
-     * @type {string}
+     * @type {Array<string>}
      * @memberof CaseBase
      */
-    'assignee'?: string;
+    'assignee'?: Array<string>;
     /**
      * Status of the case.
      * @type {string}
@@ -282,10 +282,10 @@ export interface CasePut {
     'solution'?: string;
     /**
      * Person responsible for the case.
-     * @type {string}
+     * @type {Array<string>}
      * @memberof CasePut
      */
-    'assignee'?: string;
+    'assignee'?: Array<string>;
     /**
      * Status of the case.
      * @type {string}
@@ -607,7 +607,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {string} title Title of the case.
          * @param {string} description Description of the case.
          * @param {string} [solution] Solution for the case.
-         * @param {string} [assignee] Person responsible for the case.
+         * @param {Array<string>} [assignee] Person responsible for the case.
          * @param {CasesIdPutStatusEnum} [status] Status of the case.
          * @param {CasesIdPutCaseTypeEnum} [caseType] Type of the case.
          * @param {CasesIdPutPriorityEnum} [priority] Priority level of the case.
@@ -615,7 +615,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        casesIdPut: async (id: number, title: string, description: string, solution?: string, assignee?: string, status?: CasesIdPutStatusEnum, caseType?: CasesIdPutCaseTypeEnum, priority?: CasesIdPutPriorityEnum, files?: Array<File>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        casesIdPut: async (id: number, title: string, description: string, solution?: string, assignee?: Array<string>, status?: CasesIdPutStatusEnum, caseType?: CasesIdPutCaseTypeEnum, priority?: CasesIdPutPriorityEnum, files?: Array<File>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
             assertParamExists('casesIdPut', 'id', id)
             // verify required parameter 'title' is not null or undefined
@@ -648,10 +648,10 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             if (solution !== undefined) { 
                 localVarFormParams.append('solution', solution as any);
             }
-    
-            if (assignee !== undefined) { 
-                localVarFormParams.append('assignee', assignee as any);
+                if (assignee) {
+                localVarFormParams.append('assignee', assignee.join(COLLECTION_FORMATS.csv));
             }
+
     
             if (status !== undefined) { 
                 localVarFormParams.append('status', status as any);
@@ -690,7 +690,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {string} title Title of the case.
          * @param {string} description Description of the case.
          * @param {string} [solution] Solution for the case.
-         * @param {string} [assignee] Person responsible for the case.
+         * @param {Array<string>} [assignee] Person responsible for the case.
          * @param {CasesPostStatusEnum} [status] Status of the case.
          * @param {CasesPostCaseTypeEnum} [caseType] Type of the case.
          * @param {CasesPostPriorityEnum} [priority] Priority level of the case.
@@ -698,7 +698,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        casesPost: async (title: string, description: string, solution?: string, assignee?: string, status?: CasesPostStatusEnum, caseType?: CasesPostCaseTypeEnum, priority?: CasesPostPriorityEnum, files?: Array<File>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        casesPost: async (title: string, description: string, solution?: string, assignee?: Array<string>, status?: CasesPostStatusEnum, caseType?: CasesPostCaseTypeEnum, priority?: CasesPostPriorityEnum, files?: Array<File>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'title' is not null or undefined
             assertParamExists('casesPost', 'title', title)
             // verify required parameter 'description' is not null or undefined
@@ -728,10 +728,10 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             if (solution !== undefined) { 
                 localVarFormParams.append('solution', solution as any);
             }
-    
-            if (assignee !== undefined) { 
-                localVarFormParams.append('assignee', assignee as any);
+                if (assignee) {
+                localVarFormParams.append('assignee', assignee.join(COLLECTION_FORMATS.csv));
             }
+
     
             if (status !== undefined) { 
                 localVarFormParams.append('status', status as any);
@@ -947,7 +947,7 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {string} title Title of the case.
          * @param {string} description Description of the case.
          * @param {string} [solution] Solution for the case.
-         * @param {string} [assignee] Person responsible for the case.
+         * @param {Array<string>} [assignee] Person responsible for the case.
          * @param {CasesIdPutStatusEnum} [status] Status of the case.
          * @param {CasesIdPutCaseTypeEnum} [caseType] Type of the case.
          * @param {CasesIdPutPriorityEnum} [priority] Priority level of the case.
@@ -955,7 +955,7 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async casesIdPut(id: number, title: string, description: string, solution?: string, assignee?: string, status?: CasesIdPutStatusEnum, caseType?: CasesIdPutCaseTypeEnum, priority?: CasesIdPutPriorityEnum, files?: Array<File>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Case>> {
+        async casesIdPut(id: number, title: string, description: string, solution?: string, assignee?: Array<string>, status?: CasesIdPutStatusEnum, caseType?: CasesIdPutCaseTypeEnum, priority?: CasesIdPutPriorityEnum, files?: Array<File>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Case>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.casesIdPut(id, title, description, solution, assignee, status, caseType, priority, files, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.casesIdPut']?.[localVarOperationServerIndex]?.url;
@@ -967,7 +967,7 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {string} title Title of the case.
          * @param {string} description Description of the case.
          * @param {string} [solution] Solution for the case.
-         * @param {string} [assignee] Person responsible for the case.
+         * @param {Array<string>} [assignee] Person responsible for the case.
          * @param {CasesPostStatusEnum} [status] Status of the case.
          * @param {CasesPostCaseTypeEnum} [caseType] Type of the case.
          * @param {CasesPostPriorityEnum} [priority] Priority level of the case.
@@ -975,7 +975,7 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async casesPost(title: string, description: string, solution?: string, assignee?: string, status?: CasesPostStatusEnum, caseType?: CasesPostCaseTypeEnum, priority?: CasesPostPriorityEnum, files?: Array<File>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Case>> {
+        async casesPost(title: string, description: string, solution?: string, assignee?: Array<string>, status?: CasesPostStatusEnum, caseType?: CasesPostCaseTypeEnum, priority?: CasesPostPriorityEnum, files?: Array<File>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Case>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.casesPost(title, description, solution, assignee, status, caseType, priority, files, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.casesPost']?.[localVarOperationServerIndex]?.url;
@@ -1248,10 +1248,10 @@ export interface DefaultApiCasesIdPutRequest {
 
     /**
      * Person responsible for the case.
-     * @type {string}
+     * @type {Array<string>}
      * @memberof DefaultApiCasesIdPut
      */
-    readonly assignee?: string
+    readonly assignee?: Array<string>
 
     /**
      * Status of the case.
@@ -1311,10 +1311,10 @@ export interface DefaultApiCasesPostRequest {
 
     /**
      * Person responsible for the case.
-     * @type {string}
+     * @type {Array<string>}
      * @memberof DefaultApiCasesPost
      */
-    readonly assignee?: string
+    readonly assignee?: Array<string>
 
     /**
      * Status of the case.

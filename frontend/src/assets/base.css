@@ -122,7 +122,8 @@
   --section-gap: 160px;
 }
 
-@media (prefers-color-scheme: dark) {
+
+:root[class="app-dark"] {
   :root {
     --color-background: var(--vt-c-black);
     --color-background-soft: var(--vt-c-black-soft);
