@@ -155,6 +155,16 @@ const getCaseReferences = (message: string): { id: number; case: Promise<Case> }
     }) || []
   )
 }
+
+const caseReferences = computed(() => {
+  return (activeChat.value?.messages || []).reduce(
+    (acc, message) => {
+      acc[message.id] = getCaseReferences(message.message)
+      return acc
+    },
+    {} as Record<number, { id: number; case: Promise<Case> }[]>,
+  )
+})
 </script>
 
 <template>
@@ -262,7 +272,8 @@ const getCaseReferences = (message: string): { id: number; case: Promise<Case> }
               <DynamicRouterLinkText :text="message.message" :regex="/#(\d+)/g" to="/cases/" />
             </p>
             <CaseReference
-              v-for="caseReference in getCaseReferences(message.message)"
+              v-for="caseReference in caseReferences[message.id] || []"
+              :key="caseReference.id"
               :reference="caseReference"
               class="min-w-40"
               :class="{
@@ -284,7 +295,6 @@ const getCaseReferences = (message: string): { id: number; case: Promise<Case> }
 
         <InputText
           v-model="messageInput"
-          type="text"
           placeholder="Type a message"
           class="w-full"
           @keyup.enter="sendMessage"
