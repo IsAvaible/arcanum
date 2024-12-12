@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import {
   Button,
   InputText,
@@ -129,7 +129,16 @@ const setActiveChat = (chat: Chat) => {
 }
 setActiveChat(chats.value[0])
 
+const invalidSubmissionAttempt = ref(false)
 const sendMessage = () => {
+  if (hasInvalidCaseReferences.value) {
+    invalidSubmissionAttempt.value = false
+    setTimeout(() => {
+      invalidSubmissionAttempt.value = true
+    }, 0)
+    return
+  }
+
   if (messageInput.value.trim() !== '' && activeChat.value) {
     if (!activeChat.value.messages || !Array.isArray(activeChat.value.messages)) {
       activeChat.value.messages = []
@@ -149,6 +158,7 @@ const isValidationInProgress = ref(false)
 
 const validateCaseReferences = async () => {
   if (!messageInput.value) {
+    invalidSubmissionAttempt.value = false
     invalidCaseReferences.value = []
     isValidationInProgress.value = false
     return
@@ -363,9 +373,10 @@ const caseReferences = computed(() => {
           <div
             v-if="hasInvalidCaseReferences"
             class="absolute bottom-full left-0 right-0 mx-8 mb-2 z-10"
+            :class="{ shake: invalidSubmissionAttempt }"
           >
             <div
-              class="bg-yellow-100 border border-yellow-400 text-yellow-900 px-4 py-2 rounded shadow-md flex items-center"
+              class="bg-red-50 border border-red-400 text-red-900 px-4 py-2 rounded shadow-md flex items-center"
             >
               <i class="pi pi-exclamation-triangle mr-2"></i>
               <span>
@@ -496,5 +507,28 @@ const caseReferences = computed(() => {
 .fade-leave-to {
   opacity: 0;
   transform: translateY(10px);
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-5px);
+  }
+
+  50% {
+    transform: translateX(5px);
+  }
+
+  75% {
+    transform: translateX(-5px);
+  }
+}
+
+.shake {
+  animation: shake 0.5s ease-in-out;
 }
 </style>
