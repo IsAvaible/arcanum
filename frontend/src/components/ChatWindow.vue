@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import {
   Button,
   InputText,
@@ -14,6 +14,7 @@ import { useApi } from '@/composables/useApi'
 import type { Case } from '@/api'
 import CaseReference from '@/components/chat-view/CaseReference.vue'
 import DynamicRouterLinkText from '@/components/misc/DynamicRouterLinkText.vue'
+import { useDebounceFn } from '@vueuse/core'
 
 const notification = ref(true)
 const sound = ref(false)
@@ -141,6 +142,60 @@ const sendMessage = () => {
     messageInput.value = ''
   }
 }
+
+const invalidCaseReferences = ref<number[]>([])
+const validatedCaseReferences = ref<Map<number, boolean>>(new Map())
+const isValidationInProgress = ref(false)
+
+const validateCaseReferences = async () => {
+  if (!messageInput.value) {
+    invalidCaseReferences.value = []
+    isValidationInProgress.value = false
+    return
+  }
+
+  isValidationInProgress.value = true
+  const caseReferences = messageInput.value.match(/#(\d+)/g) || []
+  const invalidRefs: number[] = []
+
+  for (const ref of caseReferences) {
+    const id = Number(ref.replace('#', ''))
+
+    // Skip if already validated
+    if (validatedCaseReferences.value.has(id)) {
+      if (!validatedCaseReferences.value.get(id)) {
+        invalidRefs.push(id)
+      }
+      continue
+    }
+
+    try {
+      await api.casesIdGet({ id })
+      validatedCaseReferences.value.set(id, true)
+    } catch {
+      invalidRefs.push(id)
+      validatedCaseReferences.value.set(id, false)
+    }
+  }
+
+  invalidCaseReferences.value = invalidRefs
+  isValidationInProgress.value = false
+}
+
+const debouncedValidateCaseReferences = useDebounceFn(validateCaseReferences, 500, { maxWait: 700 })
+
+// Reset validation cache when message is cleared
+watch(messageInput, (newValue) => {
+  if (!newValue) {
+    validatedCaseReferences.value.clear()
+    invalidCaseReferences.value = []
+  }
+})
+
+// Continue watching for changes to trigger validation
+watch(messageInput, debouncedValidateCaseReferences)
+
+const hasInvalidCaseReferences = computed(() => invalidCaseReferences.value.length > 0)
 
 const getCaseReferences = (message: string): { id: number; case: Promise<Case> }[] => {
   const caseReferences = message.match(/#(\d+)/g)
@@ -284,7 +339,10 @@ const caseReferences = computed(() => {
           </div>
         </div>
       </div>
-      <div v-if="activeChat" class="p-4 border-t border-gray-300 flex items-center gap-1 bg-white">
+      <div
+        v-if="activeChat"
+        class="p-4 border-t border-gray-300 flex items-center gap-1 bg-white relative"
+      >
         <Button variant="text" severity="secondary" rounded size="small" class="-ml-2">
           <i class="pi pi-face-smile" style="font-size: 1.2rem; color: black"></i>
         </Button>
@@ -299,6 +357,26 @@ const caseReferences = computed(() => {
           class="w-full"
           @keyup.enter="sendMessage"
         />
+
+        <!-- Case Reference Validation Overlay -->
+        <Transition name="fade">
+          <div
+            v-if="hasInvalidCaseReferences"
+            class="absolute bottom-full left-0 right-0 mx-8 mb-2 z-10"
+          >
+            <div
+              class="bg-yellow-100 border border-yellow-400 text-yellow-900 px-4 py-2 rounded shadow-md flex items-center"
+            >
+              <i class="pi pi-exclamation-triangle mr-2"></i>
+              <span>
+                Your message contains{{ invalidCaseReferences.length ? '' : ' an' }} invalid case
+                reference{{ invalidCaseReferences.length ? 's' : '' }}: #{{
+                  invalidCaseReferences.join(', #')
+                }}
+              </span>
+            </div>
+          </div>
+        </Transition>
 
         <!-- Send-Icon -->
         <Button variant="text" class="ml-2">
@@ -406,3 +484,17 @@ const caseReferences = computed(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+  opacity: 1;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+</style>
