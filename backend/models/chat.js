@@ -40,6 +40,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'Chat',
+    freezeTableName: true // << Das verhindert Pluralisierung
   });
   return Chat;
 };

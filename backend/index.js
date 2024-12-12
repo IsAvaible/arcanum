@@ -2,13 +2,15 @@ const port = 443;
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const { Server } = require("socket.io");
 
 const https = require("https");
 const fs = require("fs");
 
 const caseRoutes = require("./routes/caseRoutes");
 const uploadRoutes = require("./routes/exampleFileUpload");
-
+const chatRoutes = require("./routes/chatRoutes");
+const tokenService = require("./services/tokenService"); 
 
 // for development only
 app.set("view engine", "ejs");
@@ -39,6 +41,7 @@ app.use(express.urlencoded({ extended: true }));
 //Routen verwenden
 app.use("/api", caseRoutes);
 app.use("/", uploadRoutes);
+app.use("/api", chatRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -53,6 +56,13 @@ const credentials = {
 // for https uncomment the following lines
 try {
   const server = https.createServer(credentials, app);
+  const io = new Server(server, {
+    cors: {
+      origin: ["*"],
+      credentials: true,
+    },
+  });
+  tokenService(io);
   server.listen(port, function (req, res) {
     console.log(`Server listening on port 3000 (${port})`);
   });

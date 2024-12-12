@@ -240,16 +240,16 @@ exports.updateCase = [
 exports.createCaseFromFiles = [
   // Main request handler.
   async (req, res) => {
-    const socket_id = 123;
 
     try {
+      const { socketId } = req.body;
       // Process uploaded files and create attachments.
       const attachmentInstances =
         await attachmentService.uploadFilesAndCreateAttachments(req.files);
 
       // Prepare data to send to the LLM.
       const llmRequestData = {
-        socket_id: socket_id,
+        socket_id: socketId,
         attachments: attachmentInstances,
       };
 

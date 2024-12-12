@@ -43,7 +43,9 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'Message',
-    timestamps: false // We have a custom timestamp field
+    timestamps: false, // We have a custom timestamp field
+    freezeTableName: true // << Das verhindert Pluralisierung
+
   });
   return Message;
 };

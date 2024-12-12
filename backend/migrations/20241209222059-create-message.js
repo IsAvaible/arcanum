@@ -17,7 +17,7 @@ module.exports = {
         type: Sequelize.TEXT,
         allowNull: false
       },
-      chat_id: {
+      chatId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
