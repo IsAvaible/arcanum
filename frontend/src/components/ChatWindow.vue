@@ -1,8 +1,14 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import Button from 'primevue/button'
-import InputText from 'primevue/inputtext'
-import Avatar from 'primevue/avatar'
+import {
+  Button,
+  InputText,
+  Avatar,
+  SelectButton,
+  ToggleSwitch,
+  IconField,
+  InputIcon,
+} from 'primevue'
 import myImage from '@/assets/images/arcanum-ai.jpg'
 import { useApi } from '@/composables/useApi'
 import type { Case } from '@/api'
@@ -13,8 +19,8 @@ const notification = ref(true)
 const sound = ref(false)
 const saveToDownloads = ref(false)
 const search = ref('')
-const value = ref('Chat')
-const options = ['Chat', 'Call']
+const chatTypeSelection = ref('Chat')
+const chatTypeOptions = ['Chat', 'Call']
 const media = ref('Media')
 const mediaOptions = ['Media', 'Link', 'Docs']
 const messageInput = ref('')
@@ -152,7 +158,7 @@ const getCaseReferences = (message: string): { id: number; case: Promise<Case> }
 </script>
 
 <template>
-  <div class="flex h-screen bg-white">
+  <div class="flex h-screen bg-white neutral-primary">
     <!-- Sidebar -->
     <div class="w-4/12 xl:w-3/12 min-w-40 overflow-auto flex flex-col gap-6 border-r">
       <div class="flex flex-col gap-6 pt-3 pb-2 px-5 sticky top-0 bg-white z-10">
@@ -162,33 +168,17 @@ const getCaseReferences = (message: string): { id: number; case: Promise<Case> }
         </div>
       </div>
       <div class="px-5">
-        <div class="relative">
-          <InputText
-            v-model="search"
-            type="text"
-            placeholder="Search chats..."
-            class="w-full py-2 px-4 text-gray-800 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <i
-            class="pi pi-search absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500"
-          ></i>
-        </div>
+        <IconField>
+          <InputText v-model="search" type="text" placeholder="Search chats..." class="w-full" />
+          <InputIcon class="pi pi-search" />
+        </IconField>
       </div>
       <div class="w-full px-5 mt-4">
-        <div class="flex border border-gray-300 rounded-md overflow-hidden">
-          <button
-            v-for="option in options"
-            :key="option"
-            @click="value = option"
-            class="flex-1 py-2 text-center text-sm font-medium"
-            :class="{
-              'bg-gray-300 text-gray-800': value === option,
-              'bg-gray-100 text-gray-600': value !== option,
-            }"
-          >
-            {{ option }}
-          </button>
-        </div>
+        <SelectButton
+          v-model="chatTypeSelection"
+          class="w-full flex [&>*]:w-full"
+          :options="chatTypeOptions"
+        />
       </div>
       <div class="flex-1 flex flex-col">
         <div
@@ -236,9 +226,15 @@ const getCaseReferences = (message: string): { id: number; case: Promise<Case> }
           </div>
         </div>
         <div class="flex items-center gap-3">
-          <i class="pi pi-phone text-gray-800"></i>
-          <i class="pi pi-search text-gray-800"></i>
-          <i class="pi pi-ellipsis-h text-gray-800"></i>
+          <Button variant="text" severity="secondary" size="small">
+            <i class="pi pi-phone text-gray-800"></i>
+          </Button>
+          <Button variant="text" severity="secondary" size="small" class="-ml-4">
+            <i class="pi pi-search text-gray-800"></i>
+          </Button>
+          <Button variant="text" severity="secondary" size="small" class="-ml-4">
+            <i class="pi pi-ellipsis-h text-gray-800"></i>
+          </Button>
         </div>
       </div>
       <div v-else class="flex items-center justify-center h-full">
@@ -258,7 +254,7 @@ const getCaseReferences = (message: string): { id: number; case: Promise<Case> }
           />
           <div
             :class="
-              message.type === 'received' ? 'bg-gray-50 text-gray-800' : 'bg-blue-500 text-white'
+              message.type === 'received' ? 'bg-gray-50 text-gray-800' : 'bg-primary-500 text-white'
             "
             class="px-4 py-2 rounded-lg shadow-sm w-fit max-w-xs flex flex-col gap-y-2"
           >
@@ -277,27 +273,27 @@ const getCaseReferences = (message: string): { id: number; case: Promise<Case> }
           </div>
         </div>
       </div>
-      <div v-if="activeChat" class="p-4 border-t border-gray-300 flex items-center gap-3 bg-white">
-        <!-- Smiley Icon -->
-        <i class="pi pi-face-smile" style="font-size: 1.2rem; color: black"></i>
+      <div v-if="activeChat" class="p-4 border-t border-gray-300 flex items-center gap-1 bg-white">
+        <Button variant="text" severity="secondary" rounded size="small" class="-ml-2">
+          <i class="pi pi-face-smile" style="font-size: 1.2rem; color: black"></i>
+        </Button>
 
-        <!-- Paperclip Icon -->
-        <i class="pi pi-paperclip" style="font-size: 1.2rem; color: black"></i>
-        <!-- Inputfield -->
-        <input
+        <Button variant="text" severity="secondary" rounded size="small" class="-ml-2">
+          <i class="pi pi-paperclip" style="font-size: 1.2rem; color: black"></i>
+        </Button>
+
+        <InputText
           v-model="messageInput"
           type="text"
           placeholder="Type a message"
-          class="flex-1 border border-gray-300 rounded-md py-2 px-4 text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="w-full"
           @keyup.enter="sendMessage"
         />
 
         <!-- Send-Icon -->
-        <i
-          class="pi pi-send"
-          style="font-size: 1.3rem; color: blue; cursor: pointer"
-          @click="sendMessage"
-        ></i>
+        <Button variant="text" class="ml-2">
+          <i class="pi pi-send text-primary-700 text-xl" @click="sendMessage"></i>
+        </Button>
       </div>
     </div>
 
@@ -321,21 +317,21 @@ const getCaseReferences = (message: string): { id: number; case: Promise<Case> }
 
       <!-- Action Buttons -->
       <div class="flex justify-center gap-3 my-6">
-        <button class="p-button p-button-text">
+        <Button variant="text" severity="secondary">
           <i class="pi pi-phone" style="font-size: 1.2rem; color: #333"></i>
-        </button>
-        <button class="p-button p-button-text">
+        </Button>
+        <Button variant="text" severity="secondary">
           <i class="pi pi-video" style="font-size: 1.2rem; color: #333"></i>
-        </button>
-        <button class="p-button p-button-text">
+        </Button>
+        <Button variant="text" severity="secondary">
           <i class="pi pi-sign-out" style="font-size: 1.2rem; color: #333"></i>
-        </button>
-        <button class="p-button p-button-text">
+        </Button>
+        <Button variant="text" severity="secondary">
           <i class="pi pi-info-circle" style="font-size: 1.2rem; color: #333"></i>
-        </button>
-        <button class="p-button p-button-text">
+        </Button>
+        <Button variant="text" severity="secondary">
           <i class="pi pi-ellipsis-h" style="font-size: 1.2rem; color: #333"></i>
-        </button>
+        </Button>
       </div>
 
       <!-- Toggles -->
@@ -345,12 +341,7 @@ const getCaseReferences = (message: string): { id: number; case: Promise<Case> }
             <i class="pi pi-bell" style="font-size: 1.2rem; color: #333"></i>
             <span class="text-gray-800 text-sm">Notification</span>
           </div>
-          <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" class="sr-only peer" v-model="notification" />
-            <div
-              class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer dark:bg-gray-700 peer-checked:bg-blue-600 peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600"
-            ></div>
-          </label>
+          <ToggleSwitch v-model="notification" />
         </div>
 
         <div class="flex items-center justify-between mb-4">
@@ -358,12 +349,7 @@ const getCaseReferences = (message: string): { id: number; case: Promise<Case> }
             <i class="pi pi-volume-up" style="font-size: 1.2rem; color: #333"></i>
             <span class="text-gray-800 text-sm">Sound</span>
           </div>
-          <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" class="sr-only peer" v-model="sound" />
-            <div
-              class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer dark:bg-gray-700 peer-checked:bg-blue-600 peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600"
-            ></div>
-          </label>
+          <ToggleSwitch v-model="sound" />
         </div>
 
         <div class="flex items-center justify-between mb-4">
@@ -371,12 +357,7 @@ const getCaseReferences = (message: string): { id: number; case: Promise<Case> }
             <i class="pi pi-download" style="font-size: 1.2rem; color: #333"></i>
             <span class="text-gray-800 text-sm">Save to downloads</span>
           </div>
-          <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" class="sr-only peer" v-model="saveToDownloads" />
-            <div
-              class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer dark:bg-gray-700 peer-checked:bg-blue-600 peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600"
-            ></div>
-          </label>
+          <ToggleSwitch v-model="saveToDownloads" />
         </div>
       </div>
 
@@ -410,20 +391,7 @@ const getCaseReferences = (message: string): { id: number; case: Promise<Case> }
 
       <!-- Tabs -->
       <div class="mt-4">
-        <div class="flex border border-gray-300 rounded-md overflow-hidden text-sm">
-          <button
-            v-for="tab in mediaOptions"
-            :key="tab"
-            class="flex-1 py-2 text-center"
-            :class="{
-              'bg-gray-300 text-gray-800': media === tab,
-              'bg-gray-100 text-gray-600': media !== tab,
-            }"
-            @click="media = tab"
-          >
-            {{ tab }}
-          </button>
-        </div>
+        <SelectButton v-model="media" class="w-full flex [&>*]:w-full" :options="mediaOptions" />
       </div>
     </div>
   </div>
