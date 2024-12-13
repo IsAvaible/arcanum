@@ -16,6 +16,9 @@ import CaseReference from '@/components/chat-view/CaseReference.vue'
 import DynamicRouterLinkText from '@/components/misc/DynamicRouterLinkText.vue'
 import { useDebounceFn } from '@vueuse/core'
 
+/**
+ * Reactive references for chat settings and inputs.
+ */
 const notification = ref(true)
 const sound = ref(false)
 const saveToDownloads = ref(false)
@@ -27,10 +30,19 @@ const mediaOptions = ['Media', 'Link', 'Docs']
 const messageInput = ref('')
 const activeChat = ref<Chat | null>(null)
 
+/**
+ * API instance for fetching and validating case references.
+ */
 const api = useApi()
-// Matches case references like #10 in messages
+
+/**
+ * Regular expression to match case references like #10 in messages.
+ */
 const caseReferenceRegex = /#(\d+)(\s|$)/g
 
+/**
+ * Type definition for a Chat object.
+ */
 type Chat = {
   name: string
   image?: string
@@ -43,6 +55,9 @@ type Chat = {
   members?: { name: string; image: string }[]
 }
 
+/**
+ * Sample chat data for the application.
+ */
 const chats = ref<Chat[]>([
   {
     name: 'ARCANUM AI',
@@ -95,7 +110,7 @@ const chats = ref<Chat[]>([
         image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar11.jpg',
       },
     ],
-    lastMessage: "Let's implement PrimeVue. Elevating our UI game! \ud83d\ude80",
+    lastMessage: "Let's implement PrimeVue. Elevating our UI game! 🚀",
   },
   {
     name: 'Esther Howard',
@@ -122,16 +137,27 @@ const chats = ref<Chat[]>([
   },
 ])
 
+/**
+ * Computed property for filtering chats based on the search input.
+ */
 const filteredChats = computed(() => {
   return chats.value.filter((chat) => chat.name.toLowerCase().includes(search.value.toLowerCase()))
 })
 
+/**
+ * Sets the active chat to the selected chat.
+ * @param chat - The chat object to be set as active.
+ */
 const setActiveChat = (chat: Chat) => {
   activeChat.value = chat
 }
 setActiveChat(chats.value[0])
 
 const invalidSubmissionAttempt = ref(false)
+/**
+ * Handles sending a message in the active chat.
+ * Validates message input and appends it to the chat messages.
+ */
 const sendMessage = () => {
   if (hasInvalidCaseReferences.value) {
     invalidSubmissionAttempt.value = false
@@ -154,10 +180,16 @@ const sendMessage = () => {
   }
 }
 
+/**
+ * Case reference validation logic.
+ */
 const invalidCaseReferences = ref<number[]>([])
 const validatedCaseReferences = ref<Map<number, boolean>>(new Map())
 const isValidationInProgress = ref(false)
 
+/**
+ * Validates case references in the message input against the API.
+ */
 const validateCaseReferences = async () => {
   if (!messageInput.value) {
     invalidSubmissionAttempt.value = false
@@ -173,7 +205,6 @@ const validateCaseReferences = async () => {
   for (const ref of caseReferences) {
     const id = Number(ref.replace('#', ''))
 
-    // Skip if already validated
     if (validatedCaseReferences.value.has(id)) {
       if (!validatedCaseReferences.value.get(id)) {
         invalidRefs.push(id)
@@ -194,21 +225,32 @@ const validateCaseReferences = async () => {
   isValidationInProgress.value = false
 }
 
+/**
+ * Debounced validation for case references to avoid excessive API calls.
+ */
 const debouncedValidateCaseReferences = useDebounceFn(validateCaseReferences, 500, { maxWait: 700 })
 
-// Reset validation cache when message is cleared
+/**
+ * Watches for changes in the message input to reset or trigger validation.
+ */
 watch(messageInput, (newValue) => {
   if (!newValue) {
     validatedCaseReferences.value.clear()
     invalidCaseReferences.value = []
   }
 })
-
-// Continue watching for changes to trigger validation
 watch(messageInput, debouncedValidateCaseReferences)
 
+/**
+ * Computed property to check if there are invalid case references.
+ */
 const hasInvalidCaseReferences = computed(() => invalidCaseReferences.value.length > 0)
 
+/**
+ * Extracts and resolves case references from a given message.
+ * @param message - The message containing case references.
+ * @returns Array of case reference objects.
+ */
 const getCaseReferences = (message: string): { id: number; case: Promise<Case> }[] => {
   const caseReferences = message.match(caseReferenceRegex)
 
@@ -223,6 +265,9 @@ const getCaseReferences = (message: string): { id: number; case: Promise<Case> }
   )
 }
 
+/**
+ * Computed property to aggregate case references from all messages in the active chat.
+ */
 const caseReferences = computed(() => {
   return (activeChat.value?.messages || []).reduce(
     (acc, message) => {
