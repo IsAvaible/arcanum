@@ -437,8 +437,8 @@ const caseReferences = computed(() => {
             >
               <i class="pi pi-exclamation-triangle mr-2"></i>
               <span>
-                Your message contains{{ invalidCaseReferences.length ? '' : ' an' }} invalid case
-                reference{{ invalidCaseReferences.length ? 's' : '' }}: #{{
+                Your message contains{{ invalidCaseReferences.length > 1 ? '' : ' an' }} invalid
+                case reference{{ invalidCaseReferences.length > 1 ? 's' : '' }}: #{{
                   invalidCaseReferences.join(', #')
                 }}
               </span>
