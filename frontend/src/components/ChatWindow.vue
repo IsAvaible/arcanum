@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch } from 'vue'
 import {
   Button,
   InputText,
@@ -28,6 +28,8 @@ const messageInput = ref('')
 const activeChat = ref<Chat | null>(null)
 
 const api = useApi()
+// Matches case references like #10 in messages
+const caseReferenceRegex = /#(\d+)(\s|$)/g
 
 type Chat = {
   name: string
@@ -135,7 +137,7 @@ const sendMessage = () => {
     invalidSubmissionAttempt.value = false
     setTimeout(() => {
       invalidSubmissionAttempt.value = true
-    }, 0)
+    }, 1)
     return
   }
 
@@ -165,7 +167,7 @@ const validateCaseReferences = async () => {
   }
 
   isValidationInProgress.value = true
-  const caseReferences = messageInput.value.match(/#(\d+)/g) || []
+  const caseReferences = messageInput.value.match(caseReferenceRegex) || []
   const invalidRefs: number[] = []
 
   for (const ref of caseReferences) {
@@ -208,7 +210,7 @@ watch(messageInput, debouncedValidateCaseReferences)
 const hasInvalidCaseReferences = computed(() => invalidCaseReferences.value.length > 0)
 
 const getCaseReferences = (message: string): { id: number; case: Promise<Case> }[] => {
-  const caseReferences = message.match(/#(\d+)/g)
+  const caseReferences = message.match(caseReferenceRegex)
 
   return (
     caseReferences?.map((reference) => {
@@ -334,7 +336,11 @@ const caseReferences = computed(() => {
             class="px-4 py-2 rounded-lg shadow-sm w-fit max-w-xs flex flex-col gap-y-2"
           >
             <p>
-              <DynamicRouterLinkText :text="message.message" :regex="/#(\d+)/g" to="/cases/" />
+              <DynamicRouterLinkText
+                :text="message.message"
+                :regex="caseReferenceRegex"
+                to="/cases/"
+              />
             </p>
             <CaseReference
               v-for="caseReference in caseReferences[message.id] || []"
