@@ -317,12 +317,18 @@ const caseReferences = computed(() => {
       <div v-else class="flex items-center justify-center h-full">
         <p class="text-gray-500">Select a chat to start messaging.</p>
       </div>
-      <div v-if="activeChat" class="flex-1 overflow-y-auto flex flex-col gap-4 py-4 px-6">
+      <TransitionGroup
+        v-if="activeChat"
+        :key="activeChat.name"
+        name="pop-in"
+        tag="div"
+        class="flex-1 overflow-y-auto flex flex-col gap-4 py-4 px-6"
+      >
         <div
           v-for="message in activeChat.messages || []"
           :key="message.id"
           class="flex items-start gap-2"
-          :class="{ 'flex-row-reverse': message.type === 'sent' }"
+          :class="{ 'flex-row-reverse self-end': message.type === 'sent' }"
         >
           <Avatar
             v-bind="message.image ? { image: message.image } : { label: message.capName }"
@@ -354,7 +360,7 @@ const caseReferences = computed(() => {
             />
           </div>
         </div>
-      </div>
+      </TransitionGroup>
       <div
         v-if="activeChat"
         class="p-4 border-t border-gray-300 flex items-center gap-1 bg-white relative"
@@ -536,5 +542,22 @@ const caseReferences = computed(() => {
 
 .shake {
   animation: shake 0.5s ease-in-out;
+}
+
+.pop-in-enter-active,
+.pop-in-leave-active {
+  transition: all 0.3s ease;
+}
+
+.pop-in-enter-from,
+.pop-in-leave-to {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.pop-in-enter-to,
+.pop-in-leave-from {
+  opacity: 1;
+  transform: scale(1);
 }
 </style>
