@@ -36,6 +36,8 @@ IGNORE and DO NOT create a case if the QUERY or CONTEXT is about:
 
 If you identify multiple problems, DO NOT merge them into one case; create one case for each problem!  
 
+DO NOT INCLUDE any personal data, such as names or direct identifiers!
+
 DO NOT include personal names or sensitive data, especially when using audio files. Audio files should only complement general information and not serve as the primary source. Personal data should only include the assignee, i.e., the name(s) of the responsible person(s).  
 
 When Context contains audio files:
