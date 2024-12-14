@@ -1,5 +1,6 @@
 import subprocess
 import os
+from pathlib import Path
 
 from app import app
 
@@ -9,7 +10,7 @@ import cv2
 def cut_video_segments(input_file, filehash, segment_duration=100):
 
     output_path = os.path.join(
-        app.root_path, os.path.join("temp/video_segments", f"{filehash}_video")
+        app.root_path, os.path.join("temp/video_segments/", f"{filehash}")
     )
     if not os.path.exists(output_path):
         os.makedirs(output_path)
@@ -37,11 +38,13 @@ def extract_frames_with_ffmpeg(video_path, filehash):
     # Erstelle den Ausgabeordner, falls er nicht existiert
     single_video = video_path
 
-    path = os.path.join(
-        app.root_path, os.path.join("temp/frames", f"{filehash}_frames")
+    output_path = os.path.join(
+        app.root_path, os.path.join("temp/frames/", f"{filehash}")
     )
-    if not os.path.exists(path):
-        os.makedirs(path)
+
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+
     # Berechne die Skalierung
     cam = cv2.VideoCapture(single_video)
     fps = cam.get(cv2.CAP_PROP_FPS)
@@ -50,34 +53,46 @@ def extract_frames_with_ffmpeg(video_path, filehash):
 
     if(duration > 120):
         segments_path = cut_video_segments(single_video, filehash)
+        segments = get_all_video_segments_in_dir(segments_path)
     else:
-        segments_path = [single_video]
+        segments = [single_video]
 
-    for video in segments_path:
+    i = 1
+    for video in segments:
+        cam = cv2.VideoCapture(video)
+        fps = cam.get(cv2.CAP_PROP_FPS)
+        total_frames = int(cam.get(cv2.CAP_PROP_FRAME_COUNT))
+        duration = total_frames / fps  # Dauer des Videos in Sekunden
         # Maximal 50 Frames extrahieren
         max_frames = 50
-        frame_interval = duration / max_frames  # Intervall zwischen Frames in Sekunden
+        # Intervall zwischen Frames in Sekunden
+        frame_interval = duration / max_frames
 
         vf_filter = f"fps=1/{frame_interval} ,scale=320:-1"
 
+
         # FFmpeg-Befehl ausführen
-        output_pattern = os.path.join(path, f"frame_%04d.jpg")
+        output_pattern = os.path.join(output_path, f"frame_%04d.jpg")
+        counter = str(((i-1)*50)+1)
         command = [
             "ffmpeg",
             "-y",
             "-i", video,
             "-vf", vf_filter,
+            "-start_number", counter,
             output_pattern
         ]
+
         try:
             subprocess.run(command, check=True)
+            i = i+1
             print(f"Saved frames: {output_pattern} ")
         except subprocess.CalledProcessError as e:
             print(f"Error FFMPEG (Frame Extraction): {e}")
 
 
-    output = os.path.join(path, f"audio.mp3")
-    command2 = [
+    output = os.path.join(output_path, f"audio.mp3")
+    command = [
         "ffmpeg",
         "-y",
         "-i", single_video,
@@ -86,12 +101,12 @@ def extract_frames_with_ffmpeg(video_path, filehash):
     ]
 
     try:
-        subprocess.run(command2, check=True)
+        subprocess.run(command, check=True)
         print(f"Saved Audio in {output}")
     except subprocess.CalledProcessError as e:
         print(f"Error FFMPEG (Audio Extraction): {e}")
 
-    return path
+    return output_path
 
 
 def get_all_frames_in_dir(path):
