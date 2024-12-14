@@ -45,6 +45,10 @@ When Context contains audio files:
 - For every piece of information, attach the corresponding timestamp range in the format [file_name: start_timestamp - end_timestamp].
 - Ensure each information corresponds to the most relevant timestamp range. Avoid summarizing or merging timestamps unless explicitly stated.
 
+When Context contains video content:
+- Extract relevant information from each segment.
+- Include all information you can find in your answer!
+
 ENSURE your response is in GERMAN and avoid using other languages unless necessary for understanding the CONTEXT.  
 
 IF the context topic is irrelevant for case creation, leave the array empty.  
