@@ -37,6 +37,7 @@ import type { CasesPostCaseTypeEnum } from '@/api'
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
 import { useConfirm } from 'primevue/useconfirm'
+import { AxiosError } from 'axios'
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -210,25 +211,23 @@ const onSubmit = handleSubmit(async (_values) => {
   console.log('Submitting form', _values)
   submitState.value = SubmitState.SUBMITTING
   try {
-    await api.casesPost(
-      {
-        title: fields.title.value.value,
-        caseType: fields.type.value.value as CasesPostCaseTypeEnum,
-        assignee: fields.assignees.value.value,
-        // participants: fields.selectedParticipants.value.value,
-        // team: fields.selectedTeam.value.value,
-        description: fields.description.value.value,
-        solution: fields.solution.value.value,
-        priority: fields.priority.value.value,
-        status: fields.status.value.value,
-        // products: fields.selectedProducts.value.value,
+    const requestParameters = {
+      title: fields.title.value.value,
+      caseType: fields.type.value.value as CasesPostCaseTypeEnum,
+      assignee: fields.assignees.value.value,
+      // participants: fields.selectedParticipants.value.value,
+      // team: fields.selectedTeam.value.value,
+      description: fields.description.value.value,
+      solution: fields.solution.value.value || undefined,
+      priority: fields.priority.value.value || undefined,
+      status: fields.status.value.value,
+      // products: fields.selectedProducts.value.value,
+    }
+    await api.casesPost(requestParameters, {
+      headers: {
+        'Content-Type': 'application/json',
       },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      },
-    )
+    })
   } catch (error) {
     submitState.value = SubmitState.ERROR
     setTimeout(() => {
@@ -238,7 +237,7 @@ const onSubmit = handleSubmit(async (_values) => {
     toast.add({
       severity: 'error',
       summary: 'Error Creating Case',
-      detail: 'There was an error creating your case',
+      detail: 'There was an error creating your case\n' + (error as AxiosError).message,
       life: 3000,
     })
     return
@@ -444,7 +443,7 @@ const dialogPT = {
                 <div>
                   <UserSelector
                     @update:selected-users="
-                      fields.participants.value.value = $event.map((u) => u.name)
+                      fields.participants.value.value = $event.map((u) => u.name) || undefined
                     "
                     assigneeLabel="Participants"
                     :userOptions="peopleOptions"

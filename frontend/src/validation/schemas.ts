@@ -20,10 +20,11 @@ export const caseSchema = z.object({
     .string({ required_error: 'Please select at least one assignee' })
     .array()
     .nonempty({ message: 'Please select at least one assignee' }),
-  participants: z.array(z.string()).optional(),
+  participants: z.string().array().optional(),
   team: z.string().optional(),
 
   products: z.array(z.number()).default([]),
 
   draft: z.boolean().default(false),
 })
+export type CaseSchemaType = z.infer<typeof caseSchema>
