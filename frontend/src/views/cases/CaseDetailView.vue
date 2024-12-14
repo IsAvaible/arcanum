@@ -594,7 +594,7 @@ const toggleMenu = (event: Event) => {
                 <div v-if="!loading">
                   <UserSelector
                     @update:selected-users="
-                      (fields.assignees.value.value = $event.map((u) => u.name))
+                      fields.assignees.value.value = $event.map((u) => u.name)
                     "
                     assigneeLabel="Assignees"
                     :placeholder="inEditMode ? 'Select Assignees' : ''"
