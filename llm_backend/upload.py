@@ -153,12 +153,45 @@ def upload_file_method_production(files, pdf_extractor):
                 print("SEGMENTS COUNT: "+ str(segments))
                 transcription = transcribe(file, texts, llm, audio_path, filename, whisper_prompt)
                 texts += "  " + json.dumps(single_text, ensure_ascii=False)
+
                 result_dict = {
-                    "content" : [transcription]
+                    "video_content" : [],
+                    "transcription" : [transcription]
                 }
-                prompt_dict = []
-                for i in range(segments):
-                    print("SEGMENT #" + str(i))
+
+                if segments > 1:
+                    prompt_dict = []
+                    for i in range(0,segments):
+                        print("SEGMENT #" + str(i))
+                        prompt_dict.clear()
+                        prompt_dict = [
+                            {
+                                "type": "text",
+                                "text": "What are all frames showing, be as detailed as possible but please combine everything in a normal text"
+                            }
+                        ]
+                        for j in range(0+(50*i),50*(i+1)):
+
+                            print("FRAME #" + str(j))
+                            encoding = encode_image(frames[j])
+                            base64_image = {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{encoding}",
+                                    "detail": "auto"
+                                }
+                            }
+                            prompt_dict.append(base64_image)
+                        print("LENGTH"+str(len(prompt_dict)))
+                        single_text = image_to_openai(prompt_dict)
+                        video_dict = {
+                            "type": mimetype,
+                            "text": single_text
+                        }
+                        result_dict["video_content"].append(video_dict)
+                    single_dict = result_dict
+                else:
+                    prompt_dict = []
                     prompt_dict.clear()
                     prompt_dict = [
                         {
@@ -166,9 +199,7 @@ def upload_file_method_production(files, pdf_extractor):
                             "text": "What are all frames showing, be as detailed as possible but please combine everything in a normal text"
                         }
                     ]
-                    for j in range(0+(50*i),50*(i+1)):
-
-                        print("FRAME #" + str(j))
+                    for j in range(0,len(frames)):
                         encoding = encode_image(frames[j])
                         base64_image = {
                             "type": "image_url",
@@ -184,8 +215,8 @@ def upload_file_method_production(files, pdf_extractor):
                         "type": mimetype,
                         "text": single_text
                     }
-                    result_dict["content"].append(video_dict)
-                single_dict = result_dict
+                    result_dict["video_content"].append(video_dict)
+                    single_dict = result_dict
 
         print(single_dict)
         ### CACHE TO MINIMIZE AZURE API CALLS
