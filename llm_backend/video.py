@@ -19,6 +19,7 @@ def cut_video_segments(input_file, filehash, segment_duration=100):
 
     command = [
         "ffmpeg",
+        "-v","quiet",
         "-i", input_file,                # Input file
         "-c", "copy",                    # Copy codec to avoid re-encoding
         "-map", "0",                     # Map all streams
@@ -38,12 +39,12 @@ def extract_frames_with_ffmpeg(video_path, filehash):
     # Erstelle den Ausgabeordner, falls er nicht existiert
     single_video = video_path
 
-    output_path = os.path.join(
+    frames_path = os.path.join(
         app.root_path, os.path.join("temp/frames/", f"{filehash}")
     )
 
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
+    if not os.path.exists(frames_path):
+        os.makedirs(frames_path)
 
     # Berechne die Skalierung
     cam = cv2.VideoCapture(single_video)
@@ -72,10 +73,11 @@ def extract_frames_with_ffmpeg(video_path, filehash):
 
 
         # FFmpeg-Befehl ausführen
-        output_pattern = os.path.join(output_path, f"frame_%04d.jpg")
+        output_pattern = os.path.join(frames_path, f"frame_%04d.jpg")
         counter = str(((i-1)*50)+1)
         command = [
             "ffmpeg",
+            "-v","quiet",
             "-y",
             "-i", video,
             "-vf", vf_filter,
@@ -91,22 +93,29 @@ def extract_frames_with_ffmpeg(video_path, filehash):
             print(f"Error FFMPEG (Frame Extraction): {e}")
 
 
-    output = os.path.join(output_path, f"audio.mp3")
+    audio_path = os.path.join(
+        app.root_path, os.path.join("temp/audio/", f"{filehash}")
+    )
+
+    if not os.path.exists(audio_path):
+        os.makedirs(audio_path)
+    audio_output = os.path.join(audio_path, f"audio.mp3")
     command = [
         "ffmpeg",
+        "-v","quiet",
         "-y",
         "-i", single_video,
         "-vn",
-        output
+        audio_output
     ]
 
     try:
         subprocess.run(command, check=True)
-        print(f"Saved Audio in {output}")
+        print(f"Saved Audio in {audio_output}")
     except subprocess.CalledProcessError as e:
         print(f"Error FFMPEG (Audio Extraction): {e}")
 
-    return output_path
+    return frames_path, audio_output
 
 
 def get_all_frames_in_dir(path):
