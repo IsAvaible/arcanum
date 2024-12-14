@@ -7,6 +7,7 @@ from langchain_openai import AzureChatOpenAI
 from dotenv import load_dotenv
 
 from image import encode_image, image_to_openai
+from llm_backend.video import cut_video_segments
 from video import extract_frames_with_ffmpeg, get_all_frames_in_dir
 from readwrite import write_to_file, read_from_file, text_to_dict
 from webdav import check_if_cached, download_cache, upload_cache_file
