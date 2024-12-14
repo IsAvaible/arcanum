@@ -1,4 +1,5 @@
 import base64
+import math
 import mimetypes
 import os
 
@@ -7,7 +8,6 @@ from langchain_openai import AzureChatOpenAI
 from dotenv import load_dotenv
 
 from image import encode_image, image_to_openai
-from llm_backend.video import cut_video_segments
 from video import extract_frames_with_ffmpeg, get_all_frames_in_dir
 from readwrite import write_to_file, read_from_file, text_to_dict
 from webdav import check_if_cached, download_cache, upload_cache_file
@@ -144,39 +144,47 @@ def upload_file_method_production(files, pdf_extractor):
                 print("VIDEO")
                 texts += f" Content of Video File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
 
-                frame_path = extract_frames_with_ffmpeg(path, filehash)
+                frame_path, audio_path = extract_frames_with_ffmpeg(path, filehash)
+                frames = get_all_frames_in_dir(frame_path)
+                print("FRAMES COUNT: "+ str(len(frames)))
 
-                prompt_dict = [
-                    {
-                        "type": "text",
-                        "text": "What are all frames showing, be as detailed as possible but please combine everything in a normal text"
-                    }
-                ]
-                if frame_path:
-                    transcription = None
-                    frames = get_all_frames_in_dir(frame_path)
-                    for frame in frames:
-                        if ".mp3" not in frame:
-                            encoding = encode_image(frame)
-                            p = {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{encoding}",
-                                    "detail": "auto"
-                                }
+                segments = math.floor(len(frames) / 50)
+
+                print("SEGMENTS COUNT: "+ str(segments))
+                transcription = transcribe(file, texts, llm, audio_path, filename, whisper_prompt)
+                texts += "  " + json.dumps(single_text, ensure_ascii=False)
+                result_list = [transcription]
+                prompt_dict = []
+                for i in range(segments):
+                    print("SEGMENT #" + str(i))
+                    prompt_dict.clear()
+                    prompt_dict = [
+                        {
+                            "type": "text",
+                            "text": "What are all frames showing, be as detailed as possible but please combine everything in a normal text"
+                        }
+                    ]
+                    for j in range(0+(50*i),50*(i+1)):
+
+                        print("FRAME #" + str(j))
+                        encoding = encode_image(frames[j])
+                        base64_image = {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{encoding}",
+                                "detail": "auto"
                             }
-                            prompt_dict.append(p)
-                        else:
-                            transcription = transcribe(file, texts, llm, path, filename, whisper_prompt)
-                            texts += "  " + json.dumps(single_text, ensure_ascii=False)
-
+                        }
+                        prompt_dict.append(base64_image)
+                    print("LENGTH"+str(len(prompt_dict)))
                     single_text = image_to_openai(prompt_dict)
                     single_dict = {
                         "type": mimetype,
                         "text": single_text
                     }
-                    print(transcription)
-                    single_dict = merge_two_dicts(single_dict, transcription)
+                    result_list.append(single_dict)
+                print(result_list)
+                single_dict = result_list
 
         ### CACHE TO MINIMIZE AZURE API CALLS
         if is_cached and USE_CACHE:
@@ -192,7 +200,6 @@ def upload_file_method_production(files, pdf_extractor):
             file_path = write_to_file(filehash, json.dumps(content_dict, ensure_ascii=False, indent=2))
             upload_cache_file(file_path, filehash)
 
-        print(single_dict)
         file_as_dict = {
             "filename": filename,
             "mimetype": mimetype,
@@ -211,9 +218,7 @@ def upload_file_method_production(files, pdf_extractor):
         files_as_dicts.append(file_as_dict)
         files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False,indent=2)
 
-        print("file_as_dict")
         print(files_as_dicts_json)
-        print("file_as_dict END")
     return files_as_dicts_json
 
 def merge_two_dicts(x, y):
