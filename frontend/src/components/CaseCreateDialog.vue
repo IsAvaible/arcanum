@@ -21,22 +21,22 @@ import UserSelector, { type User } from '@/components/case-create-form/UserSelec
 import TempEditor from '@/components/case-create-form/TempEditor.vue'
 import ProductSelector from '@/components/case-create-form/ProductSelector.vue'
 import TeamSelector from '@/components/case-create-form/TeamSelector.vue'
-
-import { useCaseFormStepper } from '@/composables/useCaseFormStepper'
+import CasePrioritySelect from '@/components/case-form-fields/CaseStatusSelect/CasePrioritySelect.vue'
+import CaseStatusSelect from '@/components/case-form-fields/CaseStatusSelect/CaseStatusSelect.vue'
+import ScrollFadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
 import StepHeader from '@/components/case-create-form/StepHeader.vue'
 import CaseCreateStepper from '@/components/case-create-form/CaseCreateStepper.vue'
+
+import { useCaseFormStepper } from '@/composables/useCaseFormStepper'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { ref } from 'vue'
 import { useVModel } from '@vueuse/core'
 import { useApi } from '@/composables/useApi'
 import type { CasesPostCaseTypeEnum } from '@/api'
-import ScrollFadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
 import { useConfirm } from 'primevue/useconfirm'
-import Dropdown from 'primevue/dropdown'
-import Tag from 'primevue/tag'
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -83,21 +83,7 @@ const peopleOptions: User[] = Array.from({ length: 15 }, (_, i) => ({
   name: `Cat ${i + 1}`,
   image: `https://placecats.com/${50 + i}/${50 + i}`,
 }))
-const statuses = [
-  { name: 'Offen', code: 'open', severity: 'info' },
-  { name: 'In Bearbeitung', code: 'in-progress', severity: 'warning' },
-  { name: 'Abgeschlossen', code: 'completed', severity: 'success' },
-]
-const selectedStatus = ref(statuses[0])
 
-const priorities = [
-  { name: 'P0', code: 'p0', color: '#ef4444' }, // Red
-  { name: 'P1', code: 'p1', color: '#f97316' }, // Orange
-  { name: 'P2', code: 'p2', color: '#eab308' }, // Yellow
-  { name: 'P3', code: 'p3', color: '#22c55e' }, // Green
-]
-
-const selectedPriority = ref(priorities[0])
 // Form validation setup
 const {
   handleSubmit,
@@ -111,6 +97,9 @@ const {
 // Form validation
 const fields = useCaseFields()
 
+// Default values
+fields.status.value.value = 'Open'
+
 /**
  * Check if the current step is valid
  * @param step The step to check
@@ -118,7 +107,12 @@ const fields = useCaseFields()
 const stepValid = (step: number = activeStep.value): boolean => {
   switch (step) {
     case 0:
-      return !(errors.value.title || errors.value.case_type)
+      return !(
+        errors.value.title ||
+        errors.value.case_type ||
+        errors.value.status ||
+        errors.value.priority
+      )
     case 1:
       return !(errors.value.assignees || errors.value.participants || errors.value.team)
     case 2:
@@ -141,6 +135,8 @@ const validateStep = async (step: number = activeStep.value) => {
     case 0:
       await fields.title.validate()
       await fields.type.validate()
+      await fields.status.validate()
+      await fields.priority.validate()
       return
     case 1:
       await fields.assignees.validate()
@@ -224,7 +220,7 @@ const onSubmit = handleSubmit(async (_values) => {
         description: fields.description.value.value,
         solution: fields.solution.value.value,
         priority: fields.priority.value.value,
-        status: 'Open',
+        status: fields.status.value.value,
         // products: fields.selectedProducts.value.value,
       },
       {
@@ -361,57 +357,40 @@ const dialogPT = {
                   {{ errors.case_type }}
                 </Message>
               </div>
-            </div>
-            <!-- Priority Section -->
-            <div class="mb-6">
-              <label class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
-              <Dropdown
-                v-model="selectedPriority"
-                :options="priorities"
-                optionLabel="name"
-                class="w-full"
-              >
-                <template #value="slotProps">
-                  <div class="flex items-center gap-2" v-if="slotProps.value">
-                    <div
-                      class="w-3 h-3 rounded-full"
-                      :style="{ backgroundColor: slotProps.value.color }"
-                    ></div>
-                    <span>{{ slotProps.value.name }}</span>
-                  </div>
-                </template>
-                <template #option="slotProps">
-                  <div class="flex items-center gap-2">
-                    <div
-                      class="w-3 h-3 rounded-full"
-                      :style="{ backgroundColor: slotProps.option.color }"
-                    ></div>
-                    <span>{{ slotProps.option.name }}</span>
-                  </div>
-                </template>
-              </Dropdown>
-            </div>
 
-            <!-- Status Section -->
-            <div class="mb-6">
-              <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-              <Dropdown
-                v-model="selectedStatus"
-                :options="statuses"
-                optionLabel="name"
-                class="w-full"
-              >
-                <template #value="slotProps">
-                  <Tag
-                    v-if="slotProps.value"
-                    :value="slotProps.value.name"
-                    :severity="slotProps.value.severity"
+              <Divider />
+
+              <div class="grid sm:grid-cols-2 sm:grid-rows-2 grid-flow-col gap-x-6">
+                <Label
+                  for="status"
+                  label="Status (*)"
+                  description="The current status of the new case"
+                />
+                <div class="w-full">
+                  <CaseStatusSelect
+                    v-model="fields.status.value.value"
+                    id="status"
+                    class="w-full"
+                    :invalid="!!errors.status"
                   />
-                </template>
-                <template #option="slotProps">
-                  <Tag :value="slotProps.option.name" :severity="slotProps.option.severity" />
-                </template>
-              </Dropdown>
+                  <Message v-if="errors.status" severity="error" variant="simple" size="small">
+                    {{ errors.status }}
+                  </Message>
+                </div>
+
+                <Label for="priority" label="Priority" description="The priority of the new case" />
+                <div class="w-full">
+                  <CasePrioritySelect
+                    v-model="fields.priority.value.value"
+                    id="priority"
+                    class="w-full"
+                    :invalid="!!errors.priority"
+                  />
+                  <Message v-if="errors.priority" severity="error" variant="simple" size="small">
+                    {{ errors.priority }}
+                  </Message>
+                </div>
+              </div>
             </div>
           </AccordionContent>
         </AccordionPanel>
@@ -731,7 +710,6 @@ const dialogPT = {
             :disabled="!!Object.keys(errors).length"
             v-if="activeStep == steps.length - 1 || formEndReached"
           />
-          {{ errors }}
         </div>
       </div>
     </template>

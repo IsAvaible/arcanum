@@ -39,17 +39,8 @@ import { apiBlobToFile } from '@/functions/apiBlobToFile'
 // Validation
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
-
-interface Priority {
-  name: string
-  color: string
-}
-
-interface Status {
-  name: string
-  color: string
-  textColor: string
-}
+import CaseStatusSelect from '@/components/case-form-fields/CaseStatusSelect/CaseStatusSelect.vue'
+import CasePrioritySelect from '@/components/case-form-fields/CaseStatusSelect/CasePrioritySelect.vue'
 
 const router = useRouter()
 const api = useApi()
@@ -67,19 +58,6 @@ const caseTypes = ref(
     value: value,
   })),
 )
-
-const priorities: Priority[] = [
-  { name: 'High', color: '#ef4444' },
-  { name: 'Medium', color: '#eab308' },
-  { name: 'Low', color: '#22c55e' },
-]
-
-const statuses: Status[] = [
-  { name: 'Open', color: '#e6f4ff', textColor: '#0284c7' },
-  { name: 'In Progress', color: '#fff7ed', textColor: '#ea580c' },
-  { name: 'Solved', color: '#f0fdf4', textColor: '#16a34a' },
-  { name: 'Closed', color: '#f0fdf4', textColor: '#16a34a' },
-]
 
 const users: User[] = Array.from({ length: 15 }, (_, i) => ({
   id: i + 1,
@@ -572,78 +550,26 @@ const toggleMenu = (event: Event) => {
             <div class="space-y-4">
               <div class="field">
                 <label>Status</label>
-                <Select
+                <CaseStatusSelect
+                  v-model="fields.status.value.value"
                   v-if="!loading"
-                  :options="statuses"
-                  :model-value="statuses.find((s) => s.name === caseDetails!.status)"
-                  @update:model-value="fields.status.value.value = $event.name"
-                  optionLabel="name"
                   class="w-full min-h-10"
                   :disabled="!inEditMode"
                   :invalid="!!errors.status"
-                >
-                  <template #value="slotProps">
-                    <div v-if="slotProps.value" class="flex items-center">
-                      <div
-                        class="px-3 py-1 rounded-md text-sm"
-                        :style="{
-                          backgroundColor: slotProps.value.color,
-                          color: slotProps.value.textColor,
-                        }"
-                      >
-                        {{ slotProps.value.name }}
-                      </div>
-                    </div>
-                  </template>
-                  <template #option="slotProps">
-                    <div class="flex items-center">
-                      <div
-                        class="px-3 py-1 rounded-md text-sm"
-                        :style="{
-                          backgroundColor: slotProps.option.color,
-                          color: slotProps.option.textColor,
-                        }"
-                      >
-                        {{ slotProps.option.name }}
-                      </div>
-                    </div>
-                  </template>
-                </Select>
+                />
                 <Skeleton v-else height="2.5rem" />
                 <small v-if="errors.status" class="p-error block mt-1">{{ errors.status }}</small>
               </div>
 
               <div class="field">
                 <label>Priority</label>
-                <Select
+                <CasePrioritySelect
+                  v-model="fields.priority.value.value"
                   v-if="!loading"
-                  :model-value="priorities.find((p) => p.name === caseDetails!.priority)"
-                  @update:model-value="fields.priority.value.value = $event.name"
-                  :options="priorities"
-                  optionLabel="name"
                   class="w-full"
                   :disabled="!inEditMode"
                   :invalid="!!errors.priority"
-                >
-                  <template #value="slotProps">
-                    <div class="flex items-center gap-2" v-if="slotProps.value">
-                      <div
-                        class="w-3 h-3 rounded-full"
-                        :style="{ backgroundColor: slotProps.value.color }"
-                      ></div>
-                      <span>{{ slotProps.value.name }}</span>
-                    </div>
-                  </template>
-                  <template #option="slotProps">
-                    <div class="flex items-center gap-2">
-                      <div
-                        class="w-3 h-3 rounded-full"
-                        :style="{ backgroundColor: slotProps.option.color }"
-                      ></div>
-                      <span>{{ slotProps.option.name }}</span>
-                    </div>
-                  </template>
-                </Select>
+                />
                 <Skeleton v-else height="2.5rem" />
                 <small v-if="errors.priority" class="p-error block mt-1">{{
                   errors.priority
