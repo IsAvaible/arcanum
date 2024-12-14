@@ -5,6 +5,30 @@ from app import app
 
 import cv2
 
+
+def cut_video_segments(input_file, output_dir, segment_duration=120):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    output_pattern = os.path.join(output_dir, "segment_%03d.mp4")
+
+    command = [
+        "ffmpeg",
+        "-i", input_file,                # Input file
+        "-c", "copy",                    # Copy codec to avoid re-encoding
+        "-map", "0",                     # Map all streams
+        "-f", "segment",                 # Segment format
+        "-segment_time", str(segment_duration), # Duration of each segment
+        "-reset_timestamps", "1",        # Reset timestamps for each segment
+        output_pattern                   # Output file pattern
+    ]
+
+    try:
+        subprocess.run(command, check=True)
+        print(f"Video successfully split into segments. Saved in {output_dir}")
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred while splitting the video: {e}")
+
 def extract_frames_with_ffmpeg(video_path, filehash):
     # Erstelle den Ausgabeordner, falls er nicht existiert
     path = os.path.join(
