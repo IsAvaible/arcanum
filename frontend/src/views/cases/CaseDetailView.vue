@@ -39,18 +39,8 @@ import { apiBlobToFile } from '@/functions/apiBlobToFile'
 // Validation
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
-import { MdEditor } from 'md-editor-v3'
-
-interface Priority {
-  name: string
-  color: string
-}
-
-interface Status {
-  name: string
-  color: string
-  textColor: string
-}
+import CaseStatusSelect from '@/components/case-form-fields/CaseStatusSelect/CaseStatusSelect.vue'
+import CasePrioritySelect from '@/components/case-form-fields/CaseStatusSelect/CasePrioritySelect.vue'
 
 const router = useRouter()
 const api = useApi()
@@ -635,10 +625,13 @@ const toggleMenu = (event: Event) => {
                 <label>Status</label>
                 <CaseStatusSelect
                   v-model="fields.status.value.value"
+                <CaseStatusSelect
+                  v-model="fields.status.value.value"
                   v-if="!loading"
                   class="w-full min-h-10"
                   :disabled="!inEditMode"
                   :invalid="!!errors.status"
+                />
                 />
                 <Skeleton v-else height="2.5rem" />
                 <small v-if="errors.status" class="p-error block mt-1">{{ errors.status }}</small>
@@ -648,10 +641,13 @@ const toggleMenu = (event: Event) => {
                 <label>Priority</label>
                 <CasePrioritySelect
                   v-model="fields.priority.value.value"
+                <CasePrioritySelect
+                  v-model="fields.priority.value.value"
                   v-if="!loading"
                   class="w-full"
                   :disabled="!inEditMode"
                   :invalid="!!errors.priority"
+                />
                 />
                 <Skeleton v-else height="2.5rem" />
                 <small v-if="errors.priority" class="p-error block mt-1">{{
