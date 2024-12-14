@@ -60,17 +60,8 @@ def extract_frames_with_ffmpeg(video_path, filehash):
 
     i = 1
     for video in segments:
-        cam = cv2.VideoCapture(video)
-        fps = cam.get(cv2.CAP_PROP_FPS)
-        total_frames = int(cam.get(cv2.CAP_PROP_FRAME_COUNT))
-        duration = total_frames / fps  # Dauer des Videos in Sekunden
-        # Maximal 50 Frames extrahieren
-        max_frames = 50
-        # Intervall zwischen Frames in Sekunden
-        frame_interval = duration / max_frames
 
-        vf_filter = f"fps=1/{frame_interval} ,scale=320:-1"
-
+        vf_filter = f"fps=0.2 ,scale=320:-1"
 
         # FFmpeg-Befehl ausführen
         output_pattern = os.path.join(frames_path, f"frame_%04d.jpg")
