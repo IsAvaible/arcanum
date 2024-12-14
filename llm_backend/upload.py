@@ -153,7 +153,9 @@ def upload_file_method_production(files, pdf_extractor):
                 print("SEGMENTS COUNT: "+ str(segments))
                 transcription = transcribe(file, texts, llm, audio_path, filename, whisper_prompt)
                 texts += "  " + json.dumps(single_text, ensure_ascii=False)
-                result_list = [transcription]
+                result_dict = {
+                    "content" : [transcription]
+                }
                 prompt_dict = []
                 for i in range(segments):
                     print("SEGMENT #" + str(i))
@@ -178,14 +180,14 @@ def upload_file_method_production(files, pdf_extractor):
                         prompt_dict.append(base64_image)
                     print("LENGTH"+str(len(prompt_dict)))
                     single_text = image_to_openai(prompt_dict)
-                    single_dict = {
+                    video_dict = {
                         "type": mimetype,
                         "text": single_text
                     }
-                    result_list.append(single_dict)
-                print(result_list)
-                single_dict = result_list
+                    result_dict["content"].append(video_dict)
+                single_dict = result_dict
 
+        print(single_dict)
         ### CACHE TO MINIMIZE AZURE API CALLS
         if is_cached and USE_CACHE:
             print("USING CACHE")
@@ -225,3 +227,9 @@ def merge_two_dicts(x, y):
     z = x.copy()   # start with keys and values of x
     z.update(y)    # modifies z with keys and values of y
     return z
+
+def convert_list_to_dict(lst):
+    res_dict = {}
+    for i in range(0, len(lst), 2):
+        res_dict[lst[i]] = lst[i + 1]
+    return res_dict
