@@ -577,6 +577,18 @@ const dialogPT = {
                       }}
                     </p>
                   </div>
+                  <div>
+                    <p class="text-sm text-slate-600">Status</p>
+                    <p class="font-medium">
+                      {{ fields.status.value.value || 'No status selected' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-slate-600">Priority</p>
+                    <p class="font-medium">
+                      {{ fields.priority.value.value || 'No priority selected' }}
+                    </p>
+                  </div>
                 </div>
               </div>
 
