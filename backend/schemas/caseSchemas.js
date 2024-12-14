@@ -17,7 +17,7 @@ const caseSchema = z.object({
   case_type: z.enum(["Problem", "Incident", "Change", "FAQ"]),
   title: z.string().min(3),
   description: z.string().min(1),
-  solution: z.string().min(1).nullable(),
+  solution: z.string().min(1).optional().or(z.literal("")),
   assignee: z.string().min(1).optional(),
   status: z.enum(["Open", "In Progress", "Solved", "Closed"]).optional(),
   priority: z.enum(["Low", "Medium", "High"]).optional(),
