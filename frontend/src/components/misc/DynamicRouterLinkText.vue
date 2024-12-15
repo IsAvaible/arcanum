@@ -1,7 +1,12 @@
 <template>
   <span>
     <template v-for="(part, index) in parsedText" :key="index">
-      <router-link v-if="part.isLink" :to="`${to}${part.linkId!}`" class="hover:underline">
+      <router-link
+        v-if="part.isLink"
+        :to="`${to}${part.linkId!}`"
+        :target="target"
+        class="hover:underline"
+      >
         {{ part.text }}
       </router-link>
       <span v-else>{{ part.text }}</span>
@@ -30,13 +35,19 @@ interface Props {
    */
   to: string
   /**
+   * The target to open the link in
+   */
+  target?: '_self' | '_blank' | '_parent' | '_top' | '_unfencedTop'
+  /**
    * The validator function to check if the linkId is valid
    */
   validate?: (linkId: string) => Promise<boolean>
 }
 
-const props = defineProps<Props>()
-const { text, regex, to, validate } = toRefs(props)
+const props = withDefaults(defineProps<Props>(), {
+  target: '_self',
+})
+const { text, regex, to, target, validate } = toRefs(props)
 
 // Ref to hold the parsed and validated text parts
 const parsedText = ref<{ text: string; linkId?: string; isLink: boolean }[]>([])
