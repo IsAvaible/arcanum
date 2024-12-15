@@ -212,10 +212,9 @@ const validateCaseReferences = async () => {
       continue
     }
 
-    try {
-      await api.casesIdGet({ id })
+    if (await validateCaseReference(id)) {
       validatedCaseReferences.value.set(id, true)
-    } catch {
+    } else {
       invalidRefs.push(id)
       validatedCaseReferences.value.set(id, false)
     }
@@ -223,6 +222,20 @@ const validateCaseReferences = async () => {
 
   invalidCaseReferences.value = invalidRefs
   isValidationInProgress.value = false
+}
+
+/**
+ * Validates a single case reference against the API.
+ * @param id - The case reference to validate.
+ * @returns True if the case reference is valid, false otherwise.
+ */
+const validateCaseReference = async (id: string | number) => {
+  try {
+    await api.casesIdGet({ id: Number(id) })
+    return true
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -391,6 +404,7 @@ const caseReferences = computed(() => {
               <DynamicRouterLinkText
                 :text="message.message"
                 :regex="caseReferenceRegex"
+                :validate="validateCaseReference"
                 to="/cases/"
               />
             </p>
