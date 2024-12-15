@@ -403,8 +403,9 @@ const caseReferences = computed(() => {
               <DynamicRouterLinkText
                 :text="message.message"
                 :regex="caseReferenceRegex"
-                :validate="validateCaseReference"
                 to="/cases/"
+                target="_blank"
+                :validate="validateCaseReference"
               />
             </p>
             <CaseReference
