@@ -35,7 +35,12 @@ jobs:
           cd backend
           npm run lint
 
-      # 5. Testing
+      # 5. Build
+      - name: Build and Validate
+        run: npm run build
+        working-directory: backen
+
+      # 6. Testing
       - name: Run Tests
         run: |
           cd backend
