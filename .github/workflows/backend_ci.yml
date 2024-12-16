@@ -12,6 +12,16 @@ jobs:
   backend:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:latest
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+
     steps:
       # 1. Checkout Repository
       - name: Checkout repository
@@ -25,22 +35,53 @@ jobs:
 
       # 3. Install Backend Dependencies
       - name: Install backend dependencies
-        run:  npm install
+        run: npm install
+        working-directory: backend
+        env:
+          NODE_ENV: test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+          POSTGRES_HOST: 127.0.0.1
+          POSTGRES_PORT: 5432
+          POSTGRES_DIALECT: "postgres"
+
+      # 4. Validate Environment
+      - name: Validate Environment
+        run: cat .env || echo "No .env file found"
         working-directory: backend
 
-      # 4. Linting
+      # 5. Linting
       - name: Run Linting
         run: npm run lint
         working-directory: backend
+        env:
+          NODE_ENV: test
 
-      # 5. Build
+      # 6. Build and Validate
       - name: Build and Validate
         run: |
           npm run start-backend
           npm run shutdown
         working-directory: backend
+        env:
+          NODE_ENV: test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+          POSTGRES_HOST: 127.0.0.1
+          POSTGRES_PORT: 5432
+          POSTGRES_DIALECT: "postgres"
 
-      # 6. Testing
+      # 7. Testing
       - name: Run Tests
         run: npm test
         working-directory: backend
+        env:
+          NODE_ENV: test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+          POSTGRES_HOST: 127.0.0.1
+          POSTGRES_PORT: 5432
+          POSTGRES_DIALECT: "postgres"
