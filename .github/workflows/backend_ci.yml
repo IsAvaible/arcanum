@@ -35,8 +35,8 @@ jobs:
 
       # 5. Build
       - name: Build and Validate
-        run: npm run build
-        working-directory: backen
+        run: npm build
+        working-directory: backend
 
       # 6. Testing
       - name: Run Tests
