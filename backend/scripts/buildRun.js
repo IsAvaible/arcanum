@@ -4,7 +4,6 @@ require("dotenv").config();
 try {
   const app = express();
 
-  // Dynamisch den Port setzen, standardmäßig auf 443 (Container-Port)
   const PORT = process.env.PORT || 3000;
 
   console.log(`Using port: ${PORT}`);
