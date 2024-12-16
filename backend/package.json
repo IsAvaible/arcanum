@@ -8,7 +8,7 @@
     "format": "prettier . --write",
     "lint": "eslint .",
     "test": "echo \"No tests defined\" && exit 0",
-    "build": "scripts/buildRun.js"
+    "build": "node scripts/buildRun.js"
   },
   "keywords": [],
   "author": "",
