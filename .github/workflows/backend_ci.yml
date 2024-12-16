@@ -25,9 +25,7 @@ jobs:
 
       # 3. Install Backend Dependencies
       - name: Install backend dependencies
-        run: |
-          npm install
-          npm run build
+        run:  npm install
         working-directory: backend
 
       # 4. Linting
