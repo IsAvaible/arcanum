@@ -38,8 +38,7 @@ jobs:
         run: |
           npm run start-backend
           npm run shutdown
-
-        working-directory: backen
+        working-directory: backend
 
       # 6. Testing
       - name: Run Tests
