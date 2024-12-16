@@ -23,3 +23,4 @@ try {
   console.error("Error during application initialization:", err.message);
   process.exit(1);
 }
+

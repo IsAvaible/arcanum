@@ -9,7 +9,7 @@
     "format": "prettier . --write",
     "lint": "eslint .",
     "test": "echo \"No tests defined\" && exit 0",
-    "build": "scripts/buildRun.js"
+    "shutdown": " scripts/shutdown.js"
   },
   "keywords": [],
   "author": "",
