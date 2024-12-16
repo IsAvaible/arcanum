@@ -26,17 +26,16 @@ jobs:
       # 3. Install Backend Dependencies
       - name: Install backend dependencies
         run: |
-          cd backend
           npm install
+          npm run build
+        working-directory: backend
 
       # 4. Linting
       - name: Run Linting
-        run: |
-          cd backend
-          npm run lint
+        run: npm run lint
+        working-directory: backend
 
       # 5. Testing
       - name: Run Tests
-        run: |
-          cd backend
-          npm test
+        run: npm test
+        working-directory: backend
