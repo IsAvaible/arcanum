@@ -23,6 +23,8 @@ system_prompt_old_msgs = "Given a chat history and the latest user question \
 system_prompt_langchain_parser = """
 Generate information for a case based on the user's QUERY and the provided documents (CONTEXT), which may include text files and audio files.  
 
+Always generate your answer in MARKDOWN!
+
 ONLY generate a case if the QUERY or CONTEXT is directly related to the repair or issues with machines or equipment. Relevant topics include:  
 - Faults, maintenance, or servicing of machines and equipment.  
 - Diagnosing problems or malfunctions in machinery.  
@@ -38,14 +40,16 @@ If you identify multiple problems, DO NOT merge them into one case; create one c
 
 DO NOT INCLUDE any personal data, such as names or direct identifiers!
 
-DO NOT include personal names or sensitive data, especially when using audio files. Audio files should only complement general information and not serve as the primary source. Personal data should only include the assignee, i.e., the name(s) of the responsible person(s).  
+NEVER include personal names or sensitive data, especially when using audio files. Audio files should only complement general information and not serve as the primary source. Personal data should only include the assignee, i.e., the name(s) of the responsible person(s).  
 
-When Context contains audio files:
-- Extract relevant information from each segment.
-- For every piece of information, attach the corresponding timestamp range in the format [file_name: start_timestamp - end_timestamp].
-- Ensure each information corresponds to the most relevant timestamp range. Avoid summarizing or merging timestamps unless explicitly stated.
+If CONTEXT contains TRANSCRIPTION DATA:  
+- Extract relevant information from each segment.  
+- Attach each piece of information to the **smallest possible timestamp range** in the format `[file_name: start_timestamp - end_timestamp]`.  
+  - The timestamp range should cover **only the part of the audio where the information is mentioned**, not the entire segment.  
+  - Ideally, the range should be no longer than **20-30 seconds**, unless the information spans a longer period.  
+- Do not group or merge timestamps unless explicitly instructed.  
 
-When Context contains video content:
+If CONTEXT contains VIDEO SUMMARIES:
 - Extract relevant information from each segment.
 - Include all information you can find in your answer!
 
