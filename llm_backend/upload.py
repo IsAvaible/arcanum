@@ -159,18 +159,14 @@ def upload_file_method_production(files, socket_id):
         ### CACHE TO MINIMIZE AZURE API CALLS
         if is_cached and USE_CACHE:
             print("USING CACHE")
-            cache_path = download_cache(filehash)  # download cache file
-            txt = read_from_file(cache_path)  # read cache file
-            content_dict = text_to_dict(txt)  # file to dict
+            cache_path = download_cache(filehash)
+            txt = read_from_file(cache_path)
+            content_dict = text_to_dict(txt)
         else:
             print("NOT USING CACHE")
-            # content_dict = {"content": single_dict}
             content_dict = single_dict
-            # write file to cache
             file_path = write_to_file(filehash, json.dumps(content_dict, ensure_ascii=False, indent=2))
             upload_cache_file(file_path, filehash)
-
-
 
         file_as_dict = {
             "filename": filename,
@@ -185,12 +181,11 @@ def upload_file_method_production(files, socket_id):
         except ValueError:
             file_as_dict["content"] = single_text
 
-
-
         files_as_dicts.append(file_as_dict)
         files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False,indent=2)
 
-        print(files_as_dicts_json)
+        write_to_file("json", files_as_dicts_json)
+
     return files_as_dicts_json
 
 def merge_two_dicts(x, y):
