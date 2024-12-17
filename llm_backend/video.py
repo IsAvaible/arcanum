@@ -8,12 +8,12 @@ from image import encode_image, image_to_openai
 def cut_video_segments(input_file, filehash, segment_duration=100):
 
     output_path = os.path.join(
-        app.root_path, os.path.join("temp/video_segments/", f"{filehash}")
+        app.root_path, os.path.join(f"temp/{filehash}/", "video_segments")
     )
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
-    output_pattern = os.path.join(output_path, f"videos_%04d.mp4")
+    output_pattern = os.path.join(output_path, "videos_%04d.mp4")
 
     command = [
         "ffmpeg",
@@ -38,7 +38,7 @@ def extract_frames_with_ffmpeg(video_path, filehash):
     single_video = video_path
 
     frames_path = os.path.join(
-        app.root_path, os.path.join("temp/frames/", f"{filehash}")
+        app.root_path, os.path.join(f"temp/{filehash}/", f"frames")
     )
 
     if not os.path.exists(frames_path):
@@ -83,7 +83,7 @@ def extract_frames_with_ffmpeg(video_path, filehash):
 
 
     audio_path = os.path.join(
-        app.root_path, os.path.join("temp/audio/", f"{filehash}")
+        app.root_path, os.path.join(f"temp/{filehash}/", f"audio")
     )
 
     if not os.path.exists(audio_path):
