@@ -1,10 +1,8 @@
 import subprocess
 import os
-from pathlib import Path
-
 from app import app
-
 import cv2
+from image import encode_image, image_to_openai
 
 
 def cut_video_segments(input_file, filehash, segment_duration=100):
@@ -108,6 +106,68 @@ def extract_frames_with_ffmpeg(video_path, filehash):
 
     return frames_path, audio_output
 
+
+def process_segments(segments, frames, mimetype, result_dict):
+
+    if segments > 1:
+        prompt_dict = []
+        for i in range(0,segments):
+            print("SEGMENT #" + str(i))
+            prompt_dict.clear()
+            prompt_dict = [
+                {
+                    "type": "text",
+                    "text": "What are all frames showing, be as detailed as possible but please combine everything in a normal text"
+                }
+            ]
+            for j in range(0+(50*i),50*(i+1)):
+
+                print("FRAME #" + str(j))
+                encoding = encode_image(frames[j])
+                base64_image = {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{encoding}",
+                        "detail": "auto"
+                    }
+                }
+                prompt_dict.append(base64_image)
+            print("LENGTH"+str(len(prompt_dict)))
+            single_text = image_to_openai(prompt_dict)
+            video_dict = {
+                "type": mimetype,
+                "text": single_text
+            }
+            result_dict["video_content"].append(video_dict)
+        single_dict = result_dict
+    else:
+        prompt_dict = []
+        prompt_dict.clear()
+        prompt_dict = [
+            {
+                "type": "text",
+                "text": "What are all frames showing, be as detailed as possible but please combine everything in a normal text"
+            }
+        ]
+        for j in range(0,len(frames)):
+            encoding = encode_image(frames[j])
+            base64_image = {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/jpeg;base64,{encoding}",
+                    "detail": "auto"
+                }
+            }
+            prompt_dict.append(base64_image)
+        print("LENGTH"+str(len(prompt_dict)))
+        single_text = image_to_openai(prompt_dict)
+        video_dict = {
+            "type": mimetype,
+            "text": single_text
+        }
+        result_dict["video_content"].append(video_dict)
+        single_dict = result_dict
+    return single_dict
 
 def get_all_frames_in_dir(path):
     f = []
