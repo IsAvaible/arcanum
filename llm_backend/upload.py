@@ -7,6 +7,7 @@ from langchain_openai import AzureChatOpenAI
 from dotenv import load_dotenv
 
 from image import encode_image, image_to_openai
+from app import socketio
 from video import process_segments
 from video import extract_frames_with_ffmpeg, get_all_frames_in_dir
 from readwrite import write_to_file, read_from_file, text_to_dict
@@ -75,6 +76,7 @@ def upload_file_method_production(files, socket_id):
     sorted_attachments = sorted(files, key=sort_attachments)
 
     for file in sorted_attachments:
+
         filepath = file["filepath"]
         filehash = file["filehash"]
         file_id = file["id"] if "id" in file else file["file_id"]
@@ -83,12 +85,17 @@ def upload_file_method_production(files, socket_id):
         path = download_file_webdav(filepath, filename)
         mimetype = file["mimetype"]
         is_cached = check_if_cached(filehash)
+
+        socketio.emit('case_generation', {'message': f'Analyzing "{filename}"'}, to=socket_id)
+
         if allowed_file(filename) and (not is_cached or not USE_CACHE):
             if "audio" in mimetype:
+                socketio.emit('case_generation', {'message': f'Transcribing Audio File ({filename})'}, to=socket_id)
                 transcription = transcribe(file, texts, llm, path, filename, whisper_prompt)
                 single_dict = transcription
                 texts += "  " + json.dumps(single_text, ensure_ascii=False)
             elif mimetype == "application/pdf":
+                socketio.emit('case_generation', {'message': f'Analyzing PDF File ({filename})'}, to=socket_id)
                 texts += f" Content of PDF File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 single_text = create_text_chunks_pdfplumber(path)
                 single_dict = {
@@ -97,6 +104,7 @@ def upload_file_method_production(files, socket_id):
                 }
                 texts += " " + single_text
             elif mimetype == "text/html":
+                socketio.emit('case_generation', {'message': f'Analyzing HTML File ({filename})'}, to=socket_id)
                 texts += f" Content of HTML File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 with open(path, "r", encoding="utf-8") as file:
                     contents = file.read()
@@ -108,6 +116,7 @@ def upload_file_method_production(files, socket_id):
                     "text": single_text
                 }
             elif mimetype == "text/plain":
+                socketio.emit('case_generation', {'message': f'Analyzing Text File ({filename})'}, to=socket_id)
                 texts += f" Content of Text File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 with open(path, "r", encoding="utf-8") as file:
                     contents = file.read()
@@ -118,6 +127,7 @@ def upload_file_method_production(files, socket_id):
                     "text": single_text
                 }
             elif mimetype == "image/png" or mimetype == "image/jpeg":
+                socketio.emit('case_generation', {'message': f'Analyzing Image File ({filename})'}, to=socket_id)
                 texts += f" Content of Image File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 encoding = encode_image(path)
                 mime_type = mimetypes.guess_type(path)[0]
@@ -140,6 +150,7 @@ def upload_file_method_production(files, socket_id):
                     "text": single_text
                 }
             elif mimetype == "video/mp4":
+                socketio.emit('case_generation', {'message': f'Analyzing Video File ({filename})'}, to=socket_id)
                 texts += f" Content of Video File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
 
                 frame_path, audio_path = extract_frames_with_ffmpeg(path, filehash)
@@ -157,12 +168,16 @@ def upload_file_method_production(files, socket_id):
 
 
         ### CACHE TO MINIMIZE AZURE API CALLS
+
+
         if is_cached and USE_CACHE:
+            socketio.emit('case_generation', {'message': f'Found file in cache ({filename})'}, to=socket_id)
             print("USING CACHE")
             cache_path = download_cache(filehash)
             txt = read_from_file(cache_path)
             content_dict = text_to_dict(txt)
         else:
+            socketio.emit('case_generation', {'message': f'Saving file in cache ({filename})'}, to=socket_id)
             print("NOT USING CACHE")
             content_dict = single_dict
             file_path = write_to_file(filehash, json.dumps(content_dict, ensure_ascii=False, indent=2))
