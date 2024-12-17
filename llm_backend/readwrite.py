@@ -1,5 +1,7 @@
 import json
 import os
+import shutil
+
 from app import app
 
 
@@ -21,6 +23,20 @@ def write_to_file(hash, content):
         return None
 
 
+def delete_temp_folder(hash):
+    dir_path = os.path.join(app.root_path, "temp", hash)
+    if os.path.exists(dir_path):
+        try:
+            shutil.rmtree(dir_path)
+            return True
+        except Exception as e:
+            print(f"Error '{dir_path}': {e}")
+            return False
+    else:
+        print(f"Folder '{dir_path}' does not exist.")
+        return False
+
+
 def read_from_file(file_path):
     try:
         with open(file_path, "r", encoding="utf-8") as file:
@@ -32,7 +48,6 @@ def read_from_file(file_path):
     except Exception as e:
         print(f"Ein Fehler ist aufgetreten: {e}")
         return None
-
 
 
 def text_to_dict(json_text):
