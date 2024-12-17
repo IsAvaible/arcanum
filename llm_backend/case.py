@@ -1,7 +1,7 @@
 from pydantic import Field, BaseModel, ValidationError
 
 
-#maybe for future use
+# maybe for future use
 class CaseAttachment(BaseModel):
     file_id: int = Field(
         ...,
@@ -19,6 +19,7 @@ class CaseAttachment(BaseModel):
         ...,
         description="A unique hash generated for the file to verify its integrity and identify its contents."
     )
+
 
 # defining the desired output of the llm
 class Case(BaseModel):
@@ -58,6 +59,8 @@ class Case(BaseModel):
 
 class CaseArray(BaseModel):
     cases: list[Case] = Field(..., description="A list of one or multiple cases.", min_length=1)
+
+
 def check_if_output_is_valid(chain_output):
     try:
         # This will validate the output and raise an error if any required field is missing
