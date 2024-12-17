@@ -58,6 +58,14 @@ jobs:
         run: npm run lint
         working-directory: backend
 
+      - name: Free port 3000 if in use
+        run: |
+          if lsof -i:3000; then
+            echo "Port 3000 in use, killing process..."
+            kill -9 $(lsof -t -i:3000)
+          fi
+        working-directory: backend
+
       # 6. Build and Validate
       - name: Build and Validate
         run: |
