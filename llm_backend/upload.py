@@ -1,26 +1,20 @@
+import json
 import math
 import mimetypes
 import os
 import time
 
 from bs4 import BeautifulSoup
-from langchain_openai import AzureChatOpenAI
 from dotenv import load_dotenv
+from langchain_openai import AzureChatOpenAI
 
-from image import encode_image, image_to_openai
 from app import socketio
-from video import process_segments
-from video import extract_frames_with_ffmpeg, get_all_frames_in_dir
-from readwrite import write_to_file, read_from_file, text_to_dict
-from webdav import check_if_cached, download_cache, upload_cache_file
+from image import encode_image, image_to_openai
+from pdf import create_text_chunks_pdfplumber
+from readwrite import write_to_file, read_from_file, text_to_dict, delete_temp_folder
+from video import process_segments, extract_frames_with_ffmpeg, get_all_frames_in_dir
+from webdav import check_if_cached, download_cache, upload_cache_file, download_file_webdav
 from whisper import transcribe
-from pdf import (
-    create_text_chunks_pdfplumber,
-)
-from webdav import download_file_webdav
-
-import json
-
 
 ALLOWED_EXTENSIONS = {"txt", "pdf", "html", "mp3", "wav", "png", "jpg", "jpeg", "gif", "bmp", "mp4"}
 
@@ -65,7 +59,7 @@ def upload_file_method_production(files, socket_id):
     single_text = None
     whisper_prompt = ""
     # SET TRUE IF CACHING SHOULD BE ACTIVATED -> FALSE IF NOT
-    USE_CACHE = False
+    USE_CACHE = True
 
     for file in files:
         print(file)
@@ -162,14 +156,12 @@ def upload_file_method_production(files, socket_id):
                 transcription = transcribe(file, texts, llm, audio_path, filename, whisper_prompt)
                 texts += "  " + json.dumps(single_text, ensure_ascii=False)
                 result_dict = {
-                    "video_summary" : "",
-                    "transcription" : [transcription]
+                    "video_summary": "",
+                    "transcription": [transcription]
                 }
                 single_dict = process_segments(segments, frames, mimetype, result_dict)
 
-
         ### CACHE TO MINIMIZE AZURE API CALLS
-
 
         if is_cached and USE_CACHE:
             socketio.emit('case_generation', {'message': f'Found file in cache ({filename})'}, to=socket_id)
@@ -198,16 +190,20 @@ def upload_file_method_production(files, socket_id):
             file_as_dict["content"] = single_text
 
         files_as_dicts.append(file_as_dict)
-        files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False,indent=2)
+        files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False, indent=2)
 
         write_to_file(str(time.time()), files_as_dicts_json)
 
+        delete_temp_folder(filehash)
+
     return files_as_dicts_json
 
+
 def merge_two_dicts(x, y):
-    z = x.copy()   # start with keys and values of x
-    z.update(y)    # modifies z with keys and values of y
+    z = x.copy()  # start with keys and values of x
+    z.update(y)  # modifies z with keys and values of y
     return z
+
 
 def convert_list_to_dict(lst):
     res_dict = {}
