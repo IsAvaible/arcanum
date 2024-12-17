@@ -306,9 +306,10 @@ const caseReferences = computed(() => {
         <div
           v-for="chat in filteredChats"
           :key="chat.name"
-          class="flex items-center gap-4 p-3 cursor-pointer hover:bg-gray-100 transition-all"
+          class="flex items-center gap-4 p-3 cursor-pointer transition-all"
           :class="{
             'bg-gray-200': chat.name === activeChat?.name,
+            'hover:bg-gray-100': chat.name !== activeChat?.name,
           }"
           @click="setActiveChat(chat)"
         >
