@@ -1,3 +1,4 @@
+import math
 import os
 import subprocess
 
@@ -35,7 +36,7 @@ def cut_video_segments(input_file, filehash, segment_duration=100):
         print(f"Error occurred while splitting the video: {e}")
 
 
-def extract_frames_with_ffmpeg(video_path, filehash):
+def extract_data_from_video(video_path, filehash):
     # Erstelle den Ausgabeordner, falls er nicht existiert
     single_video = video_path
 
@@ -65,14 +66,15 @@ def extract_frames_with_ffmpeg(video_path, filehash):
 
         # FFmpeg-Befehl ausführen
         output_pattern = os.path.join(frames_path, "frame_%04d.jpg")
-        counter = str(((i - 1) * 50) + 1)
+        counter = sum(1 for item in os.listdir(frames_path) if os.path.isfile(os.path.join(frames_path, item)))
+
         command = [
             "ffmpeg",
             "-v", "quiet",
             "-y",
             "-i", video,
             "-vf", vf_filter,
-            "-start_number", counter,
+            "-start_number", str(counter),
             output_pattern
         ]
 
@@ -108,10 +110,14 @@ def extract_frames_with_ffmpeg(video_path, filehash):
     return frames_path, audio_output
 
 
-def process_segments(segments, frames, mimetype, result_dict):
-    if segments > 1:
+def process_segments(frames, result_dict):
+
+    print(len(frames))
+    frame_segments = math.floor(len(frames) / 49)
+    print(f"segments: {frame_segments}")
+    if frame_segments > 0:
         prompt_dict = []
-        for i in range(0, segments):
+        for i in range(0, frame_segments):
             prompt_dict.clear()
             prompt_dict = [
                 {
@@ -119,7 +125,8 @@ def process_segments(segments, frames, mimetype, result_dict):
                     "text": "What are all frames showing, be as detailed as possible but please combine everything in a normal text"
                 }
             ]
-            for j in range(0 + (50 * i), 50 * (i + 1)):
+            print("range - " + str(0 + (50 * i)) + " - " + str(49 * (i + 1)))
+            for j in range(0 + (50 * i), 49 * (i + 1)):
                 encoding = encode_image(frames[j])
                 base64_image = {
                     "type": "image_url",
