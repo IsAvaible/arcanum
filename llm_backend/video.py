@@ -59,10 +59,10 @@ def extract_frames_with_ffmpeg(video_path, filehash):
     i = 1
     for video in segments:
 
-        vf_filter = f"fps=0.2 ,scale=320:-1"
+        vf_filter = "fps=0.2 ,scale=320:-1"
 
         # FFmpeg-Befehl ausführen
-        output_pattern = os.path.join(frames_path, f"frame_%04d.jpg")
+        output_pattern = os.path.join(frames_path, "frame_%04d.jpg")
         counter = str(((i-1)*50)+1)
         command = [
             "ffmpeg",
@@ -88,7 +88,7 @@ def extract_frames_with_ffmpeg(video_path, filehash):
 
     if not os.path.exists(audio_path):
         os.makedirs(audio_path)
-    audio_output = os.path.join(audio_path, f"audio.mp3")
+    audio_output = os.path.join(audio_path, "audio.mp3")
     command = [
         "ffmpeg",
         "-v","quiet",
