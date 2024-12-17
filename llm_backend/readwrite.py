@@ -4,15 +4,21 @@ from app import app
 
 
 def write_to_file(hash, content):
-    file_path = os.path.join(
-        app.root_path, os.path.join("temp", hash)
-    )
+    # Verzeichnis erstellen, falls es nicht existiert
+    dir_path = os.path.join(app.root_path, "temp", hash)
+    os.makedirs(dir_path, exist_ok=True)  # Erstellt das Verzeichnis, falls nötig
+
+    # Datei-Pfad
+    file_path = os.path.join(dir_path, f"{hash}.json")
+
     try:
+        # Datei schreiben
         with open(file_path, "w", encoding="utf-8") as file:
             file.write(content)
         return file_path
     except Exception as e:
         print(f"Ein Fehler ist aufgetreten: {e}")
+        return None
 
 
 def read_from_file(file_path):
