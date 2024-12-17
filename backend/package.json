@@ -8,7 +8,7 @@
     "format": "prettier . --write",
     "lint": "eslint .",
     "test": "echo \"No tests defined\" && exit 0",
-    "shutdown": " scripts/shutdown.js"
+    "shutdown": "node scripts/shutdown.js"
   },
   "keywords": [],
   "author": "",
