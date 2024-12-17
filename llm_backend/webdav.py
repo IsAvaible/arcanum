@@ -47,7 +47,7 @@ def check_if_cached(hash):
 
 def download_cache(hash):
     download_path = os.path.join(
-        app.root_path, os.path.join(f"temp/", f"{hash}")
+        app.root_path, os.path.join("temp/", f"{hash}")
     )
     if not os.path.exists(download_path):
         os.makedirs(download_path)
