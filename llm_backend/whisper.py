@@ -35,7 +35,6 @@ class Segment:
 
 
 def transcribe(file, texts, llm, path, filename, whisper_prompt):
-    # if texts not empty -> try to get model numbers etc. by Text content
     if texts != "":
         system_prompt_langchain_parser = get_system_prompt("models")
         messages = [
@@ -58,16 +57,11 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
     data = {
         "context": "transcription of audio file",
         "segments": [],
-        # Leere Liste, die später gefüllt werden kann
     }
 
     if float(file_size_mb) > 24.0:
-        # split files
         segments = split_audio_with_overlap(path, segment_length_ms=300000, overlap_ms=500)
         for idx, segment in enumerate(segments):
-            # if partialTranscription:
-            # partial_transcript_to_context = partialTranscription[-1][-200:]
-            # print("partialTranscription:"+str(partial_transcript_to_context)+"\n\n")
             print(f"segment {idx}")
             path = os.path.join(
                 app.root_path, os.path.join(app.config["UPLOAD_FOLDER"], f"{filename}_{idx}.mp3")
@@ -91,14 +85,6 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
                 combined_segments.append(combine_segments(group_segments))
             generated_dict = generate_segment_dict(combined_segments, idx)
             data["segments"].extend(generated_dict)
-
-        # JSON besser als String
-        # formatted_string = ""
-        # for seg in data["segments"]:
-        #    for s in seg:
-        #        formatted_string += f"Von {s.get('start')} bis {s.get('end')}:\n{s.get('text')}\n\n"
-        # return formatted_string
-
         return data
     else:
 
@@ -120,17 +106,10 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
 
         data = {
             "context": "transcription",
-            "segments": []  # Leere Liste, die später gefüllt werden kann
+            "segments": []
         }
         new_segments = generate_segment_dict(combined_segments)
         data["segments"] = new_segments
-
-        # formatted_string = ""
-        # index = 1
-        # for s in new_segments:
-        #    formatted_string += f"[{s.get('start')} --> {s.get('end')}]\n{s.get('text')}\n\n"
-        #    index += 1
-        # return formatted_string
         return data
 
 
