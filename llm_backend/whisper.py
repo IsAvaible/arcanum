@@ -4,11 +4,11 @@ from itertools import islice
 
 from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate
+from openai import AzureOpenAI
 
 from app import app
 from audio import split_audio_with_overlap
 from prompts import get_system_prompt
-from openai import AzureOpenAI
 
 load_dotenv()
 
@@ -22,6 +22,7 @@ AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 client = AzureOpenAI(azure_endpoint=AZURE_ENDPOINT,
                      api_version=OPENAI_API_VERSION,
                      api_key=AZURE_OPENAI_API_KEY)
+
 
 class Segment:
     def __init__(self, start, end, text):
@@ -51,7 +52,6 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
         response = chain.invoke(promptLangchainInvoked)
         whisper_prompt = response.content
 
-
     file_size_mb = os.stat(path).st_size / (1024 * 1024)
     texts += f" NEW AUDIO FILE {json.dumps(file)} - CONTENT: "
 
@@ -65,9 +65,9 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
         # split files
         segments = split_audio_with_overlap(path, segment_length_ms=300000, overlap_ms=500)
         for idx, segment in enumerate(segments):
-            #if partialTranscription:
-                #partial_transcript_to_context = partialTranscription[-1][-200:]
-                # print("partialTranscription:"+str(partial_transcript_to_context)+"\n\n")
+            # if partialTranscription:
+            # partial_transcript_to_context = partialTranscription[-1][-200:]
+            # print("partialTranscription:"+str(partial_transcript_to_context)+"\n\n")
             print(f"segment {idx}")
             path = os.path.join(
                 app.root_path, os.path.join(app.config["UPLOAD_FOLDER"], f"{filename}_{idx}.mp3")
@@ -93,11 +93,11 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
             data["segments"].extend(generated_dict)
 
         # JSON besser als String
-        #formatted_string = ""
-        #for seg in data["segments"]:
+        # formatted_string = ""
+        # for seg in data["segments"]:
         #    for s in seg:
         #        formatted_string += f"Von {s.get('start')} bis {s.get('end')}:\n{s.get('text')}\n\n"
-        #return formatted_string
+        # return formatted_string
 
         return data
     else:
@@ -125,12 +125,12 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
         new_segments = generate_segment_dict(combined_segments)
         data["segments"] = new_segments
 
-        #formatted_string = ""
-        #index = 1
-        #for s in new_segments:
+        # formatted_string = ""
+        # index = 1
+        # for s in new_segments:
         #    formatted_string += f"[{s.get('start')} --> {s.get('end')}]\n{s.get('text')}\n\n"
         #    index += 1
-        #return formatted_string
+        # return formatted_string
         return data
 
 
@@ -148,6 +148,7 @@ def combine_segments(group_segments):
     end = group_segments[-1].end
     text = ''.join([seg.text for seg in group_segments])
     return Segment(start, end, text)
+
 
 def generate_segment_dict(combined_segments, idx=0):
     new_segments = []
