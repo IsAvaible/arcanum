@@ -1,10 +1,10 @@
 from flask import request, Blueprint
-from app import app
 
+from app import app
+from chat import chat
 from generate import (
     generate,
 )
-from chat import chat
 
 routes = Blueprint("routes", __name__)
 
@@ -19,4 +19,3 @@ def generate_case():
 def chat_langchain():
     if request.method == "POST":
         return chat(request)
-
