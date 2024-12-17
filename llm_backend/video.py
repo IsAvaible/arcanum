@@ -38,7 +38,7 @@ def extract_frames_with_ffmpeg(video_path, filehash):
     single_video = video_path
 
     frames_path = os.path.join(
-        app.root_path, os.path.join(f"temp/{filehash}/", f"frames")
+        app.root_path, os.path.join(f"temp/{filehash}/", "frames")
     )
 
     if not os.path.exists(frames_path):
@@ -83,7 +83,7 @@ def extract_frames_with_ffmpeg(video_path, filehash):
 
 
     audio_path = os.path.join(
-        app.root_path, os.path.join(f"temp/{filehash}/", f"audio")
+        app.root_path, os.path.join(f"temp/{filehash}/", "audio")
     )
 
     if not os.path.exists(audio_path):
