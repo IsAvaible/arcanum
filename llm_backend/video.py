@@ -112,7 +112,6 @@ def process_segments(segments, frames, mimetype, result_dict):
     if segments > 1:
         prompt_dict = []
         for i in range(0,segments):
-            print("SEGMENT #" + str(i))
             prompt_dict.clear()
             prompt_dict = [
                 {
@@ -121,8 +120,6 @@ def process_segments(segments, frames, mimetype, result_dict):
                 }
             ]
             for j in range(0+(50*i),50*(i+1)):
-
-                print("FRAME #" + str(j))
                 encoding = encode_image(frames[j])
                 base64_image = {
                     "type": "image_url",
@@ -132,13 +129,8 @@ def process_segments(segments, frames, mimetype, result_dict):
                     }
                 }
                 prompt_dict.append(base64_image)
-            print("LENGTH"+str(len(prompt_dict)))
-            single_text = image_to_openai(prompt_dict)
-            video_dict = {
-                "type": mimetype,
-                "text": single_text
-            }
-            result_dict["video_content"].append(video_dict)
+            video_summary = image_to_openai(prompt_dict)
+            result_dict["video_summary"] = video_summary
         single_dict = result_dict
     else:
         prompt_dict = []
@@ -159,13 +151,8 @@ def process_segments(segments, frames, mimetype, result_dict):
                 }
             }
             prompt_dict.append(base64_image)
-        print("LENGTH"+str(len(prompt_dict)))
-        single_text = image_to_openai(prompt_dict)
-        video_dict = {
-            "type": mimetype,
-            "text": single_text
-        }
-        result_dict["video_content"].append(video_dict)
+        video_summary = image_to_openai(prompt_dict)
+        result_dict["video_summary"] = video_summary
         single_dict = result_dict
     return single_dict
 
