@@ -1,6 +1,7 @@
 import math
 import mimetypes
 import os
+import time
 
 from bs4 import BeautifulSoup
 from langchain_openai import AzureChatOpenAI
@@ -100,7 +101,7 @@ def upload_file_method_production(files, socket_id):
                 single_text = create_text_chunks_pdfplumber(path)
                 single_dict = {
                     "type": "pdf",
-                    "text": single_text
+                    "content": single_text
                 }
                 texts += " " + single_text
             elif mimetype == "text/html":
@@ -113,7 +114,7 @@ def upload_file_method_production(files, socket_id):
                     single_text = soup.get_text()
                 single_dict = {
                     "type": "html",
-                    "text": single_text
+                    "content": single_text
                 }
             elif mimetype == "text/plain":
                 socketio.emit('case_generation', {'message': f'Analyzing Text File ({filename})'}, to=socket_id)
@@ -124,7 +125,7 @@ def upload_file_method_production(files, socket_id):
                     single_text = contents
                 single_dict = {
                     "type": "txt",
-                    "text": single_text
+                    "content": single_text
                 }
             elif mimetype == "image/png" or mimetype == "image/jpeg":
                 socketio.emit('case_generation', {'message': f'Analyzing Image File ({filename})'}, to=socket_id)
@@ -147,7 +148,7 @@ def upload_file_method_production(files, socket_id):
                 single_text = image_to_openai(prompt_dict)
                 single_dict = {
                     "type": mimetype,
-                    "text": single_text
+                    "content": single_text
                 }
             elif mimetype == "video/mp4":
                 socketio.emit('case_generation', {'message': f'Analyzing Video File ({filename})'}, to=socket_id)
@@ -161,7 +162,7 @@ def upload_file_method_production(files, socket_id):
                 transcription = transcribe(file, texts, llm, audio_path, filename, whisper_prompt)
                 texts += "  " + json.dumps(single_text, ensure_ascii=False)
                 result_dict = {
-                    "video_content" : [],
+                    "video_summary" : "",
                     "transcription" : [transcription]
                 }
                 single_dict = process_segments(segments, frames, mimetype, result_dict)
@@ -199,7 +200,7 @@ def upload_file_method_production(files, socket_id):
         files_as_dicts.append(file_as_dict)
         files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False,indent=2)
 
-        write_to_file("json", files_as_dicts_json)
+        write_to_file(str(time.time()), files_as_dicts_json)
 
     return files_as_dicts_json
 
