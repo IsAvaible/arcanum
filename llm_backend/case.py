@@ -1,5 +1,4 @@
 from pydantic import Field, BaseModel, ValidationError
-from pydantic.v1 import root_validator
 
 
 #maybe for future use
