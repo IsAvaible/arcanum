@@ -6,6 +6,7 @@ from pdf2image import convert_from_path
 
 pytesseract.pytesseract.tesseract_cmd = os.getenv("TESSERACT_BIN")
 
+
 def create_text_chunks_pdfplumber(pdf_path):
     content = ""
 
@@ -27,6 +28,7 @@ def create_text_chunks_pdfplumber(pdf_path):
                     content += row_text + "\n"
 
     return content
+
 
 def create_text_chunks_ocr(pdf_path):
     pages = convert_from_path(pdf_path, 600)
