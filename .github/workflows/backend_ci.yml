@@ -22,6 +22,16 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: testdb
 
+    env:
+      NODE_ENV: test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: testdb
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_PORT: 5432
+      POSTGRES_DIALECT: "postgres"
+      PORT: 3000
+
     steps:
       # 1. Checkout Repository
       - name: Checkout repository
@@ -37,14 +47,6 @@ jobs:
       - name: Install backend dependencies
         run: npm install
         working-directory: backend
-        env:
-          NODE_ENV: test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: testdb
-          POSTGRES_HOST: 127.0.0.1
-          POSTGRES_PORT: 5432
-          POSTGRES_DIALECT: "postgres"
 
       # 4. Validate Environment
       - name: Validate Environment
@@ -55,8 +57,6 @@ jobs:
       - name: Run Linting
         run: npm run lint
         working-directory: backend
-        env:
-          NODE_ENV: test
 
       # 6. Build and Validate
       - name: Build and Validate
@@ -64,24 +64,8 @@ jobs:
           npm run start-backend
           npm run shutdown
         working-directory: backend
-        env:
-          NODE_ENV: test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: testdb
-          POSTGRES_HOST: 127.0.0.1
-          POSTGRES_PORT: 5432
-          POSTGRES_DIALECT: "postgres"
 
       # 7. Testing
       - name: Run Tests
         run: npm test
         working-directory: backend
-        env:
-          NODE_ENV: test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: testdb
-          POSTGRES_HOST: 127.0.0.1
-          POSTGRES_PORT: 5432
-          POSTGRES_DIALECT: "postgres"
