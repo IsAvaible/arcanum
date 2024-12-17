@@ -1,4 +1,3 @@
-import base64
 import math
 import mimetypes
 import os
@@ -8,6 +7,7 @@ from langchain_openai import AzureChatOpenAI
 from dotenv import load_dotenv
 
 from image import encode_image, image_to_openai
+from video import process_segments
 from video import extract_frames_with_ffmpeg, get_all_frames_in_dir
 from readwrite import write_to_file, read_from_file, text_to_dict
 from webdav import check_if_cached, download_cache, upload_cache_file
@@ -18,6 +18,7 @@ from pdf import (
 from webdav import download_file_webdav
 
 import json
+
 
 ALLOWED_EXTENSIONS = {"txt", "pdf", "html", "mp3", "wav", "png", "jpg", "jpeg", "gif", "bmp", "mp4"}
 
@@ -54,7 +55,7 @@ llm = AzureChatOpenAI(
 )
 
 
-def upload_file_method_production(files, pdf_extractor):
+def upload_file_method_production(files, socket_id):
     files_as_dicts = []
     single_dict = {}
     files_as_dicts_json = ""
@@ -70,7 +71,7 @@ def upload_file_method_production(files, pdf_extractor):
         mimetype = mimetypes.guess_type(filepath)
         file["mimetype"] = mimetype[0]
 
-    # sort attachments so audio come last
+    # sort attachments so audio comes last
     sorted_attachments = sorted(files, key=sort_attachments)
 
     for file in sorted_attachments:
@@ -81,9 +82,7 @@ def upload_file_method_production(files, pdf_extractor):
         # download file to temp folder
         path = download_file_webdav(filepath, filename)
         mimetype = file["mimetype"]
-
         is_cached = check_if_cached(filehash)
-        print(mimetype)
         if allowed_file(filename) and (not is_cached or not USE_CACHE):
             if "audio" in mimetype:
                 transcription = transcribe(file, texts, llm, path, filename, whisper_prompt)
@@ -141,84 +140,22 @@ def upload_file_method_production(files, pdf_extractor):
                     "text": single_text
                 }
             elif mimetype == "video/mp4":
-                print("VIDEO")
                 texts += f" Content of Video File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
 
                 frame_path, audio_path = extract_frames_with_ffmpeg(path, filehash)
                 frames = get_all_frames_in_dir(frame_path)
-                print("FRAMES COUNT: "+ str(len(frames)))
 
                 segments = math.floor(len(frames) / 50)
 
-                print("SEGMENTS COUNT: "+ str(segments))
                 transcription = transcribe(file, texts, llm, audio_path, filename, whisper_prompt)
                 texts += "  " + json.dumps(single_text, ensure_ascii=False)
-
                 result_dict = {
                     "video_content" : [],
                     "transcription" : [transcription]
                 }
+                single_dict = process_segments(segments, frames, mimetype, result_dict)
 
-                if segments > 1:
-                    prompt_dict = []
-                    for i in range(0,segments):
-                        print("SEGMENT #" + str(i))
-                        prompt_dict.clear()
-                        prompt_dict = [
-                            {
-                                "type": "text",
-                                "text": "What are all frames showing, be as detailed as possible but please combine everything in a normal text"
-                            }
-                        ]
-                        for j in range(0+(50*i),50*(i+1)):
 
-                            print("FRAME #" + str(j))
-                            encoding = encode_image(frames[j])
-                            base64_image = {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{encoding}",
-                                    "detail": "auto"
-                                }
-                            }
-                            prompt_dict.append(base64_image)
-                        print("LENGTH"+str(len(prompt_dict)))
-                        single_text = image_to_openai(prompt_dict)
-                        video_dict = {
-                            "type": mimetype,
-                            "text": single_text
-                        }
-                        result_dict["video_content"].append(video_dict)
-                    single_dict = result_dict
-                else:
-                    prompt_dict = []
-                    prompt_dict.clear()
-                    prompt_dict = [
-                        {
-                            "type": "text",
-                            "text": "What are all frames showing, be as detailed as possible but please combine everything in a normal text"
-                        }
-                    ]
-                    for j in range(0,len(frames)):
-                        encoding = encode_image(frames[j])
-                        base64_image = {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{encoding}",
-                                "detail": "auto"
-                            }
-                        }
-                        prompt_dict.append(base64_image)
-                    print("LENGTH"+str(len(prompt_dict)))
-                    single_text = image_to_openai(prompt_dict)
-                    video_dict = {
-                        "type": mimetype,
-                        "text": single_text
-                    }
-                    result_dict["video_content"].append(video_dict)
-                    single_dict = result_dict
-
-        print(single_dict)
         ### CACHE TO MINIMIZE AZURE API CALLS
         if is_cached and USE_CACHE:
             print("USING CACHE")
@@ -232,6 +169,8 @@ def upload_file_method_production(files, pdf_extractor):
             # write file to cache
             file_path = write_to_file(filehash, json.dumps(content_dict, ensure_ascii=False, indent=2))
             upload_cache_file(file_path, filehash)
+
+
 
         file_as_dict = {
             "filename": filename,
