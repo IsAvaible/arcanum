@@ -21,7 +21,7 @@ const upload = multer({
   }),
 
   // Sets the file size limit to 50MB.
-  limits: { fileSize: 52428800 },
+  limits: { fileSize: 100000000 },
 
   /**
    * Filters uploaded files based on their names and types.
