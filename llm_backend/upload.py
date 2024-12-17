@@ -12,7 +12,7 @@ from app import socketio
 from image import encode_image, image_to_openai
 from pdf import create_text_chunks_pdfplumber
 from readwrite import write_to_file, read_from_file, text_to_dict, delete_temp_folder
-from video import process_segments, extract_frames_with_ffmpeg, get_all_frames_in_dir
+from video import process_segments, extract_data_from_video, get_all_frames_in_dir
 from webdav import check_if_cached, download_cache, upload_cache_file, download_file_webdav
 from whisper import transcribe
 
@@ -148,10 +148,8 @@ def upload_file_method_production(files, socket_id):
                 socketio.emit('case_generation', {'message': f'Analyzing Video File ({filename})'}, to=socket_id)
                 texts += f" Content of Video File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
 
-                frame_path, audio_path = extract_frames_with_ffmpeg(path, filehash)
+                frame_path, audio_path = extract_data_from_video(path, filehash)
                 frames = get_all_frames_in_dir(frame_path)
-
-                segments = math.floor(len(frames) / 50)
 
                 transcription = transcribe(file, texts, llm, audio_path, filename, whisper_prompt)
                 texts += "  " + json.dumps(single_text, ensure_ascii=False)
@@ -159,7 +157,7 @@ def upload_file_method_production(files, socket_id):
                     "video_summary": "",
                     "transcription": [transcription]
                 }
-                single_dict = process_segments(segments, frames, mimetype, result_dict)
+                single_dict = process_segments(frames, result_dict)
 
         ### CACHE TO MINIMIZE AZURE API CALLS
 
