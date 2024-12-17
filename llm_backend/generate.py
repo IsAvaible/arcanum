@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from flask import jsonify
 from case import CaseArray, check_if_output_is_valid
+from app import socketio
 from prompts import get_system_prompt
 from upload import upload_file_method_production
 
@@ -49,11 +50,15 @@ def start_quering_llm(invokedPrompt, llm, parser, max_tries=3) -> dict:
     return chain_output
 
 
-def generate_case_langchain_production(request):
+def generate(request):
     if request.method == "POST":
+
         json_str = request.get_json(force=True)
         attachments = json_str["attachments"]
         socket_id = json_str["socket_id"]
+
+        socketio.emit('case_generation', {'message': 'Starting Case Generation...'}, to=socket_id)
+
         prompt = "Please create metadata for a new case based on the Context provided and return them in JSON! Please try include all necessary information that the context has!"
 
         llm = AzureChatOpenAI(
@@ -69,6 +74,7 @@ def generate_case_langchain_production(request):
 
         context = upload_file_method_production(attachments, socket_id)
 
+        socketio.emit('case_generation', {'message': 'Finalizing Case Generation...'}, to=socket_id)
         system_prompt_langchain_parser = get_system_prompt("langchain_parser")
         case_parser_json = JsonOutputParser(pydantic_object=CaseArray)
 
