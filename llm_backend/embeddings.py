@@ -1,10 +1,10 @@
-from dotenv import load_dotenv
-
 import os
-from langchain_chroma.vectorstores import Chroma
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+from dotenv import load_dotenv
 from langchain.docstore.document import Document
+from langchain_chroma.vectorstores import Chroma
 from langchain_openai import AzureOpenAIEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 # Load environment variables from .env file
 load_dotenv()
