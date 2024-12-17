@@ -36,10 +36,10 @@ def download_folder_webdav(filepath):
 
 
 def upload_cache_file(file_path, hash):
-    client.upload_sync(remote_path="/IP_WKS/LLM_CACHE/"+hash, local_path=file_path)
+    client.upload_sync(remote_path=f"/IP_WKS/LLM_CACHE/{hash}.json", local_path=file_path)
 
 def check_if_cached(hash):
-    return client.check("/IP_WKS/LLM_CACHE/"+hash)
+    return client.check(f"/IP_WKS/LLM_CACHE/{hash}.json")
 
 def download_cache(hash):
     path = os.path.join(
@@ -48,5 +48,5 @@ def download_cache(hash):
     upload_path = os.path.join(app.root_path, os.path.join("temp"))
     if not os.path.exists(upload_path):
         os.makedirs(upload_path)
-    client.download_sync(remote_path="/IP_WKS/LLM_CACHE/"+hash, local_path=path)
+    client.download_sync(remote_path=f"/IP_WKS/LLM_CACHE/{hash}.json", local_path=path)
     return path
