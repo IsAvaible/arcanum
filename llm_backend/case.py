@@ -42,6 +42,14 @@ class Case(BaseModel):
         ...,
         description="The current state of the case, such as 'Open', 'In Progress', 'Solved' or 'Closed' to track its progression.",
     )
+    case_type: str = Field(
+        ...,
+        description="The Type of a case, such as 'Problem', 'Incident', 'Change', 'FAQ'.",
+    )
+    priority: str = Field(
+        ...,
+        description="The Priority of the case, such as 'High', 'Medium', 'Low'.",
+    )
     attachments: list[int] = Field(
         ...,
         description="All the File-Ids that were used to generate this Case.",
