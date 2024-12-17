@@ -2,14 +2,14 @@ import os
 
 from dotenv import load_dotenv
 from flask import jsonify
-from case import CaseArray, check_if_output_is_valid
-from app import socketio
-from prompts import get_system_prompt
-from upload import upload_file_method_production
-
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import AzureChatOpenAI
+
+from app import socketio
+from case import CaseArray, check_if_output_is_valid
+from prompts import get_system_prompt
+from upload import upload_file_method_production
 
 load_dotenv()
 
@@ -40,7 +40,6 @@ def start_quering_llm(invokedPrompt, llm, parser, max_tries=3) -> dict:
             chain_output = chain.invoke(invokedPrompt)
             pass
 
-
     if not is_valid:
         print(f"Couldn't get valid output in {try_number} tries")
         return {}
@@ -52,7 +51,6 @@ def start_quering_llm(invokedPrompt, llm, parser, max_tries=3) -> dict:
 
 def generate(request):
     if request.method == "POST":
-
         json_str = request.get_json(force=True)
         attachments = json_str["attachments"]
         socket_id = json_str["socket_id"]
@@ -96,4 +94,3 @@ def generate(request):
         )
 
         return jsonify(response_dict), 200
-
