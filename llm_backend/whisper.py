@@ -55,7 +55,7 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
     texts += f" NEW AUDIO FILE {json.dumps(file)} - CONTENT: "
 
     data = {
-        "context": "transcription of audio file",
+        "context": "transcription",
         "segments": [],
     }
 
