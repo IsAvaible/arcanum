@@ -13,7 +13,8 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       Chat.hasMany(models.Message, {
         foreignKey: 'chatId',
-        as: 'messages'
+        as: 'messages',
+        onDelete: 'CASCADE'
       });
     }
   }
