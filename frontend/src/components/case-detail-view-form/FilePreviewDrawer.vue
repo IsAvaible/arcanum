@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, useTemplateRef } from 'vue'
 import Drawer from 'primevue/drawer'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -14,16 +14,18 @@ export type FileProperties = {
 }
 const props = defineProps<{
   visible: boolean
-  selectedFile: File | null
+  file: File | null
   fileProperties: FileProperties | null
+  timestamp?: number
 }>()
 
 const emit = defineEmits(['update:visible', 'update:fileProperties'])
 
+const previewComponent = useTemplateRef('filePreview')
 const visible = useVModel(props, 'visible', emit)
 const fileProperties = useVModel(props, 'fileProperties', emit)
 const editing = ref(false)
-const selectedFile = props.selectedFile
+const selectedFile = props.file
 
 const editedFileProperties = ref<FileProperties | null>(null)
 
@@ -65,6 +67,13 @@ const openFile = () => {
     window.open(URL.createObjectURL(selectedFile), '_blank')
   }
 }
+
+const jumpToTimestamp = computed(() => {
+  if (previewComponent.value) {
+    return previewComponent.value!.jumpToTimestamp
+  }
+})
+defineExpose({ jumpToTimestamp: jumpToTimestamp })
 </script>
 
 <template>
@@ -160,7 +169,7 @@ const openFile = () => {
               @click="openFile"
             />
           </div>
-          <FilePreview class="flex-1" :file="selectedFile" />
+          <FilePreview ref="filePreview" class="flex-1" :file="selectedFile" />
         </div>
       </div>
     </template>

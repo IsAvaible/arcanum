@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, useTemplateRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { useApi } from '@/composables/useApi'
 import { useToast } from 'primevue/usetoast' // Import useToast only once
@@ -39,6 +39,8 @@ import { apiBlobToFile } from '@/functions/apiBlobToFile'
 // Validation
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
+import DynamicInteractiveText from '@/components/misc/DynamicInteractiveText.vue'
+import { until } from '@vueuse/core'
 
 interface Priority {
   name: string
@@ -353,12 +355,16 @@ const deleteAttachment = async (attachment: CaseAllOfAttachments) => {
 }
 
 /// File Preview Drawer Logic
-
+const previewDrawer = useTemplateRef('filePreviewDrawer')
 const selectedFile = ref<File | null>(null)
 const previewDrawerVisible = ref(false)
 const selectedFileProperties = ref<FileProperties | null>(null)
 const loadingFileId = ref<number | null>(null)
 const deletingFileId = ref<number | null>(null)
+// Matches timestamps in the format [filename.ext: HH:MM:SS - ...]
+// Extensions are based on OpenAI Whisper allowed file types
+const timeStampRegex =
+  /\[(.*?\.(?:wav|flac|m4a|mp3|mp4|mpeg|mpga|oga|ogg|webm): \d{2}:\d{2}:\d{2}) - .*?]/g
 
 const openAttachmentInDrawer = async (attachment: CaseAllOfAttachments) => {
   // Check if the attachment is already in the files array
@@ -396,6 +402,28 @@ const openAttachmentInDrawer = async (attachment: CaseAllOfAttachments) => {
   // TODO: Get file properties from the server
   selectedFileProperties.value = { name: file!.name, description: '', sharedWith: '' }
   previewDrawerVisible.value = true
+}
+
+const openTimestampInDrawer = async (match: string) => {
+  const [filename, timestamp] = match.split(': ')
+  const attachment = caseDetails.value?.attachments.find((a) => a.filename === filename)
+
+  if (!attachment) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Attachment not found',
+      life: 3000,
+    })
+    return
+  }
+
+  await openAttachmentInDrawer(attachment!)
+
+  // Make sure the function is available before calling it
+  await until(() => previewDrawer.value?.jumpToTimestamp == null).toBe(false)
+  const timestampInSeconds = timestamp.split(':').reduce((acc, time) => acc * 60 + +time, 0)
+  previewDrawer.value!.jumpToTimestamp!(timestampInSeconds)
 }
 
 /// Menu
@@ -715,14 +743,33 @@ const toggleMenu = (event: Event) => {
           <h2 class="text-xl font-semibold mb-4">Description</h2>
         </template>
         <template #content>
-          <Textarea
-            v-if="!loading"
-            v-model="fields.description.value.value"
-            rows="4"
-            class="w-full"
-            :class="{ 'p-invalid': errors.description }"
-            :disabled="!inEditMode"
-          />
+          <template v-if="!loading">
+            <Textarea
+              v-if="inEditMode"
+              v-model="fields.description.value.value"
+              rows="4"
+              class="w-full"
+              :class="{ 'p-invalid': errors.description }"
+              :disabled="!inEditMode"
+            />
+            <DynamicInteractiveText
+              class="p-textarea p-component p-filled p-disabled w-full block h-28"
+              v-else
+              :text="fields.description.value.value"
+              :regex="timeStampRegex"
+              @match-click="(_, match) => openTimestampInDrawer(match)"
+            >
+              <template #match="{ part, clickCallback }">
+                <button
+                  @click="clickCallback"
+                  class="px-1 hover:text-black rounded-md ring-1 ring-gray-400 hover:ring-gray-500 transition-all pointer-events-auto cursor-pointer"
+                >
+                  <i class="pi pi-play-circle mr-0.5 text-sm" />
+                  {{ part.text }}
+                </button>
+              </template>
+            </DynamicInteractiveText>
+          </template>
           <Skeleton v-else height="2.5rem" />
           <small v-if="errors.description" class="p-error block mt-1">{{
             errors.description
@@ -736,14 +783,33 @@ const toggleMenu = (event: Event) => {
           <h2 class="text-xl font-semibold mb-4">Solution</h2>
         </template>
         <template #content>
-          <Textarea
-            v-if="!loading"
-            v-model="fields.solution.value.value"
-            rows="4"
-            class="w-full"
-            :class="{ 'p-invalid': errors.solution }"
-            :disabled="!inEditMode"
-          />
+          <template v-if="!loading">
+            <Textarea
+              v-if="inEditMode"
+              v-model="fields.solution.value.value"
+              rows="4"
+              class="w-full"
+              :class="{ 'p-invalid': errors.solution }"
+              :disabled="!inEditMode"
+            />
+            <DynamicInteractiveText
+              class="p-textarea p-component p-filled p-disabled w-full block h-28"
+              v-else
+              :text="fields.solution.value.value"
+              :regex="timeStampRegex"
+              @match-click="(_, match) => openTimestampInDrawer(match)"
+            >
+              <template #match="{ part, clickCallback }">
+                <button
+                  @click="clickCallback"
+                  class="px-1 hover:text-black rounded-md ring-1 ring-gray-400 hover:ring-gray-500 transition-all pointer-events-auto cursor-pointer"
+                >
+                  <i class="pi pi-play-circle mr-0.5 text-sm" />
+                  {{ part.text }}
+                </button>
+              </template>
+            </DynamicInteractiveText>
+          </template>
           <Skeleton v-else height="2.5rem" />
           <small v-if="errors.solution" class="p-error block mt-1">{{ errors.solution }}</small>
         </template>
@@ -842,9 +908,10 @@ const toggleMenu = (event: Event) => {
 
     <!-- Drawer for File Preview -->
     <FilePreviewDrawer
+      ref="filePreviewDrawer"
       v-if="previewDrawerVisible"
       v-model:visible="previewDrawerVisible"
-      :selected-file="selectedFile"
+      :file="selectedFile"
       :file-properties="selectedFileProperties"
     />
   </div>

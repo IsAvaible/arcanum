@@ -1,21 +1,33 @@
 <template>
   <span>
     <template v-for="(part, index) in parsedText" :key="index">
-      <router-link
-        v-if="part.matched && to !== undefined"
-        :to="`${to}${part.match!}`"
+      <!-- Case 1: The part was matched and a slot named match was provided -->
+      <slot
+        v-if="part.matched"
+        name="match"
+        :part="part"
+        :to="to"
         :target="target"
-        @click="emit('match-click', $event, part.match!)"
-        class="hover:underline"
+        :clickCallback="(event) => emit('match-click', event, part.match!)"
+        :index="index"
       >
-        {{ part.text }}
-      </router-link>
-      <!-- Case 2: The part was matched but no to prop was provided -->
-      <button v-else-if="part.matched" @click="emit('match-click', $event, part.match!)">
-        {{ part.text }}
-      </button>
-      <!-- Case 3: The part was not matched -->
-      <span v-else>{{ part.text }}</span>
+        <!-- Case 2: The part was matched and a to prop was provided -->
+        <router-link
+          v-if="part.matched && to !== undefined"
+          :to="`${to}${part.match!}`"
+          :target="target"
+          @click="emit('match-click', $event, part.match!)"
+          class="hover:underline"
+        >
+          {{ part.text }}
+        </router-link>
+        <!-- Case 3: The part was matched but no to prop was provided -->
+        <button v-else-if="part.matched" @click="emit('match-click', $event, part.match!)">
+          {{ part.text }}
+        </button>
+      </slot>
+      <!-- Case 4: The part was not matched -->
+      <template v-else>{{ part.text }}</template>
     </template>
   </span>
 </template>
@@ -25,7 +37,7 @@
  * A component to parse text and create router links for specific parts of the text
  */
 
-import { ref, watch, toRefs } from 'vue'
+import { ref, watch, toRefs, type VNode } from 'vue'
 
 interface Props {
   /**
@@ -50,6 +62,20 @@ interface Props {
   validate?: (match: string) => Promise<boolean>
 }
 
+interface Slots {
+  match(scope: {
+    part: {
+      text: string
+      match?: string
+      matched: boolean
+    }
+    to?: string
+    target: string
+    clickCallback: (event: MouseEvent) => void
+    index: number
+  }): VNode[]
+}
+
 const props = withDefaults(defineProps<Props>(), {
   target: '_self',
 })
@@ -57,6 +83,8 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   'match-click': [event: MouseEvent, match: string]
 }>()
+
+defineSlots<Slots>()
 
 const { text, regex, to, target, validate } = toRefs(props)
 

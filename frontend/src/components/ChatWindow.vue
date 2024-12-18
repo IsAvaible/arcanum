@@ -13,7 +13,7 @@ import myImage from '@/assets/images/arcanum-ai.jpg'
 import { useApi } from '@/composables/useApi'
 import type { Case } from '@/api'
 import CaseReference from '@/components/chat-view/CaseReference.vue'
-import DynamicRouterLinkText from '@/components/misc/DynamicRouterLinkText.vue'
+import DynamicInteractiveText from '@/components/misc/DynamicInteractiveText.vue'
 import { useDebounceFn } from '@vueuse/core'
 
 /**
@@ -401,7 +401,7 @@ const caseReferences = computed(() => {
             class="px-4 py-2 rounded-lg shadow-sm w-fit max-w-xs flex flex-col gap-y-2"
           >
             <p>
-              <DynamicRouterLinkText
+              <DynamicInteractiveText
                 :text="message.message"
                 :regex="caseReferenceRegex"
                 to="/cases/"
