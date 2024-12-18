@@ -3,45 +3,47 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Chat extends Model {
+  class Messages extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
-      Chat.hasMany(models.Message, {
+      Messages.belongsTo(models.Chats, {
         foreignKey: 'chatId',
-        as: 'messages',
-        onDelete: 'CASCADE'
-      });
+        as: 'chat'
+      })
     }
   }
-  Chat.init({
+  Messages.init({
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true
     },
-    title: {
-      type: DataTypes.STRING,
-      allowNull: true
+    chatId: {
+      type: DataTypes.INTEGER,
+      allowNull: false
     },
-    createdAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW
+    role: {
+      type: DataTypes.ENUM('user', 'assistant'),
+      allowNull: false
     },
-    updatedAt: {
+    content: {
+      type: DataTypes.TEXT,
+      allowNull: false
+    },
+    timestamp: {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW
     }
   }, {
+
+    timestamps: false, // We have a custom timestamp field
     sequelize,
-    modelName: 'Chat',
-    freezeTableName: true // << Das verhindert Pluralisierung
+    modelName: 'Messages',
   });
-  return Chat;
+  return Messages;
 };

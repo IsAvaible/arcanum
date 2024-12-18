@@ -61,9 +61,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: "Attachments",
-      charset: 'utf8', /* i add this two ligne here for generate the table with collation  = 'utf8_general_ci' test it and tell me ? */
-      collate: 'utf8_general_ci'
+      modelName: "Attachments"
     },
   );
 

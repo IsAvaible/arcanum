@@ -1,19 +1,27 @@
-const { Chat, Message } = require('../models');
-
+const { Chats, Messages } = require('../models');
+/**
+ * @async
+ * @function gatherChatContext
+ * @description Retrieves all messages for a given chat, sorted by their timestamp, providing context for interactions.
+ * @param {number} chatId - The ID of the chat whose messages should be gathered.
+ * @returns {Promise<Array>} An array of messages from the specified chat, sorted chronologically by their timestamp.
+ * @throws {Error} Internal server error if there's an issue querying the database or sorting the messages.
+ * @example
+ * const context = await gatherChatContext(42);
+ * console.log(context); // [{ id: 1, content: 'Hello', ... }, { id: 2, content: 'Hi', ... }]
+ */
 async function gatherChatContext(chatId) {
   try {
-    const chat = await Chat.findByPk(chatId, {
+    const chat = await Chats.findByPk(chatId, {
       include: [
         {
-          model: Message,
+          model: Messages,
           as: 'messages',
         }
       ]
     });
 
     if (!chat) {
-      // Falls der Chat nicht existiert, gib einen leeren Array oder null zurück,
-      // je nach gewünschtem Verhalten.
       return [];
     }
 
@@ -22,10 +30,6 @@ async function gatherChatContext(chatId) {
       return new Date(a.timestamp) - new Date(b.timestamp);
     });
 
-    // Falls du nur den reinen Nachrichtentext und Rolle brauchst, könntest du hier filtern:
-    // const context = sortedMessages.map(msg => ({ role: msg.role, content: msg.content }));
-
-    // Hier geben wir einfach die kompletten Nachrichten zurück:
     return sortedMessages;
   } catch (error) {
     console.error("Error gathering chat context:", error);

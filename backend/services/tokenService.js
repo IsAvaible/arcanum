@@ -6,10 +6,11 @@ module.exports = (io) => {
   io.on('connection', (socket) => {
     console.log('Client connected:', socket.id);
 
-    // Token vom LLM empfangen
-    socket.on('llm_token', ({ socket_id, token }) => {
+    // Receive token from LLM
+    socket.on('llm_token', ({ socketId, token }) => {
       console.log('llm_token:', token);
-      io.to(socket_id).emit('llm_token', { token });
+      // send to frontend
+      io.to(socketId).emit('llm_token', { token });
     });
 
     socket.on('front_identify', () => {
