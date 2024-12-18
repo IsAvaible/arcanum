@@ -11,14 +11,7 @@ services:
     volumes:
       - ./frontend:/app
       - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf
-    command: >
-      sh -c "
-      npm install &&
-      npm run build-only &&
-      cp -rf '/app/dist/.' '/usr/share/nginx/html/' &&
-      nginx -g 'daemon off;'
-      "
-
+  
   node_backend:
     image: node:20
     container_name: node_backend
@@ -57,5 +50,17 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
+  clamav:
+    platform: linux/x86_64 # uncomment this line if you are using mac
+    image: clamav/clamav:latest
+    container_name: clamav
+    volumes:
+      - ./clamav/database:/var/lib/clamav
+      - ./backend/uploads:/uploads
+      - ./clamav/configs:/etc/clamav
+    ports:
+      - "3310:3310"
+    command: > 
+      sh -c "freshclam -d & clamd"
 volumes:
   postgres-data:
