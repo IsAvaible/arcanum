@@ -1,6 +1,7 @@
 const { Chat, Message } = require('../models');
 const axios = require('axios');
 const { gatherChatContext } = require('../services/chatContextService');
+const message = require('../models/message');
 
 module.exports = {
 
@@ -21,7 +22,7 @@ module.exports = {
       res.status(201).json({ chat_id: newChat.id });
     } catch (error) {
       console.error("Error creating chat:", error);
-      res.status(500).json({ error: "Error creating chat" });
+      res.status(500).json({ message: error.message || "Error creating chat" });
     }
   },
 
@@ -39,7 +40,7 @@ module.exports = {
         res.status(200).json(chats);
       } catch (error) {
         console.error("Error fetching all chats:", error);
-        res.status(500).json({ error: "Error fetching all chats" });
+        res.status(500).json({ message: error.message || "Error fetching all chats" });
       }
     },
 
@@ -72,23 +73,22 @@ module.exports = {
       res.json(chat);
     } catch (error) {
       console.error("Error fetching chat messages:", error);
-      res.status(500).json({ error: "Error fetching chat messages" });
+      res.status(500).json({ message: error.message || "Error fetching chat messages" });
     }
   },
 
   /**
    * Speichert eine neue user-Nachricht in einem Chat und sendet den Kontext ans LLM
    * POST /chats/:id/message
-   * Body: { content: "Nachrichtentext" }
+   * Body: { content: "Nachrichtentext", socketId: "123ABC456" }
    */
   async postMessage(req, res) {
     const chatId = parseInt(req.params.id, 10);
-    //const { content, socketId } = req.body;
-    const { content } = req.body;
-    const socketId  = 123;
+    const { content, socketId } = req.body;
+
 
     if (!content || content.trim().length === 0) {
-      return res.status(400).json({ error: "Message content is required" });
+      return res.status(400).json({ message: "Message content is required" });
     }
 
     try {
@@ -108,10 +108,17 @@ module.exports = {
       // Kontext holen
       const context = await gatherChatContext(chatId);
 
+
+
       // An LLM senden und auf fertige Antwort warten
       // Erwarte hier ein JSON: { message: "Die komplette Antwort vom LLM" }
+      console.log("Sende ans LLM: ", JSON.stringify({ socketId: socketId, context }));
+
       const llmResponse = await axios.post(`${process.env.LLM_API_URL}/generate`, { socketId: socketId, context });
       const { message: assistantMessageContent } = llmResponse.data;
+
+      console.log("Vom LLM Empfangen: ", JSON.stringify(message));
+
 
       // LLM-Antwort (assistant message) speichern
       const assistantMessage = await Message.create({
@@ -125,7 +132,7 @@ module.exports = {
       res.status(200).json({ message: assistantMessage });
     } catch (error) {
       console.error("Error sending message:", error);
-      res.status(500).json({ error: "Error sending message" });
+      res.status(500).json({ message: error.message || "Error sending message" });
     }
   },
 
@@ -152,7 +159,7 @@ module.exports = {
         res.status(200).json({ message: "Chat updated successfully", chat });
       } catch (error) {
         console.error("Error updating chat:", error);
-        res.status(500).json({ error: "Error updating chat" });
+        res.status(500).json({ message: error.message || "Error updating chat" });
       }
     },
 
@@ -169,7 +176,7 @@ module.exports = {
         res.status(200).json({ message: "Chat deleted successfully" });
       } catch (error) {
         console.error("Error deleting chat:", error);
-        res.status(500).json({ error: "Error deleting chat" });
+        res.status(500).json({ message: error.message || "Error deleting chat" });
       }
     },
 
@@ -191,7 +198,7 @@ module.exports = {
       res.status(200).json({ message: "Message deleted successfully" });
     } catch (error) {
       console.error("Error deleting message:", error);
-      res.status(500).json({ error: "Error deleting message" });
+      res.status(500).json({ message: error.message || "Error deleting message" });
     }
   },
 
@@ -206,7 +213,7 @@ module.exports = {
     const { content } = req.body;
 
     if (!content || content.trim().length === 0) {
-      return res.status(400).json({ error: "Message content is required" });
+      return res.status(400).json({ message: "Message content is required" });
     }
 
     try {
@@ -223,7 +230,7 @@ module.exports = {
       res.status(200).json({ message: "Message updated successfully", updatedMessage: message });
     } catch (error) {
       console.error("Error updating message:", error);
-      res.status(500).json({ error: "Error updating message" });
+      res.status(500).json({ message: error.message || "Error updating message" });
     }
   },
 
@@ -256,13 +263,20 @@ module.exports = {
         }))
       };
 
-      // Je nach Wunsch: Datei-Download oder einfach JSON zurückgeben
-      // Hier einfach als JSON zurückgeben
-      res.status(200).json(exportData);
+          // Die Daten in einen JSON-String konvertieren
+    const jsonString = JSON.stringify(exportData, null, 2);
+
+    // Headers setzen, um Download zu erzwingen
+    // 'attachment; filename="...' setzt den Dateinamen
+    res.setHeader('Content-Disposition', 'attachment; filename="chat-export.json"');
+    res.setHeader('Content-Type', 'application/json');
+
+    // Datei senden
+    res.send(jsonString);
 
     } catch (error) {
       console.error("Error exporting chat:", error);
-      res.status(500).json({ error: "Error exporting chat" });
+      res.status(500).json({ message: error.message || "Error exporting chat" });
     }
   }
   

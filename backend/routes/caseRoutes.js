@@ -130,11 +130,12 @@ router.delete(
  * @description Creates one or multiple new cases based on uploaded files and data returned from an external LLM.  
  * The LLM returns case data (title, description, etc.) and references to attachments.
  * @param {file} files.formData.required - Files to process for creating case(s).
+ * @param {string} [socketId] - Id of Socket where the Tokens are send to. 
  * @returns {Object|Object[]} 201 - The newly created case(s) with attachments.
  * @returns {Object} 200 - If LLM returns a message but no cases, returns an object with { message: string }.
  * @returns {Error} 500 - Internal server error or LLM error.
  */
-router.post("/createCaseFromFiles",multerMiddleware, caseController.createCaseFromFiles);
+router.post("/createCaseFromFiles",multerMiddleware, escapeData(["socketId"]), caseController.createCaseFromFiles);
 
 /**
  * @route PUT /confirmCase/:id
