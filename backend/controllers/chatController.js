@@ -67,8 +67,7 @@ module.exports = {
         return res.status(404).json({ message: "Chat not found" });
       }
 
-      // Nachrichten sortieren (falls nötig, oder in der Include-Option)
-      //chat.messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
 
       res.json(chat);
     } catch (error) {
@@ -223,8 +222,7 @@ module.exports = {
       }
 
       message.content = content;
-      // timestamp wird aktualisiert, wenn Sie wollen (hier optional)
-      message.timestamp = new Date();
+
       await message.save();
 
       res.status(200).json({ message: "Message updated successfully", updatedMessage: message });

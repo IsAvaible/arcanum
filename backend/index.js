@@ -58,13 +58,20 @@ try {
   const server = https.createServer(credentials, app);
   const io = new Server(server, {
     cors: {
-      origin: ["*"],
+      origin: [
+      "http://localhost:8080", // Frontend (Docker)
+      "http://localhost:4173", // Frontend (Production)
+      "http://localhost:5173", // Frontend (Development)
+      "http://localhost:5174", // Swagger OpenAPI Editor
+      "http://localhost:63342",// PHPStorm
+      "http://localhost:5001"  // LLM_Backend
+      ],
       credentials: true,
     },
   });
   tokenService(io);
   server.listen(port, function (req, res) {
-    console.log(`Server listening on port 3000 (${port})`);
+    console.log(`Server listening on port (${port})`);
   });
 } catch (err) {
   console.error(err);
