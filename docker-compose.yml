@@ -51,7 +51,7 @@ services:
       - postgres-data:/var/lib/postgresql/data
 
   clamav:
-    platform: linux/arm64/v8  # uncomment this line if you are using mac
+    platform: linux/x86_64 # uncomment this line if you are using mac
     image: clamav/clamav:latest
     container_name: clamav
     volumes:
@@ -60,7 +60,5 @@ services:
       - ./clamav/configs:/etc/clamav
     ports:
       - "3310:3310"
-    command: > 
-      sh -c "freshclam -d & clamd"
 volumes:
   postgres-data:
