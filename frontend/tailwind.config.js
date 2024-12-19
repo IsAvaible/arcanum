@@ -23,6 +23,10 @@ export default {
       size: {
         0.75: '0.1875rem',
       },
+      fontSize: {
+        '2xs': ['0.625rem', '0.85rem'],
+        '3xs': ['0.5rem', '0.75rem'],
+      },
       maxHeight: {
         128: '32rem',
         xl: '36rem',
