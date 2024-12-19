@@ -4,3 +4,19 @@
 @import url('./assets/primevue/tailwind.css');
 @import url('tailwindcss/utilities.css');
 @import url('primeicons/primeicons.css');
+
+/* MD Editor Overwrites */
+svg.md-editor-icon {
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+}
+
+.md-editor[invalid="true"] {
+    @apply border-red-500;
+}
+
+.md-editor-preview {
+    ol, li {
+        list-style: revert;
+    }
+}

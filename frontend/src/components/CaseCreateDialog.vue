@@ -36,8 +36,6 @@ import { useConfirm } from 'primevue/useconfirm'
 
 import { MdEditor } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
-const descriptionText = ref('')
-const solutionText = ref('')
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -427,9 +425,9 @@ const dialogPT = {
             title="Details"
           />
           <AccordionContent>
-            <div class="h-full grid gap-y-4">
+            <div class="h-full grid grid-rows-2 grid-cols-1 gap-y-4">
               <!-- Description Box -->
-              <div class="flex flex-col">
+              <div class="flex flex-col relative">
                 <Label
                   for="description"
                   label="Description"
@@ -437,11 +435,27 @@ const dialogPT = {
                   icon="pi-info-circle"
                   class="mb-3"
                 />
-                <MdEditor v-model="descriptionText" />
+                <MdEditor
+                  v-model="fields.description.value.value"
+                  class="!h-full min-h-56"
+                  language="en-US"
+                  id="description"
+                  :invalid="!!errors.description"
+                  noUploadImg
+                />
+                <Message
+                  v-if="errors.description"
+                  severity="error"
+                  variant="simple"
+                  size="small"
+                  class="absolute bottom-0 mx-auto left-[50%] -translate-x-[50%] mb-1 z-10"
+                >
+                  {{ errors.description }}
+                </Message>
               </div>
 
               <!-- Solution Box -->
-              <div class="flex flex-col">
+              <div class="flex flex-col relative">
                 <Label
                   for="solution"
                   label="Solution"
@@ -449,7 +463,23 @@ const dialogPT = {
                   icon="pi-check-circle"
                   class="mb-3"
                 />
-                <MdEditor v-model="solutionText" />
+                <MdEditor
+                  v-model="fields.solution.value.value"
+                  class="!h-full min-h-56"
+                  language="en-US"
+                  id="solution"
+                  :invalid="!!errors.solution"
+                  noUploadImg
+                />
+                <Message
+                  v-if="errors.solution"
+                  severity="error"
+                  variant="simple"
+                  size="small"
+                  class="absolute bottom-0 mx-auto left-[50%] -translate-x-[50%] mb-1 z-10"
+                >
+                  {{ errors.solution }}
+                </Message>
               </div>
             </div>
           </AccordionContent>
