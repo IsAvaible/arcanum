@@ -16,6 +16,7 @@ svg.md-editor-icon {
 }
 
 .md-editor-preview {
+<<<<<<< HEAD
   ol, li {
     list-style: revert;
   }
@@ -27,6 +28,12 @@ svg.md-editor-icon {
   *:last-child {
     margin-bottom: 0;
   }
+=======
+  ol,
+  li {
+    list-style: revert;
+  }
+>>>>>>> 84e03aa (feat(case-detail): use MdEditor for description and solution)
 }
 
 .md-editor-toolbar-item.md-editor-disabled {
