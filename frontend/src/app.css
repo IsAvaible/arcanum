@@ -7,16 +7,21 @@
 
 /* MD Editor Overwrites */
 svg.md-editor-icon {
-    width: 1.5rem !important;
-    height: 1.5rem !important;
+  width: 1.5rem !important;
+  height: 1.5rem !important;
 }
 
-.md-editor[invalid="true"] {
-    @apply border-red-500;
+.md-editor[invalid='true'] {
+  @apply border-red-500;
 }
 
 .md-editor-preview {
-    ol, li {
-        list-style: revert;
-    }
+  ol,
+  li {
+    list-style: revert;
+  }
+}
+
+.md-editor-toolbar-item.md-editor-disabled {
+  @apply text-gray-300 pointer-events-none;
 }
