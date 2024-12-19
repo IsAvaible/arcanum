@@ -1,4 +1,4 @@
-const { Chats, Messages } = require('../models');
+const { Chats, Messages } = require("../models");
 /**
  * @async
  * @function gatherChatContext
@@ -16,9 +16,9 @@ async function gatherChatContext(chatId) {
       include: [
         {
           model: Messages,
-          as: 'messages',
-        }
-      ]
+          as: "messages",
+        },
+      ],
     });
 
     if (!chat) {
@@ -38,5 +38,5 @@ async function gatherChatContext(chatId) {
 }
 
 module.exports = {
-  gatherChatContext
+  gatherChatContext,
 };

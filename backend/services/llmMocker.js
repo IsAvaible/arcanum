@@ -1,10 +1,10 @@
-const { io } = require('socket.io-client');
-const express = require('express');
-const bodyParser = require('body-parser');
+const { io } = require("socket.io-client");
+const express = require("express");
+const bodyParser = require("body-parser");
 
 /**
  * Simuliert das Senden von Tokens an das Backend.
- * 
+ *
  * @param {Object} socket - Die Socket.io-Client-Instanz, die mit dem Backend verbunden ist.
  * @param {string} socketId - Die Socket-ID des Frontend-Clients, an den die Tokens geroutet werden sollen.
  * @param {Array<string>} tokens - Ein Array von Strings, die als einzelne Tokens gesendet werden.
@@ -17,15 +17,15 @@ function simulateTokenSending(socket, socketId, tokens, intervalMs = 500) {
     if (index < tokens.length) {
       const token = tokens[index];
       console.log("Sending token:", token);
-      socket.emit('llm_token', { socketId, token });
+      socket.emit("llm_token", { socketId, token });
       index++;
     } else {
       clearInterval(interval);
 
       // Wenn alle Tokens gesendet sind, sende das end-Event
-      const finalMessage = tokens.join('');
+      const finalMessage = tokens.join("");
       console.log("Sending llm_end with content:", finalMessage);
-      socket.emit('llm_end', { socketId, content: finalMessage });
+      socket.emit("llm_end", { socketId, content: finalMessage });
     }
   }, intervalMs);
 }
@@ -36,7 +36,7 @@ function simulateTokenSending(socket, socketId, tokens, intervalMs = 500) {
 const backendUrl = "https://localhost:443"; // URL des eigentlichen Backends
 // Socket.io-Client mit Backend verbinden
 const socket = io(backendUrl, {
-  rejectUnauthorized: false 
+  rejectUnauthorized: false,
 });
 
 const app = express();
@@ -45,30 +45,36 @@ app.use(bodyParser.json());
 // -------------------------------------------
 // Socket Event Handler
 // -------------------------------------------
-socket.on('connect', () => {
-  console.log('LLM Simulator connected to backend, Socket ID (LLM-Simulator):', socket.id);
-  
+socket.on("connect", () => {
+  console.log(
+    "LLM Simulator connected to backend, Socket ID (LLM-Simulator):",
+    socket.id,
+  );
+
   // Dem Backend mitteilen, dass dies ein LLM-Simulator ist (falls notwendig)
-  socket.emit('llm_identify');
+  socket.emit("llm_identify");
 
   // Falls vom Backend Daten empfangen werden...
-  socket.on('something_from_backend', (data) => {
-    console.log('Received from backend:', data);
+  socket.on("something_from_backend", (data) => {
+    console.log("Received from backend:", data);
   });
 });
 
-socket.on('connect_error', (err) => {
-  console.error('Connection error:', err);
+socket.on("connect_error", (err) => {
+  console.error("Connection error:", err);
 });
 
 // -------------------------------------------
 // Express-Routen
 // -------------------------------------------
-app.post('/generate', (req, res) => {
+app.post("/generate", (req, res) => {
   const { socketId, message, context } = req.body;
-  
-  console.log(`Received request with socketId: ${socketId}, message: "${message}", context:`, context);
-  
+
+  console.log(
+    `Received request with socketId: ${socketId}, message: "${message}", context:`,
+    context,
+  );
+
   // Hier könnten Sie je nach message/context Tokens generieren
   // Wir nehmen einfach Fake-Tokens an:
   const tokens = ["Fake", " ", "Token", " ", "Response"];
@@ -79,7 +85,7 @@ app.post('/generate', (req, res) => {
   // Sofortige HTTP-Response an den Request
   // Wir geben eine Fake-LLM-Antwort zurück
   res.json({
-    message: "This is a fake LLM response message."
+    message: "This is a fake LLM response message.",
   });
 });
 
@@ -89,4 +95,4 @@ app.post('/generate', (req, res) => {
 const PORT = 5001;
 app.listen(PORT, () => {
   console.log(`LLM Mocker running on http://localhost:${PORT}`);
-})
+});

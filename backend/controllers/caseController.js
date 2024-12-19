@@ -3,7 +3,7 @@ const { body, validationResult } = require("express-validator");
 const upload = require("../configs/multerConfig.js");
 const attachmentService = require("../services/attachmentService");
 const axios = require("axios");
-require('dotenv').config();
+require("dotenv").config();
 
 /**
  * Fetches the details of a specific case, including its attachments.
@@ -191,7 +191,6 @@ exports.updateCase = [
           updateData[field] = req.body[field];
         }
       });
-      
 
       const caseItem = await Cases.findByPk(caseId);
 
@@ -230,7 +229,6 @@ exports.updateCase = [
   },
 ];
 
-
 /**
  * Creates a new case from uploaded files and data received from an external LLM.
  * @param {Object} req - Express request object, containing uploaded files and socket_id in `req.body`.
@@ -240,7 +238,6 @@ exports.updateCase = [
 exports.createCaseFromFiles = [
   // Main request handler.
   async (req, res) => {
-
     try {
       const { socketId } = req.body;
       // Process uploaded files and create attachments.

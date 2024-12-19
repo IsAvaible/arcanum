@@ -10,7 +10,7 @@ const fs = require("fs");
 const caseRoutes = require("./routes/caseRoutes");
 const uploadRoutes = require("./routes/exampleFileUpload");
 const chatRoutes = require("./routes/chatRoutes");
-const tokenService = require("./services/tokenService"); 
+const tokenService = require("./services/tokenService");
 
 // for development only
 app.set("view engine", "ejs");
@@ -59,12 +59,12 @@ try {
   const io = new Server(server, {
     cors: {
       origin: [
-      "http://localhost:8080", // Frontend (Docker)
-      "http://localhost:4173", // Frontend (Production)
-      "http://localhost:5173", // Frontend (Development)
-      "http://localhost:5174", // Swagger OpenAPI Editor
-      "http://localhost:63342",// PHPStorm
-      process.env.LLM_API_URL  // LLM_Backend
+        "http://localhost:8080", // Frontend (Docker)
+        "http://localhost:4173", // Frontend (Production)
+        "http://localhost:5173", // Frontend (Development)
+        "http://localhost:5174", // Swagger OpenAPI Editor
+        "http://localhost:63342", // PHPStorm
+        process.env.LLM_API_URL, // LLM_Backend
       ],
       credentials: true,
     },
@@ -76,4 +76,3 @@ try {
 } catch (err) {
   console.error(err);
 }
-

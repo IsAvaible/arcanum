@@ -61,7 +61,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: "Attachments"
+      modelName: "Attachments",
     },
   );
 
