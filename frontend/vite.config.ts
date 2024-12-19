@@ -11,14 +11,4 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-  build: {
-    rollupOptions: {
-      // Explicitly ignore platform-specific optional dependencies
-      external: [
-        '@rollup/rollup-darwin-arm64',
-        '@rollup/rollup-linux-x64',
-        '@rollup/rollup-win32-x64',
-      ],
-    },
-  },
 })
