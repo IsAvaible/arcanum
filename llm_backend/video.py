@@ -109,7 +109,7 @@ def extract_data_from_video(video_path, filehash):
 
     return frames_path, audio_output
 
-
+# todo bereits zusammengefasste frames hinzufügen und transcription
 def process_segments(frames, result_dict):
 
     print(len(frames))
@@ -137,7 +137,8 @@ def process_segments(frames, result_dict):
                 }
                 prompt_dict.append(base64_image)
             video_summary = image_to_openai(prompt_dict)
-            result_dict["video_summary"] = video_summary
+            #append
+            result_dict["video_summary"] += video_summary
         single_dict = result_dict
     else:
         prompt_dict = []

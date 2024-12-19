@@ -151,7 +151,7 @@ def upload_file_method_production(files, socket_id):
                 frames = get_all_frames_in_dir(frame_path)
 
                 transcription = transcribe(file, texts, llm, audio_path, filename, whisper_prompt)
-                texts += "  " + json.dumps(single_text, ensure_ascii=False)
+                #texts += "  " + json.dumps(single_text, ensure_ascii=False)
                 result_dict = {
                     "video_summary": "",
                     "transcription": [transcription]
@@ -193,7 +193,7 @@ def upload_file_method_production(files, socket_id):
 
         write_to_file(str(time.time()), files_as_dicts_json)
 
-        delete_temp_folder(filehash)
+        #delete_temp_folder(filehash)
 
     return files_as_dicts_json
 
