@@ -3,7 +3,12 @@ const { z } = require("zod");
 // Message schema
 const messageSchema = z.object({
   content: z.string().min(1),
-  socketId: z.string().min(1).nullable(),
+  socketId: z.string().min(1),
+});
+
+const updateMessageSchema = z.object({
+  content: z.string().min(1),
+  socketId: z.string().min(1).optional(),
 });
 
 // Chat schema
@@ -12,6 +17,7 @@ const chatSchema = z.object({
 });
 
 module.exports = {
+  updateMessageSchema,
   messageSchema,
   chatSchema,
 };

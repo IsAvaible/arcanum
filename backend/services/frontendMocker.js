@@ -81,14 +81,10 @@ setTimeout(async () => {
       socketId: socket.id,
     };
 
-    await testRequest(
-      "post",
-      `/api/chats/${chatId}/message`,
-      messageData,
-    );
+    await testRequest("post", `/api/chats/${chatId}/message`, messageData);
 
     // 10 Sekunden warten
-    await new Promise(resolve => setTimeout(resolve, 10000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
     messageData = {
       content: "Hier eine zweite nachricht",
@@ -101,9 +97,8 @@ setTimeout(async () => {
       messageData,
     );
 
-
     // 10 Sekunden warten
-    await new Promise(resolve => setTimeout(resolve, 10000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
     const userMessages = messages.filter((msg) => msg.role === "user");
     const lastUserMessage = userMessages[0];
@@ -113,16 +108,34 @@ setTimeout(async () => {
       content: "Updated Content",
       socketId: socket.id,
     };
-    await testRequest("put", `/api/chats/${chatId}/message/${lastUserMessageId}`, messageData);
+    await testRequest(
+      "put",
+      `/api/chats/${chatId}/message/${lastUserMessageId}`,
+      messageData,
+    );
 
-    // 5. Export the chat
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    messageData = {
+      content: "Updated Content Without LLM Result just different message",
+    };
+
+    await testRequest(
+      "put",
+      `/api/chats/${chatId}/message/${lastUserMessageId + 2}`,
+      messageData,
+    );
+
+    // Delete Message:
+    await testRequest('delete', `/api/chats/${chatId}/message/${lastUserMessageId + 2}`);
+    
+    // Export the chat
     await testRequest("get", `/api/chats/${chatId}/export`);
 
-    // 6. Delete the chat
+    //  Delete the chat
     await testRequest("delete", `/api/chats/${chatId}`);
   }
 
-  // Weitere Endpunkte testen:
   // Delete Message:
   // await testRequest('delete', '/chats/someChatId/message/someMessageId');
 

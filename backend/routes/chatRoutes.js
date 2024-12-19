@@ -5,7 +5,11 @@ const {
   escapeData,
   validateData,
 } = require("../middlewares/validationMiddleware");
-const { messageSchema, chatSchema } = require("../schemas/chatSchemas");
+const {
+  messageSchema,
+  chatSchema,
+  updateMessageSchema,
+} = require("../schemas/chatSchemas");
 
 // Saves a new user message and sends context to LLM
 router.post(
@@ -36,7 +40,7 @@ router.delete(
 ); // Delete a message
 router.put(
   "/chats/:chatId/message/:messageId",
-  validateData(messageSchema),
+  validateData(updateMessageSchema),
   escapeData(["content", "socketId"]),
   chatController.updateMessage,
 ); // Update a message

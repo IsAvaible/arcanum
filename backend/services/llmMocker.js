@@ -67,7 +67,7 @@ socket.on("connect_error", (err) => {
 // -------------------------------------------
 // Express-Routen
 // -------------------------------------------
-app.post("/generate", (req, res) => {
+app.post("/generate", async (req, res) => {
   const { socketId, message, context } = req.body;
 
   console.log(
@@ -77,16 +77,21 @@ app.post("/generate", (req, res) => {
 
   // Hier könnten Sie je nach message/context Tokens generieren
   // Wir nehmen einfach Fake-Tokens an:
-  const tokens = ["Fake", " ", "Token", " ", "Response"];
-
+  const tokens = ["This", " ", "is", " ", "a", " ", "fake", " ", "LLM", " ", "response", " ", "message."];
+try{
   // Tokens asynchron über Socket senden
-  simulateTokenSending(socket, socketId, tokens, 500);
+   simulateTokenSending(socket, socketId, tokens, 100);
+   await new Promise((resolve) => setTimeout(resolve, 1400));
+
 
   // Sofortige HTTP-Response an den Request
   // Wir geben eine Fake-LLM-Antwort zurück
   res.json({
     message: "This is a fake LLM response message.",
   });
+}catch(error){
+  console.error(error);
+}
 });
 
 // -------------------------------------------

@@ -257,7 +257,6 @@ module.exports = {
     const messageId = parseInt(req.params.messageId, 10);
     const { content, socketId } = req.body;
 
-
     if (!content || content.trim().length === 0) {
       return res.status(400).json({ message: "Message content is required" });
     }
@@ -295,7 +294,6 @@ module.exports = {
         message.timestamp = new Date();
         await message.save();
 
-
         // Save LLM response (assistant message)
         await Messages.create({
           chatId: chatId,
@@ -303,9 +301,11 @@ module.exports = {
           content: assistantMessageContent,
           timestamp: new Date(),
         });
+      } else {
+        message.content = content;
+        message.timestamp = new Date();
+        await message.save();
       }
-
-
 
       const result = await gatherChatContext(chatId);
       res.status(200).json(result);
