@@ -76,12 +76,44 @@ setTimeout(async () => {
     const updatedChatData = { title: "Updated Chat Title" };
     await testRequest("put", `/api/chats/${chatId}`, updatedChatData);
 
-    const messageData = {
+    let messageData = {
       content: "Hallo, wie geht es dir?",
       socketId: socket.id,
     };
 
-    await testRequest("post", `/api/chats/${chatId}/message`, messageData);
+    await testRequest(
+      "post",
+      `/api/chats/${chatId}/message`,
+      messageData,
+    );
+
+    // 10 Sekunden warten
+    await new Promise(resolve => setTimeout(resolve, 10000));
+
+    messageData = {
+      content: "Hier eine zweite nachricht",
+      socketId: socket.id,
+    };
+
+    const messages = await testRequest(
+      "post",
+      `/api/chats/${chatId}/message`,
+      messageData,
+    );
+
+
+    // 10 Sekunden warten
+    await new Promise(resolve => setTimeout(resolve, 10000));
+
+    const userMessages = messages.filter((msg) => msg.role === "user");
+    const lastUserMessage = userMessages[userMessages.length - 1];
+    const lastUserMessageId = lastUserMessage ? lastUserMessage.id : null;
+
+    messageData = {
+      content: "Updated Content",
+      socketId: socket.id,
+    };
+    await testRequest("put", `/api/chats/${chatId}/message/${lastUserMessageId}`, messageData);
 
     // 5. Export the chat
     await testRequest("get", `/api/chats/${chatId}/export`);
@@ -93,10 +125,6 @@ setTimeout(async () => {
   // Weitere Endpunkte testen:
   // Delete Message:
   // await testRequest('delete', '/chats/someChatId/message/someMessageId');
-
-  // Update Message:
-  // const updateMessageData = { content: "Updated Content", socketId: socket.id };
-  // await testRequest('put', '/chats/someChatId/message/someMessageId', updateMessageData);
 
   console.log("All test requests done.");
 }, 15000);

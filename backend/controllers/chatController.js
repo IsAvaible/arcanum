@@ -256,14 +256,14 @@ module.exports = {
     const chatId = parseInt(req.params.chatId, 10);
     const messageId = parseInt(req.params.messageId, 10);
     const { content, socketId } = req.body;
-    const assistantMessage = [];
+    let assistantMessage = [];
 
     if (!content || content.trim().length === 0) {
       return res.status(400).json({ message: "Message content is required" });
     }
 
     try {
-      const message = await Messages.findOne({
+      let message = await Messages.findOne({
         where: { id: messageId, chatId: chatId },
       });
       if (!message) {
@@ -291,6 +291,11 @@ module.exports = {
           JSON.stringify(assistantMessageContent),
         );
 
+        message.content = content;
+        message.timestamp = new Date();
+        await message.save();
+
+        
         // Save LLM response (assistant message)
         assistantMessage = await Messages.create({
           chatId: chatId,
@@ -300,9 +305,7 @@ module.exports = {
         });
       }
 
-      message.content = content;
-      message.timestamp = new Date();
-      await message.save();
+
 
       const result = gatherChatContext(chatId);
       res.status(200).json(result);
