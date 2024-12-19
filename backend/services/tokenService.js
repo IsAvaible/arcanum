@@ -8,7 +8,7 @@ module.exports = (io) => {
 
     // Receive token from LLM
     socket.on("llm_token", ({ socketId, token }) => {
-      console.log("llm_token:", token);
+      //console.log("llm_token:", token);
       // send to frontend
       io.to(socketId).emit("llm_token", { token });
     });
