@@ -18,7 +18,6 @@ import { CoinsSwap, CpuWarning, QuestionMark, WarningTriangle } from '@iconoir/v
 import Label from '@/components/case-create-form/Label.vue'
 import CaseTypeSelector from '@/components/case-create-form/CaseTypeSelector.vue'
 import UserSelector, { type User } from '@/components/case-create-form/UserSelector.vue'
-import TempEditor from '@/components/case-create-form/TempEditor.vue'
 import TeamSelector from '@/components/case-create-form/TeamSelector.vue'
 import CasePrioritySelect from '@/components/case-form-fields/CaseStatusSelect/CasePrioritySelect.vue'
 import CaseStatusSelect from '@/components/case-form-fields/CaseStatusSelect/CaseStatusSelect.vue'
@@ -41,8 +40,11 @@ import type { CasesPostCaseTypeEnum } from '@/api'
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
 import { useConfirm } from 'primevue/useconfirm'
-import Dropdown from 'primevue/dropdown'
-import Tag from 'primevue/tag'
+
+import { MdEditor } from 'md-editor-v3'
+import 'md-editor-v3/lib/style.css'
+const descriptionText = ref('')
+const solutionText = ref('')
 
 const toast = useToast()
 const confirm = useConfirm()
