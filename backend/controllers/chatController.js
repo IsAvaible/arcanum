@@ -307,7 +307,7 @@ module.exports = {
 
 
 
-      const result = gatherChatContext(chatId);
+      const result = await gatherChatContext(chatId);
       res.status(200).json(result);
     } catch (error) {
       console.error("Error updating message:", error);
