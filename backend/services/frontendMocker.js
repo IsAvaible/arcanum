@@ -106,7 +106,7 @@ setTimeout(async () => {
     await new Promise(resolve => setTimeout(resolve, 10000));
 
     const userMessages = messages.filter((msg) => msg.role === "user");
-    const lastUserMessage = userMessages[userMessages.length - 1];
+    const lastUserMessage = userMessages[0];
     const lastUserMessageId = lastUserMessage ? lastUserMessage.id : null;
 
     messageData = {
@@ -127,7 +127,7 @@ setTimeout(async () => {
   // await testRequest('delete', '/chats/someChatId/message/someMessageId');
 
   console.log("All test requests done.");
-}, 15000);
+}, 5000);
 
 app.get("/", (req, res) => {
   res.send("Frontend Mocker running...");

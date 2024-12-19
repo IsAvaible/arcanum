@@ -256,7 +256,7 @@ module.exports = {
     const chatId = parseInt(req.params.chatId, 10);
     const messageId = parseInt(req.params.messageId, 10);
     const { content, socketId } = req.body;
-    let assistantMessage = [];
+
 
     if (!content || content.trim().length === 0) {
       return res.status(400).json({ message: "Message content is required" });
@@ -295,9 +295,9 @@ module.exports = {
         message.timestamp = new Date();
         await message.save();
 
-        
+
         // Save LLM response (assistant message)
-        assistantMessage = await Messages.create({
+        await Messages.create({
           chatId: chatId,
           role: "assistant",
           content: assistantMessageContent,
