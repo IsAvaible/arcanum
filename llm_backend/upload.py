@@ -88,7 +88,7 @@ def upload_file_method_production(files, socket_id):
                 transcription = transcribe(file, texts, llm, path, filename, whisper_prompt)
                 single_dict = transcription
                 texts += "  " + json.dumps(single_text, ensure_ascii=False)
-            elif mimetype == "application/pdf":
+            elif "pdf" in mimetype:
                 socketio.emit('case_generation', {'message': f'Analyzing PDF File ({filename})'}, to=socket_id)
                 texts += f" Content of PDF File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 single_text = create_text_chunks_pdfplumber(path)
@@ -97,7 +97,7 @@ def upload_file_method_production(files, socket_id):
                     "content": single_text
                 }
                 texts += " " + single_text
-            elif mimetype == "text/html":
+            elif "html" in mimetype:
                 socketio.emit('case_generation', {'message': f'Analyzing HTML File ({filename})'}, to=socket_id)
                 texts += f" Content of HTML File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 with open(path, "r", encoding="utf-8") as file:
@@ -120,7 +120,7 @@ def upload_file_method_production(files, socket_id):
                     "type": "txt",
                     "content": single_text
                 }
-            elif mimetype == "image/png" or mimetype == "image/jpeg":
+            elif "image" in mimetype:
                 socketio.emit('case_generation', {'message': f'Analyzing Image File ({filename})'}, to=socket_id)
                 texts += f" Content of Image File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 encoding = encode_image(path)
@@ -143,7 +143,7 @@ def upload_file_method_production(files, socket_id):
                     "type": mimetype,
                     "content": single_text
                 }
-            elif mimetype == "video/mp4":
+            elif "video" in mimetype:
                 socketio.emit('case_generation', {'message': f'Analyzing Video File ({filename})'}, to=socket_id)
                 texts += f" Content of Video File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
 
@@ -157,6 +157,8 @@ def upload_file_method_production(files, socket_id):
                     "transcription": [transcription]
                 }
                 single_dict = process_segments(frames, result_dict)
+            else:
+                socketio.emit('case_generation', {'message': f'File ({filename}) cannot be processed'}, to=socket_id)
 
         ### CACHE TO MINIMIZE AZURE API CALLS
 

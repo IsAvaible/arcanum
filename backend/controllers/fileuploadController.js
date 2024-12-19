@@ -35,7 +35,7 @@ function checkFileType(file, cb) {
 
   // Allowed MIME types
   const mimetypes =
-    /image\/jpeg|image\/jpg|image\/png|image\/gif|text\/plain|application\/pdf|audio\/mpeg|audio\/wav|application\/msword/;
+    /image\/jpeg|image\/jpg|image\/png|image\/gif|text\/plain|video\/mp4|application\/pdf|audio\/mpeg|audio\/wav|application\/msword|audio\/flac|audio\/m4a|audio\/mp3|audio\/oga|audio\/ogg|video\/webm/;
   const mimetype = mimetypes.test(file.mimetype);
 
   if (mimetype && extname) {
