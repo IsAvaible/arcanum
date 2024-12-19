@@ -21,7 +21,7 @@ module.exports = {
         updatedAt: new Date()
       });
 
-      res.status(201).json({ chat_id: newChat.id });
+      res.status(201).json({ chatId: newChat.id });
     } catch (error) {
       console.error("Error creating chat:", error);
       res.status(500).json({ message: error.message || "Error creating chat" });

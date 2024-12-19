@@ -15,7 +15,7 @@ router.post('/chats',escapeData(['title']), chatController.createNewChat); // Cr
 router.put('/chats/:id',escapeData(['title']), chatController.updateChat); // Update chat metadata
 router.delete('/chats/:id', chatController.deleteChat); // Delete a chat
 router.delete('/chats/:chatId/message/:messageId', chatController.deleteMessage); // Delete a message
-router.put('/chats/:chatId/message/:messageId',escapeData(['content']), chatController.updateMessage); // Update a message
+router.put('/chats/:chatId/message/:messageId',escapeData(['content', 'socketId']), chatController.updateMessage); // Update a message
 router.get('/chats/:id/export', chatController.exportChat); // Export chat
 
 
