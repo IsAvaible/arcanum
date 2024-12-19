@@ -20,7 +20,7 @@ const upload = multer({
     },
   }),
 
-  // Sets the file size limit to 50MB.
+  // Sets the file size limit to 100MB.
   limits: { fileSize: 100000000 },
 
   /**
