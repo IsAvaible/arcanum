@@ -21,20 +21,23 @@ import UserSelector, { type User } from '@/components/case-create-form/UserSelec
 import TempEditor from '@/components/case-create-form/TempEditor.vue'
 import ProductSelector from '@/components/case-create-form/ProductSelector.vue'
 import TeamSelector from '@/components/case-create-form/TeamSelector.vue'
-
-import { useCaseFormStepper } from '@/composables/useCaseFormStepper'
+import CasePrioritySelect from '@/components/case-form-fields/CaseStatusSelect/CasePrioritySelect.vue'
+import CaseStatusSelect from '@/components/case-form-fields/CaseStatusSelect/CaseStatusSelect.vue'
+import ScrollFadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
 import StepHeader from '@/components/case-create-form/StepHeader.vue'
 import CaseCreateStepper from '@/components/case-create-form/CaseCreateStepper.vue'
+
+import { useCaseFormStepper } from '@/composables/useCaseFormStepper'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { ref } from 'vue'
 import { useVModel } from '@vueuse/core'
 import { useApi } from '@/composables/useApi'
 import type { CasesPostCaseTypeEnum } from '@/api'
-import ScrollFadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
 import { useConfirm } from 'primevue/useconfirm'
+import { AxiosError } from 'axios'
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -95,6 +98,9 @@ const {
 // Form validation
 const fields = useCaseFields()
 
+// Default values
+fields.status.value.value = 'Open'
+
 /**
  * Check if the current step is valid
  * @param step The step to check
@@ -102,7 +108,12 @@ const fields = useCaseFields()
 const stepValid = (step: number = activeStep.value): boolean => {
   switch (step) {
     case 0:
-      return !(errors.value.title || errors.value.case_type)
+      return !(
+        errors.value.title ||
+        errors.value.case_type ||
+        errors.value.status ||
+        errors.value.priority
+      )
     case 1:
       return !(errors.value.assignees || errors.value.participants || errors.value.team)
     case 2:
@@ -125,6 +136,8 @@ const validateStep = async (step: number = activeStep.value) => {
     case 0:
       await fields.title.validate()
       await fields.type.validate()
+      await fields.status.validate()
+      await fields.priority.validate()
       return
     case 1:
       await fields.assignees.validate()
@@ -198,25 +211,23 @@ const onSubmit = handleSubmit(async (_values) => {
   console.log('Submitting form', _values)
   submitState.value = SubmitState.SUBMITTING
   try {
-    await api.casesPost(
-      {
-        title: fields.title.value.value,
-        caseType: fields.type.value.value as CasesPostCaseTypeEnum,
-        assignee: fields.assignees.value.value,
-        // participants: fields.selectedParticipants.value.value,
-        // team: fields.selectedTeam.value.value,
-        description: fields.description.value.value,
-        solution: fields.solution.value.value,
-        priority: fields.priority.value.value,
-        status: 'Open',
-        // products: fields.selectedProducts.value.value,
+    const requestParameters = {
+      title: fields.title.value.value,
+      caseType: fields.type.value.value as CasesPostCaseTypeEnum,
+      assignee: fields.assignees.value.value,
+      // participants: fields.selectedParticipants.value.value,
+      // team: fields.selectedTeam.value.value,
+      description: fields.description.value.value,
+      solution: fields.solution.value.value || undefined,
+      priority: fields.priority.value.value || undefined,
+      status: fields.status.value.value,
+      // products: fields.selectedProducts.value.value,
+    }
+    await api.casesPost(requestParameters, {
+      headers: {
+        'Content-Type': 'application/json',
       },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      },
-    )
+    })
   } catch (error) {
     submitState.value = SubmitState.ERROR
     setTimeout(() => {
@@ -226,7 +237,7 @@ const onSubmit = handleSubmit(async (_values) => {
     toast.add({
       severity: 'error',
       summary: 'Error Creating Case',
-      detail: 'There was an error creating your case',
+      detail: 'There was an error creating your case\n' + (error as AxiosError).message,
       life: 3000,
     })
     return
@@ -345,6 +356,40 @@ const dialogPT = {
                   {{ errors.case_type }}
                 </Message>
               </div>
+
+              <Divider />
+
+              <div class="grid sm:grid-cols-2 sm:grid-rows-2 grid-flow-col gap-x-6">
+                <Label
+                  for="status"
+                  label="Status (*)"
+                  description="The current status of the new case"
+                />
+                <div class="w-full">
+                  <CaseStatusSelect
+                    v-model="fields.status.value.value"
+                    id="status"
+                    class="w-full"
+                    :invalid="!!errors.status"
+                  />
+                  <Message v-if="errors.status" severity="error" variant="simple" size="small">
+                    {{ errors.status }}
+                  </Message>
+                </div>
+
+                <Label for="priority" label="Priority" description="The priority of the new case" />
+                <div class="w-full">
+                  <CasePrioritySelect
+                    v-model="fields.priority.value.value"
+                    id="priority"
+                    class="w-full"
+                    :invalid="!!errors.priority"
+                  />
+                  <Message v-if="errors.priority" severity="error" variant="simple" size="small">
+                    {{ errors.priority }}
+                  </Message>
+                </div>
+              </div>
             </div>
           </AccordionContent>
         </AccordionPanel>
@@ -398,7 +443,7 @@ const dialogPT = {
                 <div>
                   <UserSelector
                     @update:selected-users="
-                      fields.participants.value.value = $event.map((u) => u.name)
+                      fields.participants.value.value = $event.map((u) => u.name) || undefined
                     "
                     assigneeLabel="Participants"
                     :userOptions="peopleOptions"
@@ -529,6 +574,18 @@ const dialogPT = {
                         caseTypes.find((type) => type.title === fields.type.value.value)?.title ||
                         'Not selected'
                       }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-slate-600">Status</p>
+                    <p class="font-medium">
+                      {{ fields.status.value.value || 'No status selected' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-slate-600">Priority</p>
+                    <p class="font-medium">
+                      {{ fields.priority.value.value || 'No priority selected' }}
                     </p>
                   </div>
                 </div>
@@ -664,7 +721,6 @@ const dialogPT = {
             :disabled="!!Object.keys(errors).length"
             v-if="activeStep == steps.length - 1 || formEndReached"
           />
-          {{ errors }}
         </div>
       </div>
     </template>
