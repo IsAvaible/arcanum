@@ -18,7 +18,6 @@ import { CoinsSwap, CpuWarning, QuestionMark, WarningTriangle } from '@iconoir/v
 import Label from '@/components/case-create-form/Label.vue'
 import CaseTypeSelector from '@/components/case-create-form/CaseTypeSelector.vue'
 import UserSelector, { type User } from '@/components/case-create-form/UserSelector.vue'
-import TempEditor from '@/components/case-create-form/TempEditor.vue'
 import TeamSelector from '@/components/case-create-form/TeamSelector.vue'
 
 import { useCaseFormStepper } from '@/composables/useCaseFormStepper'
@@ -34,6 +33,11 @@ import ScrollFadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
 import { useConfirm } from 'primevue/useconfirm'
+
+import { MdEditor } from 'md-editor-v3'
+import 'md-editor-v3/lib/style.css'
+const descriptionText = ref('')
+const solutionText = ref('')
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -424,6 +428,7 @@ const dialogPT = {
           />
           <AccordionContent>
             <div class="h-full grid gap-y-4">
+              <!-- Description Box -->
               <div class="flex flex-col">
                 <Label
                   for="description"
@@ -432,23 +437,10 @@ const dialogPT = {
                   icon="pi-info-circle"
                   class="mb-3"
                 />
-                <TempEditor
-                  v-model="fields.description.value.value"
-                  editorStyle="flex: 1; min-height: 180px"
-                  class="flex-1 flex flex-col"
-                  id="description"
-                  :invalid="!!errors.description"
-                />
-                <Message
-                  v-if="errors.description"
-                  severity="error"
-                  variant="simple"
-                  size="small"
-                  class="-mt-5 ml-1 z-10"
-                >
-                  {{ errors.description }}
-                </Message>
+                <MdEditor v-model="descriptionText" />
               </div>
+
+              <!-- Solution Box -->
               <div class="flex flex-col">
                 <Label
                   for="solution"
@@ -457,22 +449,7 @@ const dialogPT = {
                   icon="pi-check-circle"
                   class="mb-3"
                 />
-                <TempEditor
-                  v-model="fields.solution.value.value"
-                  editorStyle="flex: 1; min-height: 180px"
-                  class="flex-1 flex flex-col"
-                  id="solution"
-                  :invalid="!!errors.solution"
-                />
-                <Message
-                  v-if="errors.solution"
-                  severity="error"
-                  variant="simple"
-                  size="small"
-                  class="-mt-5 ml-1 z-10"
-                >
-                  {{ errors.solution }}
-                </Message>
+                <MdEditor v-model="solutionText" />
               </div>
             </div>
           </AccordionContent>
