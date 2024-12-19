@@ -36,3 +36,13 @@ svg.md-editor-icon {
 .md-editor-toolbar-item.md-editor-disabled {
   @apply text-gray-300 pointer-events-none;
 }
+
+  ol,
+  li {
+    list-style: revert;
+  }
+}
+
+.md-editor-toolbar-item.md-editor-disabled {
+  @apply text-gray-300 pointer-events-none;
+}
