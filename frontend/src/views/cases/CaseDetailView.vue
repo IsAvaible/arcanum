@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, nextTick, useTemplateRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { useApi } from '@/composables/useApi'
 import { useToast } from 'primevue/usetoast' // Import useToast only once
@@ -13,7 +13,6 @@ import Card from 'primevue/card'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import DatePicker from 'primevue/datepicker'
-import Textarea from 'primevue/textarea'
 import Menu from 'primevue/menu'
 import Dialog from 'primevue/dialog'
 import Skeleton from 'primevue/skeleton'
@@ -39,6 +38,7 @@ import { apiBlobToFile } from '@/functions/apiBlobToFile'
 // Validation
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
+import { MdEditor } from 'md-editor-v3'
 
 interface Priority {
   name: string
@@ -285,6 +285,37 @@ const navigateTo = async (name: string) => {
     })
   }
 }
+
+const solutionMdEditor = useTemplateRef<typeof MdEditor | null>('solutionMdEditor')
+const descriptionMdEditor = useTemplateRef<typeof MdEditor | null>('descriptionMdEditor')
+
+watch(
+  [solutionMdEditor, descriptionMdEditor],
+  // Watch for the solution and description editors to be initialized
+  ([solution, description]) => {
+    if (solution && description) {
+      // Watch for the inEditMode value to toggle the previewOnly mode
+      watch(
+        inEditMode,
+        (value) => {
+          if (value) {
+            nextTick(() => {
+              solutionMdEditor.value?.togglePreviewOnly(false)
+              descriptionMdEditor.value?.togglePreviewOnly(false)
+            })
+          } else {
+            nextTick(() => {
+              solutionMdEditor.value?.togglePreviewOnly(true)
+              descriptionMdEditor.value?.togglePreviewOnly(true)
+            })
+          }
+        },
+        { immediate: true },
+      )
+    }
+  },
+  { immediate: true },
+)
 
 /// File / Attachment Handling
 
@@ -715,13 +746,17 @@ const toggleMenu = (event: Event) => {
           <h2 class="text-xl font-semibold mb-4">Description</h2>
         </template>
         <template #content>
-          <Textarea
+          <MdEditor
             v-if="!loading"
             v-model="fields.description.value.value"
-            rows="4"
-            class="w-full"
-            :class="{ 'p-invalid': errors.description }"
+            class="min-h-64 resize-y"
+            style="height: 16rem"
+            language="en-US"
+            id="description"
             :disabled="!inEditMode"
+            :invalid="!!errors.description"
+            noUploadImg
+            ref="descriptionMdEditor"
           />
           <Skeleton v-else height="2.5rem" />
           <small v-if="errors.description" class="p-error block mt-1">{{
@@ -736,13 +771,17 @@ const toggleMenu = (event: Event) => {
           <h2 class="text-xl font-semibold mb-4">Solution</h2>
         </template>
         <template #content>
-          <Textarea
+          <MdEditor
             v-if="!loading"
             v-model="fields.solution.value.value"
-            rows="4"
-            class="w-full"
-            :class="{ 'p-invalid': errors.solution }"
+            class="min-h-64 resize-y"
+            style="height: 16rem"
+            language="en-US"
+            id="solution"
             :disabled="!inEditMode"
+            :invalid="!!errors.solution"
+            noUploadImg
+            ref="solutionMdEditor"
           />
           <Skeleton v-else height="2.5rem" />
           <small v-if="errors.solution" class="p-error block mt-1">{{ errors.solution }}</small>
