@@ -5,7 +5,7 @@ const { escapeData, validateData } = require("../middlewares/validationMiddlewar
 const { messageSchema, chatSchema } = require("../schemas/chatSchemas");
 
 
-// Speichert eine neue User-Nachricht und sendet Kontext ans LLM
+// Saves a new user message and sends context to LLM
 router.post('/chats/:id/message',validateData(messageSchema), escapeData(['content', 'socketId']), chatController.postMessage);
 
 

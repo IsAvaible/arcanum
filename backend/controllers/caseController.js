@@ -233,7 +233,7 @@ exports.updateCase = [
 
 /**
  * Creates a new case from uploaded files and data received from an external LLM.
- * @param {Object} req - Express request object, containing uploaded files and optional socket_id in `req.body`.
+ * @param {Object} req - Express request object, containing uploaded files and socket_id in `req.body`.
  * @param {Object} res - Express response object to send the created case(s) or error messages.
  * @returns {Object} JSON response with the created case(s) or an error message.
  */
