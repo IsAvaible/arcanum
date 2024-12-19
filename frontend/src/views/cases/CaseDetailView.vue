@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, nextTick, useTemplateRef } from 'vue'
-import { ref, computed, watch, onMounted, nextTick, useTemplateRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { useApi } from '@/composables/useApi'
 import { useToast } from 'primevue/usetoast' // Import useToast only once
@@ -39,8 +38,18 @@ import { apiBlobToFile } from '@/functions/apiBlobToFile'
 // Validation
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
-import CaseStatusSelect from '@/components/case-form-fields/CaseStatusSelect/CaseStatusSelect.vue'
-import CasePrioritySelect from '@/components/case-form-fields/CaseStatusSelect/CasePrioritySelect.vue'
+import { MdEditor } from 'md-editor-v3'
+
+interface Priority {
+  name: string
+  color: string
+}
+
+interface Status {
+  name: string
+  color: string
+  textColor: string
+}
 
 const router = useRouter()
 const api = useApi()
@@ -263,37 +272,6 @@ const navigateTo = async (name: string) => {
     })
   }
 }
-
-const solutionMdEditor = useTemplateRef<typeof MdEditor | null>('solutionMdEditor')
-const descriptionMdEditor = useTemplateRef<typeof MdEditor | null>('descriptionMdEditor')
-
-watch(
-  [solutionMdEditor, descriptionMdEditor],
-  // Watch for the solution and description editors to be initialized
-  ([solution, description]) => {
-    if (solution && description) {
-      // Watch for the inEditMode value to toggle the previewOnly mode
-      watch(
-        inEditMode,
-        (value) => {
-          if (value) {
-            nextTick(() => {
-              solutionMdEditor.value?.togglePreviewOnly(false)
-              descriptionMdEditor.value?.togglePreviewOnly(false)
-            })
-          } else {
-            nextTick(() => {
-              solutionMdEditor.value?.togglePreviewOnly(true)
-              descriptionMdEditor.value?.togglePreviewOnly(true)
-            })
-          }
-        },
-        { immediate: true },
-      )
-    }
-  },
-  { immediate: true },
-)
 
 const solutionMdEditor = useTemplateRef<typeof MdEditor | null>('solutionMdEditor')
 const descriptionMdEditor = useTemplateRef<typeof MdEditor | null>('descriptionMdEditor')
@@ -710,21 +688,13 @@ const toggleMenu = (event: Event) => {
         </template>
         <template #content>
           <MdEditor
-          <MdEditor
             v-if="!loading"
             v-model="fields.description.value.value"
             class="min-h-64 resize-y"
             style="height: 16rem"
             language="en-US"
             id="description"
-            class="min-h-64 resize-y"
-            style="height: 16rem"
-            language="en-US"
-            id="description"
             :disabled="!inEditMode"
-            :invalid="!!errors.description"
-            noUploadImg
-            ref="descriptionMdEditor"
             :invalid="!!errors.description"
             noUploadImg
             ref="descriptionMdEditor"
@@ -743,21 +713,13 @@ const toggleMenu = (event: Event) => {
         </template>
         <template #content>
           <MdEditor
-          <MdEditor
             v-if="!loading"
             v-model="fields.solution.value.value"
             class="min-h-64 resize-y"
             style="height: 16rem"
             language="en-US"
             id="solution"
-            class="min-h-64 resize-y"
-            style="height: 16rem"
-            language="en-US"
-            id="solution"
             :disabled="!inEditMode"
-            :invalid="!!errors.solution"
-            noUploadImg
-            ref="solutionMdEditor"
             :invalid="!!errors.solution"
             noUploadImg
             ref="solutionMdEditor"
