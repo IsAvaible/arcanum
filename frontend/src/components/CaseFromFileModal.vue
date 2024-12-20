@@ -27,52 +27,6 @@ const openManualCaseCreation = () => {
   router.push({ name: 'case-create-manual' })
 }
 
-// Audio-Recorder
-const isRecording = ref(false)
-const mediaRecorder = ref<MediaRecorder | null>(null)
-const audioChunks = ref<BlobPart[]>([])
-const audioBlob = ref<Blob | null>(null)
-const audioUrl = ref<string>('')
-
-const startRecording = async () => {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    isRecording.value = true
-    audioChunks.value = []
-    mediaRecorder.value = new MediaRecorder(stream)
-
-    mediaRecorder.value.ondataavailable = (e) => {
-      audioChunks.value.push(e.data)
-    }
-
-    mediaRecorder.value.onstop = () => {
-      audioBlob.value = new Blob(audioChunks.value, { type: 'audio/wav' })
-      audioUrl.value = URL.createObjectURL(audioBlob.value)
-    }
-
-    mediaRecorder.value.start()
-  } catch (_err) {
-    toast.add({
-      severity: 'error',
-      summary: 'Microphone Error',
-      detail: 'Could not access the microphone.',
-      life: 3000,
-    })
-  }
-}
-
-const stopRecording = () => {
-  if (mediaRecorder.value) {
-    mediaRecorder.value.stop()
-    isRecording.value = false
-  }
-}
-
-const deleteRecording = () => {
-  audioBlob.value = null
-  audioUrl.value = ''
-}
-
 const loading = ref(false)
 const openAICaseCreation = async () => {
   if (files.value.length === 0) {
@@ -115,26 +69,6 @@ const openAICaseCreation = async () => {
       <!-- Options Section -->
       <div class="flex flex-col space-y-4">
         <FileDropzoneUpload v-model:files="files" />
-        <!-- Audio Recording Section -->
-        <div class="audio-recorder flex flex-col items-center gap-3 mb-4">
-          <p class="text-gray-600 text-sm">Or record audio to describe your case</p>
-          <button
-            @click="isRecording ? stopRecording() : startRecording()"
-            :aria-label="isRecording ? 'Stop Recording' : 'Start Recording'"
-            class="mic-button flex items-center gap-2 px-4 py-2 border rounded-lg shadow hover:bg-gray-100"
-          >
-            <span v-if="isRecording" class="recording-indicator"></span>
-            <i class="pi pi-microphone"></i>
-            <span>{{ isRecording ? 'Stop Recording' : 'Start Recording' }}</span>
-          </button>
-
-          <div v-if="audioBlob" class="audio-controls mt-2">
-            <audio :src="audioUrl" controls class="w-full"></audio>
-            <button @click="deleteRecording" class="delete-button text-red-600 mt-2">
-              Delete Recording
-            </button>
-          </div>
-        </div>
         <Button
           :loading="loading"
           :disabled="loading"
@@ -161,34 +95,4 @@ const openAICaseCreation = async () => {
   </Dialog>
 </template>
 
-<style scoped>
-.mic-button {
-  background: white;
-  border: 1px solid #e5e7eb;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.mic-button:hover {
-  background: #f3f4f6;
-}
-
-.recording-indicator {
-  width: 10px;
-  height: 10px;
-  background: red;
-  border-radius: 50%;
-  animation: blink 1s infinite;
-}
-
-@keyframes blink {
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0;
-  }
-}
-</style>
+<style scoped></style>
