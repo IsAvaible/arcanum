@@ -546,9 +546,9 @@ const dialogPT = {
           </AccordionContent>
         </AccordionPanel>
 
-        <AccordionPanel :value="4" :disabled="!isClickable(4)">
+        <AccordionPanel :value="3" :disabled="!isClickable(3)">
           <StepHeader
-            :step="4"
+            :step="3"
             :activeStep="activeStep"
             :stepValid="stepValid"
             :stepInteracted="stepInteracted"
