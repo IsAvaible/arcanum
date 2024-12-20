@@ -34,7 +34,7 @@ import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
 import { useConfirm } from 'primevue/useconfirm'
 
-import { MdEditor } from 'md-editor-v3'
+import { MdEditor, MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 
 const toast = useToast()
@@ -552,15 +552,12 @@ const dialogPT = {
                     <ScrollFadeOverlay
                       axis="vertical"
                       content-class="max-h-[150px]"
-                      fade-from="from-slate-50"
-                      class="ql-snow"
+                      fade-from="from-white"
+                      class="rounded-lg overflow-hidden"
                     >
-                      <div
-                        v-if="fields.description.value.value"
-                        class="ql-editor p-0 max-w-full overflow-auto"
-                        v-html="fields.description.value.value"
-                      ></div>
-                      <p v-else class="font-medium">No description provided</p>
+                      <MdPreview
+                        :model-value="fields.description.value.value ?? 'No description provided'"
+                      ></MdPreview>
                     </ScrollFadeOverlay>
                   </div>
                   <div>
@@ -568,15 +565,12 @@ const dialogPT = {
                     <ScrollFadeOverlay
                       axis="vertical"
                       content-class="max-h-[150px]"
-                      fade-from="from-slate-50"
-                      class="ql-snow"
+                      fade-from="from-white"
+                      class="rounded-lg overflow-hidden"
                     >
-                      <div
-                        v-if="fields.solution.value.value"
-                        class="ql-editor p-0 max-w-full max-h-[10px] overflow-auto"
-                        v-html="fields.solution.value.value"
-                      ></div>
-                      <p v-else class="font-medium">No solution provided</p>
+                      <MdPreview
+                        :model-value="fields.solution.value.value ?? 'No solution provided'"
+                      ></MdPreview>
                     </ScrollFadeOverlay>
                   </div>
                 </div>
