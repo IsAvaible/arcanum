@@ -762,10 +762,11 @@ const toggleMenu = (event: Event) => {
               <template #match="{ part, clickCallback }">
                 <button
                   @click="clickCallback"
-                  class="px-1 hover:text-black rounded-md ring-1 ring-gray-400 hover:ring-gray-500 transition-all pointer-events-auto cursor-pointer"
+                  class="inline-flex items-center gap-1.5 px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 rounded-md transition-all pointer-events-auto cursor-pointer"
                 >
                   <i class="pi pi-play-circle mr-0.5 text-sm" />
-                  {{ part.text }}
+
+                  <span>Abspielen</span>
                 </button>
               </template>
             </DynamicInteractiveText>
@@ -802,10 +803,11 @@ const toggleMenu = (event: Event) => {
               <template #match="{ part, clickCallback }">
                 <button
                   @click="clickCallback"
-                  class="px-1 hover:text-black rounded-md ring-1 ring-gray-400 hover:ring-gray-500 transition-all pointer-events-auto cursor-pointer"
+                  class="inline-flex items-center gap-1.5 px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 rounded-md transition-all pointer-events-auto cursor-pointer"
                 >
                   <i class="pi pi-play-circle mr-0.5 text-sm" />
-                  {{ part.text }}
+
+                  <span> Abspielen</span>
                 </button>
               </template>
             </DynamicInteractiveText>
