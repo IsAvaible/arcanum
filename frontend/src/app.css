@@ -17,6 +17,7 @@ svg.md-editor-icon {
 
 .md-editor-preview {
 <<<<<<< HEAD
+<<<<<<< HEAD
   ol, li {
     list-style: revert;
   }
@@ -34,6 +35,19 @@ svg.md-editor-icon {
     list-style: revert;
   }
 >>>>>>> 84e03aa (feat(case-detail): use MdEditor for description and solution)
+=======
+  ol, li {
+    list-style: revert;
+  }
+
+  *:first-child {
+    margin-top: 0;
+  }
+
+  *:last-child {
+    margin-bottom: 0;
+  }
+>>>>>>> 0374082 (feat(case-create-dialog): display description & solution preview in review section)
 }
 
 .md-editor-toolbar-item.md-editor-disabled {
