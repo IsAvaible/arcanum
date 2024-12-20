@@ -1,3 +1,4 @@
+
 const { Request, Response, NextFunction } = require("express");
 const { z, ZodError } = require("zod");
 const { StatusCodes } = require("http-status-codes");
@@ -67,4 +68,30 @@ function escapeData(fields) {
   ];
 }
 
-module.exports = { validateData, escapeData };
+/**
+ * Middleware to authenticate a JSON Web Token (JWT).
+ *
+ * This middleware checks for the presence of a JWT in the "x-auth-token" header of the request.
+ * If the token is not provided, it sends a `401 Unauthorized` response.
+ * If the token is provided, it verifies the token using the secret key from the environment variables.
+ * If the token is valid, it attaches the decoded token to the `req.user` property and calls `next()` to proceed.
+ * If the token is invalid, it sends a `400 Bad Request` response.
+ *
+ * @param {Request} req - The Express request object.
+ * @param {Response} res - The Express response object.
+ * @param {NextFunction} next - The next middleware function in the stack.
+ */
+const authenticateJWT = (req, res, next) => {
+  const token = req.header("x-auth-token");
+  if (!token) return res.status(401).send("Access denied. No token provided.");
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (ex) {
+    res.status(400).send("Invalid token.");
+  }
+};
+
+module.exports = { validateData, escapeData, authenticateJWT };
