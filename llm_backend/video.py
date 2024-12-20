@@ -109,9 +109,9 @@ def extract_data_from_video(video_path, filehash):
 
     return frames_path, audio_output
 
-# todo bereits zusammengefasste frames hinzufügen und transcription
-def process_segments(frames, result_dict):
 
+# todo bereits zusammengefasste frames hinzufügen und transcription
+def process_segments(frames, result_dict, transcription):
     print(len(frames))
     frame_segments = math.floor(len(frames) / 49)
     print(f"segments: {frame_segments}")
@@ -121,8 +121,13 @@ def process_segments(frames, result_dict):
             prompt_dict.clear()
             prompt_dict = [
                 {
+                    "type": "transcription",
+                    "text": f"Here is the complete transaction of the video file",
+                    "content": transcription
+                },
+                {
                     "type": "text",
-                    "text": "What are all frames showing, be as detailed as possible but please combine everything in a normal text"
+                    "text": f"Here is part {i} of {frame_segments}. What are all frames showing, be as detailed as possible but please combine everything in a normal text"
                 }
             ]
             print("range - " + str(0 + (50 * i)) + " - " + str(49 * (i + 1)))
@@ -137,8 +142,9 @@ def process_segments(frames, result_dict):
                 }
                 prompt_dict.append(base64_image)
             video_summary = image_to_openai(prompt_dict)
-            #append
-            result_dict["video_summary"] += video_summary
+            print(video_summary)
+            # append
+            result_dict["video_summary"] += video_summary + " "
         single_dict = result_dict
     else:
         prompt_dict = []

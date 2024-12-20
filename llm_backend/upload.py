@@ -156,7 +156,7 @@ def upload_file_method_production(files, socket_id):
                     "video_summary": "",
                     "transcription": [transcription]
                 }
-                single_dict = process_segments(frames, result_dict)
+                single_dict = process_segments(frames, result_dict, transcription)
             else:
                 socketio.emit('case_generation', {'message': f'File ({filename}) cannot be processed'}, to=socket_id)
 
