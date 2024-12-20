@@ -16,9 +16,16 @@ svg.md-editor-icon {
 }
 
 .md-editor-preview {
-  ol,
-  li {
+  ol, li {
     list-style: revert;
+  }
+
+  *:first-child {
+    margin-top: 0;
+  }
+
+  *:last-child {
+    margin-bottom: 0;
   }
 }
 
