@@ -109,8 +109,6 @@ const stepValid = (step: number = activeStep.value): boolean => {
     case 2:
       return !(errors.value.description || errors.value.solution)
     case 3:
-      return !errors.value.products
-    case 4:
       return true
     default:
       return false
@@ -485,9 +483,9 @@ const dialogPT = {
           </AccordionContent>
         </AccordionPanel>
 
-        <AccordionPanel :value="4" :disabled="!isClickable(4)">
+        <AccordionPanel :value="3" :disabled="!isClickable(3)">
           <StepHeader
-            :step="4"
+            :step="3"
             :activeStep="activeStep"
             :stepValid="stepValid"
             :stepInteracted="stepInteracted"
