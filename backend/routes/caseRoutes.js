@@ -1,4 +1,5 @@
 const express = require("express");
+const jwt = require("jsonwebtoken");
 const router = express.Router();
 const caseController = require("../controllers/caseController");
 const multerMiddleware = require("../middlewares/multerMiddleware");
@@ -8,6 +9,8 @@ const {
 } = require("../middlewares/validationMiddleware");
 const { caseSchema } = require("../schemas/caseSchemas");
 const attachmentController = require("../controllers/attachmentController");
+
+const jwtToken = jwt.sign("8ab6ee2c8e36849699b9a9b81290c41901953ac2d0e890e45ffa30da1b924f2e", process.env.JWT_SECRET);
 
 /**
  * @route GET /cases/

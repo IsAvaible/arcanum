@@ -3,6 +3,7 @@ const { Request, Response, NextFunction } = require("express");
 const { z, ZodError } = require("zod");
 const { StatusCodes } = require("http-status-codes");
 const { body, validationResult } = require("express-validator");
+const jwt = require("jsonwebtoken");
 
 /**
  * Middleware to validate request data using a Zod schema.

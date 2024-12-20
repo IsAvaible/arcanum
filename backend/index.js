@@ -64,6 +64,8 @@ const credentials = {
 try {
   const server = https.createServer(credentials, app);
   server.listen(port, function (req, res) {
+    
+    
     console.log(`Example app listening on port 3000 (${port})`);
   });
 } catch (err) {
