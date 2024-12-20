@@ -115,16 +115,13 @@ def process_segments(frames, result_dict, transcription):
     print(len(frames))
     frame_segments = math.floor(len(frames) / 49)
     print(f"segments: {frame_segments}")
+
+    video_summary = ""
     if frame_segments > 0:
         prompt_dict = []
         for i in range(0, frame_segments):
             prompt_dict.clear()
             prompt_dict = [
-                {
-                    "type": "transcription",
-                    "text": f"Here is the complete transaction of the video file",
-                    "content": transcription
-                },
                 {
                     "type": "text",
                     "text": f"Here is part {i} of {frame_segments}. What are all frames showing, be as detailed as possible but please combine everything in a normal text"
@@ -144,7 +141,7 @@ def process_segments(frames, result_dict, transcription):
             video_summary = image_to_openai(prompt_dict)
             print(video_summary)
             # append
-            result_dict["video_summary"] += video_summary + " "
+            video_summary = video_summary + " "
         single_dict = result_dict
     else:
         prompt_dict = []
@@ -166,8 +163,10 @@ def process_segments(frames, result_dict, transcription):
             }
             prompt_dict.append(base64_image)
         video_summary = image_to_openai(prompt_dict)
-        result_dict["video_summary"] = video_summary
-        single_dict = result_dict
+
+
+
+    single_dict = result_dict
     return single_dict
 
 
