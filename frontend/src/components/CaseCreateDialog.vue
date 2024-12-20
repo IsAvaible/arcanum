@@ -18,8 +18,6 @@ import { CoinsSwap, CpuWarning, QuestionMark, WarningTriangle } from '@iconoir/v
 import Label from '@/components/case-create-form/Label.vue'
 import CaseTypeSelector from '@/components/case-create-form/CaseTypeSelector.vue'
 import UserSelector, { type User } from '@/components/case-create-form/UserSelector.vue'
-import TempEditor from '@/components/case-create-form/TempEditor.vue'
-import ProductSelector from '@/components/case-create-form/ProductSelector.vue'
 import TeamSelector from '@/components/case-create-form/TeamSelector.vue'
 import CasePrioritySelect from '@/components/case-form-fields/CaseStatusSelect/CasePrioritySelect.vue'
 import CaseStatusSelect from '@/components/case-form-fields/CaseStatusSelect/CaseStatusSelect.vue'
@@ -38,6 +36,9 @@ import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
 import { useConfirm } from 'primevue/useconfirm'
 import { AxiosError } from 'axios'
+
+import { MdEditor, MdPreview } from 'md-editor-v3'
+import 'md-editor-v3/lib/style.css'
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -119,8 +120,6 @@ const stepValid = (step: number = activeStep.value): boolean => {
     case 2:
       return !(errors.value.description || errors.value.solution)
     case 3:
-      return !errors.value.products
-    case 4:
       return true
     default:
       return false
@@ -148,9 +147,6 @@ const validateStep = async (step: number = activeStep.value) => {
       await fields.description.validate()
       await fields.solution.validate()
       return
-    case 3:
-      await fields.selectedProducts.validate()
-      return
   }
 }
 
@@ -175,7 +171,6 @@ const steps = [
   { label: 'Basics', icon: 'pi-info-circle' },
   { label: 'People', icon: 'pi-user' },
   { label: 'Details', icon: 'pi-pen-to-square' },
-  { label: 'Products', icon: 'pi-warehouse' },
   { label: 'Review', icon: 'pi-star' },
 ]
 
@@ -473,8 +468,9 @@ const dialogPT = {
             title="Details"
           />
           <AccordionContent>
-            <div class="h-full grid gap-y-4">
-              <div class="flex flex-col">
+            <div class="h-full grid grid-rows-2 grid-cols-1 gap-y-4">
+              <!-- Description Box -->
+              <div class="flex flex-col relative">
                 <Label
                   for="description"
                   label="Description"
@@ -482,24 +478,27 @@ const dialogPT = {
                   icon="pi-info-circle"
                   class="mb-3"
                 />
-                <TempEditor
+                <MdEditor
                   v-model="fields.description.value.value"
-                  editorStyle="flex: 1; min-height: 180px"
-                  class="flex-1 flex flex-col"
+                  class="!h-full min-h-56"
+                  language="en-US"
                   id="description"
                   :invalid="!!errors.description"
+                  noUploadImg
                 />
                 <Message
                   v-if="errors.description"
                   severity="error"
                   variant="simple"
                   size="small"
-                  class="-mt-5 ml-1 z-10"
+                  class="absolute bottom-0 mx-auto left-[50%] -translate-x-[50%] mb-1 z-10"
                 >
                   {{ errors.description }}
                 </Message>
               </div>
-              <div class="flex flex-col">
+
+              <!-- Solution Box -->
+              <div class="flex flex-col relative">
                 <Label
                   for="solution"
                   label="Solution"
@@ -507,19 +506,20 @@ const dialogPT = {
                   icon="pi-check-circle"
                   class="mb-3"
                 />
-                <TempEditor
+                <MdEditor
                   v-model="fields.solution.value.value"
-                  editorStyle="flex: 1; min-height: 180px"
-                  class="flex-1 flex flex-col"
+                  class="!h-full min-h-56"
+                  language="en-US"
                   id="solution"
                   :invalid="!!errors.solution"
+                  noUploadImg
                 />
                 <Message
                   v-if="errors.solution"
                   severity="error"
                   variant="simple"
                   size="small"
-                  class="-mt-5 ml-1 z-10"
+                  class="absolute bottom-0 mx-auto left-[50%] -translate-x-[50%] mb-1 z-10"
                 >
                   {{ errors.solution }}
                 </Message>
@@ -531,27 +531,6 @@ const dialogPT = {
         <AccordionPanel :value="3" :disabled="!isClickable(3)">
           <StepHeader
             :step="3"
-            :activeStep="activeStep"
-            :stepValid="stepValid"
-            :stepInteracted="stepInteracted"
-            title="Products"
-          />
-          <!-- Content for Products -->
-          <AccordionContent>
-            <div class="flex flex-col gap-y-3">
-              <Label
-                for="products"
-                label="Products"
-                description="Select the products related to this case"
-              />
-              <ProductSelector v-model="fields.selectedProducts.value.value" />
-            </div>
-          </AccordionContent>
-        </AccordionPanel>
-
-        <AccordionPanel :value="4" :disabled="!isClickable(4)">
-          <StepHeader
-            :step="4"
             :activeStep="activeStep"
             :stepValid="stepValid"
             :stepInteracted="stepInteracted"
@@ -630,15 +609,12 @@ const dialogPT = {
                     <ScrollFadeOverlay
                       axis="vertical"
                       content-class="max-h-[150px]"
-                      fade-from="from-slate-50"
-                      class="ql-snow"
+                      fade-from="from-white"
+                      class="rounded-lg overflow-hidden"
                     >
-                      <div
-                        v-if="fields.description.value.value"
-                        class="ql-editor p-0 max-w-full overflow-auto"
-                        v-html="fields.description.value.value"
-                      ></div>
-                      <p v-else class="font-medium">No description provided</p>
+                      <MdPreview
+                        :model-value="fields.description.value.value ?? 'No description provided'"
+                      ></MdPreview>
                     </ScrollFadeOverlay>
                   </div>
                   <div>
@@ -646,31 +622,14 @@ const dialogPT = {
                     <ScrollFadeOverlay
                       axis="vertical"
                       content-class="max-h-[150px]"
-                      fade-from="from-slate-50"
-                      class="ql-snow"
+                      fade-from="from-white"
+                      class="rounded-lg overflow-hidden"
                     >
-                      <div
-                        v-if="fields.solution.value.value"
-                        class="ql-editor p-0 max-w-full max-h-[10px] overflow-auto"
-                        v-html="fields.solution.value.value"
-                      ></div>
-                      <p v-else class="font-medium">No solution provided</p>
+                      <MdPreview
+                        :model-value="fields.solution.value.value ?? 'No solution provided'"
+                      ></MdPreview>
                     </ScrollFadeOverlay>
                   </div>
-                </div>
-              </div>
-
-              <div class="bg-slate-50 p-4 rounded-lg">
-                <h2 class="text-xl font-semibold mb-4">Products</h2>
-                <div>
-                  <p class="text-sm text-slate-600">Selected Products</p>
-                  <p class="font-medium">
-                    {{
-                      fields.selectedProducts.value.value?.length
-                        ? fields.selectedProducts.value.value.join(', ')
-                        : 'No products selected'
-                    }}
-                  </p>
                 </div>
               </div>
 
