@@ -5,16 +5,17 @@ import shutil
 from app import app
 
 
+# write content to a file
 def write_to_file(hash, content):
-    # Verzeichnis erstellen, falls es nicht existiert
+    # create directory if does not exist
     dir_path = os.path.join(app.root_path, "temp", hash)
     os.makedirs(dir_path, exist_ok=True)  # Erstellt das Verzeichnis, falls nötig
 
-    # Datei-Pfad
+    # file path
     file_path = os.path.join(dir_path, f"{hash}.json")
 
     try:
-        # Datei schreiben
+        # write file
         with open(file_path, "w", encoding="utf-8") as file:
             file.write(content)
         return file_path
@@ -22,7 +23,7 @@ def write_to_file(hash, content):
         print(f"Ein Fehler ist aufgetreten: {e}")
         return None
 
-
+# delete temp folder
 def delete_temp_folder(hash):
     dir_path = os.path.join(app.root_path, "temp", hash)
     if os.path.exists(dir_path):
@@ -36,7 +37,7 @@ def delete_temp_folder(hash):
         print(f"Folder '{dir_path}' does not exist.")
         return False
 
-
+# read file
 def read_from_file(file_path):
     try:
         with open(file_path, "r", encoding="utf-8") as file:
@@ -49,7 +50,7 @@ def read_from_file(file_path):
         print(f"Ein Fehler ist aufgetreten: {e}")
         return None
 
-
+# text to dict
 def text_to_dict(json_text):
     try:
         return json.loads(json_text)
