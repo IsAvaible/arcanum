@@ -1,10 +1,10 @@
 import base64
+import json
 import os
 
 from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import AzureChatOpenAI
-
 from prompts import get_system_prompt
 
 load_dotenv()
@@ -31,9 +31,9 @@ def image_to_openai(dict):
         max_retries=2,
         streaming=False,
     )
-    system_prompt = get_system_prompt("image")
+    system_prompt = get_system_prompt("images")
     messages = [
-        ("system", f"{system_prompt}"),
+        ("system", "{system_prompt}"),
         ("human", dict),
     ]
     promptLangchain = ChatPromptTemplate.from_messages(messages).partial(
@@ -48,7 +48,7 @@ def image_to_openai(dict):
     return vision_prompt
 
 
-def dict_to_openai(dict):
+def video_openai(video_summary, transcription_dict):
     llm = AzureChatOpenAI(
         azure_endpoint=AZURE_ENDPOINT,
         azure_deployment=AZURE_DEPLOYMENT_GPT,
@@ -59,16 +59,17 @@ def dict_to_openai(dict):
         max_retries=2,
         streaming=False,
     )
-    system_prompt = get_system_prompt("image")
+    system_prompt = get_system_prompt("video")
+
     messages = [
-        ("system", f"{system_prompt}"),
-        ("human", dict),
+        ("system", "{system_prompt}"),
+        ("human", "Please take the input data and explain the content as detailed as possible. Include all information:\nThis is the video data: {video_summary}\n"),
     ]
     promptLangchain = ChatPromptTemplate.from_messages(messages).partial(
-        system_prompt=system_prompt
+        system_prompt=system_prompt, video_summary=video_summary
     )
     promptLangchainInvoked = promptLangchain.invoke(
-        {"query": "Please explain me what you see in this picture!"}
+         {"video_summary": video_summary, "query": "Please write all information you can find as detailed as possible!"}
     )
     chain = llm
     response = chain.invoke(promptLangchainInvoked)
