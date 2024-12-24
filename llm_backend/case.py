@@ -60,7 +60,6 @@ class Case(BaseModel):
 class CaseArray(BaseModel):
     cases: list[Case] = Field(..., description="A list of one or multiple cases.", min_length=1)
 
-
 def check_if_output_is_valid(chain_output):
     try:
         # This will validate the output and raise an error if any required field is missing
