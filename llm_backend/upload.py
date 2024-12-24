@@ -15,10 +15,12 @@ from video import process_segments, extract_data_from_video, get_all_frames_in_d
 from webdav import check_if_cached, download_cache, upload_cache_file, download_file_webdav
 from whisper import transcribe
 
+
+# All Allowed Extensions
 ALLOWED_EXTENSIONS = {"txt", "pdf", "html", "mp3", "wav", "png", "jpg", "jpeg", "gif", "bmp", "mp4"}
 
+# Load all needed Environment variables
 load_dotenv()
-
 AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
 AZURE_DEPLOYMENT_GPT = os.getenv("AZURE_DEPLOYMENT_GPT")
 AZURE_DEPLOYMENT_EMBEDDING = os.getenv("AZURE_DEPLOYMENT_EMBEDDING")
@@ -26,9 +28,15 @@ AZURE_DEPLOYMENT = os.getenv("AZURE_DEPLOYMENT_WHISPER")
 OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
 
 
+# simple checker if filename is allowed
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+'''
+Important Sorting function
+If multiple files were uploaded, Textbased files should have a higher priority than audio/video files
+Is needed for generating glossary terms out of Text files
+'''
 
 def sort_attachments(item):
     if item["mimetype"] == "application/pdf":
@@ -38,6 +46,7 @@ def sort_attachments(item):
     return 1
 
 
+# Instantiate LLM
 llm = AzureChatOpenAI(
     azure_endpoint=AZURE_ENDPOINT,
     azure_deployment=AZURE_DEPLOYMENT_GPT,
@@ -49,28 +58,32 @@ llm = AzureChatOpenAI(
     streaming=False,
 )
 
-
+# main upload method
 def upload_file_method_production(files, socket_id):
+
     files_as_dicts = []
     single_dict = {}
     files_as_dicts_json = ""
     texts = ""
     single_text = None
     whisper_prompt = ""
-    # SET TRUE IF CACHING SHOULD BE ACTIVATED -> FALSE IF NOT
-    USE_CACHE = True
+    # Set to true if you want to cache files in Sciebo/WebDav
+    USE_CACHE = False
 
+
+    # iterate over all files and add mimetype
     for file in files:
         print(file)
         filepath = file["filepath"]
         mimetype = mimetypes.guess_type(filepath)
         file["mimetype"] = mimetype[0]
 
-    # sort attachments so audio comes last
+    # sort all attachments so textbased files will be analyzed first
     sorted_attachments = sorted(files, key=sort_attachments)
 
-    for file in sorted_attachments:
 
+    # iterate over all sorted attachments
+    for file in sorted_attachments:
         filepath = file["filepath"]
         filehash = file["filehash"]
         file_id = file["id"] if "id" in file else file["file_id"]
@@ -78,10 +91,13 @@ def upload_file_method_production(files, socket_id):
         # download file to temp folder
         path = download_file_webdav(filepath, filename)
         mimetype = file["mimetype"]
+        # check if file was already analyzed based on filehash
         is_cached = check_if_cached(filehash)
 
         socketio.emit('case_generation', {'message': f'Analyzing "{filename}"'}, to=socket_id)
 
+        # check if file is allowed
+        # if file was cached before this if clause will be skipped
         if allowed_file(filename) and (not is_cached or not USE_CACHE):
             if "audio" in mimetype:
                 socketio.emit('case_generation', {'message': f'Transcribing Audio File ({filename})'}, to=socket_id)
@@ -193,7 +209,7 @@ def upload_file_method_production(files, socket_id):
 
         write_to_file(str(time.time()), files_as_dicts_json)
 
-        #delete_temp_folder(filehash)
+        delete_temp_folder(filehash)
 
     return files_as_dicts_json
 
