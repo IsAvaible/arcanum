@@ -13,6 +13,8 @@ from upload import upload_file_method_production
 
 load_dotenv()
 
+
+# Getting all Env Variables
 AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
 AZURE_DEPLOYMENT_GPT = os.getenv("AZURE_DEPLOYMENT_GPT")
 AZURE_DEPLOYMENT_EMBEDDING = os.getenv("AZURE_DEPLOYMENT_EMBEDDING")
@@ -49,16 +51,21 @@ def start_quering_llm(invokedPrompt, llm, parser, max_tries=3) -> dict:
     return chain_output
 
 
+# Method to generate one or more Cases
 def generate(request):
     if request.method == "POST":
         json_str = request.get_json(force=True)
+        # gets all attachments sent by user
         attachments = json_str["attachments"]
+        # gets socket_id to send message to frontend
         socket_id = json_str["socket_id"]
 
         socketio.emit('case_generation', {'message': 'Starting Case Generation...'}, to=socket_id)
 
+        # Prompt for generating JSON and including all context
         prompt = "Please create metadata for a new case based on the Context provided and return them in JSON! Please try include all necessary information that the context has!"
 
+        # Instantiating AzureOpenAI object for making prompts
         llm = AzureChatOpenAI(
             azure_endpoint=AZURE_ENDPOINT,
             azure_deployment=AZURE_DEPLOYMENT_GPT,
@@ -70,27 +77,37 @@ def generate(request):
             streaming=False,
         )
 
+        # Upload File method converts into Context (Text)
         context = upload_file_method_production(attachments, socket_id)
 
         socketio.emit('case_generation', {'message': 'Finalizing Case Generation...'}, to=socket_id)
+
+        # get system prompt for case generation
         system_prompt_langchain_parser = get_system_prompt("langchain_parser")
+        # validate json for multiple cases
         case_parser_json = JsonOutputParser(pydantic_object=CaseArray)
 
+        # set system prompt and context for LLM
         messages = [
             ("system", "{system_prompt}\n{format_instructions}"),
             ("human", "CONTEXT: {context}\n\nQUERY: {query}"),
         ]
 
+        # replace system prompt and format instructions for LLM
         promptLangchain = ChatPromptTemplate.from_messages(messages).partial(
             system_prompt=system_prompt_langchain_parser,
             format_instructions=case_parser_json.get_format_instructions(),
         )
+
+        # invoke prompt to get an answer
         promptLangchainInvoked = promptLangchain.invoke(
             {"context": context, "query": prompt}
         )
+
 
         response_dict = start_quering_llm(
             promptLangchainInvoked, llm, case_parser_json, max_tries=3
         )
 
+        # return case json
         return jsonify(response_dict), 200
