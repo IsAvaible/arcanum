@@ -10,6 +10,8 @@ from app import app
 from audio import split_audio_with_overlap
 from prompts import get_system_prompt
 
+
+# load Env Variables
 load_dotenv()
 
 AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
@@ -19,9 +21,13 @@ AZURE_DEPLOYMENT_WHISPER = os.getenv("AZURE_DEPLOYMENT_WHISPER")
 OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
 AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 
+# instantiate Azure
 client = AzureOpenAI(azure_endpoint=AZURE_ENDPOINT,
                      api_version=OPENAI_API_VERSION,
                      api_key=AZURE_OPENAI_API_KEY)
+
+split_length_ms = 300000
+split_length_s = split_length_ms/1000
 
 
 class Segment:
@@ -35,6 +41,7 @@ class Segment:
 
 
 def transcribe(file, texts, llm, path, filename, whisper_prompt):
+    # if text content was analyzed before, check here for any glossary terms
     if texts != "":
         system_prompt_langchain_parser = get_system_prompt("models")
         messages = [
@@ -51,22 +58,29 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
         response = chain.invoke(promptLangchainInvoked)
         whisper_prompt = response.content
 
+
+    # check file size because only 25Mb/request are allowed for Whisper transcription
     file_size_mb = os.stat(path).st_size / (1024 * 1024)
     texts += f" NEW AUDIO FILE {json.dumps(file)} - CONTENT: "
 
+    # define new dict for transcription
     data = {
-        "context": "transcription",
+        "type": "transcription",
         "segments": [],
     }
 
+    # if file greater 24Mb we need to split this file into multiple segments
     if float(file_size_mb) > 24.0:
-        segments = split_audio_with_overlap(path, segment_length_ms=300000, overlap_ms=500)
+        # get multiple split segments
+        segments = split_audio_with_overlap(path, segment_length_ms=split_length_ms, overlap_ms=500)
         for idx, segment in enumerate(segments):
             print(f"segment {idx}")
             path = os.path.join(
                 app.root_path, os.path.join(app.config["UPLOAD_FOLDER"], f"{filename}_{idx}.mp3")
             )
+            # save to mp3 format in temp folder
             segment.export(path, format="mp3")
+
             # Set up AzureChatOpenAI with the required configurations
             audio_file = open(path, "rb")
             response = client.audio.transcriptions.create(
@@ -79,6 +93,8 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
 
             segments = response.segments
             combined_segments = []
+
+            # to make the array not too large we are merging multiple (n = 4) transcription segments into one
             n = 4
             for i in range(0, len(segments), n):
                 group_segments = list(islice(segments, i, i + n))
@@ -87,7 +103,7 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
             data["segments"].extend(generated_dict)
         return data
     else:
-
+        # if audio file is lower than 24mb
         audio_file = open(path, "rb")
         response = client.audio.transcriptions.create(
             file=audio_file,
@@ -104,15 +120,16 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
             group_segments = list(islice(segments, i, i + n))
             combined_segments.append(combine_segments(group_segments))
 
+        # define data type
         data = {
-            "context": "transcription",
+            "type": "transcription",
             "segments": []
         }
         new_segments = generate_segment_dict(combined_segments)
         data["segments"] = new_segments
         return data
 
-
+# this will generate a better reading timestamp (XX:YY:ZZ)
 def convert_timestamp_to_str(ts):
     ts = int(ts)
     return "{:02d}:{:02d}:{:02d}".format(
@@ -121,14 +138,17 @@ def convert_timestamp_to_str(ts):
         ts % 60  # Sekunden
     )
 
-
+# Method to merge multiple segments into one bigger segments to reduce the size of the transcription array
 def combine_segments(group_segments):
     start = group_segments[0].start
     end = group_segments[-1].end
     text = ''.join([seg.text for seg in group_segments])
     return Segment(start, end, text)
 
-
+"""
+This method will generate a dictionary over the combined segments
+If there are splitted segments we need to adjust the start and end timestamp of the segments because Open AI Whisper will always start at 0 seconds for each segment uplaoded
+"""
 def generate_segment_dict(combined_segments, idx=0):
     new_segments = []
     for seg in combined_segments:
@@ -137,8 +157,8 @@ def generate_segment_dict(combined_segments, idx=0):
         text = seg.text
 
         if idx > 0:
-            start = int(start) + (300 * idx)
-            end = int(end) + (300 * idx)
+            start = int(start) + (split_length_s * idx)
+            end = int(end) + (split_length_s * idx)
 
         start_str = convert_timestamp_to_str(start)
         end_str = convert_timestamp_to_str(end)
