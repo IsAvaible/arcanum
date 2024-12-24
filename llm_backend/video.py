@@ -5,7 +5,7 @@ import subprocess
 import cv2
 
 from app import app
-from image import encode_image, image_to_openai, video_openai
+from image import encode_image, image_to_openai
 
 split_secs = 100
 
