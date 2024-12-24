@@ -6,22 +6,24 @@ from pdf2image import convert_from_path
 
 pytesseract.pytesseract.tesseract_cmd = os.getenv("TESSERACT_BIN")
 
-
+# read pdf file with pdf plumber and convert to text
 def create_text_chunks_pdfplumber(pdf_path):
     content = ""
 
+    # read pages of pdf file
     with pdfplumber.open(pdf_path) as pdf:
+        # iterate over pdf pages
         for page in pdf.pages:
-            # Extrahiere den gesamten Text auf der Seite
+            # extract content of page
             page_text = page.extract_text()
             if page_text:
                 content += page_text + "\n"
 
-            # Extrahiere Tabellen (falls vorhanden)
+            # extract tables if they exists
             tables = page.extract_tables()
             for table in tables:
                 for row in table:
-                    # Konvertiere jede Tabellenzeile in eine durch Tabulatoren getrennte Zeichenfolge
+                    # convert table into text
                     row_text = "\t".join(
                         [str(cell) if cell is not None else "" for cell in row]
                     )
@@ -29,7 +31,7 @@ def create_text_chunks_pdfplumber(pdf_path):
 
     return content
 
-
+# ocr method (unused)
 def create_text_chunks_ocr(pdf_path):
     pages = convert_from_path(pdf_path, 600)
     content = ""
