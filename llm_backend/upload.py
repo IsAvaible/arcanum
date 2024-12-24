@@ -99,11 +99,13 @@ def upload_file_method_production(files, socket_id):
         # check if file is allowed
         # if file was cached before this if clause will be skipped
         if allowed_file(filename) and (not is_cached or not USE_CACHE):
+            # upload audio file
             if "audio" in mimetype:
                 socketio.emit('case_generation', {'message': f'Transcribing Audio File ({filename})'}, to=socket_id)
                 transcription = transcribe(file, texts, llm, path, filename, whisper_prompt)
                 single_dict = transcription
                 texts += "  " + json.dumps(single_text, ensure_ascii=False)
+            # upload pdf file
             elif "pdf" in mimetype:
                 socketio.emit('case_generation', {'message': f'Analyzing PDF File ({filename})'}, to=socket_id)
                 texts += f" Content of PDF File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
@@ -113,6 +115,7 @@ def upload_file_method_production(files, socket_id):
                     "content": single_text
                 }
                 texts += " " + single_text
+            # upload html file
             elif "html" in mimetype:
                 socketio.emit('case_generation', {'message': f'Analyzing HTML File ({filename})'}, to=socket_id)
                 texts += f" Content of HTML File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
@@ -125,6 +128,7 @@ def upload_file_method_production(files, socket_id):
                     "type": "html",
                     "content": single_text
                 }
+            # upload text file
             elif mimetype == "text/plain":
                 socketio.emit('case_generation', {'message': f'Analyzing Text File ({filename})'}, to=socket_id)
                 texts += f" Content of Text File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
@@ -136,6 +140,7 @@ def upload_file_method_production(files, socket_id):
                     "type": "txt",
                     "content": single_text
                 }
+            # upload image file
             elif "image" in mimetype:
                 socketio.emit('case_generation', {'message': f'Analyzing Image File ({filename})'}, to=socket_id)
                 texts += f" Content of Image File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
@@ -159,9 +164,11 @@ def upload_file_method_production(files, socket_id):
                     "type": mimetype,
                     "content": single_text
                 }
+            # upload video file
             elif "video" in mimetype:
                 socketio.emit('case_generation', {'message': f'Analyzing Video File ({filename})'}, to=socket_id)
                 texts += f" Content of Video File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
+
 
                 frame_path, audio_path = extract_data_from_video(path, filehash)
                 frames = get_all_frames_in_dir(frame_path)
@@ -176,21 +183,25 @@ def upload_file_method_production(files, socket_id):
             else:
                 socketio.emit('case_generation', {'message': f'File ({filename}) cannot be processed'}, to=socket_id)
 
-        ### CACHE TO MINIMIZE AZURE API CALLS
 
+        ### CACHE TO MINIMIZE AZURE API CALLS
         if is_cached and USE_CACHE:
+            # get cached file
             socketio.emit('case_generation', {'message': f'Found file in cache ({filename})'}, to=socket_id)
             print("USING CACHE")
             cache_path = download_cache(filehash)
             txt = read_from_file(cache_path)
             content_dict = text_to_dict(txt)
         else:
+            # if not cached -> upload to Sciebo
             socketio.emit('case_generation', {'message': f'Saving file in cache ({filename})'}, to=socket_id)
             print("NOT USING CACHE")
             content_dict = single_dict
             file_path = write_to_file(filehash, json.dumps(content_dict, ensure_ascii=False, indent=2))
             upload_cache_file(file_path, filehash)
 
+
+        # define a dictionary for a file
         file_as_dict = {
             "filename": filename,
             "mimetype": mimetype,
@@ -207,21 +218,9 @@ def upload_file_method_production(files, socket_id):
         files_as_dicts.append(file_as_dict)
         files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False, indent=2)
 
+        # debug
         write_to_file(str(time.time()), files_as_dicts_json)
-
+        # delete temp folder
         delete_temp_folder(filehash)
 
     return files_as_dicts_json
-
-
-def merge_two_dicts(x, y):
-    z = x.copy()  # start with keys and values of x
-    z.update(y)  # modifies z with keys and values of y
-    return z
-
-
-def convert_list_to_dict(lst):
-    res_dict = {}
-    for i in range(0, len(lst), 2):
-        res_dict[lst[i]] = lst[i + 1]
-    return res_dict
