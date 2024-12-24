@@ -100,6 +100,8 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
                 group_segments = list(islice(segments, i, i + n))
                 combined_segments.append(combine_segments(group_segments))
             generated_dict = generate_segment_dict(combined_segments, idx)
+
+            # attach generated dictionary to data dictionary
             data["segments"].extend(generated_dict)
         return data
     else:
@@ -112,6 +114,7 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
             prompt=whisper_prompt,
             timestamp_granularities=["segment"]
         )
+
 
         segments = response.segments
         combined_segments = []
