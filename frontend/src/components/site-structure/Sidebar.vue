@@ -25,6 +25,7 @@ const menuItems: { label: string; items: MenuItem[] }[] = [
       { path: '/', label: 'Home', icon: 'pi pi-home' },
       { path: '/chat', label: 'Chat', icon: 'pi pi-comments' },
       { path: '/notifications', label: 'Notifications', icon: 'pi pi-bell' },
+      { path: '/glossary', label: 'Glossary', icon: 'pi pi-book' },
       { path: '/cases', label: 'Cases', icon: 'pi pi-briefcase' },
     ],
   },
