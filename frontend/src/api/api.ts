@@ -259,86 +259,6 @@ export type CaseBasePriorityEnum = typeof CaseBasePriorityEnum[keyof typeof Case
 /**
  * 
  * @export
- * @interface CasePut
- */
-export interface CasePut {
-    /**
-     * Title of the case.
-     * @type {string}
-     * @memberof CasePut
-     */
-    'title': string;
-    /**
-     * Description of the case.
-     * @type {string}
-     * @memberof CasePut
-     */
-    'description': string;
-    /**
-     * Solution for the case.
-     * @type {string}
-     * @memberof CasePut
-     */
-    'solution'?: string;
-    /**
-     * Person responsible for the case.
-     * @type {Array<string>}
-     * @memberof CasePut
-     */
-    'assignee'?: Array<string>;
-    /**
-     * Status of the case.
-     * @type {string}
-     * @memberof CasePut
-     */
-    'status'?: CasePutStatusEnum;
-    /**
-     * Type of the case.
-     * @type {string}
-     * @memberof CasePut
-     */
-    'case_type'?: CasePutCaseTypeEnum;
-    /**
-     * Priority level of the case.
-     * @type {string}
-     * @memberof CasePut
-     */
-    'priority'?: CasePutPriorityEnum;
-    /**
-     * Attached files on upload.
-     * @type {Array<File>}
-     * @memberof CasePut
-     */
-    'files'?: Array<File>;
-}
-
-export const CasePutStatusEnum = {
-    Open: 'Open',
-    InProgress: 'In Progress',
-    Solved: 'Solved',
-    Closed: 'Closed'
-} as const;
-
-export type CasePutStatusEnum = typeof CasePutStatusEnum[keyof typeof CasePutStatusEnum];
-export const CasePutCaseTypeEnum = {
-    Problem: 'Problem',
-    Incident: 'Incident',
-    Change: 'Change',
-    Faq: 'FAQ'
-} as const;
-
-export type CasePutCaseTypeEnum = typeof CasePutCaseTypeEnum[keyof typeof CasePutCaseTypeEnum];
-export const CasePutPriorityEnum = {
-    Low: 'Low',
-    Medium: 'Medium',
-    High: 'High'
-} as const;
-
-export type CasePutPriorityEnum = typeof CasePutPriorityEnum[keyof typeof CasePutPriorityEnum];
-
-/**
- * 
- * @export
  * @interface CasesIdAttachmentsPost200Response
  */
 export interface CasesIdAttachmentsPost200Response {
@@ -418,119 +338,10 @@ export interface ChatWithMessages {
     'updatedAt'?: string;
     /**
      * 
-     * @type {Array<ChatWithMessagesAllOfMessages>}
+     * @type {Array<Message>}
      * @memberof ChatWithMessages
      */
-    'messages': Array<ChatWithMessagesAllOfMessages>;
-}
-/**
- * 
- * @export
- * @interface ChatWithMessagesAllOfMessages
- */
-export interface ChatWithMessagesAllOfMessages {
-    /**
-     * Message ID.
-     * @type {number}
-     * @memberof ChatWithMessagesAllOfMessages
-     */
-    'id': number;
-    /**
-     * ID of the chat the message belongs to.
-     * @type {number}
-     * @memberof ChatWithMessagesAllOfMessages
-     */
-    'chatId': number;
-    /**
-     * Role of the message sender.
-     * @type {string}
-     * @memberof ChatWithMessagesAllOfMessages
-     */
-    'role': ChatWithMessagesAllOfMessagesRoleEnum;
-    /**
-     * Content of the message.
-     * @type {string}
-     * @memberof ChatWithMessagesAllOfMessages
-     */
-    'content': string;
-    /**
-     * Time the message was sent.
-     * @type {string}
-     * @memberof ChatWithMessagesAllOfMessages
-     */
-    'timestamp': string;
-}
-
-export const ChatWithMessagesAllOfMessagesRoleEnum = {
-    User: 'user',
-    Assistant: 'assistant'
-} as const;
-
-export type ChatWithMessagesAllOfMessagesRoleEnum = typeof ChatWithMessagesAllOfMessagesRoleEnum[keyof typeof ChatWithMessagesAllOfMessagesRoleEnum];
-
-/**
- * 
- * @export
- * @interface ChatsChatIdMessagesMessageIdDelete200Response
- */
-export interface ChatsChatIdMessagesMessageIdDelete200Response {
-    /**
-     * 
-     * @type {string}
-     * @memberof ChatsChatIdMessagesMessageIdDelete200Response
-     */
-    'message'?: string;
-}
-/**
- * 
- * @export
- * @interface ChatsChatIdMessagesMessageIdPutRequest
- */
-export interface ChatsChatIdMessagesMessageIdPutRequest {
-    /**
-     * The new content of the message.
-     * @type {string}
-     * @memberof ChatsChatIdMessagesMessageIdPutRequest
-     */
-    'content': string;
-    /**
-     * Optional socket ID for sending the updated message to the LLM.
-     * @type {string}
-     * @memberof ChatsChatIdMessagesMessageIdPutRequest
-     */
-    'socketId'?: string;
-}
-/**
- * 
- * @export
- * @interface ChatsIdMessagePostRequest
- */
-export interface ChatsIdMessagePostRequest {
-    /**
-     * Content of the message.
-     * @type {string}
-     * @memberof ChatsIdMessagePostRequest
-     */
-    'content': string;
-    /**
-     * ID for tracking responses in real-time.
-     * @type {string}
-     * @memberof ChatsIdMessagePostRequest
-     */
-    'socketId': string;
-}
-/**
- * 
- * @export
- * @interface ChatsIdPutRequest
- */
-export interface ChatsIdPutRequest {
-    /**
-     * 
-     * @type {string}
-     * @memberof ChatsIdPutRequest
-     */
-    'title'?: string;
+    'messages': Array<Message>;
 }
 /**
  * 
@@ -543,20 +354,7 @@ export interface ChatsPost201Response {
      * @type {number}
      * @memberof ChatsPost201Response
      */
-    'chatId'?: number;
-}
-/**
- * 
- * @export
- * @interface ChatsPostRequest
- */
-export interface ChatsPostRequest {
-    /**
-     * An optional title for the chat.
-     * @type {string}
-     * @memberof ChatsPostRequest
-     */
-    'title'?: string;
+    'chatId': number;
 }
 /**
  * 
@@ -569,19 +367,19 @@ export interface Message {
      * @type {number}
      * @memberof Message
      */
-    'id'?: number;
+    'id': number;
     /**
      * ID of the chat the message belongs to.
      * @type {number}
      * @memberof Message
      */
-    'chatId'?: number;
+    'chatId': number;
     /**
      * Role of the message sender.
      * @type {string}
      * @memberof Message
      */
-    'role'?: MessageRoleEnum;
+    'role': MessageRoleEnum;
     /**
      * Content of the message.
      * @type {string}
@@ -593,7 +391,7 @@ export interface Message {
      * @type {string}
      * @memberof Message
      */
-    'timestamp'?: string;
+    'timestamp': string;
 }
 
 export const MessageRoleEnum = {
@@ -1013,59 +811,22 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         * Deletes a specific message by its ID within a given chat.
-         * @summary Delete message
-         * @param {number} chatId The ID of the chat containing the message.
-         * @param {number} messageId The ID of the message to delete.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        chatsChatIdMessagesMessageIdDelete: async (chatId: number, messageId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'chatId' is not null or undefined
-            assertParamExists('chatsChatIdMessagesMessageIdDelete', 'chatId', chatId)
-            // verify required parameter 'messageId' is not null or undefined
-            assertParamExists('chatsChatIdMessagesMessageIdDelete', 'messageId', messageId)
-            const localVarPath = `/chats/{chatId}/messages/{messageId}`
-                .replace(`{${"chatId"}}`, encodeURIComponent(String(chatId)))
-                .replace(`{${"messageId"}}`, encodeURIComponent(String(messageId)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-    
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
          * Updates a specific message within a given chat.
          * @summary Update message
          * @param {number} chatId The ID of the chat containing the message.
          * @param {number} messageId The ID of the message to update.
-         * @param {ChatsChatIdMessagesMessageIdPutRequest} chatsChatIdMessagesMessageIdPutRequest 
+         * @param {string} content The new content of the message.
+         * @param {string} [socketId] Optional socket ID for sending the updated message to the LLM.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        chatsChatIdMessagesMessageIdPut: async (chatId: number, messageId: number, chatsChatIdMessagesMessageIdPutRequest: ChatsChatIdMessagesMessageIdPutRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        chatsChatIdMessagesMessageIdPut: async (chatId: number, messageId: number, content: string, socketId?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'chatId' is not null or undefined
             assertParamExists('chatsChatIdMessagesMessageIdPut', 'chatId', chatId)
             // verify required parameter 'messageId' is not null or undefined
             assertParamExists('chatsChatIdMessagesMessageIdPut', 'messageId', messageId)
-            // verify required parameter 'chatsChatIdMessagesMessageIdPutRequest' is not null or undefined
-            assertParamExists('chatsChatIdMessagesMessageIdPut', 'chatsChatIdMessagesMessageIdPutRequest', chatsChatIdMessagesMessageIdPutRequest)
+            // verify required parameter 'content' is not null or undefined
+            assertParamExists('chatsChatIdMessagesMessageIdPut', 'content', content)
             const localVarPath = `/chats/{chatId}/messages/{messageId}`
                 .replace(`{${"chatId"}}`, encodeURIComponent(String(chatId)))
                 .replace(`{${"messageId"}}`, encodeURIComponent(String(messageId)));
@@ -1079,15 +840,24 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
 
 
+            if (content !== undefined) { 
+                localVarFormParams.append('content', content as any);
+            }
     
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
+            if (socketId !== undefined) { 
+                localVarFormParams.append('socketId', socketId as any);
+            }
+    
+    
+            localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+    
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(chatsChatIdMessagesMessageIdPutRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = localVarFormParams;
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -1230,14 +1000,19 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * Adds a user message to the specified chat and sends context to the LLM.
          * @summary Add a message to a chat
          * @param {number} id 
-         * @param {ChatsIdMessagePostRequest} [chatsIdMessagePostRequest] 
+         * @param {string} content Content of the message.
+         * @param {string} socketId ID for tracking responses in real-time.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        chatsIdMessagePost: async (id: number, chatsIdMessagePostRequest?: ChatsIdMessagePostRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        chatsIdMessagesPost: async (id: number, content: string, socketId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
-            assertParamExists('chatsIdMessagePost', 'id', id)
-            const localVarPath = `/chats/{id}/message`
+            assertParamExists('chatsIdMessagesPost', 'id', id)
+            // verify required parameter 'content' is not null or undefined
+            assertParamExists('chatsIdMessagesPost', 'content', content)
+            // verify required parameter 'socketId' is not null or undefined
+            assertParamExists('chatsIdMessagesPost', 'socketId', socketId)
+            const localVarPath = `/chats/{id}/messages`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1249,15 +1024,24 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
 
 
+            if (content !== undefined) { 
+                localVarFormParams.append('content', content as any);
+            }
     
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
+            if (socketId !== undefined) { 
+                localVarFormParams.append('socketId', socketId as any);
+            }
+    
+    
+            localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+    
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(chatsIdMessagePostRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = localVarFormParams;
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -1268,11 +1052,11 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * Updates the title of a specified chat.
          * @summary Update chat title
          * @param {number} id 
-         * @param {ChatsIdPutRequest} [chatsIdPutRequest] 
+         * @param {string} [title] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        chatsIdPut: async (id: number, chatsIdPutRequest?: ChatsIdPutRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        chatsIdPut: async (id: number, title?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
             assertParamExists('chatsIdPut', 'id', id)
             const localVarPath = `/chats/{id}`
@@ -1287,15 +1071,20 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
 
 
+            if (title !== undefined) { 
+                localVarFormParams.append('title', title as any);
+            }
     
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
+    
+            localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+    
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(chatsIdPutRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = localVarFormParams;
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -1305,11 +1094,11 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * Creates a new chat instance.
          * @summary Create a new chat
-         * @param {ChatsPostRequest} [chatsPostRequest] 
+         * @param {string} [title] An optional title for the chat.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        chatsPost: async (chatsPostRequest?: ChatsPostRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        chatsPost: async (title?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/chats`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1321,15 +1110,20 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
 
 
+            if (title !== undefined) { 
+                localVarFormParams.append('title', title as any);
+            }
     
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
+    
+            localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+    
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(chatsPostRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = localVarFormParams;
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -1340,15 +1134,24 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * Update a draft case with additional details and mark it as confirmed.
          * @summary Confirm and update a draft case.
          * @param {number} id ID of the case to confirm.
-         * @param {CasePut} casePut 
+         * @param {string} title Title of the case.
+         * @param {string} description Description of the case.
+         * @param {string} [solution] Solution for the case.
+         * @param {Array<string>} [assignee] Person responsible for the case.
+         * @param {ConfirmCaseIdPutStatusEnum} [status] Status of the case.
+         * @param {ConfirmCaseIdPutCaseTypeEnum} [caseType] Type of the case.
+         * @param {ConfirmCaseIdPutPriorityEnum} [priority] Priority level of the case.
+         * @param {Array<File>} [files] Attached files on upload.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        confirmCaseIdPut: async (id: number, casePut: CasePut, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        confirmCaseIdPut: async (id: number, title: string, description: string, solution?: string, assignee?: Array<string>, status?: ConfirmCaseIdPutStatusEnum, caseType?: ConfirmCaseIdPutCaseTypeEnum, priority?: ConfirmCaseIdPutPriorityEnum, files?: Array<File>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
             assertParamExists('confirmCaseIdPut', 'id', id)
-            // verify required parameter 'casePut' is not null or undefined
-            assertParamExists('confirmCaseIdPut', 'casePut', casePut)
+            // verify required parameter 'title' is not null or undefined
+            assertParamExists('confirmCaseIdPut', 'title', title)
+            // verify required parameter 'description' is not null or undefined
+            assertParamExists('confirmCaseIdPut', 'description', description)
             const localVarPath = `/confirmCase/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -1361,15 +1164,50 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
 
+
+            if (title !== undefined) { 
+                localVarFormParams.append('title', title as any);
+            }
+    
+            if (description !== undefined) { 
+                localVarFormParams.append('description', description as any);
+            }
+    
+            if (solution !== undefined) { 
+                localVarFormParams.append('solution', solution as any);
+            }
+                if (assignee) {
+                localVarFormParams.append('assignee', assignee.join(COLLECTION_FORMATS.csv));
+            }
 
     
-            localVarHeaderParameter['Content-Type'] = 'application/json';
+            if (status !== undefined) { 
+                localVarFormParams.append('status', status as any);
+            }
+    
+            if (caseType !== undefined) { 
+                localVarFormParams.append('case_type', caseType as any);
+            }
+    
+            if (priority !== undefined) { 
+                localVarFormParams.append('priority', priority as any);
+            }
+                if (files) {
+                files.forEach((element) => {
+                    localVarFormParams.append('files', element as any);
+                })
+            }
 
+    
+    
+            localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+    
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(casePut, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = localVarFormParams;
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -1554,30 +1392,17 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Deletes a specific message by its ID within a given chat.
-         * @summary Delete message
-         * @param {number} chatId The ID of the chat containing the message.
-         * @param {number} messageId The ID of the message to delete.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async chatsChatIdMessagesMessageIdDelete(chatId: number, messageId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ChatsChatIdMessagesMessageIdDelete200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.chatsChatIdMessagesMessageIdDelete(chatId, messageId, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['DefaultApi.chatsChatIdMessagesMessageIdDelete']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
          * Updates a specific message within a given chat.
          * @summary Update message
          * @param {number} chatId The ID of the chat containing the message.
          * @param {number} messageId The ID of the message to update.
-         * @param {ChatsChatIdMessagesMessageIdPutRequest} chatsChatIdMessagesMessageIdPutRequest 
+         * @param {string} content The new content of the message.
+         * @param {string} [socketId] Optional socket ID for sending the updated message to the LLM.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async chatsChatIdMessagesMessageIdPut(chatId: number, messageId: number, chatsChatIdMessagesMessageIdPutRequest: ChatsChatIdMessagesMessageIdPutRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ChatWithMessages>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.chatsChatIdMessagesMessageIdPut(chatId, messageId, chatsChatIdMessagesMessageIdPutRequest, options);
+        async chatsChatIdMessagesMessageIdPut(chatId: number, messageId: number, content: string, socketId?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ChatWithMessages>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.chatsChatIdMessagesMessageIdPut(chatId, messageId, content, socketId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.chatsChatIdMessagesMessageIdPut']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1637,26 +1462,27 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * Adds a user message to the specified chat and sends context to the LLM.
          * @summary Add a message to a chat
          * @param {number} id 
-         * @param {ChatsIdMessagePostRequest} [chatsIdMessagePostRequest] 
+         * @param {string} content Content of the message.
+         * @param {string} socketId ID for tracking responses in real-time.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async chatsIdMessagePost(id: number, chatsIdMessagePostRequest?: ChatsIdMessagePostRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.chatsIdMessagePost(id, chatsIdMessagePostRequest, options);
+        async chatsIdMessagesPost(id: number, content: string, socketId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<Message>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.chatsIdMessagesPost(id, content, socketId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['DefaultApi.chatsIdMessagePost']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.chatsIdMessagesPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * Updates the title of a specified chat.
          * @summary Update chat title
          * @param {number} id 
-         * @param {ChatsIdPutRequest} [chatsIdPutRequest] 
+         * @param {string} [title] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async chatsIdPut(id: number, chatsIdPutRequest?: ChatsIdPutRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Chat>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.chatsIdPut(id, chatsIdPutRequest, options);
+        async chatsIdPut(id: number, title?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Chat>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.chatsIdPut(id, title, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.chatsIdPut']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1664,12 +1490,12 @@ export const DefaultApiFp = function(configuration?: Configuration) {
         /**
          * Creates a new chat instance.
          * @summary Create a new chat
-         * @param {ChatsPostRequest} [chatsPostRequest] 
+         * @param {string} [title] An optional title for the chat.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async chatsPost(chatsPostRequest?: ChatsPostRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ChatsPost201Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.chatsPost(chatsPostRequest, options);
+        async chatsPost(title?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ChatsPost201Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.chatsPost(title, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.chatsPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1678,12 +1504,19 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * Update a draft case with additional details and mark it as confirmed.
          * @summary Confirm and update a draft case.
          * @param {number} id ID of the case to confirm.
-         * @param {CasePut} casePut 
+         * @param {string} title Title of the case.
+         * @param {string} description Description of the case.
+         * @param {string} [solution] Solution for the case.
+         * @param {Array<string>} [assignee] Person responsible for the case.
+         * @param {ConfirmCaseIdPutStatusEnum} [status] Status of the case.
+         * @param {ConfirmCaseIdPutCaseTypeEnum} [caseType] Type of the case.
+         * @param {ConfirmCaseIdPutPriorityEnum} [priority] Priority level of the case.
+         * @param {Array<File>} [files] Attached files on upload.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async confirmCaseIdPut(id: number, casePut: CasePut, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Case>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.confirmCaseIdPut(id, casePut, options);
+        async confirmCaseIdPut(id: number, title: string, description: string, solution?: string, assignee?: Array<string>, status?: ConfirmCaseIdPutStatusEnum, caseType?: ConfirmCaseIdPutCaseTypeEnum, priority?: ConfirmCaseIdPutPriorityEnum, files?: Array<File>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Case>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.confirmCaseIdPut(id, title, description, solution, assignee, status, caseType, priority, files, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.confirmCaseIdPut']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1792,16 +1625,6 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
             return localVarFp.casesPost(requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(axios, basePath));
         },
         /**
-         * Deletes a specific message by its ID within a given chat.
-         * @summary Delete message
-         * @param {DefaultApiChatsChatIdMessagesMessageIdDeleteRequest} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        chatsChatIdMessagesMessageIdDelete(requestParameters: DefaultApiChatsChatIdMessagesMessageIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<ChatsChatIdMessagesMessageIdDelete200Response> {
-            return localVarFp.chatsChatIdMessagesMessageIdDelete(requestParameters.chatId, requestParameters.messageId, options).then((request) => request(axios, basePath));
-        },
-        /**
          * Updates a specific message within a given chat.
          * @summary Update message
          * @param {DefaultApiChatsChatIdMessagesMessageIdPutRequest} requestParameters Request parameters.
@@ -1809,7 +1632,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         chatsChatIdMessagesMessageIdPut(requestParameters: DefaultApiChatsChatIdMessagesMessageIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<ChatWithMessages> {
-            return localVarFp.chatsChatIdMessagesMessageIdPut(requestParameters.chatId, requestParameters.messageId, requestParameters.chatsChatIdMessagesMessageIdPutRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.chatsChatIdMessagesMessageIdPut(requestParameters.chatId, requestParameters.messageId, requestParameters.content, requestParameters.socketId, options).then((request) => request(axios, basePath));
         },
         /**
          * Retrieves all chats, ordered by creation date in descending order.
@@ -1853,12 +1676,12 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
         /**
          * Adds a user message to the specified chat and sends context to the LLM.
          * @summary Add a message to a chat
-         * @param {DefaultApiChatsIdMessagePostRequest} requestParameters Request parameters.
+         * @param {DefaultApiChatsIdMessagesPostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        chatsIdMessagePost(requestParameters: DefaultApiChatsIdMessagePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.chatsIdMessagePost(requestParameters.id, requestParameters.chatsIdMessagePostRequest, options).then((request) => request(axios, basePath));
+        chatsIdMessagesPost(requestParameters: DefaultApiChatsIdMessagesPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<Message>> {
+            return localVarFp.chatsIdMessagesPost(requestParameters.id, requestParameters.content, requestParameters.socketId, options).then((request) => request(axios, basePath));
         },
         /**
          * Updates the title of a specified chat.
@@ -1868,7 +1691,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         chatsIdPut(requestParameters: DefaultApiChatsIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<Chat> {
-            return localVarFp.chatsIdPut(requestParameters.id, requestParameters.chatsIdPutRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.chatsIdPut(requestParameters.id, requestParameters.title, options).then((request) => request(axios, basePath));
         },
         /**
          * Creates a new chat instance.
@@ -1878,7 +1701,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         chatsPost(requestParameters: DefaultApiChatsPostRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<ChatsPost201Response> {
-            return localVarFp.chatsPost(requestParameters.chatsPostRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.chatsPost(requestParameters.title, options).then((request) => request(axios, basePath));
         },
         /**
          * Update a draft case with additional details and mark it as confirmed.
@@ -1888,7 +1711,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         confirmCaseIdPut(requestParameters: DefaultApiConfirmCaseIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<Case> {
-            return localVarFp.confirmCaseIdPut(requestParameters.id, requestParameters.casePut, options).then((request) => request(axios, basePath));
+            return localVarFp.confirmCaseIdPut(requestParameters.id, requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(axios, basePath));
         },
         /**
          * Upload files, process them, and create draft cases.
@@ -2128,27 +1951,6 @@ export interface DefaultApiCasesPostRequest {
 }
 
 /**
- * Request parameters for chatsChatIdMessagesMessageIdDelete operation in DefaultApi.
- * @export
- * @interface DefaultApiChatsChatIdMessagesMessageIdDeleteRequest
- */
-export interface DefaultApiChatsChatIdMessagesMessageIdDeleteRequest {
-    /**
-     * The ID of the chat containing the message.
-     * @type {number}
-     * @memberof DefaultApiChatsChatIdMessagesMessageIdDelete
-     */
-    readonly chatId: number
-
-    /**
-     * The ID of the message to delete.
-     * @type {number}
-     * @memberof DefaultApiChatsChatIdMessagesMessageIdDelete
-     */
-    readonly messageId: number
-}
-
-/**
  * Request parameters for chatsChatIdMessagesMessageIdPut operation in DefaultApi.
  * @export
  * @interface DefaultApiChatsChatIdMessagesMessageIdPutRequest
@@ -2169,11 +1971,18 @@ export interface DefaultApiChatsChatIdMessagesMessageIdPutRequest {
     readonly messageId: number
 
     /**
-     * 
-     * @type {ChatsChatIdMessagesMessageIdPutRequest}
+     * The new content of the message.
+     * @type {string}
      * @memberof DefaultApiChatsChatIdMessagesMessageIdPut
      */
-    readonly chatsChatIdMessagesMessageIdPutRequest: ChatsChatIdMessagesMessageIdPutRequest
+    readonly content: string
+
+    /**
+     * Optional socket ID for sending the updated message to the LLM.
+     * @type {string}
+     * @memberof DefaultApiChatsChatIdMessagesMessageIdPut
+     */
+    readonly socketId?: string
 }
 
 /**
@@ -2219,24 +2028,31 @@ export interface DefaultApiChatsIdGetRequest {
 }
 
 /**
- * Request parameters for chatsIdMessagePost operation in DefaultApi.
+ * Request parameters for chatsIdMessagesPost operation in DefaultApi.
  * @export
- * @interface DefaultApiChatsIdMessagePostRequest
+ * @interface DefaultApiChatsIdMessagesPostRequest
  */
-export interface DefaultApiChatsIdMessagePostRequest {
+export interface DefaultApiChatsIdMessagesPostRequest {
     /**
      * 
      * @type {number}
-     * @memberof DefaultApiChatsIdMessagePost
+     * @memberof DefaultApiChatsIdMessagesPost
      */
     readonly id: number
 
     /**
-     * 
-     * @type {ChatsIdMessagePostRequest}
-     * @memberof DefaultApiChatsIdMessagePost
+     * Content of the message.
+     * @type {string}
+     * @memberof DefaultApiChatsIdMessagesPost
      */
-    readonly chatsIdMessagePostRequest?: ChatsIdMessagePostRequest
+    readonly content: string
+
+    /**
+     * ID for tracking responses in real-time.
+     * @type {string}
+     * @memberof DefaultApiChatsIdMessagesPost
+     */
+    readonly socketId: string
 }
 
 /**
@@ -2254,10 +2070,10 @@ export interface DefaultApiChatsIdPutRequest {
 
     /**
      * 
-     * @type {ChatsIdPutRequest}
+     * @type {string}
      * @memberof DefaultApiChatsIdPut
      */
-    readonly chatsIdPutRequest?: ChatsIdPutRequest
+    readonly title?: string
 }
 
 /**
@@ -2267,11 +2083,11 @@ export interface DefaultApiChatsIdPutRequest {
  */
 export interface DefaultApiChatsPostRequest {
     /**
-     * 
-     * @type {ChatsPostRequest}
+     * An optional title for the chat.
+     * @type {string}
      * @memberof DefaultApiChatsPost
      */
-    readonly chatsPostRequest?: ChatsPostRequest
+    readonly title?: string
 }
 
 /**
@@ -2288,11 +2104,60 @@ export interface DefaultApiConfirmCaseIdPutRequest {
     readonly id: number
 
     /**
-     * 
-     * @type {CasePut}
+     * Title of the case.
+     * @type {string}
      * @memberof DefaultApiConfirmCaseIdPut
      */
-    readonly casePut: CasePut
+    readonly title: string
+
+    /**
+     * Description of the case.
+     * @type {string}
+     * @memberof DefaultApiConfirmCaseIdPut
+     */
+    readonly description: string
+
+    /**
+     * Solution for the case.
+     * @type {string}
+     * @memberof DefaultApiConfirmCaseIdPut
+     */
+    readonly solution?: string
+
+    /**
+     * Person responsible for the case.
+     * @type {Array<string>}
+     * @memberof DefaultApiConfirmCaseIdPut
+     */
+    readonly assignee?: Array<string>
+
+    /**
+     * Status of the case.
+     * @type {string}
+     * @memberof DefaultApiConfirmCaseIdPut
+     */
+    readonly status?: ConfirmCaseIdPutStatusEnum
+
+    /**
+     * Type of the case.
+     * @type {string}
+     * @memberof DefaultApiConfirmCaseIdPut
+     */
+    readonly caseType?: ConfirmCaseIdPutCaseTypeEnum
+
+    /**
+     * Priority level of the case.
+     * @type {string}
+     * @memberof DefaultApiConfirmCaseIdPut
+     */
+    readonly priority?: ConfirmCaseIdPutPriorityEnum
+
+    /**
+     * Attached files on upload.
+     * @type {Array<File>}
+     * @memberof DefaultApiConfirmCaseIdPut
+     */
+    readonly files?: Array<File>
 }
 
 /**
@@ -2419,18 +2284,6 @@ export class DefaultApi extends BaseAPI {
     }
 
     /**
-     * Deletes a specific message by its ID within a given chat.
-     * @summary Delete message
-     * @param {DefaultApiChatsChatIdMessagesMessageIdDeleteRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof DefaultApi
-     */
-    public chatsChatIdMessagesMessageIdDelete(requestParameters: DefaultApiChatsChatIdMessagesMessageIdDeleteRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).chatsChatIdMessagesMessageIdDelete(requestParameters.chatId, requestParameters.messageId, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
      * Updates a specific message within a given chat.
      * @summary Update message
      * @param {DefaultApiChatsChatIdMessagesMessageIdPutRequest} requestParameters Request parameters.
@@ -2439,7 +2292,7 @@ export class DefaultApi extends BaseAPI {
      * @memberof DefaultApi
      */
     public chatsChatIdMessagesMessageIdPut(requestParameters: DefaultApiChatsChatIdMessagesMessageIdPutRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).chatsChatIdMessagesMessageIdPut(requestParameters.chatId, requestParameters.messageId, requestParameters.chatsChatIdMessagesMessageIdPutRequest, options).then((request) => request(this.axios, this.basePath));
+        return DefaultApiFp(this.configuration).chatsChatIdMessagesMessageIdPut(requestParameters.chatId, requestParameters.messageId, requestParameters.content, requestParameters.socketId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -2492,13 +2345,13 @@ export class DefaultApi extends BaseAPI {
     /**
      * Adds a user message to the specified chat and sends context to the LLM.
      * @summary Add a message to a chat
-     * @param {DefaultApiChatsIdMessagePostRequest} requestParameters Request parameters.
+     * @param {DefaultApiChatsIdMessagesPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof DefaultApi
      */
-    public chatsIdMessagePost(requestParameters: DefaultApiChatsIdMessagePostRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).chatsIdMessagePost(requestParameters.id, requestParameters.chatsIdMessagePostRequest, options).then((request) => request(this.axios, this.basePath));
+    public chatsIdMessagesPost(requestParameters: DefaultApiChatsIdMessagesPostRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).chatsIdMessagesPost(requestParameters.id, requestParameters.content, requestParameters.socketId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -2510,7 +2363,7 @@ export class DefaultApi extends BaseAPI {
      * @memberof DefaultApi
      */
     public chatsIdPut(requestParameters: DefaultApiChatsIdPutRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).chatsIdPut(requestParameters.id, requestParameters.chatsIdPutRequest, options).then((request) => request(this.axios, this.basePath));
+        return DefaultApiFp(this.configuration).chatsIdPut(requestParameters.id, requestParameters.title, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -2522,7 +2375,7 @@ export class DefaultApi extends BaseAPI {
      * @memberof DefaultApi
      */
     public chatsPost(requestParameters: DefaultApiChatsPostRequest = {}, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).chatsPost(requestParameters.chatsPostRequest, options).then((request) => request(this.axios, this.basePath));
+        return DefaultApiFp(this.configuration).chatsPost(requestParameters.title, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -2534,7 +2387,7 @@ export class DefaultApi extends BaseAPI {
      * @memberof DefaultApi
      */
     public confirmCaseIdPut(requestParameters: DefaultApiConfirmCaseIdPutRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).confirmCaseIdPut(requestParameters.id, requestParameters.casePut, options).then((request) => request(this.axios, this.basePath));
+        return DefaultApiFp(this.configuration).confirmCaseIdPut(requestParameters.id, requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -2608,5 +2461,34 @@ export const CasesPostPriorityEnum = {
     High: 'High'
 } as const;
 export type CasesPostPriorityEnum = typeof CasesPostPriorityEnum[keyof typeof CasesPostPriorityEnum];
+/**
+ * @export
+ */
+export const ConfirmCaseIdPutStatusEnum = {
+    Open: 'Open',
+    InProgress: 'In Progress',
+    Solved: 'Solved',
+    Closed: 'Closed'
+} as const;
+export type ConfirmCaseIdPutStatusEnum = typeof ConfirmCaseIdPutStatusEnum[keyof typeof ConfirmCaseIdPutStatusEnum];
+/**
+ * @export
+ */
+export const ConfirmCaseIdPutCaseTypeEnum = {
+    Problem: 'Problem',
+    Incident: 'Incident',
+    Change: 'Change',
+    Faq: 'FAQ'
+} as const;
+export type ConfirmCaseIdPutCaseTypeEnum = typeof ConfirmCaseIdPutCaseTypeEnum[keyof typeof ConfirmCaseIdPutCaseTypeEnum];
+/**
+ * @export
+ */
+export const ConfirmCaseIdPutPriorityEnum = {
+    Low: 'Low',
+    Medium: 'Medium',
+    High: 'High'
+} as const;
+export type ConfirmCaseIdPutPriorityEnum = typeof ConfirmCaseIdPutPriorityEnum[keyof typeof ConfirmCaseIdPutPriorityEnum];
 
 
