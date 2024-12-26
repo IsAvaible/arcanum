@@ -9,7 +9,7 @@ import {
   IconField,
   InputIcon,
 } from 'primevue'
-import myImage from '@/assets/images/arcanum-ai.jpg'
+import arcanumLogo from '@/assets/logo/LogoGradient.png'
 import { useApi } from '@/composables/useApi'
 import type { Case } from '@/api'
 import CaseReference from '@/components/chat-view/CaseReference.vue'
@@ -60,38 +60,21 @@ type Chat = {
  */
 const chats = ref<Chat[]>([
   {
-    name: 'ARCANUM AI',
-    image: myImage,
-    capName: 'AI',
-    time: '',
-    isGroup: false,
-    members: [],
-    lastMessage: 'Ask me about anything',
-    messages: [
-      {
-        id: 1,
-        type: 'received',
-        message: 'Hello! How can I assist you today? #22 #9999',
-        capName: 'AI',
-      },
-    ],
-  },
-  {
     name: 'Cody Fisher',
     image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar12.jpg',
     capName: 'CF',
     time: '12:30',
     isGroup: false,
     members: [],
-    lastMessage: "Hey there! I've heard about PrimeVue. Any cool tips for getting started?",
+    lastMessage: 'I have a question about Arcanum.',
     messages: [
       { id: 1, type: 'received', message: 'Hi, how can I help you?', capName: 'CF' },
-      { id: 2, type: 'sent', message: 'I have a question about PrimeVue.', capName: 'You' },
+      { id: 2, type: 'sent', message: 'I have a question about Arcanum.', capName: 'You' },
     ],
   },
   {
-    image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar-primetek.png',
-    name: 'PrimeTek Team',
+    image: arcanumLogo,
+    name: 'Arcanum Team',
     capName: 'PT',
     unreadMessageCount: 0,
     time: '11.15',
@@ -110,7 +93,11 @@ const chats = ref<Chat[]>([
         image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar11.jpg',
       },
     ],
-    lastMessage: "Let's implement PrimeVue. Elevating our UI game! 🚀",
+    messages: [
+      { id: 1, type: 'received', message: 'Arcanum looks amazing so far!', capName: 'PT' },
+      { id: 2, type: 'sent', message: "Let's discuss the new project.", capName: 'You' },
+    ],
+    lastMessage: "Let's discuss the new project.",
   },
   {
     name: 'Esther Howard',
@@ -119,10 +106,16 @@ const chats = ref<Chat[]>([
     time: '12:30',
     isGroup: false,
     members: [],
-    lastMessage: 'Do you have a moment to discuss our project?',
+    lastMessage: "It's about the deadline.",
     messages: [
-      { id: 1, type: 'received', message: 'Sure, what’s the issue?', capName: 'EH' },
-      { id: 2, type: 'sent', message: "It's about the deadline.", capName: 'You' },
+      {
+        id: 1,
+        type: 'received',
+        message: 'Do you have a moment to discuss our project?',
+        capName: 'EH',
+      },
+      { id: 2, type: 'sent', message: 'Sure, what’s the issue?', capName: 'You' },
+      { id: 3, type: 'received', message: "It's about the deadline.", capName: 'EH' },
     ],
   },
   {
@@ -132,7 +125,7 @@ const chats = ref<Chat[]>([
     time: '12:30',
     isGroup: false,
     members: [],
-    lastMessage: 'Just checking in for updates on our project!',
+    lastMessage: 'In the office',
     messages: [],
   },
 ])
