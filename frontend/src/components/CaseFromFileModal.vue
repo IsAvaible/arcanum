@@ -27,6 +27,7 @@ const openManualCaseCreation = () => {
   router.push({ name: 'case-create-manual' })
 }
 
+
 // Audio-Recorder
 const isRecording = ref(false)
 const mediaRecorder = ref<MediaRecorder | null>(null)
@@ -91,7 +92,7 @@ const openAICaseCreation = async () => {
   loading.value = true
 
   try {
-    // Übergeben der ursprünglichen Dateien direkt an die API
+   
     const result = await api.createCaseFromFilesPost({
       files: files.value, // Original-File-Objekte werden gesendet
     })
@@ -124,6 +125,7 @@ const openAICaseCreation = async () => {
       <!-- Options Section -->
       <div class="flex flex-col space-y-4">
         <FileDropzoneUpload v-model:files="files" />
+
         <!-- Audio Recording Section -->
         <div class="audio-recorder flex flex-col items-center gap-3 mb-4">
           <p class="text-gray-600 text-sm">Or record audio to describe your case</p>
@@ -147,6 +149,7 @@ const openAICaseCreation = async () => {
             </button>
           </div>
         </div>
+
         <Button
           :loading="loading"
           :disabled="loading"
@@ -172,6 +175,7 @@ const openAICaseCreation = async () => {
     </div>
   </Dialog>
 </template>
+
 
 <style scoped>
 .mic-button {
@@ -204,21 +208,21 @@ const openAICaseCreation = async () => {
   }
 }
 
-/* Anpassungen für die Audio Recorder-Komponente */
+
 .audio-recorder {
-  width: 100%; /* Passt sich an den Container an */
-  max-width: 600px; /* Maximale Breite */
-  margin: 0 auto; /* Zentriert das Element */
+  width: 100%; 
+  max-width: 600px; 
+  margin: 0 auto; 
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem; /* Abstand zwischen den Elementen */
+  gap: 1rem; 
 }
 
-/* Safari-spezifische Anpassungen */
+
 @supports (-webkit-touch-callout: none) {
   .audio-recorder {
-    width: 90vw; /* Alternative Breite für Safari */
+    width: 90vw; 
   }
 }
 
@@ -227,3 +231,4 @@ audio {
   height: 40px;
 }
 </style>
+
