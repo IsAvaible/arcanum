@@ -42,7 +42,6 @@ import { apiBlobToFile } from '@/functions/apiBlobToFile'
 // Validation
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
-import DynamicInteractiveText from '@/components/misc/DynamicInteractiveText.vue'
 import { until } from '@vueuse/core'
 
 const router = useRouter()
@@ -373,7 +372,7 @@ const loadingFileId = ref<number | null>(null)
 const deletingFileId = ref<number | null>(null)
 // Matches timestamps in the format [filename.ext: HH:MM:SS - ...]
 // Extensions are based on OpenAI Whisper allowed file types
-const timeStampRegex =
+const _timeStampRegex =
   /\[(.*?\.(?:wav|flac|m4a|mp3|mp4|mpeg|mpga|oga|ogg|webm): \d{2}:\d{2}:\d{2}) - .*?]/g
 
 const openAttachmentInDrawer = async (attachment: CaseAllOfAttachments) => {
@@ -414,7 +413,7 @@ const openAttachmentInDrawer = async (attachment: CaseAllOfAttachments) => {
   previewDrawerVisible.value = true
 }
 
-const openTimestampInDrawer = async (match: string) => {
+const _openTimestampInDrawer = async (match: string) => {
   const [filename, timestamp] = match.split(': ')
   const attachment = caseDetails.value?.attachments.find((a) => a.filename === filename)
 
