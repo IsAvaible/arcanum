@@ -4,6 +4,7 @@ import CaseListView from '@/views/cases/CaseListView.vue'
 import CaseDetail from '@/views/cases/CaseDetailView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import ChatWindow from '@/components/ChatWindow.vue'
+import AIChatWindow from '@/components/AIChatWindow.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,9 +45,14 @@ const router = createRouter({
       component: NotFoundView,
     },
     {
-      path: '/chat', // Route for Chat
+      path: '/chat',
       name: 'Chat',
       component: ChatWindow,
+    },
+    {
+      path: '/ai',
+      name: 'AI',
+      component: AIChatWindow,
     },
   ],
 })

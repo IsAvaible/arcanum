@@ -701,6 +701,7 @@ components:
           enum: [Low, Medium, High]
     Chat:
       type: object
+      required: [id]
       properties:
         id:
           type: integer
@@ -718,6 +719,7 @@ components:
           description: Date the chat was last updated.
 
     ChatWithMessages:
+      required: [messages]
       allOf:
         - $ref: '#/components/schemas/Chat'
         - type: object
@@ -725,10 +727,14 @@ components:
             messages:
               type: array
               items:
-                $ref: '#/components/schemas/Message'
+                allOf:
+                  - $ref: '#/components/schemas/Message'
+                  - type: object
+                    required: [id, chatId, role, content, timestamp]
 
     Message:
       type: object
+      required: [content]
       properties:
         id:
           type: integer

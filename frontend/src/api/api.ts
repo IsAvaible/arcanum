@@ -366,7 +366,7 @@ export interface Chat {
      * @type {number}
      * @memberof Chat
      */
-    'id'?: number;
+    'id': number;
     /**
      * Title of the chat.
      * @type {string}
@@ -397,7 +397,7 @@ export interface ChatWithMessages {
      * @type {number}
      * @memberof ChatWithMessages
      */
-    'id'?: number;
+    'id': number;
     /**
      * Title of the chat.
      * @type {string}
@@ -418,11 +418,56 @@ export interface ChatWithMessages {
     'updatedAt'?: string;
     /**
      * 
-     * @type {Array<Message>}
+     * @type {Array<ChatWithMessagesAllOfMessages>}
      * @memberof ChatWithMessages
      */
-    'messages'?: Array<Message>;
+    'messages': Array<ChatWithMessagesAllOfMessages>;
 }
+/**
+ * 
+ * @export
+ * @interface ChatWithMessagesAllOfMessages
+ */
+export interface ChatWithMessagesAllOfMessages {
+    /**
+     * Message ID.
+     * @type {number}
+     * @memberof ChatWithMessagesAllOfMessages
+     */
+    'id': number;
+    /**
+     * ID of the chat the message belongs to.
+     * @type {number}
+     * @memberof ChatWithMessagesAllOfMessages
+     */
+    'chatId': number;
+    /**
+     * Role of the message sender.
+     * @type {string}
+     * @memberof ChatWithMessagesAllOfMessages
+     */
+    'role': ChatWithMessagesAllOfMessagesRoleEnum;
+    /**
+     * Content of the message.
+     * @type {string}
+     * @memberof ChatWithMessagesAllOfMessages
+     */
+    'content': string;
+    /**
+     * Time the message was sent.
+     * @type {string}
+     * @memberof ChatWithMessagesAllOfMessages
+     */
+    'timestamp': string;
+}
+
+export const ChatWithMessagesAllOfMessagesRoleEnum = {
+    User: 'user',
+    Assistant: 'assistant'
+} as const;
+
+export type ChatWithMessagesAllOfMessagesRoleEnum = typeof ChatWithMessagesAllOfMessagesRoleEnum[keyof typeof ChatWithMessagesAllOfMessagesRoleEnum];
+
 /**
  * 
  * @export
@@ -542,7 +587,7 @@ export interface Message {
      * @type {string}
      * @memberof Message
      */
-    'content'?: string;
+    'content': string;
     /**
      * Time the message was sent.
      * @type {string}
