@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, nextTick, useTemplateRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { useApi } from '@/composables/useApi'
 import { useToast } from 'primevue/usetoast' // Import useToast only once
@@ -13,12 +13,13 @@ import Card from 'primevue/card'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import DatePicker from 'primevue/datepicker'
-import Textarea from 'primevue/textarea'
 import Menu from 'primevue/menu'
 import Dialog from 'primevue/dialog'
 import Skeleton from 'primevue/skeleton'
 import Divider from 'primevue/divider'
 import ConfirmDialog from 'primevue/confirmdialog'
+
+import { MdEditor } from 'md-editor-v3'
 
 // Custom components
 import FilePreviewDrawer, {
@@ -26,6 +27,8 @@ import FilePreviewDrawer, {
 } from '@/components/case-detail-view-form/FilePreviewDrawer.vue'
 import FileDropzoneUpload from '@/components/file-handling/FileDropzoneUpload.vue'
 import UserSelector, { type User } from '@/components/case-create-form/UserSelector.vue'
+import CaseStatusSelect from '@/components/case-form-fields/CaseStatusSelect/CaseStatusSelect.vue'
+import CasePrioritySelect from '@/components/case-form-fields/CaseStatusSelect/CasePrioritySelect.vue'
 
 // Types
 import type { AxiosError } from 'axios'
@@ -39,17 +42,6 @@ import { apiBlobToFile } from '@/functions/apiBlobToFile'
 // Validation
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
-
-interface Priority {
-  name: string
-  color: string
-}
-
-interface Status {
-  name: string
-  color: string
-  textColor: string
-}
 
 const router = useRouter()
 const api = useApi()
@@ -67,19 +59,6 @@ const caseTypes = ref(
     value: value,
   })),
 )
-
-const priorities: Priority[] = [
-  { name: 'High', color: '#ef4444' },
-  { name: 'Medium', color: '#eab308' },
-  { name: 'Low', color: '#22c55e' },
-]
-
-const statuses: Status[] = [
-  { name: 'Open', color: '#e6f4ff', textColor: '#0284c7' },
-  { name: 'In Progress', color: '#fff7ed', textColor: '#ea580c' },
-  { name: 'Solved', color: '#f0fdf4', textColor: '#16a34a' },
-  { name: 'Closed', color: '#f0fdf4', textColor: '#16a34a' },
-]
 
 const users: User[] = Array.from({ length: 15 }, (_, i) => ({
   id: i + 1,
@@ -285,6 +264,37 @@ const navigateTo = async (name: string) => {
     })
   }
 }
+
+const solutionMdEditor = useTemplateRef<typeof MdEditor | null>('solutionMdEditor')
+const descriptionMdEditor = useTemplateRef<typeof MdEditor | null>('descriptionMdEditor')
+
+watch(
+  [solutionMdEditor, descriptionMdEditor],
+  // Watch for the solution and description editors to be initialized
+  ([solution, description]) => {
+    if (solution && description) {
+      // Watch for the inEditMode value to toggle the previewOnly mode
+      watch(
+        inEditMode,
+        (value) => {
+          if (value) {
+            nextTick(() => {
+              solutionMdEditor.value?.togglePreviewOnly(false)
+              descriptionMdEditor.value?.togglePreviewOnly(false)
+            })
+          } else {
+            nextTick(() => {
+              solutionMdEditor.value?.togglePreviewOnly(true)
+              descriptionMdEditor.value?.togglePreviewOnly(true)
+            })
+          }
+        },
+        { immediate: true },
+      )
+    }
+  },
+  { immediate: true },
+)
 
 /// File / Attachment Handling
 
@@ -583,78 +593,26 @@ const toggleMenu = (event: Event) => {
             <div class="space-y-4">
               <div class="field">
                 <label>Status</label>
-                <Select
+                <CaseStatusSelect
+                  v-model="fields.status.value.value"
                   v-if="!loading"
-                  :options="statuses"
-                  :model-value="statuses.find((s) => s.name === caseDetails!.status)"
-                  @update:model-value="fields.status.value.value = $event.name"
-                  optionLabel="name"
                   class="w-full min-h-10"
                   :disabled="!inEditMode"
                   :invalid="!!errors.status"
-                >
-                  <template #value="slotProps">
-                    <div v-if="slotProps.value" class="flex items-center">
-                      <div
-                        class="px-3 py-1 rounded-md text-sm"
-                        :style="{
-                          backgroundColor: slotProps.value.color,
-                          color: slotProps.value.textColor,
-                        }"
-                      >
-                        {{ slotProps.value.name }}
-                      </div>
-                    </div>
-                  </template>
-                  <template #option="slotProps">
-                    <div class="flex items-center">
-                      <div
-                        class="px-3 py-1 rounded-md text-sm"
-                        :style="{
-                          backgroundColor: slotProps.option.color,
-                          color: slotProps.option.textColor,
-                        }"
-                      >
-                        {{ slotProps.option.name }}
-                      </div>
-                    </div>
-                  </template>
-                </Select>
+                />
                 <Skeleton v-else height="2.5rem" />
                 <small v-if="errors.status" class="p-error block mt-1">{{ errors.status }}</small>
               </div>
 
               <div class="field">
                 <label>Priority</label>
-                <Select
+                <CasePrioritySelect
+                  v-model="fields.priority.value.value"
                   v-if="!loading"
-                  :model-value="priorities.find((p) => p.name === caseDetails!.priority)"
-                  @update:model-value="fields.priority.value.value = $event.name"
-                  :options="priorities"
-                  optionLabel="name"
                   class="w-full"
                   :disabled="!inEditMode"
                   :invalid="!!errors.priority"
-                >
-                  <template #value="slotProps">
-                    <div class="flex items-center gap-2" v-if="slotProps.value">
-                      <div
-                        class="w-3 h-3 rounded-full"
-                        :style="{ backgroundColor: slotProps.value.color }"
-                      ></div>
-                      <span>{{ slotProps.value.name }}</span>
-                    </div>
-                  </template>
-                  <template #option="slotProps">
-                    <div class="flex items-center gap-2">
-                      <div
-                        class="w-3 h-3 rounded-full"
-                        :style="{ backgroundColor: slotProps.option.color }"
-                      ></div>
-                      <span>{{ slotProps.option.name }}</span>
-                    </div>
-                  </template>
-                </Select>
+                />
                 <Skeleton v-else height="2.5rem" />
                 <small v-if="errors.priority" class="p-error block mt-1">{{
                   errors.priority
@@ -668,7 +626,7 @@ const toggleMenu = (event: Event) => {
                 <div v-if="!loading">
                   <UserSelector
                     @update:selected-users="
-                      (fields.assignees.value.value = $event.map((u) => u.name))
+                      fields.assignees.value.value = $event.map((u) => u.name)
                     "
                     assigneeLabel="Assignees"
                     :placeholder="inEditMode ? 'Select Assignees' : ''"
@@ -715,13 +673,17 @@ const toggleMenu = (event: Event) => {
           <h2 class="text-xl font-semibold mb-4">Description</h2>
         </template>
         <template #content>
-          <Textarea
+          <MdEditor
             v-if="!loading"
             v-model="fields.description.value.value"
-            rows="4"
-            class="w-full"
-            :class="{ 'p-invalid': errors.description }"
+            class="min-h-64 resize-y"
+            style="height: 16rem"
+            language="en-US"
+            id="description"
             :disabled="!inEditMode"
+            :invalid="!!errors.description"
+            noUploadImg
+            ref="descriptionMdEditor"
           />
           <Skeleton v-else height="2.5rem" />
           <small v-if="errors.description" class="p-error block mt-1">{{
@@ -736,13 +698,17 @@ const toggleMenu = (event: Event) => {
           <h2 class="text-xl font-semibold mb-4">Solution</h2>
         </template>
         <template #content>
-          <Textarea
+          <MdEditor
             v-if="!loading"
             v-model="fields.solution.value.value"
-            rows="4"
-            class="w-full"
-            :class="{ 'p-invalid': errors.solution }"
+            class="min-h-64 resize-y"
+            style="height: 16rem"
+            language="en-US"
+            id="solution"
             :disabled="!inEditMode"
+            :invalid="!!errors.solution"
+            noUploadImg
+            ref="solutionMdEditor"
           />
           <Skeleton v-else height="2.5rem" />
           <small v-if="errors.solution" class="p-error block mt-1">{{ errors.solution }}</small>
