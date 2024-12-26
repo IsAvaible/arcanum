@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const chatController = require("../controllers/chatController");
+
+const multerMiddleware = require("../middlewares/multerMiddleware");
 const {
   escapeData,
   validateData,
@@ -14,6 +16,7 @@ const {
 // Saves a new user message and sends context to LLM
 router.post(
   "/chats/:id/messages",
+  multerMiddleware,
   validateData(messageSchema),
   escapeData(["content", "socketId"]),
   chatController.postMessage,
@@ -29,6 +32,7 @@ router.post(
 ); // Create a new chat
 router.put(
   "/chats/:id",
+  multerMiddleware,
   validateData(chatSchema),
   escapeData(["title"]),
   chatController.updateChat,
@@ -40,6 +44,7 @@ router.delete(
 ); // Delete a message
 router.put(
   "/chats/:chatId/messages/:messageId",
+  multerMiddleware,
   validateData(updateMessageSchema),
   escapeData(["content", "socketId"]),
   chatController.updateMessage,

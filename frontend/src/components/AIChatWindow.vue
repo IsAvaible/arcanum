@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import {
-  Button,
-  InputText,
   Avatar,
-  SelectButton,
-  ToggleSwitch,
+  Button,
   IconField,
   InputIcon,
+  InputText,
+  SelectButton,
+  ToggleSwitch,
 } from 'primevue'
-import arcanumLogo from '@/assets/logo/LogoGradient.png'
 import { useApi } from '@/composables/useApi'
-import type { Case } from '@/api'
+import { type Case, type Chat, type ChatWithMessages, MessageRoleEnum } from '@/api'
 import CaseReference from '@/components/chat-view/CaseReference.vue'
 import DynamicRouterLinkText from '@/components/misc/DynamicRouterLinkText.vue'
 import { useDebounceFn } from '@vueuse/core'
+import type { AxiosError } from 'axios'
 
 /**
  * Reactive references for chat settings and inputs.
@@ -23,12 +23,10 @@ const notification = ref(true)
 const sound = ref(false)
 const saveToDownloads = ref(false)
 const search = ref('')
-const chatTypeSelection = ref('Chat')
-const chatTypeOptions = ['Chat', 'Call']
 const media = ref('Media')
 const mediaOptions = ['Media', 'Link', 'Docs']
 const messageInput = ref('')
-const activeChat = ref<Chat | null>(null)
+const activeChat = ref<ChatWithMessages | null>(null)
 
 /**
  * API instance for fetching and validating case references.
@@ -41,117 +39,55 @@ const api = useApi()
 const caseReferenceRegex = /#(\d+)(?:[,.\s]|$)/g
 
 /**
- * Type definition for a Chat object.
+ * Fetches and sets the chat data from the API.
  */
-type Chat = {
-  name: string
-  image?: string
-  capName: string
-  time: string
-  lastMessage: string
-  unreadMessageCount?: number
-  messages?: Array<{ id: number; type: string; message: string; capName?: string; image?: string }>
-  isGroup?: boolean
-  members?: { name: string; image: string }[]
+const chats = ref<Chat[] | null>(null)
+const chatsLoading = ref(false)
+const chatsError = ref<string | null>(null)
+const fetchChats = async () => {
+  chatsLoading.value = true
+  try {
+    chats.value = (await api.chatsGet()).data
+  } catch (error) {
+    chatsError.value = (error as AxiosError).message
+  }
+  chatsLoading.value = false
 }
-
-/**
- * Sample chat data for the application.
- */
-const chats = ref<Chat[]>([
-  {
-    name: 'Cody Fisher',
-    image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar12.jpg',
-    capName: 'CF',
-    time: '12:30',
-    isGroup: false,
-    members: [],
-    lastMessage: 'I have a question about Arcanum.',
-    messages: [
-      { id: 1, type: 'received', message: 'Hi, how can I help you?', capName: 'CF' },
-      { id: 2, type: 'sent', message: 'I have a question about Arcanum.', capName: 'You' },
-    ],
-  },
-  {
-    image: arcanumLogo,
-    name: 'Arcanum Team',
-    capName: 'PT',
-    unreadMessageCount: 0,
-    time: '11.15',
-    isGroup: true,
-    members: [
-      {
-        name: 'Cody Fisher',
-        image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar12.jpg',
-      },
-      {
-        name: 'Esther Howard',
-        image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar13.jpg',
-      },
-      {
-        name: 'Darlene Robertson',
-        image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar11.jpg',
-      },
-    ],
-    messages: [
-      { id: 1, type: 'received', message: 'Arcanum looks amazing so far!', capName: 'PT' },
-      { id: 2, type: 'sent', message: "Let's discuss the new project.", capName: 'You' },
-    ],
-    lastMessage: "Let's discuss the new project.",
-  },
-  {
-    name: 'Esther Howard',
-    image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar13.jpg',
-    capName: 'EH',
-    time: '12:30',
-    isGroup: false,
-    members: [],
-    lastMessage: "It's about the deadline.",
-    messages: [
-      {
-        id: 1,
-        type: 'received',
-        message: 'Do you have a moment to discuss our project?',
-        capName: 'EH',
-      },
-      { id: 2, type: 'sent', message: 'Sure, what’s the issue?', capName: 'You' },
-      { id: 3, type: 'received', message: "It's about the deadline.", capName: 'EH' },
-    ],
-  },
-  {
-    name: 'Darlene Robertson',
-    image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar9.jpg',
-    capName: 'DR',
-    time: '12:30',
-    isGroup: false,
-    members: [],
-    lastMessage: 'In the office',
-    messages: [],
-  },
-])
 
 /**
  * Computed property for filtering chats based on the search input.
  */
 const filteredChats = computed(() => {
-  return chats.value.filter((chat) => chat.name.toLowerCase().includes(search.value.toLowerCase()))
+  console.log(chats.value)
+  return chats.value?.filter(
+    (chat: Chat) => chat.title?.toLowerCase().includes(search.value.toLowerCase()) ?? true,
+  )
+})
+
+const filteredPinnedChats = computed(() => {
+  // TODO
+  return filteredChats.value?.filter((_chat: Chat) => false)
 })
 
 /**
  * Sets the active chat to the selected chat.
- * @param chat - The chat object to be set as active.
+ * @param chatId - The ID of the chat to set as active.
  */
-const setActiveChat = (chat: Chat) => {
-  activeChat.value = chat
+const setActiveChat = async (chatId: number) => {
+  activeChat.value = (await api.chatsIdGet({ id: chatId })).data
 }
-setActiveChat(chats.value[0])
 
 const invalidSubmissionAttempt = ref(false)
+const pendingMessage = ref<{ content: string; state: string } | null>(null)
 /**
  * Handles sending a message in the active chat.
  * Validates message input and appends it to the chat messages.
  */
-const sendMessage = () => {
+const sendMessage = async () => {
+  if (!messageInput.value.trim() || !activeChat.value || pendingMessage.value) {
+    return
+  }
+
   if (hasInvalidCaseReferences.value) {
     invalidSubmissionAttempt.value = false
     setTimeout(() => {
@@ -160,16 +96,45 @@ const sendMessage = () => {
     return
   }
 
-  if (messageInput.value.trim() !== '' && activeChat.value) {
-    if (!activeChat.value.messages || !Array.isArray(activeChat.value.messages)) {
-      activeChat.value.messages = []
-    }
-    activeChat.value.messages.push({
-      id: activeChat.value.messages.length + 1,
-      type: 'sent',
-      message: messageInput.value.trim(),
-    })
-    messageInput.value = ''
+  pendingMessage.value = { content: messageInput.value.trim(), state: 'pending' }
+  messageInput.value = ''
+  await sendPendingMessage()
+}
+
+const sendPendingMessage = async () => {
+  if (!pendingMessage.value || !activeChat.value) {
+    return
+  }
+  try {
+    activeChat.value.messages = (
+      await api.chatsIdMessagesPost({
+        id: activeChat.value!.id,
+        content: pendingMessage.value!.content,
+        socketId: 'TODO',
+      })
+    ).data
+    pendingMessage.value = null
+  } catch {
+    pendingMessage.value!.state = 'failed'
+  }
+}
+
+const createChatLoading = ref(false)
+/**
+ * Creates a new chat with a message.
+ */
+const createChatWithMessage = async () => {
+  if (!messageInput.value || createChatLoading.value) {
+    return
+  }
+  createChatLoading.value = true
+  try {
+    const { chatId } = (await api.chatsPost()).data
+    activeChat.value = (await api.chatsIdGet({ id: chatId })).data
+    sendMessage()
+    createChatLoading.value = false
+  } catch (error) {
+    console.error(error)
   }
 }
 
@@ -266,61 +231,60 @@ const getCaseReferences = (message: string): { id: number; case: Promise<Case> }
 const caseReferences = computed(() => {
   return (activeChat.value?.messages || []).reduce(
     (acc, message) => {
-      acc[message.id] = getCaseReferences(message.message)
+      acc[message.id] = getCaseReferences(message.content)
       return acc
     },
     {} as Record<number, { id: number; case: Promise<Case> }[]>,
   )
 })
+
+onMounted(fetchChats)
 </script>
 
 <template>
   <div class="flex h-screen bg-white neutral-primary">
     <!-- Sidebar -->
-    <div class="w-4/12 xl:w-3/12 min-w-40 overflow-auto flex flex-col gap-6 border-r">
-      <div class="flex flex-col gap-6 pt-3 pb-2 px-5 sticky top-0 bg-white z-10">
+    <div class="w-4/12 xl:w-3/12 min-w-40 overflow-auto flex flex-col gap-6 border-r px-5">
+      <div class="flex flex-col gap-6 pt-3 pb-2 sticky top-0 bg-white z-10">
         <div class="flex items-center justify-between gap-6 text-gray-800">
-          <div class="text-2xl font-medium lead">Chats</div>
-          <Button icon="pi pi-plus" text />
+          <h2 class="text-2xl font-medium lead">Chats</h2>
         </div>
       </div>
-      <div class="px-5">
-        <IconField>
-          <InputText v-model="search" type="text" placeholder="Search chats..." class="w-full" />
-          <InputIcon class="pi pi-search" />
-        </IconField>
-      </div>
-      <div class="w-full px-5 mt-4">
-        <SelectButton
-          v-model="chatTypeSelection"
-          class="w-full flex [&>*]:w-full"
-          :options="chatTypeOptions"
-        />
+      <IconField>
+        <InputText v-model="search" type="text" placeholder="Search for chats..." class="w-full" />
+        <InputIcon class="pi pi-search" />
+      </IconField>
+      <div class="flex flex-col">
+        <h3 class="uppercase text-slate-400 mb-4">Pinned</h3>
+        <div
+          v-for="chat in filteredPinnedChats"
+          :key="chat.title"
+          class="truncate w-full p-3 cursor-pointer hover:bg-gray-100 rounded-lg transition-all"
+          :class="{
+            'bg-gray-200': chat.id === activeChat?.id,
+          }"
+          @click="setActiveChat(chat.id)"
+        >
+          {{ chat.title }}
+        </div>
+        <div v-if="!!filteredPinnedChats" class="text-gray-500 text-center">No pinned chats.</div>
       </div>
       <div class="flex-1 flex flex-col">
-        <div
+        <h3 class="uppercase text-slate-400 mb-4">Chat History</h3>
+        <button
           v-for="chat in filteredChats"
-          :key="chat.name"
-          class="flex items-center gap-4 p-3 cursor-pointer hover:bg-gray-100 transition-all"
+          :key="chat.title"
+          class="truncate w-full p-3 cursor-pointer hover:bg-gray-100 rounded-lg transition-all flex items-center justify-between"
           :class="{
-            'bg-gray-200': chat.name === activeChat?.name,
+            'bg-gray-200': chat.id === activeChat?.id,
           }"
-          @click="setActiveChat(chat)"
+          @click="setActiveChat(chat.id)"
         >
-          <Avatar
-            v-bind="chat.image ? { image: chat.image } : { label: chat.capName }"
-            class="text-base font-medium flex"
-            size="large"
-            shape="circle"
-          />
-          <div class="flex-1">
-            <div class="flex items-center justify-between">
-              <div class="text-base font-medium text-gray-800">{{ chat.name }}</div>
-              <div class="text-xs text-gray-500">{{ chat.time }}</div>
-            </div>
-            <div class="text-sm text-gray-500 line-clamp-1">{{ chat.lastMessage }}</div>
-          </div>
-        </div>
+          <span>
+            {{ chat.title || 'Untitled Chat' }}
+          </span>
+          <button v-if="chat.id === activeChat?.id" class="pi pi-ellipsis-h text-gray-500"></button>
+        </button>
       </div>
     </div>
 
@@ -330,36 +294,43 @@ const caseReferences = computed(() => {
         v-if="activeChat"
         class="flex items-center justify-between p-4 gap-4 border-b border-gray-300"
       >
-        <div class="flex items-center">
-          <Avatar
-            v-bind="activeChat.image ? { image: activeChat.image } : { label: activeChat.capName }"
-            class="mr-2"
-            size="large"
-            shape="circle"
-          />
-          <div class="flex-1">
-            <div class="text-gray-800 font-medium">{{ activeChat.name }}</div>
-            <div class="text-gray-500 text-sm">{{ activeChat.lastMessage }}</div>
-          </div>
-        </div>
+        <div class="text-gray-800 font-medium">{{ activeChat.title }}</div>
         <div class="flex items-center gap-3">
-          <Button variant="text" severity="secondary" size="small">
-            <i class="pi pi-phone text-gray-800"></i>
-          </Button>
-          <Button variant="text" severity="secondary" size="small" class="-ml-4">
-            <i class="pi pi-search text-gray-800"></i>
-          </Button>
-          <Button variant="text" severity="secondary" size="small" class="-ml-4">
-            <i class="pi pi-ellipsis-h text-gray-800"></i>
+          <Button
+            v-for="icon in ['cog', 'trash', 'inbox']"
+            :key="icon"
+            variant="text"
+            severity="secondary"
+            size="small"
+            :class="icon !== 'cog' ? '-ml-4' : ''"
+          >
+            <i :class="`pi pi-${icon} text-gray-800`"></i>
           </Button>
         </div>
       </div>
-      <div v-else class="flex items-center justify-center h-full">
-        <p class="text-gray-500">Select a chat to start messaging.</p>
+      <div v-else class="flex flex-col gap-y-4 p-4 items-center justify-center h-full">
+        <h2 class="text-gray-700 text-2xl font-semibold">What can I help you with?</h2>
+        <IconField class="w-full max-w-lg">
+          <InputText
+            v-model="messageInput"
+            placeholder="Type a message"
+            class="w-full"
+            :disabled="createChatLoading"
+            @keyup.enter="createChatWithMessage"
+          />
+          <InputIcon
+            class="pi"
+            :class="{
+              'pi-spinner pi-spin': createChatLoading,
+              'pi-send': !createChatLoading,
+            }"
+            @click="createChatWithMessage"
+          />
+        </IconField>
       </div>
       <TransitionGroup
         v-if="activeChat"
-        :key="activeChat.name"
+        :key="activeChat.id"
         name="pop-in"
         tag="div"
         class="flex-1 overflow-y-auto flex flex-col gap-4 py-4 px-6"
@@ -368,22 +339,24 @@ const caseReferences = computed(() => {
           v-for="message in activeChat.messages || []"
           :key="message.id"
           class="flex items-start gap-2"
-          :class="{ 'flex-row-reverse self-end': message.type === 'sent' }"
+          :class="{ 'flex-row-reverse self-end': message.role === MessageRoleEnum.User }"
         >
           <Avatar
-            v-bind="message.image ? { image: message.image } : { label: message.capName }"
+            :label="message.role === MessageRoleEnum.User ? 'You' : 'AI'"
             class="w-10 h-10 bg-gray-300"
             shape="circle"
           />
           <div
             :class="
-              message.type === 'received' ? 'bg-gray-50 text-gray-800' : 'bg-primary-500 text-white'
+              message.role === MessageRoleEnum.Assistant
+                ? 'bg-gray-50 text-gray-800'
+                : 'bg-primary-500 text-white'
             "
             class="px-4 py-2 rounded-lg shadow-sm w-fit max-w-xs flex flex-col gap-y-2"
           >
             <p>
               <DynamicRouterLinkText
-                :text="message.message"
+                :text="message.content"
                 :regex="caseReferenceRegex"
                 to="/cases/"
               />
@@ -394,11 +367,28 @@ const caseReferences = computed(() => {
               :reference="caseReference"
               class="min-w-40"
               :class="{
-                'bg-gray-100': message.type === 'received',
-                'bg-white': message.type === 'sent',
+                'bg-gray-100': message.role === MessageRoleEnum.Assistant,
+                'bg-white': message.role === MessageRoleEnum.User,
               }"
             />
           </div>
+        </div>
+        <div v-if="pendingMessage" class="flex items-center gap-2 flex-row-reverse self-end">
+          <Avatar label="You" class="w-10 h-10 bg-gray-300" shape="circle" />
+          <div
+            :class="{
+              '': pendingMessage.state === 'pending',
+              'bg-red-700': pendingMessage.state === 'failed',
+            }"
+            class="px-4 py-2 rounded-lg shadow-sm w-fit max-w-xs flex flex-col gap-y-2 bg-primary-500 text-white transition-all"
+          >
+            <p>{{ pendingMessage.content }}</p>
+          </div>
+          <button
+            v-if="pendingMessage.state === 'failed'"
+            @click="sendPendingMessage"
+            class="pi pi-undo"
+          ></button>
         </div>
       </TransitionGroup>
       <div
@@ -443,7 +433,7 @@ const caseReferences = computed(() => {
 
         <!-- Send-Icon -->
         <Button variant="text" class="ml-2">
-          <i class="pi pi-send text-primary-700 text-xl" @click="sendMessage"></i>
+          <i class="pi text-primary-700 text-xl pi-send" @click="sendMessage"></i>
         </Button>
       </div>
     </div>
@@ -452,16 +442,10 @@ const caseReferences = computed(() => {
     <div class="w-3/12 min-w-[300px] border-l border-gray-300 bg-white px-4 py-6 flex flex-col">
       <div class="flex flex-col items-center">
         <!-- Avatar -->
-        <Avatar
-          v-bind="
-            activeChat?.image ? { image: activeChat.image } : { label: activeChat?.capName || '?' }
-          "
-          class="w-24 h-24 mb-4"
-          shape="circle"
-        />
+        <Avatar label="AI" class="w-24 h-24 mb-4" shape="circle" />
 
         <div v-if="activeChat" class="text-gray-800 font-medium text-xl">
-          {{ activeChat.name }}
+          {{ activeChat.title }}
         </div>
         <div v-else class="text-gray-500 text-center">No chat selected.</div>
       </div>
@@ -509,34 +493,6 @@ const caseReferences = computed(() => {
             <span class="text-gray-800 text-sm">Save to downloads</span>
           </div>
           <ToggleSwitch v-model="saveToDownloads" />
-        </div>
-      </div>
-
-      <div v-if="activeChat?.isGroup" class="mt-6 flex-1 overflow-y-auto">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-4">
-          <span class="text-gray-800 font-medium text-sm">Members</span>
-          <a href="#" class="text-blue-500 hover:underline text-sm">See All</a>
-        </div>
-
-        <!-- Members List -->
-        <div
-          v-for="(member, index) in activeChat?.members || []"
-          :key="index"
-          class="flex items-center justify-between mb-4"
-        >
-          <div class="flex items-center gap-3">
-            <Avatar
-              v-bind="member.image ? { image: member.image } : { icon: 'pi pi-user' }"
-              shape="circle"
-              class="bg-gray-300 w-8 h-8"
-            />
-
-            <span class="text-gray-800 text-sm">{{ member.name }}</span>
-          </div>
-          <button class="p-button p-button-text">
-            <i class="pi pi-angle-right" style="font-size: 1.2rem; color: #333"></i>
-          </button>
         </div>
       </div>
 

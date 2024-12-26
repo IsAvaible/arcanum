@@ -142,7 +142,7 @@ const handleSave = handleSubmit(
     saveLoading.value = true
     try {
       if (caseDetails.value!.draft) {
-        await api.confirmCaseIdPut({ id: Number(caseId.value), casePut: values })
+        await api.confirmCaseIdPut({ id: Number(caseId.value), ...values })
       } else {
         await api.casesIdPut({ id: Number(caseId.value), ...values })
       }
