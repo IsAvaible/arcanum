@@ -2,7 +2,7 @@
 /* eslint-disable */
 /**
  * Oculavis Arcanum API
- * The Oculavis Arcanum API allows you to manage cases by creating, retrieving, updating, and deleting them. It also supports file attachments associated with cases. 
+ * The Oculavis Arcanum API allows you to manage cases by creating, retrieving, updating, and deleting them. It also supports file attachments associated with cases. The API also includes endpoints for managing chat functionality, including creating, retrieving, updating, and exporting chat sessions and messages. 
  *
  * The version of the OpenAPI document: 1.0.0
  * 
@@ -355,6 +355,209 @@ export interface CasesIdAttachmentsPost200Response {
      */
     'uploadedFiles'?: Array<string>;
 }
+/**
+ * 
+ * @export
+ * @interface Chat
+ */
+export interface Chat {
+    /**
+     * Chat ID.
+     * @type {number}
+     * @memberof Chat
+     */
+    'id'?: number;
+    /**
+     * Title of the chat.
+     * @type {string}
+     * @memberof Chat
+     */
+    'title'?: string;
+    /**
+     * Date the chat was created.
+     * @type {string}
+     * @memberof Chat
+     */
+    'createdAt'?: string;
+    /**
+     * Date the chat was last updated.
+     * @type {string}
+     * @memberof Chat
+     */
+    'updatedAt'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface ChatWithMessages
+ */
+export interface ChatWithMessages {
+    /**
+     * Chat ID.
+     * @type {number}
+     * @memberof ChatWithMessages
+     */
+    'id'?: number;
+    /**
+     * Title of the chat.
+     * @type {string}
+     * @memberof ChatWithMessages
+     */
+    'title'?: string;
+    /**
+     * Date the chat was created.
+     * @type {string}
+     * @memberof ChatWithMessages
+     */
+    'createdAt'?: string;
+    /**
+     * Date the chat was last updated.
+     * @type {string}
+     * @memberof ChatWithMessages
+     */
+    'updatedAt'?: string;
+    /**
+     * 
+     * @type {Array<Message>}
+     * @memberof ChatWithMessages
+     */
+    'messages'?: Array<Message>;
+}
+/**
+ * 
+ * @export
+ * @interface ChatsChatIdMessagesMessageIdDelete200Response
+ */
+export interface ChatsChatIdMessagesMessageIdDelete200Response {
+    /**
+     * 
+     * @type {string}
+     * @memberof ChatsChatIdMessagesMessageIdDelete200Response
+     */
+    'message'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface ChatsChatIdMessagesMessageIdPutRequest
+ */
+export interface ChatsChatIdMessagesMessageIdPutRequest {
+    /**
+     * The new content of the message.
+     * @type {string}
+     * @memberof ChatsChatIdMessagesMessageIdPutRequest
+     */
+    'content': string;
+    /**
+     * Optional socket ID for sending the updated message to the LLM.
+     * @type {string}
+     * @memberof ChatsChatIdMessagesMessageIdPutRequest
+     */
+    'socketId'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface ChatsIdMessagePostRequest
+ */
+export interface ChatsIdMessagePostRequest {
+    /**
+     * Content of the message.
+     * @type {string}
+     * @memberof ChatsIdMessagePostRequest
+     */
+    'content': string;
+    /**
+     * ID for tracking responses in real-time.
+     * @type {string}
+     * @memberof ChatsIdMessagePostRequest
+     */
+    'socketId': string;
+}
+/**
+ * 
+ * @export
+ * @interface ChatsIdPutRequest
+ */
+export interface ChatsIdPutRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof ChatsIdPutRequest
+     */
+    'title'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface ChatsPost201Response
+ */
+export interface ChatsPost201Response {
+    /**
+     * 
+     * @type {number}
+     * @memberof ChatsPost201Response
+     */
+    'chatId'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface ChatsPostRequest
+ */
+export interface ChatsPostRequest {
+    /**
+     * An optional title for the chat.
+     * @type {string}
+     * @memberof ChatsPostRequest
+     */
+    'title'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface Message
+ */
+export interface Message {
+    /**
+     * Message ID.
+     * @type {number}
+     * @memberof Message
+     */
+    'id'?: number;
+    /**
+     * ID of the chat the message belongs to.
+     * @type {number}
+     * @memberof Message
+     */
+    'chatId'?: number;
+    /**
+     * Role of the message sender.
+     * @type {string}
+     * @memberof Message
+     */
+    'role'?: MessageRoleEnum;
+    /**
+     * Content of the message.
+     * @type {string}
+     * @memberof Message
+     */
+    'content'?: string;
+    /**
+     * Time the message was sent.
+     * @type {string}
+     * @memberof Message
+     */
+    'timestamp'?: string;
+}
+
+export const MessageRoleEnum = {
+    User: 'user',
+    Assistant: 'assistant'
+} as const;
+
+export type MessageRoleEnum = typeof MessageRoleEnum[keyof typeof MessageRoleEnum];
+
 /**
  * 
  * @export
@@ -765,6 +968,330 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
+         * Deletes a specific message by its ID within a given chat.
+         * @summary Delete message
+         * @param {number} chatId The ID of the chat containing the message.
+         * @param {number} messageId The ID of the message to delete.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        chatsChatIdMessagesMessageIdDelete: async (chatId: number, messageId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'chatId' is not null or undefined
+            assertParamExists('chatsChatIdMessagesMessageIdDelete', 'chatId', chatId)
+            // verify required parameter 'messageId' is not null or undefined
+            assertParamExists('chatsChatIdMessagesMessageIdDelete', 'messageId', messageId)
+            const localVarPath = `/chats/{chatId}/messages/{messageId}`
+                .replace(`{${"chatId"}}`, encodeURIComponent(String(chatId)))
+                .replace(`{${"messageId"}}`, encodeURIComponent(String(messageId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Updates a specific message within a given chat.
+         * @summary Update message
+         * @param {number} chatId The ID of the chat containing the message.
+         * @param {number} messageId The ID of the message to update.
+         * @param {ChatsChatIdMessagesMessageIdPutRequest} chatsChatIdMessagesMessageIdPutRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        chatsChatIdMessagesMessageIdPut: async (chatId: number, messageId: number, chatsChatIdMessagesMessageIdPutRequest: ChatsChatIdMessagesMessageIdPutRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'chatId' is not null or undefined
+            assertParamExists('chatsChatIdMessagesMessageIdPut', 'chatId', chatId)
+            // verify required parameter 'messageId' is not null or undefined
+            assertParamExists('chatsChatIdMessagesMessageIdPut', 'messageId', messageId)
+            // verify required parameter 'chatsChatIdMessagesMessageIdPutRequest' is not null or undefined
+            assertParamExists('chatsChatIdMessagesMessageIdPut', 'chatsChatIdMessagesMessageIdPutRequest', chatsChatIdMessagesMessageIdPutRequest)
+            const localVarPath = `/chats/{chatId}/messages/{messageId}`
+                .replace(`{${"chatId"}}`, encodeURIComponent(String(chatId)))
+                .replace(`{${"messageId"}}`, encodeURIComponent(String(messageId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(chatsChatIdMessagesMessageIdPutRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Retrieves all chats, ordered by creation date in descending order.
+         * @summary Retrieve all chats
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        chatsGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/chats`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Deletes a chat by its ID.
+         * @summary Delete a specific chat
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        chatsIdDelete: async (id: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('chatsIdDelete', 'id', id)
+            const localVarPath = `/chats/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Exports a chat and its messages as a JSON file.
+         * @summary Export a chat
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        chatsIdExportGet: async (id: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('chatsIdExportGet', 'id', id)
+            const localVarPath = `/chats/{id}/export`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Retrieves a chat by ID, including its messages.
+         * @summary Retrieve a specific chat and its messages
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        chatsIdGet: async (id: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('chatsIdGet', 'id', id)
+            const localVarPath = `/chats/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Adds a user message to the specified chat and sends context to the LLM.
+         * @summary Add a message to a chat
+         * @param {number} id 
+         * @param {ChatsIdMessagePostRequest} [chatsIdMessagePostRequest] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        chatsIdMessagePost: async (id: number, chatsIdMessagePostRequest?: ChatsIdMessagePostRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('chatsIdMessagePost', 'id', id)
+            const localVarPath = `/chats/{id}/message`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(chatsIdMessagePostRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Updates the title of a specified chat.
+         * @summary Update chat title
+         * @param {number} id 
+         * @param {ChatsIdPutRequest} [chatsIdPutRequest] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        chatsIdPut: async (id: number, chatsIdPutRequest?: ChatsIdPutRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('chatsIdPut', 'id', id)
+            const localVarPath = `/chats/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(chatsIdPutRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Creates a new chat instance.
+         * @summary Create a new chat
+         * @param {ChatsPostRequest} [chatsPostRequest] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        chatsPost: async (chatsPostRequest?: ChatsPostRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/chats`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(chatsPostRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Update a draft case with additional details and mark it as confirmed.
          * @summary Confirm and update a draft case.
          * @param {number} id ID of the case to confirm.
@@ -808,11 +1335,11 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * Upload files, process them, and create draft cases.
          * @summary Create cases from uploaded files.
          * @param {Array<File>} [files] Files to be uploaded.
-         * @param {number} [socketId] Socket ID for real-time communication.
+         * @param {string} [socketId] Socket ID for real-time communication.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createCaseFromFilesPost: async (files?: Array<File>, socketId?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        createCaseFromFilesPost: async (files?: Array<File>, socketId?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/createCaseFromFiles`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -834,7 +1361,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
 
     
             if (socketId !== undefined) { 
-                localVarFormParams.append('socket_id', socketId as any);
+                localVarFormParams.append('socketId', socketId as any);
             }
     
     
@@ -982,6 +1509,127 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * Deletes a specific message by its ID within a given chat.
+         * @summary Delete message
+         * @param {number} chatId The ID of the chat containing the message.
+         * @param {number} messageId The ID of the message to delete.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async chatsChatIdMessagesMessageIdDelete(chatId: number, messageId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ChatsChatIdMessagesMessageIdDelete200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.chatsChatIdMessagesMessageIdDelete(chatId, messageId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.chatsChatIdMessagesMessageIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Updates a specific message within a given chat.
+         * @summary Update message
+         * @param {number} chatId The ID of the chat containing the message.
+         * @param {number} messageId The ID of the message to update.
+         * @param {ChatsChatIdMessagesMessageIdPutRequest} chatsChatIdMessagesMessageIdPutRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async chatsChatIdMessagesMessageIdPut(chatId: number, messageId: number, chatsChatIdMessagesMessageIdPutRequest: ChatsChatIdMessagesMessageIdPutRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ChatWithMessages>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.chatsChatIdMessagesMessageIdPut(chatId, messageId, chatsChatIdMessagesMessageIdPutRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.chatsChatIdMessagesMessageIdPut']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Retrieves all chats, ordered by creation date in descending order.
+         * @summary Retrieve all chats
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async chatsGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<Chat>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.chatsGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.chatsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Deletes a chat by its ID.
+         * @summary Delete a specific chat
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async chatsIdDelete(id: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.chatsIdDelete(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.chatsIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Exports a chat and its messages as a JSON file.
+         * @summary Export a chat
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async chatsIdExportGet(id: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.chatsIdExportGet(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.chatsIdExportGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Retrieves a chat by ID, including its messages.
+         * @summary Retrieve a specific chat and its messages
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async chatsIdGet(id: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ChatWithMessages>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.chatsIdGet(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.chatsIdGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Adds a user message to the specified chat and sends context to the LLM.
+         * @summary Add a message to a chat
+         * @param {number} id 
+         * @param {ChatsIdMessagePostRequest} [chatsIdMessagePostRequest] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async chatsIdMessagePost(id: number, chatsIdMessagePostRequest?: ChatsIdMessagePostRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.chatsIdMessagePost(id, chatsIdMessagePostRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.chatsIdMessagePost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Updates the title of a specified chat.
+         * @summary Update chat title
+         * @param {number} id 
+         * @param {ChatsIdPutRequest} [chatsIdPutRequest] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async chatsIdPut(id: number, chatsIdPutRequest?: ChatsIdPutRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Chat>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.chatsIdPut(id, chatsIdPutRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.chatsIdPut']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Creates a new chat instance.
+         * @summary Create a new chat
+         * @param {ChatsPostRequest} [chatsPostRequest] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async chatsPost(chatsPostRequest?: ChatsPostRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ChatsPost201Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.chatsPost(chatsPostRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.chatsPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Update a draft case with additional details and mark it as confirmed.
          * @summary Confirm and update a draft case.
          * @param {number} id ID of the case to confirm.
@@ -999,11 +1647,11 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * Upload files, process them, and create draft cases.
          * @summary Create cases from uploaded files.
          * @param {Array<File>} [files] Files to be uploaded.
-         * @param {number} [socketId] Socket ID for real-time communication.
+         * @param {string} [socketId] Socket ID for real-time communication.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async createCaseFromFilesPost(files?: Array<File>, socketId?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<Case>>> {
+        async createCaseFromFilesPost(files?: Array<File>, socketId?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<Case>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.createCaseFromFilesPost(files, socketId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.createCaseFromFilesPost']?.[localVarOperationServerIndex]?.url;
@@ -1097,6 +1745,95 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          */
         casesPost(requestParameters: DefaultApiCasesPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Case> {
             return localVarFp.casesPost(requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Deletes a specific message by its ID within a given chat.
+         * @summary Delete message
+         * @param {DefaultApiChatsChatIdMessagesMessageIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        chatsChatIdMessagesMessageIdDelete(requestParameters: DefaultApiChatsChatIdMessagesMessageIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<ChatsChatIdMessagesMessageIdDelete200Response> {
+            return localVarFp.chatsChatIdMessagesMessageIdDelete(requestParameters.chatId, requestParameters.messageId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Updates a specific message within a given chat.
+         * @summary Update message
+         * @param {DefaultApiChatsChatIdMessagesMessageIdPutRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        chatsChatIdMessagesMessageIdPut(requestParameters: DefaultApiChatsChatIdMessagesMessageIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<ChatWithMessages> {
+            return localVarFp.chatsChatIdMessagesMessageIdPut(requestParameters.chatId, requestParameters.messageId, requestParameters.chatsChatIdMessagesMessageIdPutRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Retrieves all chats, ordered by creation date in descending order.
+         * @summary Retrieve all chats
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        chatsGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<Chat>> {
+            return localVarFp.chatsGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Deletes a chat by its ID.
+         * @summary Delete a specific chat
+         * @param {DefaultApiChatsIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        chatsIdDelete(requestParameters: DefaultApiChatsIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.chatsIdDelete(requestParameters.id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Exports a chat and its messages as a JSON file.
+         * @summary Export a chat
+         * @param {DefaultApiChatsIdExportGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        chatsIdExportGet(requestParameters: DefaultApiChatsIdExportGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.chatsIdExportGet(requestParameters.id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Retrieves a chat by ID, including its messages.
+         * @summary Retrieve a specific chat and its messages
+         * @param {DefaultApiChatsIdGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        chatsIdGet(requestParameters: DefaultApiChatsIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<ChatWithMessages> {
+            return localVarFp.chatsIdGet(requestParameters.id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Adds a user message to the specified chat and sends context to the LLM.
+         * @summary Add a message to a chat
+         * @param {DefaultApiChatsIdMessagePostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        chatsIdMessagePost(requestParameters: DefaultApiChatsIdMessagePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.chatsIdMessagePost(requestParameters.id, requestParameters.chatsIdMessagePostRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Updates the title of a specified chat.
+         * @summary Update chat title
+         * @param {DefaultApiChatsIdPutRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        chatsIdPut(requestParameters: DefaultApiChatsIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<Chat> {
+            return localVarFp.chatsIdPut(requestParameters.id, requestParameters.chatsIdPutRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Creates a new chat instance.
+         * @summary Create a new chat
+         * @param {DefaultApiChatsPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        chatsPost(requestParameters: DefaultApiChatsPostRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<ChatsPost201Response> {
+            return localVarFp.chatsPost(requestParameters.chatsPostRequest, options).then((request) => request(axios, basePath));
         },
         /**
          * Update a draft case with additional details and mark it as confirmed.
@@ -1346,6 +2083,153 @@ export interface DefaultApiCasesPostRequest {
 }
 
 /**
+ * Request parameters for chatsChatIdMessagesMessageIdDelete operation in DefaultApi.
+ * @export
+ * @interface DefaultApiChatsChatIdMessagesMessageIdDeleteRequest
+ */
+export interface DefaultApiChatsChatIdMessagesMessageIdDeleteRequest {
+    /**
+     * The ID of the chat containing the message.
+     * @type {number}
+     * @memberof DefaultApiChatsChatIdMessagesMessageIdDelete
+     */
+    readonly chatId: number
+
+    /**
+     * The ID of the message to delete.
+     * @type {number}
+     * @memberof DefaultApiChatsChatIdMessagesMessageIdDelete
+     */
+    readonly messageId: number
+}
+
+/**
+ * Request parameters for chatsChatIdMessagesMessageIdPut operation in DefaultApi.
+ * @export
+ * @interface DefaultApiChatsChatIdMessagesMessageIdPutRequest
+ */
+export interface DefaultApiChatsChatIdMessagesMessageIdPutRequest {
+    /**
+     * The ID of the chat containing the message.
+     * @type {number}
+     * @memberof DefaultApiChatsChatIdMessagesMessageIdPut
+     */
+    readonly chatId: number
+
+    /**
+     * The ID of the message to update.
+     * @type {number}
+     * @memberof DefaultApiChatsChatIdMessagesMessageIdPut
+     */
+    readonly messageId: number
+
+    /**
+     * 
+     * @type {ChatsChatIdMessagesMessageIdPutRequest}
+     * @memberof DefaultApiChatsChatIdMessagesMessageIdPut
+     */
+    readonly chatsChatIdMessagesMessageIdPutRequest: ChatsChatIdMessagesMessageIdPutRequest
+}
+
+/**
+ * Request parameters for chatsIdDelete operation in DefaultApi.
+ * @export
+ * @interface DefaultApiChatsIdDeleteRequest
+ */
+export interface DefaultApiChatsIdDeleteRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof DefaultApiChatsIdDelete
+     */
+    readonly id: number
+}
+
+/**
+ * Request parameters for chatsIdExportGet operation in DefaultApi.
+ * @export
+ * @interface DefaultApiChatsIdExportGetRequest
+ */
+export interface DefaultApiChatsIdExportGetRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof DefaultApiChatsIdExportGet
+     */
+    readonly id: number
+}
+
+/**
+ * Request parameters for chatsIdGet operation in DefaultApi.
+ * @export
+ * @interface DefaultApiChatsIdGetRequest
+ */
+export interface DefaultApiChatsIdGetRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof DefaultApiChatsIdGet
+     */
+    readonly id: number
+}
+
+/**
+ * Request parameters for chatsIdMessagePost operation in DefaultApi.
+ * @export
+ * @interface DefaultApiChatsIdMessagePostRequest
+ */
+export interface DefaultApiChatsIdMessagePostRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof DefaultApiChatsIdMessagePost
+     */
+    readonly id: number
+
+    /**
+     * 
+     * @type {ChatsIdMessagePostRequest}
+     * @memberof DefaultApiChatsIdMessagePost
+     */
+    readonly chatsIdMessagePostRequest?: ChatsIdMessagePostRequest
+}
+
+/**
+ * Request parameters for chatsIdPut operation in DefaultApi.
+ * @export
+ * @interface DefaultApiChatsIdPutRequest
+ */
+export interface DefaultApiChatsIdPutRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof DefaultApiChatsIdPut
+     */
+    readonly id: number
+
+    /**
+     * 
+     * @type {ChatsIdPutRequest}
+     * @memberof DefaultApiChatsIdPut
+     */
+    readonly chatsIdPutRequest?: ChatsIdPutRequest
+}
+
+/**
+ * Request parameters for chatsPost operation in DefaultApi.
+ * @export
+ * @interface DefaultApiChatsPostRequest
+ */
+export interface DefaultApiChatsPostRequest {
+    /**
+     * 
+     * @type {ChatsPostRequest}
+     * @memberof DefaultApiChatsPost
+     */
+    readonly chatsPostRequest?: ChatsPostRequest
+}
+
+/**
  * Request parameters for confirmCaseIdPut operation in DefaultApi.
  * @export
  * @interface DefaultApiConfirmCaseIdPutRequest
@@ -1381,10 +2265,10 @@ export interface DefaultApiCreateCaseFromFilesPostRequest {
 
     /**
      * Socket ID for real-time communication.
-     * @type {number}
+     * @type {string}
      * @memberof DefaultApiCreateCaseFromFilesPost
      */
-    readonly socketId?: number
+    readonly socketId?: string
 }
 
 /**
@@ -1487,6 +2371,113 @@ export class DefaultApi extends BaseAPI {
      */
     public casesPost(requestParameters: DefaultApiCasesPostRequest, options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).casesPost(requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Deletes a specific message by its ID within a given chat.
+     * @summary Delete message
+     * @param {DefaultApiChatsChatIdMessagesMessageIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public chatsChatIdMessagesMessageIdDelete(requestParameters: DefaultApiChatsChatIdMessagesMessageIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).chatsChatIdMessagesMessageIdDelete(requestParameters.chatId, requestParameters.messageId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Updates a specific message within a given chat.
+     * @summary Update message
+     * @param {DefaultApiChatsChatIdMessagesMessageIdPutRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public chatsChatIdMessagesMessageIdPut(requestParameters: DefaultApiChatsChatIdMessagesMessageIdPutRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).chatsChatIdMessagesMessageIdPut(requestParameters.chatId, requestParameters.messageId, requestParameters.chatsChatIdMessagesMessageIdPutRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Retrieves all chats, ordered by creation date in descending order.
+     * @summary Retrieve all chats
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public chatsGet(options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).chatsGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Deletes a chat by its ID.
+     * @summary Delete a specific chat
+     * @param {DefaultApiChatsIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public chatsIdDelete(requestParameters: DefaultApiChatsIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).chatsIdDelete(requestParameters.id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Exports a chat and its messages as a JSON file.
+     * @summary Export a chat
+     * @param {DefaultApiChatsIdExportGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public chatsIdExportGet(requestParameters: DefaultApiChatsIdExportGetRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).chatsIdExportGet(requestParameters.id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Retrieves a chat by ID, including its messages.
+     * @summary Retrieve a specific chat and its messages
+     * @param {DefaultApiChatsIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public chatsIdGet(requestParameters: DefaultApiChatsIdGetRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).chatsIdGet(requestParameters.id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Adds a user message to the specified chat and sends context to the LLM.
+     * @summary Add a message to a chat
+     * @param {DefaultApiChatsIdMessagePostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public chatsIdMessagePost(requestParameters: DefaultApiChatsIdMessagePostRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).chatsIdMessagePost(requestParameters.id, requestParameters.chatsIdMessagePostRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Updates the title of a specified chat.
+     * @summary Update chat title
+     * @param {DefaultApiChatsIdPutRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public chatsIdPut(requestParameters: DefaultApiChatsIdPutRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).chatsIdPut(requestParameters.id, requestParameters.chatsIdPutRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Creates a new chat instance.
+     * @summary Create a new chat
+     * @param {DefaultApiChatsPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public chatsPost(requestParameters: DefaultApiChatsPostRequest = {}, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).chatsPost(requestParameters.chatsPostRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

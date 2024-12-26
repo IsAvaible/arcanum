@@ -3,6 +3,7 @@ info:
   title: Oculavis Arcanum API
   description: |
     The Oculavis Arcanum API allows you to manage cases by creating, retrieving, updating, and deleting them. It also supports file attachments associated with cases.
+    The API also includes endpoints for managing chat functionality, including creating, retrieving, updating, and exporting chat sessions and messages.
   version: '1.0.0'
 servers:
   - url: https://localhost:3000/api
@@ -297,8 +298,8 @@ paths:
                     type: string
                     format: binary
                   description: Files to be uploaded.
-                socket_id:
-                  type: integer
+                socketId:
+                  type: string
                   description: Socket ID for real-time communication.
       responses:
         '201':
@@ -341,6 +342,265 @@ paths:
           description: Case not found.
         '500':
           description: Server error during case update.
+  /chats:
+    post:
+      summary: Create a new chat
+      description: Creates a new chat instance.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: An optional title for the chat.
+      responses:
+        201:
+          description: Chat successfully created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chatId:
+                    type: integer
+        500:
+          description: Error creating chat.
+
+    get:
+      summary: Retrieve all chats
+      description: Retrieves all chats, ordered by creation date in descending order.
+      responses:
+        200:
+          description: Successfully retrieved chats.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Chat'
+        500:
+          description: Error retrieving chats.
+
+  /chats/{id}:
+    get:
+      summary: Retrieve a specific chat and its messages
+      description: Retrieves a chat by ID, including its messages.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Successfully retrieved chat and messages.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatWithMessages'
+        404:
+          description: Chat not found.
+        500:
+          description: Error retrieving chat.
+
+    put:
+      summary: Update chat title
+      description: Updates the title of a specified chat.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+      responses:
+        200:
+          description: Chat updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chat'
+        404:
+          description: Chat not found.
+        500:
+          description: Error updating chat.
+
+    delete:
+      summary: Delete a specific chat
+      description: Deletes a chat by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Chat successfully deleted.
+        404:
+          description: Chat not found.
+        500:
+          description: Error deleting chat.
+
+  /chats/{id}/message:
+    post:
+      summary: Add a message to a chat
+      description: Adds a user message to the specified chat and sends context to the LLM.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+                - socketId
+              properties:
+                content:
+                  type: string
+                  description: Content of the message.
+                socketId:
+                  type: string
+                  description: ID for tracking responses in real-time.
+      responses:
+        200:
+          description: Message added successfully.
+        400:
+          description: Invalid message content.
+        404:
+          description: Chat not found.
+        500:
+          description: Error adding message.
+
+  /chats/{chatId}/messages/{messageId}:
+    delete:
+      summary: Delete message
+      description: Deletes a specific message by its ID within a given chat.
+      parameters:
+        - name: chatId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the chat containing the message.
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the message to delete.
+      responses:
+        200:
+          description: Successfully deleted the message.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        404:
+          description: Message or chat not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error deleting message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update message
+      description: Updates a specific message within a given chat.
+      parameters:
+        - name: chatId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the chat containing the message.
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the message to update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  description: The new content of the message.
+                socketId:
+                  type: string
+                  description: Optional socket ID for sending the updated message to the LLM.
+      responses:
+        200:
+          description: Successfully updated the message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatWithMessages'
+        400:
+          description: Missing or invalid message content.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Message or chat not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error updating message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /chats/{id}/export:
+    get:
+      summary: Export a chat
+      description: Exports a chat and its messages as a JSON file.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: JSON file successfully exported.
+          content:
+            application/json: {}
+        404:
+          description: Chat not found.
+        500:
+          description: Error exporting chat.
 components:
   schemas:
     Case:
@@ -439,6 +699,54 @@ components:
           type: string
           description: Priority level of the case.
           enum: [Low, Medium, High]
+    Chat:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Chat ID.
+        title:
+          type: string
+          description: Title of the chat.
+        createdAt:
+          type: string
+          format: date-time
+          description: Date the chat was created.
+        updatedAt:
+          type: string
+          format: date-time
+          description: Date the chat was last updated.
+
+    ChatWithMessages:
+      allOf:
+        - $ref: '#/components/schemas/Chat'
+        - type: object
+          properties:
+            messages:
+              type: array
+              items:
+                $ref: '#/components/schemas/Message'
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Message ID.
+        chatId:
+          type: integer
+          description: ID of the chat the message belongs to.
+        role:
+          type: string
+          enum: [user, assistant]
+          description: Role of the message sender.
+        content:
+          type: string
+          description: Content of the message.
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the message was sent.
     Error:
       type: object
       properties:

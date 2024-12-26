@@ -13,7 +13,7 @@ const {
 
 // Saves a new user message and sends context to LLM
 router.post(
-  "/chats/:id/message",
+  "/chats/:id/messages",
   validateData(messageSchema),
   escapeData(["content", "socketId"]),
   chatController.postMessage,
@@ -35,11 +35,11 @@ router.put(
 ); // Update chat metadata
 router.delete("/chats/:id", chatController.deleteChat); // Delete a chat
 router.delete(
-  "/chats/:chatId/message/:messageId",
+  "/chats/:chatId/messages/:messageId",
   chatController.deleteMessage,
 ); // Delete a message
 router.put(
-  "/chats/:chatId/message/:messageId",
+  "/chats/:chatId/messages/:messageId",
   validateData(updateMessageSchema),
   escapeData(["content", "socketId"]),
   chatController.updateMessage,
