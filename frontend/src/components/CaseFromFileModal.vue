@@ -45,17 +45,11 @@ const startRecording = async () => {
     }
 
     mediaRecorder.value.onstop = () => {
-      // Create a file from the audio chunks
-      const file = new File(
-        [new Blob(audioChunks.value, { type: 'audio/wav' })],
-        `audio-recording_${new Date().toISOString()}.wav`,
-        {
-          type: 'audio/wav',
-        },
-      )
+      audioBlob.value = new Blob(audioChunks.value, { type: 'audio/wav' })
+      audioUrl.value = URL.createObjectURL(audioBlob.value)
 
-      // Add the file to the file dropzone
-      fileDropzone.value?.addFile(file)
+      // Drag & Drop
+      files.value.push(new File([audioBlob.value], 'recording.wav', { type: 'audio/wav' }))
     }
 
     mediaRecorder.value.start()
@@ -91,6 +85,7 @@ const openAICaseCreation = async () => {
   loading.value = true
 
   try {
+    // Übergeben der ursprünglichen Dateien direkt an die API
     const result = await api.createCaseFromFilesPost({
       files: files.value, // Original-File-Objekte werden gesendet
     })
@@ -138,6 +133,16 @@ const openAICaseCreation = async () => {
             </div>
             <span>{{ isRecording ? 'Stop Recording' : 'Start Recording' }}</span>
           </button>
+
+          <div v-if="audioBlob" class="audio-controls mt-2">
+            <audio :src="audioUrl" controls class="w-full rounded border border-gray-300"></audio>
+            <button
+              @click="deleteRecording"
+              class="delete-button px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition mt-2"
+            >
+              Delete Recording
+            </button>
+          </div>
         </div>
         <Button
           :loading="loading"
@@ -194,5 +199,28 @@ const openAICaseCreation = async () => {
   50% {
     opacity: 0;
   }
+}
+
+/* Anpassungen für die Audio Recorder-Komponente */
+.audio-recorder {
+  width: 100%; /* Passt sich an den Container an */
+  max-width: 600px; /* Maximale Breite */
+  margin: 0 auto; /* Zentriert das Element */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem; /* Abstand zwischen den Elementen */
+}
+
+/* Safari-spezifische Anpassungen */
+@supports (-webkit-touch-callout: none) {
+  .audio-recorder {
+    width: 90vw; /* Alternative Breite für Safari */
+  }
+}
+
+audio {
+  width: 100%;
+  height: 40px;
 }
 </style>
