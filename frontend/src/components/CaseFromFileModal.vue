@@ -48,6 +48,9 @@ const startRecording = async () => {
     mediaRecorder.value.onstop = () => {
       audioBlob.value = new Blob(audioChunks.value, { type: 'audio/wav' })
       audioUrl.value = URL.createObjectURL(audioBlob.value)
+
+      // Drag & Drop
+      files.value.push(new File([audioBlob.value], 'recording.wav', { type: 'audio/wav' }))
     }
 
     mediaRecorder.value.start()
@@ -82,23 +85,29 @@ const openAICaseCreation = async () => {
       detail: 'Please select files to generate a case from',
       life: 3000,
     })
-  } else {
-    loading.value = true
-    try {
-      const result = await api.createCaseFromFilesPost({ files: files.value })
-      console.log(result)
-      await router.push('/cases/' + result.data[0].id)
-    } catch (error) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'An error occurred while creating the case:\n\t' + (error as AxiosError).message,
-        life: 3000,
-      })
-      console.error(error)
-    } finally {
-      loading.value = false
-    }
+    return
+  }
+
+  loading.value = true
+
+  try {
+    // Übergeben der ursprünglichen Dateien direkt an die API
+    const result = await api.createCaseFromFilesPost({
+      files: files.value, // Original-File-Objekte werden gesendet
+    })
+
+    console.log(result)
+    await router.push('/cases/' + result.data[0].id)
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'An error occurred while creating the case:\n\t' + (error as AxiosError).message,
+      life: 3000,
+    })
+    console.error(error)
+  } finally {
+    loading.value = false
   }
 }
 </script>
@@ -129,8 +138,11 @@ const openAICaseCreation = async () => {
           </button>
 
           <div v-if="audioBlob" class="audio-controls mt-2">
-            <audio :src="audioUrl" controls class="w-full"></audio>
-            <button @click="deleteRecording" class="delete-button text-red-600 mt-2">
+            <audio :src="audioUrl" controls class="w-full rounded border border-gray-300"></audio>
+            <button
+              @click="deleteRecording"
+              class="delete-button px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition mt-2"
+            >
               Delete Recording
             </button>
           </div>
@@ -190,5 +202,28 @@ const openAICaseCreation = async () => {
   50% {
     opacity: 0;
   }
+}
+
+/* Anpassungen für die Audio Recorder-Komponente */
+.audio-recorder {
+  width: 100%; /* Passt sich an den Container an */
+  max-width: 600px; /* Maximale Breite */
+  margin: 0 auto; /* Zentriert das Element */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem; /* Abstand zwischen den Elementen */
+}
+
+/* Safari-spezifische Anpassungen */
+@supports (-webkit-touch-callout: none) {
+  .audio-recorder {
+    width: 90vw; /* Alternative Breite für Safari */
+  }
+}
+
+audio {
+  width: 100%;
+  height: 40px;
 }
 </style>
