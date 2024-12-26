@@ -81,7 +81,7 @@ setTimeout(async () => {
       socketId: socket.id,
     };
 
-    await testRequest("post", `/api/chats/${chatId}/message`, messageData);
+    await testRequest("post", `/api/chats/${chatId}/messages`, messageData);
 
     // 10 Sekunden warten
     await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -93,7 +93,7 @@ setTimeout(async () => {
 
     const messages = await testRequest(
       "post",
-      `/api/chats/${chatId}/message`,
+      `/api/chats/${chatId}/messages`,
       messageData,
     );
 
@@ -110,7 +110,7 @@ setTimeout(async () => {
     };
     await testRequest(
       "put",
-      `/api/chats/${chatId}/message/${lastUserMessageId}`,
+      `/api/chats/${chatId}/messages/${lastUserMessageId}`,
       messageData,
     );
 
@@ -122,13 +122,16 @@ setTimeout(async () => {
 
     await testRequest(
       "put",
-      `/api/chats/${chatId}/message/${lastUserMessageId + 2}`,
+      `/api/chats/${chatId}/messages/${lastUserMessageId + 2}`,
       messageData,
     );
 
     // Delete Message:
-    await testRequest('delete', `/api/chats/${chatId}/message/${lastUserMessageId + 2}`);
-    
+    await testRequest(
+      "delete",
+      `/api/chats/${chatId}/messages/${lastUserMessageId + 2}`,
+    );
+
     // Export the chat
     await testRequest("get", `/api/chats/${chatId}/export`);
 
@@ -136,8 +139,7 @@ setTimeout(async () => {
     await testRequest("delete", `/api/chats/${chatId}`);
   }
 
-  // Delete Message:
-  // await testRequest('delete', '/chats/someChatId/message/someMessageId');
+ 
 
   console.log("All test requests done.");
 }, 5000);
