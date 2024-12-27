@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import {
   Avatar,
   Button,
@@ -10,7 +10,7 @@ import {
   ToggleSwitch,
 } from 'primevue'
 import { useApi } from '@/composables/useApi'
-import { type Case, type Chat, type ChatWithMessages, MessageRoleEnum } from '@/api'
+import { type Case, type Chat, type ChatWithMessages, type Message, MessageRoleEnum } from '@/api'
 import CaseReference from '@/components/chat-view/CaseReference.vue'
 import DynamicRouterLinkText from '@/components/misc/DynamicRouterLinkText.vue'
 import { useDebounceFn } from '@vueuse/core'
@@ -58,7 +58,6 @@ const fetchChats = async () => {
  * Computed property for filtering chats based on the search input.
  */
 const filteredChats = computed(() => {
-  console.log(chats.value)
   return chats.value?.filter(
     (chat: Chat) => chat.title?.toLowerCase().includes(search.value.toLowerCase()) ?? true,
   )
@@ -78,7 +77,7 @@ const setActiveChat = async (chatId: number) => {
 }
 
 const invalidSubmissionAttempt = ref(false)
-const pendingMessage = ref<{ content: string; state: string } | null>(null)
+const pendingMessage = ref<(Message & { state: string }) | null>(null)
 /**
  * Handles sending a message in the active chat.
  * Validates message input and appends it to the chat messages.
@@ -96,7 +95,15 @@ const sendMessage = async () => {
     return
   }
 
-  pendingMessage.value = { content: messageInput.value.trim(), state: 'pending' }
+  pendingMessage.value = {
+    content: messageInput.value.trim(),
+    state: 'pending',
+    chatId: activeChat.value.id,
+    role: MessageRoleEnum.User,
+    timestamp: new Date().toISOString(),
+    // This assumes that message IDs are sequential.
+    id: displayedMessages.value[displayedMessages.value.length - 1]?.id + 1 || -1,
+  }
   messageInput.value = ''
   await sendPendingMessage()
 }
@@ -131,12 +138,29 @@ const createChatWithMessage = async () => {
   try {
     const { chatId } = (await api.chatsPost()).data
     activeChat.value = (await api.chatsIdGet({ id: chatId })).data
-    sendMessage()
+    await sendMessage()
     createChatLoading.value = false
   } catch (error) {
     console.error(error)
   }
 }
+
+const displayedMessages = computed<(Message & { state: string })[]>(() => {
+  return (
+    pendingMessage.value
+      ? [...(activeChat.value?.messages ?? []), pendingMessage.value]
+      : (activeChat.value?.messages ?? [])
+  ) as (Message & { state: string })[]
+})
+
+watch(displayedMessages, () => {
+  nextTick(() => {
+    const chatWindow = document.querySelector('#chat-window')
+    chatWindow?.scrollTo({
+      top: chatWindow.scrollHeight,
+    })
+  })
+})
 
 /**
  * Case reference validation logic.
@@ -162,7 +186,6 @@ const validateCaseReferences = async () => {
   const invalidRefs: number[] = []
 
   for (const ref of caseReferences) {
-    console.log(ref)
     const id = Number(ref)
 
     if (validatedCaseReferences.value.has(id)) {
@@ -229,7 +252,7 @@ const getCaseReferences = (message: string): { id: number; case: Promise<Case> }
  * Computed property to aggregate case references from all messages in the active chat.
  */
 const caseReferences = computed(() => {
-  return (activeChat.value?.messages || []).reduce(
+  return displayedMessages.value.reduce(
     (acc, message) => {
       acc[message.id] = getCaseReferences(message.content)
       return acc
@@ -248,6 +271,7 @@ onMounted(fetchChats)
       <div class="flex flex-col gap-6 pt-3 pb-2 sticky top-0 bg-white z-10">
         <div class="flex items-center justify-between gap-6 text-gray-800">
           <h2 class="text-2xl font-medium lead">Chats</h2>
+          <Button icon="pi pi-plus" text @click="activeChat = null" />
         </div>
       </div>
       <IconField>
@@ -288,8 +312,8 @@ onMounted(fetchChats)
       </div>
     </div>
 
-    <!-- Chat Window -->
     <div class="w-8/12 xl:w-6/12 flex flex-col">
+      <!-- Header -->
       <div
         v-if="activeChat"
         class="flex items-center justify-between p-4 gap-4 border-b border-gray-300"
@@ -328,17 +352,19 @@ onMounted(fetchChats)
           />
         </IconField>
       </div>
+      <!-- Chat Window -->
       <TransitionGroup
         v-if="activeChat"
-        :key="activeChat.id"
+        :key="activeChat?.id"
         name="pop-in"
         tag="div"
+        id="chat-window"
         class="flex-1 overflow-y-auto flex flex-col gap-4 py-4 px-6"
       >
         <div
-          v-for="message in activeChat.messages || []"
+          v-for="message in displayedMessages"
           :key="message.id"
-          class="flex items-start gap-2"
+          class="flex items-center gap-2"
           :class="{ 'flex-row-reverse self-end': message.role === MessageRoleEnum.User }"
         >
           <Avatar
@@ -347,11 +373,11 @@ onMounted(fetchChats)
             shape="circle"
           />
           <div
-            :class="
-              message.role === MessageRoleEnum.Assistant
-                ? 'bg-gray-50 text-gray-800'
-                : 'bg-primary-500 text-white'
-            "
+            :class="{
+              'bg-gray-50 text-gray-800': message.role === MessageRoleEnum.Assistant,
+              'bg-primary-500 text-white': message.role === MessageRoleEnum.User,
+              'bg-red-700': message.state === 'failed',
+            }"
             class="px-4 py-2 rounded-lg shadow-sm w-fit max-w-xs flex flex-col gap-y-2"
           >
             <p>
@@ -372,20 +398,8 @@ onMounted(fetchChats)
               }"
             />
           </div>
-        </div>
-        <div v-if="pendingMessage" class="flex items-center gap-2 flex-row-reverse self-end">
-          <Avatar label="You" class="w-10 h-10 bg-gray-300" shape="circle" />
-          <div
-            :class="{
-              '': pendingMessage.state === 'pending',
-              'bg-red-700': pendingMessage.state === 'failed',
-            }"
-            class="px-4 py-2 rounded-lg shadow-sm w-fit max-w-xs flex flex-col gap-y-2 bg-primary-500 text-white transition-all"
-          >
-            <p>{{ pendingMessage.content }}</p>
-          </div>
           <button
-            v-if="pendingMessage.state === 'failed'"
+            v-if="message.state === 'failed'"
             @click="sendPendingMessage"
             class="pi pi-undo"
           ></button>
