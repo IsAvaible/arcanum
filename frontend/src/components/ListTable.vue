@@ -250,12 +250,12 @@ const getMenuItems = (caseItem: Case) => [
     command: () => router.push(`/cases/${caseItem.id}`),
   },
   {
-    label: caseItem.id == 0 ? 'Unarchive Item' : 'Archive Item',
+    label: caseItem.id == 0 ? 'Unarchive Case' : 'Archive Case',
     icon: 'pi pi-inbox',
     command: () => toggleArchive(caseItem.id),
   },
   {
-    label: 'Delete Item',
+    label: 'Delete Case',
     icon: 'pi pi-trash',
     command: () => openDeleteDialog(caseItem),
   },
