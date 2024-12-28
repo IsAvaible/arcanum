@@ -552,6 +552,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete message
+      description: Deletes a specific message within a given chat.
+      parameters:
+        - name: chatId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the chat containing the message.
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the message to delete.
+      responses:
+        204:
+          description: Successfully deleted the message.
+        404:
+          description: Message or chat not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error deleting message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /chats/{id}/export:
     get:

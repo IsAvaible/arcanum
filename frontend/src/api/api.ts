@@ -811,6 +811,44 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
+         * Deletes a specific message within a given chat.
+         * @summary Delete message
+         * @param {number} chatId The ID of the chat containing the message.
+         * @param {number} messageId The ID of the message to delete.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        chatsChatIdMessagesMessageIdDelete: async (chatId: number, messageId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'chatId' is not null or undefined
+            assertParamExists('chatsChatIdMessagesMessageIdDelete', 'chatId', chatId)
+            // verify required parameter 'messageId' is not null or undefined
+            assertParamExists('chatsChatIdMessagesMessageIdDelete', 'messageId', messageId)
+            const localVarPath = `/chats/{chatId}/messages/{messageId}`
+                .replace(`{${"chatId"}}`, encodeURIComponent(String(chatId)))
+                .replace(`{${"messageId"}}`, encodeURIComponent(String(messageId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Updates a specific message within a given chat.
          * @summary Update message
          * @param {number} chatId The ID of the chat containing the message.
@@ -1392,6 +1430,20 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * Deletes a specific message within a given chat.
+         * @summary Delete message
+         * @param {number} chatId The ID of the chat containing the message.
+         * @param {number} messageId The ID of the message to delete.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async chatsChatIdMessagesMessageIdDelete(chatId: number, messageId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.chatsChatIdMessagesMessageIdDelete(chatId, messageId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.chatsChatIdMessagesMessageIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Updates a specific message within a given chat.
          * @summary Update message
          * @param {number} chatId The ID of the chat containing the message.
@@ -1623,6 +1675,16 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          */
         casesPost(requestParameters: DefaultApiCasesPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Case> {
             return localVarFp.casesPost(requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Deletes a specific message within a given chat.
+         * @summary Delete message
+         * @param {DefaultApiChatsChatIdMessagesMessageIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        chatsChatIdMessagesMessageIdDelete(requestParameters: DefaultApiChatsChatIdMessagesMessageIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.chatsChatIdMessagesMessageIdDelete(requestParameters.chatId, requestParameters.messageId, options).then((request) => request(axios, basePath));
         },
         /**
          * Updates a specific message within a given chat.
@@ -1948,6 +2010,27 @@ export interface DefaultApiCasesPostRequest {
      * @memberof DefaultApiCasesPost
      */
     readonly files?: Array<File>
+}
+
+/**
+ * Request parameters for chatsChatIdMessagesMessageIdDelete operation in DefaultApi.
+ * @export
+ * @interface DefaultApiChatsChatIdMessagesMessageIdDeleteRequest
+ */
+export interface DefaultApiChatsChatIdMessagesMessageIdDeleteRequest {
+    /**
+     * The ID of the chat containing the message.
+     * @type {number}
+     * @memberof DefaultApiChatsChatIdMessagesMessageIdDelete
+     */
+    readonly chatId: number
+
+    /**
+     * The ID of the message to delete.
+     * @type {number}
+     * @memberof DefaultApiChatsChatIdMessagesMessageIdDelete
+     */
+    readonly messageId: number
 }
 
 /**
@@ -2281,6 +2364,18 @@ export class DefaultApi extends BaseAPI {
      */
     public casesPost(requestParameters: DefaultApiCasesPostRequest, options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).casesPost(requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Deletes a specific message within a given chat.
+     * @summary Delete message
+     * @param {DefaultApiChatsChatIdMessagesMessageIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public chatsChatIdMessagesMessageIdDelete(requestParameters: DefaultApiChatsChatIdMessagesMessageIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).chatsChatIdMessagesMessageIdDelete(requestParameters.chatId, requestParameters.messageId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

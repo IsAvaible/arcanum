@@ -202,7 +202,7 @@ module.exports = {
       }
 
       await chat.destroy();
-      res.status(200).json({ message: "Chat deleted successfully" });
+      res.status(204).json({ message: "Chat deleted successfully" });
     } catch (error) {
       console.error("Error deleting chat:", error);
       res.status(500).json({ message: error.message || "Error deleting chat" });
@@ -231,7 +231,7 @@ module.exports = {
       }
 
       await message.destroy();
-      res.status(200).json({ message: "Message deleted successfully" });
+      res.status(204).json({ message: "Message deleted successfully" });
     } catch (error) {
       console.error("Error deleting message:", error);
       res

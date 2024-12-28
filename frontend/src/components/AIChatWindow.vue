@@ -9,6 +9,7 @@ import {
   SelectButton,
   ToggleSwitch,
   Menu,
+  ContextMenu,
   useToast,
 } from 'primevue'
 import { useApi } from '@/composables/useApi'
@@ -17,8 +18,10 @@ import CaseReference from '@/components/chat-view/CaseReference.vue'
 import DynamicRouterLinkText from '@/components/misc/DynamicRouterLinkText.vue'
 import { useDebounceFn } from '@vueuse/core'
 import type { AxiosError } from 'axios'
+import { useConfirm } from 'primevue/useconfirm'
 
 const toast = useToast()
+const confirm = useConfirm()
 
 /**
  * Reactive references for chat settings and inputs.
@@ -104,6 +107,35 @@ const deleteChat = async (id: Chat['id']) => {
 }
 
 /**
+ * Displays a confirmation dialog before deleting a chat.
+ * @param id - The ID of the chat to delete.
+ */
+const displayDeleteChatDialog = (id: Chat['id']) => {
+  const chat = chats.value?.find((chat) => chat.id === id)
+  confirm.require({
+    message:
+      'Are you sure you want to permanently delete ' +
+      (chat?.title ? `the chat called "${chat?.title}"?` : 'this chat?'),
+    header: 'Confirm Deletion',
+    icon: 'pi pi-exclamation-triangle',
+    rejectLabel: 'Cancel',
+    rejectProps: {
+      label: 'Cancel',
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: 'Delete',
+      severity: 'danger',
+    },
+    accept: async () => {
+      await deleteChat(id)
+    },
+    reject: () => {},
+  })
+}
+
+/**
  * Context menu items for chats.
  */
 const chatContextMenuItems = ref([
@@ -133,7 +165,7 @@ const chatContextMenuItems = ref([
     icon: 'pi pi-trash',
     command: async () => {
       chatContextMenuItems.value[2].icon = 'pi pi-spinner pi-spin'
-      await deleteChat(selectedChatContextMenuChat.value!.id)
+      displayDeleteChatDialog(selectedChatContextMenuChat.value!.id)
       chatContextMenuItems.value[2].icon = 'pi pi-trash'
     },
   },
@@ -208,6 +240,38 @@ const saveChatTitle = async (id: Chat['id'], title: string): Promise<boolean> =>
   }
 }
 
+/**
+ * Context menu items for messages.
+ */
+const messageContextMenuItems = ref([
+  {
+    label: 'Copy',
+    icon: 'pi pi-copy',
+    command: () => {
+      navigator.clipboard.writeText(selectedContextMenuMessage.value!.content)
+    },
+  },
+  {
+    label: 'Delete',
+    icon: 'pi pi-trash',
+    command: () => {
+      messageContextMenuItems.value[1].icon = 'pi pi-spinner pi-spin'
+      deleteMessage(selectedContextMenuMessage.value!.id)
+      messageContextMenuItems.value[1].icon = 'pi pi-trash'
+    },
+  },
+])
+const messageContextMenu = useTemplateRef('messageContextMenu')
+const selectedContextMenuMessage = ref<Message | null>(null)
+
+/**
+ * Opens the message context menu.
+ */
+const openMessageContextMenu = (event: MouseEvent, message: Message) => {
+  selectedContextMenuMessage.value = message
+  messageContextMenu.value!.show(event)
+}
+
 const invalidSubmissionAttempt = ref(false)
 const pendingMessage = ref<(Message & { state: string }) | null>(null)
 /**
@@ -260,6 +324,31 @@ const sendPendingMessage = async () => {
       life: 1500,
     })
     pendingMessage.value!.state = 'failed'
+  }
+}
+
+const deletingMessage = ref(false)
+/**
+ * Deletes a message from the active chat.
+ * @param id - The ID of the message to delete.
+ */
+const deleteMessage = async (id: Message['id']) => {
+  if (!activeChat.value) {
+    return
+  }
+  deletingMessage.value = true
+  try {
+    await api.chatsChatIdMessagesMessageIdDelete({ chatId: activeChat.value.id, messageId: id })
+    activeChat.value.messages = activeChat.value.messages.filter((message) => message.id !== id)
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Failed to delete message',
+      detail: (error as AxiosError).message,
+      life: 1500,
+    })
+  } finally {
+    deletingMessage.value = false
   }
 }
 
@@ -463,6 +552,7 @@ onMounted(fetchChats)
           </template>
           <template v-else>
             <input
+              placeholder="Type a title"
               v-model="newChatTitleList"
               id="editingChatTitleInput"
               class="focus:outline-none focus:border-gray-700 border-b border-gray-300 flex-1 min-w-0"
@@ -547,14 +637,19 @@ onMounted(fetchChats)
         </div>
         <div class="flex items-center gap-3">
           <Button
-            v-for="icon in ['cog', 'trash', 'inbox']"
-            :key="icon"
+            v-for="button in [
+              { icon: 'inbox' },
+              { icon: 'trash', action: () => displayDeleteChatDialog(activeChat!.id) },
+              { icon: 'cog' },
+            ]"
+            :key="button.icon"
             variant="text"
             severity="secondary"
             size="small"
-            :class="icon !== 'cog' ? '-ml-4' : ''"
+            @click="button.action"
+            :class="button.icon !== 'inbox' ? '-ml-4' : ''"
           >
-            <i :class="`pi pi-${icon} text-gray-800`"></i>
+            <i :class="`pi pi-${button.icon} text-gray-800`"></i>
           </Button>
         </div>
       </div>
@@ -587,9 +682,10 @@ onMounted(fetchChats)
         id="chat-window"
         class="flex-1 overflow-y-auto flex flex-col gap-4 py-4 px-6"
       >
+        <!-- We use the index as the key for messages to avoid re-animating on state change. -->
         <div
-          v-for="message in displayedMessages"
-          :key="message.id"
+          v-for="(message, index) in displayedMessages"
+          :key="index"
           class="flex items-center gap-2"
           :class="{ 'flex-row-reverse self-end': message.role === MessageRoleEnum.User }"
         >
@@ -605,6 +701,7 @@ onMounted(fetchChats)
               'bg-red-700': message.state === 'failed',
             }"
             class="px-4 py-2 rounded-lg shadow-sm w-fit max-w-xs flex flex-col gap-y-2"
+            @contextmenu.prevent="openMessageContextMenu($event, message)"
           >
             <p>
               <DynamicRouterLinkText
@@ -631,14 +728,16 @@ onMounted(fetchChats)
           ></button>
         </div>
       </TransitionGroup>
+      <ContextMenu
+        ref="messageContextMenu"
+        :model="messageContextMenuItems"
+        @hide="selectedContextMenuMessage = null"
+      />
+      <!-- Message Input -->
       <div
         v-if="activeChat"
         class="p-4 border-t border-gray-300 flex items-center gap-1 bg-white relative"
       >
-        <Button variant="text" severity="secondary" rounded size="small" class="-ml-2">
-          <i class="pi pi-face-smile" style="font-size: 1.2rem; color: black"></i>
-        </Button>
-
         <Button variant="text" severity="secondary" rounded size="small" class="-ml-2">
           <i class="pi pi-paperclip" style="font-size: 1.2rem; color: black"></i>
         </Button>
@@ -785,8 +884,7 @@ onMounted(fetchChats)
   transition: all 0.3s ease;
 }
 
-.pop-in-enter-from,
-.pop-in-leave-to {
+.pop-in-enter-from {
   opacity: 0;
   transform: scale(0.8);
 }
@@ -795,5 +893,10 @@ onMounted(fetchChats)
 .pop-in-leave-from {
   opacity: 1;
   transform: scale(1);
+}
+
+.pop-in-leave-to {
+  opacity: 0;
+  transform: scale(0);
 }
 </style>
