@@ -293,7 +293,14 @@ const createChatWithMessage = async () => {
     await sendMessage()
     createChatLoading.value = false
   } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Failed to create chat',
+      detail: (error as AxiosError).message,
+      life: 3000,
+    })
     console.error(error)
+    createChatLoading.value = false
   }
 }
 
@@ -545,7 +552,7 @@ onMounted(async () => {
         </div>
       </TransitionGroup>
       <!-- Skeleton loader -->
-      <div v-else class="flex-1 overflow-y-auto flex flex-col gap-4 py-4 px-6">
+      <div v-else-if="chatsLoading" class="flex-1 overflow-y-auto flex flex-col gap-4 py-4 px-6">
         <div
           class="flex gap-2"
           v-for="i in 6"
@@ -611,7 +618,9 @@ onMounted(async () => {
     </div>
 
     <!-- User Details -->
-    <div class="w-3/12 min-w-[300px] border-l border-gray-300 bg-white px-4 py-6 flex flex-col">
+    <div
+      class="w-3/12 min-w-[300px] border-l border-gray-300 bg-white px-4 py-6 hidden xl:flex flex-col"
+    >
       <div class="flex flex-col items-center">
         <!-- Avatar -->
         <Avatar label="AI" class="w-24 h-24 mb-4" shape="circle" />

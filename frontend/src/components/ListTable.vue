@@ -371,7 +371,7 @@ watch(path, (newPath, oldPath) => {
 
 <template>
   <div class="flex flex-1 my-auto">
-    <div class="transition-all duration-300 p-6 space-y-6 mx-auto">
+    <div class="transition-all duration-300 p-6 space-y-6 mx-auto max-w-full">
       <div class="flex items-center justify-between">
         <div class="flex gap-4">
           <h1 class="text-3xl font-bold">Cases</h1>
@@ -380,7 +380,7 @@ watch(path, (newPath, oldPath) => {
       </div>
 
       <!-- KPI Widgets Row -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <KpiWidget
           title="Total Cases"
           :value="totalCases"

@@ -48,7 +48,8 @@ type Chat = {
   image?: string
   capName: string
   time: string
-  lastMessage: string
+  status?: string
+  lastMessage?: string
   unreadMessageCount?: number
   messages?: Array<{ id: number; type: string; message: string; capName?: string; image?: string }>
   isGroup?: boolean
@@ -66,6 +67,7 @@ const chats = ref<Chat[]>([
     time: '12:30',
     isGroup: false,
     members: [],
+    status: 'Available',
     lastMessage: 'I have a question about Arcanum.',
     messages: [
       { id: 1, type: 'received', message: 'Hi, how can I help you?', capName: 'CF' },
@@ -97,6 +99,7 @@ const chats = ref<Chat[]>([
       { id: 1, type: 'received', message: 'Arcanum looks amazing so far!', capName: 'PT' },
       { id: 2, type: 'sent', message: "Let's discuss the new project.", capName: 'You' },
     ],
+    status: 'Rethinking the future',
     lastMessage: "Let's discuss the new project.",
   },
   {
@@ -106,6 +109,7 @@ const chats = ref<Chat[]>([
     time: '12:30',
     isGroup: false,
     members: [],
+    status: 'In a meeting',
     lastMessage: "It's about the deadline.",
     messages: [
       {
@@ -125,7 +129,7 @@ const chats = ref<Chat[]>([
     time: '12:30',
     isGroup: false,
     members: [],
-    lastMessage: 'In the office',
+    status: 'In the office',
     messages: [],
   },
 ])
@@ -339,7 +343,7 @@ const caseReferences = computed(() => {
           />
           <div class="flex-1">
             <div class="text-gray-800 font-medium">{{ activeChat.name }}</div>
-            <div class="text-gray-500 text-sm">{{ activeChat.lastMessage }}</div>
+            <div class="text-gray-500 text-sm">{{ activeChat.status }}</div>
           </div>
         </div>
         <div class="flex items-center gap-3">
@@ -449,7 +453,9 @@ const caseReferences = computed(() => {
     </div>
 
     <!-- User Details -->
-    <div class="w-3/12 min-w-[300px] border-l border-gray-300 bg-white px-4 py-6 flex flex-col">
+    <div
+      class="w-3/12 min-w-[300px] border-l border-gray-300 bg-white px-4 py-6 hidden xl:flex flex-col"
+    >
       <div class="flex flex-col items-center">
         <!-- Avatar -->
         <Avatar

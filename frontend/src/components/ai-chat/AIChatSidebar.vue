@@ -149,6 +149,7 @@ const setActiveChat = async (chatId: Chat['id'] | null) => {
         {{ chat.title ?? 'Untitled Chat' }}
       </button>
       <p v-if="chatsLoading" class="text-gray-500 text-center">Loading chats...</p>
+      <p v-else-if="chatsError" class="text-red-500 text-center">Failed to load chats.</p>
       <p v-else-if="filteredPinnedChats?.length == 0" class="text-gray-500 text-center">
         No pinned chats.
       </p>
@@ -203,7 +204,7 @@ const setActiveChat = async (chatId: Chat['id'] | null) => {
         </template>
       </button>
       <p v-if="chatsLoading" class="text-gray-500 text-center">Loading chats...</p>
-      <p v-else-if="chatsError" class="text-red-500 text-center">{{ chatsError }}</p>
+      <p v-else-if="chatsError" class="text-red-500 text-center">Failed to load chats.</p>
       <p v-else-if="filteredChats?.length == 0" class="text-gray-500 text-center">
         No chats found.
       </p>
