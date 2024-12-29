@@ -1,6 +1,8 @@
 const express = require("express");
 const { io } = require("socket.io-client");
 const axios = require("axios");
+const fs = require("fs");
+const FormData = require("form-data");
 
 // Da self-signed Zertifikat
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -65,9 +67,10 @@ setTimeout(async () => {
   // 2. Create a new chat
   const newChatData = { title: "Test Chat" };
   const createChat = await testRequest("post", "/api/chats", newChatData);
+  console.log(createChat);
 
-  if (createChat && createChat.chatId) {
-    const chatId = createChat.chatId;
+  if (createChat && createChat.id) {
+    const chatId = createChat.id;
 
     // 3. Get the newly created chat messages
     await testRequest("get", `/api/chats/${chatId}`);
@@ -91,16 +94,19 @@ setTimeout(async () => {
       socketId: socket.id,
     };
 
-    const messages = await testRequest(
+    await testRequest(
       "post",
       `/api/chats/${chatId}/messages`,
       messageData,
     );
 
+   const chatRes =  await testRequest("get", `/api/chats/${chatId}`);
+
+
     // 10 Sekunden warten
     await new Promise((resolve) => setTimeout(resolve, 5000));
 
-    const userMessages = messages.filter((msg) => msg.role === "user");
+    const userMessages = chatRes.messages.filter((msg) => msg.role === "user");
     const lastUserMessage = userMessages[0];
     const lastUserMessageId = lastUserMessage ? lastUserMessage.id : null;
 
@@ -132,14 +138,30 @@ setTimeout(async () => {
       `/api/chats/${chatId}/messages/${lastUserMessageId + 2}`,
     );
 
+    console.log("Testing file upload...");
+
+    const formData = new FormData();
+    formData.append("socketId", socket.id);
+    formData.append("content", "Hallo vom File-Test");
+    formData.append("files", fs.createReadStream("../test/testfile.txt"));
+
+    const res = await axios.post(
+      backendUrl + `/api/chats/${chatId}/messages/files`,
+      formData,
+      {
+        headers: formData.getHeaders(),
+        httpsAgent: new (require("https").Agent)({ rejectUnauthorized: false }),
+      },
+    );
+    console.log("File upload => status:", res.status, JSON.stringify(res.data));
+
+    await new Promise((resolve) => setTimeout(resolve, 5000));
     // Export the chat
     await testRequest("get", `/api/chats/${chatId}/export`);
 
     //  Delete the chat
     await testRequest("delete", `/api/chats/${chatId}`);
   }
-
- 
 
   console.log("All test requests done.");
 }, 5000);

@@ -8,12 +8,12 @@ const messageSchema = z.object({
 
 const updateMessageSchema = z.object({
   content: z.string().min(1),
-  socketId: z.string().min(1).optional(),
+  socketId: z.string().optional(),
 });
 
 // Chat schema
 const chatSchema = z.object({
-  title: z.string().min(1).nullable(),
+  title: z.string().optional(),
 });
 
 module.exports = {
