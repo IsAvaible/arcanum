@@ -9,6 +9,7 @@ import {
   SelectButton,
   ToggleSwitch,
   ContextMenu,
+  Skeleton,
   useToast,
 } from 'primevue'
 import { useApi } from '@/composables/useApi'
@@ -20,7 +21,10 @@ import type { AxiosError } from 'axios'
 import { useConfirm } from 'primevue/useconfirm'
 import AIChatSidebar from '@/components/ai-chat/AIChatSidebar.vue'
 import AIChatHeader from '@/components/ai-chat/AIChatHeader.vue'
+import { useRoute, useRouter } from 'vue-router'
 
+const route = useRoute()
+const router = useRouter()
 const toast = useToast()
 const confirm = useConfirm()
 
@@ -50,6 +54,7 @@ const caseReferenceRegex = /#(\d+)(?:[,.\s]|$)/g
  */
 const chats = ref<Chat[] | null>(null)
 const chatsLoading = ref(false)
+const chatLoading = ref(false)
 const chatsError = ref<string | null>(null)
 const fetchChats = async () => {
   chatsLoading.value = true
@@ -68,8 +73,21 @@ const fetchChats = async () => {
 const setActiveChat = async (chatId: Chat['id'] | null) => {
   if (chatId === null) {
     activeChat.value = null
+    if (route.params.chatId) {
+      await router.push('/ai')
+    }
   } else {
-    activeChat.value = (await api.chatsIdGet({ id: chatId })).data
+    chatLoading.value = true
+    try {
+      activeChat.value = (await api.chatsIdGet({ id: chatId })).data
+      if (!route.params.chatId || Number(route.params.chatId) !== chatId) {
+        await router.push(`/ai/${chatId}`)
+      }
+    } catch (error) {
+      throw error
+    } finally {
+      chatLoading.value = false
+    }
   }
 }
 
@@ -81,7 +99,7 @@ const deleteChat = async (id: Chat['id']) => {
     await api.chatsIdDelete({ id })
     chats.value = chats.value?.filter((chat) => chat.id !== id) ?? []
     if (activeChat.value?.id === id) {
-      activeChat.value = null
+      await router.push('/ai')
     }
   } catch (error) {
     toast.add({
@@ -270,8 +288,8 @@ const createChatWithMessage = async () => {
   createChatLoading.value = true
   try {
     const { chatId } = (await api.chatsPost()).data
-    activeChat.value = (await api.chatsIdGet({ id: chatId })).data
-    chats.value = [activeChat.value, ...(chats.value ?? [])]
+    chats.value = [activeChat.value!, ...(chats.value ?? [])]
+    await router.push(`/ai/${chatId}`)
     await sendMessage()
     createChatLoading.value = false
   } catch (error) {
@@ -395,7 +413,37 @@ const caseReferences = computed(() => {
   )
 })
 
-onMounted(fetchChats)
+onMounted(async () => {
+  if (route.params.chatId) {
+    chatLoading.value = true
+  }
+  await fetchChats()
+  /**
+   * Watches for route changes and loads the chat based on the route parameter
+   */
+  watch(
+    () => route.params.chatId,
+    async (newChatId) => {
+      if (newChatId) {
+        try {
+          await setActiveChat(Number(newChatId))
+        } catch (error) {
+          toast.add({
+            severity: 'error',
+            summary: 'Failed to load chat',
+            detail: 'The requested chat could not be found',
+            life: 3000,
+          })
+          console.error(error)
+          await router.push('/ai')
+        }
+      } else {
+        activeChat.value = null
+      }
+    },
+    { immediate: true },
+  )
+})
 </script>
 
 <template>
@@ -415,7 +463,7 @@ onMounted(fetchChats)
     <div class="w-8/12 xl:w-6/12 flex flex-col">
       <!-- Header -->
       <AIChatHeader
-        v-if="activeChat"
+        v-if="activeChat || chatLoading"
         :active-chat="activeChat"
         :save-chat-title="saveChatTitle"
         :display-delete-chat-dialog="displayDeleteChatDialog"
@@ -454,7 +502,7 @@ onMounted(fetchChats)
         <div
           v-for="(message, index) in displayedMessages"
           :key="index"
-          class="flex items-center gap-2"
+          class="flex gap-2"
           :class="{ 'flex-row-reverse self-end': message.role === MessageRoleEnum.User }"
         >
           <Avatar
@@ -496,6 +544,23 @@ onMounted(fetchChats)
           ></button>
         </div>
       </TransitionGroup>
+      <!-- Skeleton loader -->
+      <div v-else class="flex-1 overflow-y-auto flex flex-col gap-4 py-4 px-6">
+        <div
+          class="flex gap-2"
+          v-for="i in 6"
+          :class="{
+            'flex-row-reverse self-end': i % 2 !== 0,
+          }"
+        >
+          <Avatar class="w-10 h-10 bg-gray-300" shape="circle" />
+          <Skeleton
+            :height="i % 2 !== 0 ? '2.5rem' : Math.floor(Math.random() * 10) + 5 + 'rem'"
+            :width="i % 2 !== 0 ? Math.floor(Math.random() * 10) + 15 + 'rem' : '20rem'"
+            class="h-10 w-20 rounded-lg shadow-sm w-fit max-w-xs"
+          />
+        </div>
+      </div>
       <ContextMenu
         ref="messageContextMenu"
         :model="messageContextMenuItems"

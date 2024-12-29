@@ -53,6 +53,12 @@ const router = createRouter({
       path: '/ai',
       name: 'AI',
       component: AIChatWindow,
+      children: [
+        {
+          path: ':chatId',
+          component: AIChatWindow,
+        },
+      ],
     },
   ],
 })

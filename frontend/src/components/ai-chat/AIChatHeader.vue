@@ -63,13 +63,14 @@ const saveChatTitleHeader = async () => {
         />
       </template>
       <template v-else>
-        {{ activeChat?.title || 'Untitled Chat' }}
+        {{ activeChat ? activeChat!.title || 'Untitled Chat' : 'Loading...' }}
         <Button
           icon="pi pi-pencil"
           text
           size="small"
           severity="secondary"
           class="ml-2"
+          v-if="activeChat !== null"
           @click="
             () => {
               editingChatTitleHeader = true
@@ -92,6 +93,7 @@ const saveChatTitleHeader = async () => {
         severity="secondary"
         size="small"
         @click="button.action"
+        :disabled="activeChat === null"
         :class="button.icon !== 'inbox' ? '-ml-4' : ''"
       >
         <i :class="`pi pi-${button.icon} text-gray-800`"></i>
