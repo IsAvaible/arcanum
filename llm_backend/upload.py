@@ -169,7 +169,6 @@ def upload_file_method_production(files, socket_id):
                 socketio.emit('case_generation', {'message': f'Analyzing Video File ({filename})'}, to=socket_id)
                 texts += f" Content of Video File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
 
-
                 frame_path, audio_path = extract_data_from_video(path, filehash)
                 frames = get_all_frames_in_dir(frame_path)
 

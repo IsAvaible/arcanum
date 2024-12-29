@@ -72,9 +72,9 @@ def extract_data_from_video(video_path, filehash):
     else:
         segments = [single_video]
 
-
+    i = 0
     # iterate over segments
-    for i, video in segments:
+    for video in segments:
 
         # Scale video down to width of 320 and the corresponding height based on the aspect ratio
         # get one frame each 2 seconds
@@ -149,13 +149,21 @@ def process_segments(frames, result_dict, transcription):
         for i in range(0, frame_segments):
             print("Analyzing Segment " + str(i) + " / " + str(frame_segments))
             prompt_dict.clear()
-            prompt_dict = [
-                {
-                    "type": "text",
-                    "text": f"Here is part {str(i)} of {str(frame_segments)}. What are all frames showing, be as detailed as possible but please combine everything in a normal text"
-                }
-            ]
 
+            if video_summary is "":
+                prompt_dict = [
+                    {
+                        "type": "text",
+                        "text": f"Here is part {str(i)} of {str(frame_segments)}. What are all frames showing, be as detailed as possible but please combine everything in a normal text"
+                    }
+                ]
+            else:
+                prompt_dict = [
+                    {
+                        "type": "text",
+                        "text": f"Here is the summary: of the other parts: {video_summary}. Here is part {str(i)} of {str(frame_segments)}. What are all frames showing, be as detailed as possible but please combine everything in a normal text"
+                    }
+                ]
             for j in range(0 + (50 * i), 49 * (i + 1)):
                 # images need to be base64 encoded otherwise Azure OpenAI wont understand them
                 encoding = encode_image(frames[j])
@@ -176,7 +184,13 @@ def process_segments(frames, result_dict, transcription):
         prompt_dict = [
             {
                 "type": "text",
-                "text": "What are all frames showing, be as detailed as possible but please combine everything in a normal text"
+                "text": """I have a video file that needs analysis. Please provide detailed insights, including the following:
+Key objects, actions, or events detected in the video.
+Sentiment analysis, if applicable to the content.
+Summary of the video’s main theme or message.
+Brands or Machine Names or Model numbers.
+The video should be processed for accuracy, and any detected patterns, anomalies, or highlights should be noted.
+"""
             }
         ]
         for j in range(0, len(frames)):

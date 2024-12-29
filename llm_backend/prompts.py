@@ -99,6 +99,7 @@ You are an AI assistant tasked with creating a concise and informative summary o
 Your task is to:
 
 - Analyze both the transcription and the video description to identify the main points of the video.
+- Try to detect Logos and Brands
 - Create a summary that is clear, engaging, and accurately reflects both the spoken content and the visual elements.
 - Ensure the summary includes the key moments of the video, any important themes, and a brief overview of the content.
 - The summary should be no longer than 300 words and must provide an overview that someone who has not watched the video can understand.

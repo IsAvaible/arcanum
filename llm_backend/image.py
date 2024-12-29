@@ -90,7 +90,7 @@ def video_openai(video_summary, transcription_dict):
 
     # replace vars with values
     promptLangchainInvoked = promptLangchain.invoke(
-         {"video_summary": video_summary, "query": "Please write all information you can find as detailed as possible!"}
+         {"system_prompt":system_prompt,"video_summary": video_summary, "query": "Please write all information you can find as detailed as possible!"}
     )
 
     # define chain

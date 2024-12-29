@@ -104,7 +104,7 @@ def generate(request):
             {"context": context, "query": prompt}
         )
 
-
+        # get response
         response_dict = start_quering_llm(
             promptLangchainInvoked, llm, case_parser_json, max_tries=3
         )
