@@ -8,7 +8,6 @@ module.exports = {
    * @route POST /chats
    * @description Creates a new chat instance and returns its ID.
    * @param {string} [title.body.optional] - An optional title for the new chat.
-   * @returns {Object} 201 - A JSON object containing the newly created chat's ID.
    * @returns {Object} 201 - A JSON object containing the newly created chat.
    * @returns {Error} 500 - Internal server error.
    */
@@ -21,7 +20,6 @@ module.exports = {
         updatedAt: new Date(),
       });
 
-      res.status(201).json({ chatId: newChat.id });
       res.status(201).json(newChat);
     } catch (error) {
       console.error("Error creating chat:", error);
@@ -59,7 +57,6 @@ module.exports = {
    */
   async getChatMessages(req, res) {
     const chatId = parseInt(req.params.id, 10);
-
     try {
       const chat = await Chats.findByPk(chatId, {
         include: [
@@ -90,7 +87,6 @@ module.exports = {
    * @param {number} id.path.required - The ID of the chat to which the message will be added.
    * @param {Text} content.body.required - The content of the user's message (non-empty).
    * @param {string} socketId.body.required - An socket ID to track responses in real-time.
-   * @returns {Object} 200 - The updated chat with user and assisstant messages
    * @returns {Object} 200 - The assisstant messages
    * @returns {Error} 400 - Missing or invalid message content.
    * @returns {Error} 404 - Chat not found.
@@ -149,7 +145,6 @@ module.exports = {
           timestamp: new Date(),
         });
 
-        const result = await gatherChatContext(chatId);
         res.status(200).json(assistantMessage);
       } catch (error) {
         console.error("LLM module error:", error.message || error);
@@ -258,7 +253,8 @@ module.exports = {
    * @param {number} messageId.path.required - The ID of the message to update.
    * @param {string} content.body.required - The new content of the message.
    * @param {string} [socketId.body.optional] - Optional socket ID for sending the updated message to the LLM.
-   * @returns {Object} 200 - The updated chat with user and assisstant messages
+   * @returns {Object} 200 - The assisstant message (SocketId was provided)
+   * @returns {Object} 204 - Updated user message(no SocketId) 
    * @returns {Error} 400 - Missing or invalid message content.
    * @returns {Error} 404 - Message or chat not found.
    * @returns {Error} 500 - Internal server error.
@@ -313,6 +309,8 @@ module.exports = {
             content: assistantMessageContent,
             timestamp: new Date(),
           });
+
+          res.status(200).json(newAssistantMsg);
         } catch (error) {
           console.error("LLM module error:", error.message || error);
           return res
