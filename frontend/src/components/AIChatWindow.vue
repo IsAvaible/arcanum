@@ -8,7 +8,6 @@ import {
   InputText,
   SelectButton,
   ToggleSwitch,
-  Menu,
   ContextMenu,
   useToast,
 } from 'primevue'
@@ -19,6 +18,8 @@ import DynamicRouterLinkText from '@/components/misc/DynamicRouterLinkText.vue'
 import { useDebounceFn } from '@vueuse/core'
 import type { AxiosError } from 'axios'
 import { useConfirm } from 'primevue/useconfirm'
+import AIChatSidebar from '@/components/ai-chat/AIChatSidebar.vue'
+import AIChatHeader from '@/components/ai-chat/AIChatHeader.vue'
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -29,7 +30,6 @@ const confirm = useConfirm()
 const notification = ref(true)
 const sound = ref(false)
 const saveToDownloads = ref(false)
-const search = ref('')
 const media = ref('Media')
 const mediaOptions = ['Media', 'Link', 'Docs']
 const messageInput = ref('')
@@ -62,28 +62,15 @@ const fetchChats = async () => {
 }
 
 /**
- * Computed property for filtering chats based on the search input.
- */
-const filteredChats = computed(() => {
-  return chats.value?.filter(
-    (chat: Chat) => chat.title?.toLowerCase().includes(search.value.toLowerCase()) ?? true,
-  )
-})
-
-const filteredPinnedChats = computed(() => {
-  // TODO
-  return filteredChats.value?.filter((_chat: Chat) => false)
-})
-
-/**
  * Sets the active chat to the selected chat.
  * @param chatId - The ID of the chat to set as active.
  */
-const setActiveChat = async (chatId: number) => {
-  if (editingChatTitleList && selectedChatContextMenuChat.value?.id === chatId) {
-    return
+const setActiveChat = async (chatId: Chat['id'] | null) => {
+  if (chatId === null) {
+    activeChat.value = null
+  } else {
+    activeChat.value = (await api.chatsIdGet({ id: chatId })).data
   }
-  activeChat.value = (await api.chatsIdGet({ id: chatId })).data
 }
 
 /**
@@ -136,98 +123,18 @@ const displayDeleteChatDialog = (id: Chat['id']) => {
 }
 
 /**
- * Context menu items for chats.
+ * Saves the chat title to the API and updates the local state.
+ * @param id - The ID of the chat to update.
+ * @param title - The new title for the chat.
+ * @returns True if the chat title was saved successfully.
  */
-const chatContextMenuItems = ref([
-  {
-    label: 'Pin Chat',
-    icon: 'pi pi-thumbtack',
-  },
-  {
-    label: 'Edit Title',
-    icon: 'pi pi-pencil',
-    command: () => {
-      const chat = selectedChatContextMenuChat.value
-      newChatTitleList.value = chat!.title ?? ''
-      editingChatTitleListLoading.value = false
-      editingChatTitleList.value = true
-      nextTick(() => {
-        selectedChatContextMenuChat.value = chat
-        nextTick(() => {
-          const input = document.getElementById('editingChatTitleInput') as HTMLInputElement
-          input?.focus()
-        })
-      })
-    },
-  },
-  {
-    label: 'Delete Chat',
-    icon: 'pi pi-trash',
-    command: async () => {
-      chatContextMenuItems.value[2].icon = 'pi pi-spinner pi-spin'
-      displayDeleteChatDialog(selectedChatContextMenuChat.value!.id)
-      chatContextMenuItems.value[2].icon = 'pi pi-trash'
-    },
-  },
-])
-const chatContextMenu = useTemplateRef('chatContextMenu')
-const selectedChatContextMenuChat = ref<Chat | null>(null)
-const openChatContextMenu = (event: MouseEvent, selectedChat: Chat) => {
-  editingChatTitleList.value = false
-  selectedChatContextMenuChat.value = selectedChat
-  chatContextMenu.value!.toggle(event)
-}
-
-/**
- * Reactive references for editing chat title in the list
- */
-const editingChatTitleList = ref(false)
-const editingChatTitleListLoading = ref(false)
-const newChatTitleList = ref('')
-
-/**
- * Saves the edited chat title in the list.
- */
-const saveChatTitleList = async () => {
-  editingChatTitleListLoading.value = true
-  if (await saveChatTitle(selectedChatContextMenuChat.value!.id, newChatTitleList.value)) {
-    editingChatTitleList.value = false
-  }
-  selectedChatContextMenuChat.value = null
-  editingChatTitleListLoading.value = false
-}
-
-/**
- * Cancels the chat title edit in the list.
- */
-const cancelChatTitleListEdit = () => {
-  selectedChatContextMenuChat.value = null
-  editingChatTitleList.value = false
-}
-
-/**
- * Reactive references for editing chat title in the header
- */
-const editingChatTitleHeader = ref(false)
-const editingChatTitleHeaderLoading = ref(false)
-const newChatTitleHeader = ref('')
-
-/**
- * Saves the edited chat title in the header.
- */
-const saveChatTitleHeader = async () => {
-  if (!activeChat.value) return
-  editingChatTitleHeaderLoading.value = true
-  if (await saveChatTitle(activeChat.value.id, newChatTitleHeader.value)) {
-    editingChatTitleHeader.value = false
-  }
-  editingChatTitleHeaderLoading.value = false
-}
-
 const saveChatTitle = async (id: Chat['id'], title: string): Promise<boolean> => {
   try {
     await api.chatsIdPut({ id, title })
     chats.value!.find((chat) => chat.id === id)!.title = title
+    if (activeChat.value?.id === id) {
+      activeChat.value!.title = title
+    }
     return true
   } catch (error) {
     toast.add({
@@ -494,165 +401,26 @@ onMounted(fetchChats)
 <template>
   <div class="flex h-screen bg-white neutral-primary">
     <!-- Sidebar -->
-    <div class="w-4/12 xl:w-3/12 min-w-40 overflow-auto flex flex-col gap-6 border-r px-5">
-      <div class="flex flex-col gap-6 pt-3 pb-2 sticky top-0 bg-white z-10">
-        <div class="flex items-center justify-between gap-6 text-gray-800">
-          <h2 class="text-2xl font-medium lead">Chats</h2>
-          <Button icon="pi pi-plus" text @click="activeChat = null" />
-        </div>
-      </div>
-      <IconField>
-        <InputText v-model="search" type="text" placeholder="Search for chats..." class="w-full" />
-        <InputIcon class="pi pi-search" />
-      </IconField>
-      <div class="flex flex-col">
-        <h3 class="uppercase text-slate-400 mb-4">Pinned</h3>
-        <button
-          v-for="chat in filteredPinnedChats"
-          :key="chat.title"
-          class="truncate w-full p-3 cursor-pointer hover:bg-gray-100 rounded-lg transition-all"
-          :class="{
-            'bg-gray-200': chat.id === activeChat?.id,
-          }"
-          @click="setActiveChat(chat.id)"
-        >
-          {{ chat.title ?? 'Untitled Chat' }}
-        </button>
-        <p v-if="chatsLoading" class="text-gray-500 text-center">Loading chats...</p>
-        <p v-else-if="filteredPinnedChats?.length == 0" class="text-gray-500 text-center">
-          No pinned chats.
-        </p>
-      </div>
-      <div class="flex-1 flex flex-col">
-        <h3 class="uppercase text-slate-400 mb-4">Chat History</h3>
-        <button
-          v-for="chat in filteredChats"
-          :key="chat.title"
-          class="w-full p-3 cursor-pointer rounded-lg transition-all flex items-center justify-between group gap-x-1"
-          :class="{
-            'hover:bg-gray-100': chat.id !== activeChat?.id,
-            'bg-gray-200': chat.id === activeChat?.id,
-            'bg-gray-100':
-              chat.id !== activeChat?.id && chat.id === selectedChatContextMenuChat?.id,
-          }"
-          @click="setActiveChat(chat.id)"
-        >
-          <template v-if="!editingChatTitleList || chat.id !== selectedChatContextMenuChat?.id">
-            <span class="truncate">
-              {{ chat.title || 'Untitled Chat' }}
-            </span>
-            <button
-              :class="{
-                'opacity-0 group-hover:opacity-30 hover:!opacity-100': chat.id !== activeChat?.id,
-                'opacity-100': selectedChatContextMenuChat?.id === chat.id,
-              }"
-              @click.stop="openChatContextMenu($event, chat)"
-              class="pi pi-ellipsis-h text-gray-500 hover:text-gray-800 transition-opacity"
-            ></button>
-          </template>
-          <template v-else>
-            <input
-              placeholder="Type a title"
-              v-model="newChatTitleList"
-              id="editingChatTitleInput"
-              class="focus:outline-none focus:border-gray-700 border-b border-gray-300 flex-1 min-w-0"
-              @keyup.enter="saveChatTitleList"
-              @keyup.esc="cancelChatTitleListEdit"
-            />
-            <button
-              @click.stop="saveChatTitleList"
-              :class="{
-                'pi pi-spinner pi-spin': editingChatTitleListLoading,
-                'pi pi-check': !editingChatTitleListLoading,
-              }"
-              class="text-gray-500 hover:text-gray-700 transition-colors px-1"
-            />
-            <button
-              @click.stop="cancelChatTitleListEdit"
-              class="pi pi-times text-gray-500 hover:text-gray-700 transition-colors"
-            />
-          </template>
-        </button>
-        <p v-if="chatsLoading" class="text-gray-500 text-center">Loading chats...</p>
-        <p v-else-if="chatsError" class="text-red-500 text-center">{{ chatsError }}</p>
-        <p v-else-if="filteredChats?.length == 0" class="text-gray-500 text-center">
-          No chats found.
-        </p>
-      </div>
-      <Menu
-        ref="chatContextMenu"
-        popup
-        :model="chatContextMenuItems"
-        @hide="selectedChatContextMenuChat = null"
-      />
-    </div>
+    <AIChatSidebar
+      :active-chat="activeChat"
+      :chats="chats"
+      :chats-loading="chatsLoading"
+      :chats-error="chatsError"
+      :fetch-chats="fetchChats"
+      :set-active-chat="setActiveChat"
+      :display-delete-chat-dialog="displayDeleteChatDialog"
+      :save-chat-title="saveChatTitle"
+    />
 
     <div class="w-8/12 xl:w-6/12 flex flex-col">
       <!-- Header -->
-      <div
+      <AIChatHeader
         v-if="activeChat"
-        class="flex items-center justify-between p-4 gap-4 border-b border-gray-300 w-full"
-      >
-        <div class="text-gray-800 font-medium flex items-center">
-          <template v-if="editingChatTitleHeader">
-            <InputText
-              v-model="newChatTitleHeader"
-              placeholder="Type a title"
-              class="mr-2 min-w-0"
-              size="small"
-              @keyup.enter="saveChatTitleHeader"
-            />
-            <Button
-              :icon="editingChatTitleHeaderLoading ? 'pi pi-spinner pi-spin' : 'pi pi-check'"
-              @click="saveChatTitleHeader"
-              text
-              size="small"
-              severity="secondary"
-            />
-            <Button
-              icon="pi pi-times"
-              @click="editingChatTitleHeader = false"
-              text
-              size="small"
-              severity="secondary"
-            />
-          </template>
-          <template v-else>
-            {{ activeChat.title || 'Untitled Chat' }}
-            <Button
-              icon="pi pi-pencil"
-              text
-              size="small"
-              severity="secondary"
-              class="ml-2"
-              @click="
-                () => {
-                  editingChatTitleHeader = true
-                  editingChatTitleHeaderLoading = false
-                  newChatTitleHeader = activeChat?.title ?? ''
-                }
-              "
-            />
-          </template>
-        </div>
-        <div class="flex items-center gap-3">
-          <Button
-            v-for="button in [
-              { icon: 'inbox' },
-              { icon: 'trash', action: () => displayDeleteChatDialog(activeChat!.id) },
-              { icon: 'cog' },
-            ]"
-            :key="button.icon"
-            variant="text"
-            severity="secondary"
-            size="small"
-            @click="button.action"
-            :class="button.icon !== 'inbox' ? '-ml-4' : ''"
-          >
-            <i :class="`pi pi-${button.icon} text-gray-800`"></i>
-          </Button>
-        </div>
-      </div>
+        :active-chat="activeChat"
+        :save-chat-title="saveChatTitle"
+        :display-delete-chat-dialog="displayDeleteChatDialog"
+      />
+      <!-- No Chat Selected -->
       <div v-else class="flex flex-col gap-y-4 p-4 items-center justify-center h-full">
         <h2 class="text-gray-700 text-2xl font-semibold">What can I help you with?</h2>
         <IconField class="w-full max-w-lg">
