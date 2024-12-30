@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from langchain_openai import AzureChatOpenAI
 from dotenv import load_dotenv
 
+from glossary import generate_glossary_terms
 from readwrite import write_to_file, read_from_file, text_to_dict
 from webdav import check_if_cached, download_cache, upload_cache_file
 from whisper import transcribe
@@ -24,7 +25,6 @@ AZURE_DEPLOYMENT_GPT = os.getenv("AZURE_DEPLOYMENT_GPT")
 AZURE_DEPLOYMENT_EMBEDDING = os.getenv("AZURE_DEPLOYMENT_EMBEDDING")
 AZURE_DEPLOYMENT = os.getenv("AZURE_DEPLOYMENT_WHISPER")
 OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
-
 
 
 def allowed_file(filename):
@@ -56,7 +56,7 @@ def upload_file_method_production(files, pdf_extractor):
     single_text = None
     whisper_prompt = ""
     # SET TRUE IF CACHING SHOULD BE ACTIVATED -> FALSE IF NOT
-    USE_CACHE = True
+    USE_CACHE = False
 
     for file in files:
         print (file)
@@ -67,6 +67,7 @@ def upload_file_method_production(files, pdf_extractor):
 
     #sort attachments so audio come last
     sorted_attachments = sorted(files, key=sort_attachments)
+
 
     for file in sorted_attachments:
         filepath = file["filepath"]
@@ -81,15 +82,17 @@ def upload_file_method_production(files, pdf_extractor):
 
         if allowed_file(filename) and (not is_cached or not USE_CACHE):
             if "audio" in mimetype:
-                transcription = transcribe(file, texts, llm, path, filename, whisper_prompt)
+                transcription = transcribe(file, texts, path, filename, files_as_dicts)
                 single_dict = transcription
                 texts += "  " + json.dumps(single_text, ensure_ascii=False)
             elif mimetype == "application/pdf":
                 texts += f" Content of PDF File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 single_text = create_text_chunks_pdfplumber(path)
+                glossary_terms = generate_glossary_terms(single_text)
                 single_dict = {
                     "type": "pdf",
-                    "text": single_text
+                    "text": single_text,
+                    "glossary" : glossary_terms
                 }
                 texts += " " + single_text
             elif mimetype == "text/html":
@@ -99,9 +102,11 @@ def upload_file_method_production(files, pdf_extractor):
                     soup = BeautifulSoup(contents)
                     texts += soup.get_text()
                     single_text = soup.get_text()
+                    glossary_terms = generate_glossary_terms(single_text)
                 single_dict = {
                     "type": "html",
-                    "text": single_text
+                    "text": single_text,
+                    "glossary" : glossary_terms
                 }
             elif mimetype == "text/plain":
                 texts += f" Content of Text File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
@@ -109,24 +114,12 @@ def upload_file_method_production(files, pdf_extractor):
                     contents = file.read()
                     texts += contents
                     single_text = contents
+                    glossary_terms = generate_glossary_terms(single_text)
                 single_dict = {
                     "type": "txt",
-                    "text": single_text
+                    "text": single_text,
+                    "glossary" : glossary_terms
                 }
-
-        ### CACHE TO MINIMIZE AZURE API CALLS
-        if is_cached and USE_CACHE:
-            print("USING CACHE")
-            cache_path = download_cache(filehash) # download cache file
-            txt = read_from_file(cache_path) # read cache file
-            content_dict = text_to_dict(txt) # file to dict
-        else:
-            print("NOT USING CACHE")
-            #content_dict = {"content": single_dict}
-            content_dict = single_dict
-            # write file to cache
-            file_path = write_to_file(filehash, json.dumps(content_dict, ensure_ascii=False, indent=2))
-            upload_cache_file(file_path, filehash)
 
 
         file_as_dict = {
@@ -136,13 +129,21 @@ def upload_file_method_production(files, pdf_extractor):
             "filepath": filepath,
             "file_id": file_id,
         }
+        file_as_dict.update(single_dict)
 
-        try:
-            file_as_dict.update(content_dict)
-        except ValueError:
-            file_as_dict["content"] = single_text
+        ### CACHE TO MINIMIZE AZURE API CALLS
+        if is_cached and USE_CACHE:
+            print("USING CACHE")
+            cache_path = download_cache(filehash) # download cache file
+            txt = read_from_file(cache_path) # read cache file
+            file_as_dict = text_to_dict(txt) # file to dict
+        else:
+            print("NOT USING CACHE")
+            file_path = write_to_file(filehash, json.dumps(file_as_dict, ensure_ascii=False, indent=2))
+            upload_cache_file(file_path, filehash)
 
         files_as_dicts.append(file_as_dict)
+
         files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False)
 
         print("file_as_dict")
