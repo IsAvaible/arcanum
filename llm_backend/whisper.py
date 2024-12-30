@@ -3,11 +3,9 @@ import os
 from itertools import islice
 
 from dotenv import load_dotenv
-from langchain_core.prompts import ChatPromptTemplate
-
 from app import app
 from audio import split_audio_with_overlap
-from prompts import get_system_prompt
+from glossary import list_to_comma
 from openai import AzureOpenAI
 
 load_dotenv()
@@ -33,23 +31,15 @@ class Segment:
         return f"({self.start}, {self.end}, {self.text})"
 
 
-def transcribe(file, texts, llm, path, filename, whisper_prompt):
+def transcribe(file, texts, path, filename,file_as_dicts):
+    glossary_terms = []
+    print(glossary_terms)
+    for dict in file_as_dicts:
+        if dict["glossary"] is not None:
+            glossary_terms.append(dict["glossary"])
+
     # if texts not empty -> try to get model numbers etc. by Text content
-    if texts != "":
-        system_prompt_langchain_parser = get_system_prompt("models")
-        messages = [
-            ("system", "{system_prompt}"),
-            ("human", "CONTEXT: {context}"),
-        ]
-        promptLangchain = ChatPromptTemplate.from_messages(messages).partial(
-            system_prompt=system_prompt_langchain_parser
-        )
-        promptLangchainInvoked = promptLangchain.invoke(
-            {"context": texts, "query": "Please give me the list back!"}
-        )
-        chain = llm
-        response = chain.invoke(promptLangchainInvoked)
-        whisper_prompt = response.content
+    whisper_prompt = list_to_comma(glossary_terms)
 
     file_size_mb = os.stat(path).st_size / (1024 * 1024)
     texts += f" NEW AUDIO FILE {json.dumps(file)} - CONTENT: "
@@ -64,9 +54,6 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
         # split files
         segments = split_audio_with_overlap(path, segment_length_ms=300000, overlap_ms=500)
         for idx, segment in enumerate(segments):
-            #if partialTranscription:
-                #partial_transcript_to_context = partialTranscription[-1][-200:]
-                # print("partialTranscription:"+str(partial_transcript_to_context)+"\n\n")
             print(f"segment {idx}")
             path = os.path.join(
                 app.root_path, os.path.join(app.config["UPLOAD_FOLDER"], f"{filename}_{idx}.mp3")
@@ -90,13 +77,6 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
                 combined_segments.append(combine_segments(group_segments))
             generated_dict = generate_segment_dict(combined_segments, idx)
             data["segments"].extend(generated_dict)
-
-        # JSON besser als String
-        #formatted_string = ""
-        #for seg in data["segments"]:
-        #    for s in seg:
-        #        formatted_string += f"Von {s.get('start')} bis {s.get('end')}:\n{s.get('text')}\n\n"
-        #return formatted_string
 
         return data
     else:
@@ -124,12 +104,6 @@ def transcribe(file, texts, llm, path, filename, whisper_prompt):
         new_segments = generate_segment_dict(combined_segments)
         data["segments"] = new_segments
 
-        #formatted_string = ""
-        #index = 1
-        #for s in new_segments:
-        #    formatted_string += f"[{s.get('start')} --> {s.get('end')}]\n{s.get('text')}\n\n"
-        #    index += 1
-        #return formatted_string
         return data
 
 
