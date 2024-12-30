@@ -11,5 +11,3 @@ RUN cat package.json | jq 'del(.scripts.prepare)' > temp.json && mv temp.json pa
 RUN apt-get install -y nginx && apt-get clean
 
 RUN npm install -g npm
-
-RUN npm install && npm run build-only && cp -rf '/app/dist/.' '/usr/share/nginx/html/' && nginx -g 'daemon off;''

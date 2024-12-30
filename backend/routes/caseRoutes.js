@@ -6,11 +6,11 @@ const multerMiddleware = require("../middlewares/multerMiddleware");
 const {
   validateData,
   escapeData,
+  authenticateJWT,
 } = require("../middlewares/validationMiddleware");
 const { caseSchema } = require("../schemas/caseSchemas");
 const attachmentController = require("../controllers/attachmentController");
 
-const jwtToken = jwt.sign("8ab6ee2c8e36849699b9a9b81290c41901953ac2d0e890e45ffa30da1b924f2e", process.env.JWT_SECRET);
 
 /**
  * @route GET /cases/
@@ -18,7 +18,7 @@ const jwtToken = jwt.sign("8ab6ee2c8e36849699b9a9b81290c41901953ac2d0e890e45ffa3
  * @returns {Object[]} 200 - An array of case objects.
  * @returns {Error} 500 - Internal server error.
  */
-router.get("/cases/", caseController.showCaseList);
+router.get("/cases/",authenticateJWT, caseController.showCaseList);
 
 /**
  * @route GET /cases/:id
