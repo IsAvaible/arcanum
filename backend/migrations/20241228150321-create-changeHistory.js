@@ -2,7 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
-        await queryInterface.createTable('ChatHistory', {
+        await queryInterface.createTable('ChangeHistory', {
             id: {
                 allowNull: false,
                 autoIncrement: true,
@@ -13,20 +13,11 @@ module.exports = {
                 allowNull: false,
                 type: Sequelize.INTEGER,
                 references: {
-                    model: 'Cases', // Referenziert die Tabelle 'Cases'
+                    model: 'Cases',
                     key: 'id',
                 },
                 onUpdate: 'CASCADE',
                 onDelete: 'CASCADE',
-            },
-            adjustment_time: {
-                allowNull: false,
-                type: Sequelize.DATE,
-                defaultValue: Sequelize.NOW, // Speichert das Änderungsdatum
-            },
-            createdAt: {
-                allowNull: false,
-                type: Sequelize.DATE,
             },
             updatedAt: {
                 allowNull: false,
@@ -36,6 +27,6 @@ module.exports = {
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.dropTable('ChatHistory');
+        await queryInterface.dropTable('ChangeHistory');
     },
 };
