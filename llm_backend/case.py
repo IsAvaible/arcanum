@@ -6,7 +6,11 @@ class CaseAttachment(BaseModel):
         ...,
         description="A unique numeric identifier for the file within the system."
     )
-    filename: str = Field(
+    glossary: list[str] = Field(
+        ...,
+        description="A list of all the glossary terms in this attachment."
+    )
+"""   filename: str = Field(
         ...,
         description="The name of the file, including its extension (e.g., 'document.pdf'), as stored in the system."
     )
@@ -18,7 +22,7 @@ class CaseAttachment(BaseModel):
         ...,
         description="A unique hash generated for the file to verify its integrity and identify its contents."
     )
-
+"""
 # defining the desired output of the llm
 class Case(BaseModel):
     title: str = Field(
@@ -41,9 +45,13 @@ class Case(BaseModel):
         ...,
         description="The current state of the case, such as 'Open', 'In Progress', 'Solved' or 'Closed' to track its progression.",
     )
-    attachments: list[int] = Field(
+    attachments: list[CaseAttachment] = Field(
         ...,
-        description="All the File-Ids that were used to generate this Case.",
+        description="All the Attachments that were used to generate this Case.",
+    )
+    glossary: list[str] = Field(
+        ...,
+        description="All the Glossary terms used for generating this case",
     )
 
 
