@@ -21,7 +21,7 @@ const features = ref([
     link: '/settings',
   },
   {
-    title: 'UX Glossary',
+    title: 'UX Glossar',
     description: 'Explore essential UX terms and definitions',
     icon: 'pi-book',
     link: '/glossary',
