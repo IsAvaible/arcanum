@@ -30,8 +30,10 @@ type FileUploadType = InstanceType<typeof FileUpload>
 const fileUpload = useTemplateRef<FileUploadType & FileUploadState & { choose: () => void }>(
   'file-upload',
 )
+const fileUploadWrapper = useTemplateRef('fileUploadWrapper')
 const totalSize = ref(0)
 const totalSizePercent = ref(0)
+
 effect(() => {
   fileUpload.value?.messages?.forEach((message: string) => {
     toast.add({
@@ -82,6 +84,11 @@ const previewFile = (event: MouseEvent, file: File) => {
   }
 }
 
+const closePopover = () => {
+  popover.value!.hide()
+  popoverPreviewFile.value = null
+}
+
 const displayRequirements = ref(false)
 const toggleRequirements = (event: MouseEvent) => {
   popover.value!.hide()
@@ -92,71 +99,104 @@ const toggleRequirements = (event: MouseEvent) => {
     })
   }
 }
+
+/**
+ * Programmatically add a file to the FileUpload component
+ * @param file The file to add
+ */
+const addFileProgrammatically = (file: File) => {
+  // Create a DataTransfer instance
+  const dataTransfer = new DataTransfer()
+
+  // Append the file to the DataTransfer object
+  dataTransfer.items.add(file)
+
+  // Access the file input of the FileUpload component
+  const inputElement = fileUploadWrapper.value!.querySelector(
+    'input[type="file"]',
+  ) as HTMLInputElement
+  if (inputElement) {
+    // Set the files property of the input element
+    inputElement.files = dataTransfer.files
+
+    // Trigger a change event to update the component
+    const event = new Event('change', { bubbles: true })
+    inputElement.dispatchEvent(event)
+  }
+}
+
+defineExpose({
+  addFile: addFileProgrammatically,
+})
 </script>
 
 <template>
-  <FileUpload
-    v-bind="$attrs"
-    @upload="onTemplatedUpload($event)"
-    @select="onSelectedFiles"
-    :multiple="true"
-    :accept="accept"
-    :maxFileSize="maxFileSize"
-    ref="file-upload"
-  >
-    <template #header="{ chooseCallback, uploadCallback, clearCallback, files }">
-      <span></span>
-    </template>
-    <template #content="{ files, removeFileCallback }">
-      <div class="flex flex-col gap-8 pt-4">
-        <div class="flex items-center justify-center flex-col">
-          <div class="border-2 rounded-full size-24 flex items-center justify-center">
-            <i class="pi pi-cloud-upload text-4xl text-muted-color" />
-          </div>
-          <h4 class="mt-4 font-semibold text-lg">Drag & Drop</h4>
-          <p>
-            or
-            <span class="underline cursor-pointer" @click="fileUpload!.choose()">choose files</span>
-          </p>
-          <div
-            class="grid grid-cols-[1fr_auto_1fr] gap-x-2 items-center mt-6 text-surface-600 text-sm"
-          >
-            <p class="text-right">max file size is {{ formatSize(maxFileSize) }}</p>
-            <span class="rounded-full size-0.75 bg-surface-600"></span>
-            <button @click="toggleRequirements">see more requirements</button>
-          </div>
-        </div>
-        <div v-if="files.length > 0" class="flex flex-col gap-y-4">
-          <div
-            v-for="(file, index) of files"
-            :key="index"
-            class="flex items-center gap-4 p-2 rounded-lg border border-surface-200"
-          >
-            <Button
-              severity="secondary"
-              :icon="`pi ${getFileIcon(file.type)}`"
-              class="p-button-rounded p-button-text"
-              aria-label="Preview File"
-              @click="previewFile($event, file)"
-            />
-            <div class="flex-1">
-              <p class="font-medium">{{ file.name }}</p>
-              <p class="text-surface-400">{{ formatSize(file.size) }}</p>
+  <div ref="fileUploadWrapper">
+    <FileUpload
+      v-bind="$attrs"
+      @upload="onTemplatedUpload($event)"
+      @select="onSelectedFiles"
+      :multiple="true"
+      :accept="accept"
+      :maxFileSize="maxFileSize"
+      ref="file-upload"
+    >
+      <template #header="{ chooseCallback, uploadCallback, clearCallback, files }">
+        <span></span>
+      </template>
+      <template #content="{ files, removeFileCallback }">
+        <div class="flex flex-col gap-8 pt-4">
+          <div class="flex items-center justify-center flex-col">
+            <div class="border-2 rounded-full size-24 flex items-center justify-center">
+              <i class="pi pi-cloud-upload text-4xl text-muted-color" />
             </div>
-            <Button
-              severity="secondary"
-              icon="pi pi-trash"
-              class="p-button-rounded p-button-text"
-              aria-label="Remove File"
-              @click="onRemoveTemplatingFile(file, removeFileCallback, index)"
-            />
+            <h4 class="mt-4 font-semibold text-lg">Drag & Drop</h4>
+            <p>
+              or
+              <span class="underline cursor-pointer" @click="fileUpload!.choose()"
+                >choose files</span
+              >
+            </p>
+            <div
+              class="grid grid-cols-[1fr_auto_1fr] gap-x-2 items-center mt-6 text-surface-600 text-sm"
+            >
+              <p class="text-right">max file size is {{ formatSize(maxFileSize) }}</p>
+              <span class="rounded-full size-0.75 bg-surface-600"></span>
+              <button @click="toggleRequirements">see more requirements</button>
+            </div>
           </div>
+          <div v-if="files.length > 0" class="flex flex-col gap-y-4">
+            <div
+              v-for="(file, index) of files"
+              :key="index"
+              class="flex items-center gap-4 p-2 rounded-lg border border-surface-200"
+            >
+              <Button
+                severity="secondary"
+                :icon="`pi ${getFileIcon(file.type)}`"
+                class="p-button-rounded p-button-text"
+                aria-label="Preview File"
+                @click="previewFile($event, file)"
+              />
+              <div class="flex-1">
+                <p class="font-medium">{{ file.name }}</p>
+                <p class="text-surface-400">{{ formatSize(file.size) }}</p>
+              </div>
+              <Button
+                severity="secondary"
+                icon="pi pi-trash"
+                class="p-button-rounded p-button-text"
+                aria-label="Remove File"
+                @click="onRemoveTemplatingFile(file, removeFileCallback, index)"
+              />
+            </div>
 
-          <slot name="file-list-footer"></slot>
+            <slot name="file-list-footer"></slot>
+          </div>
         </div>
-      </div>
-    </template>
-  </FileUpload>
+      </template>
+    </FileUpload>
+  </div>
 
   <Popover ref="popover">
     <div class="flex flex-col gap-y-3 p-2" v-if="popoverPreviewFile && !displayRequirements">
@@ -168,7 +208,7 @@ const toggleRequirements = (event: MouseEvent) => {
           severity="secondary"
           class="p-button-rounded"
           aria-label="Close Preview"
-          @click="popoverPreviewFile = null"
+          @click="closePopover"
         />
       </div>
       <FilePreview class="h-96" :file="popoverPreviewFile" />
