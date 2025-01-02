@@ -150,7 +150,7 @@ def process_segments(frames, result_dict, transcription):
             print("Analyzing Segment " + str(i) + " / " + str(frame_segments))
             prompt_dict.clear()
 
-            if video_summary is "":
+            if video_summary == "":
                 prompt_dict = [
                     {
                         "type": "text",
