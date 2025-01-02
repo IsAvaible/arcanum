@@ -2,7 +2,7 @@ from pydantic import Field, BaseModel, ValidationError
 
 #maybe for future use
 class CaseAttachment(BaseModel):
-    file_id: int = Field(
+    id: int = Field(
         ...,
         description="A unique numeric identifier for the file within the system."
     )
