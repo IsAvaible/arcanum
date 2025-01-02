@@ -156,7 +156,7 @@ const openFile = () => {
               severity="secondary"
               rounded
               aria-label="Open File"
-              v-tooltip="{ value: 'Open File', delay: 1000 }"
+              v-tooltip="{ value: 'Open File', showDelay: 1000 }"
               @click="openFile"
             />
           </div>

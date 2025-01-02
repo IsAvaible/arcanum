@@ -83,10 +83,14 @@ const saveChatTitleHeader = async () => {
     </div>
     <div class="flex items-center gap-3">
       <Button
-        v-for="button in [
-          { icon: 'inbox' },
-          { icon: 'trash', action: () => displayDeleteChatDialog(activeChat!.id) },
-          { icon: 'cog' },
+        v-for="(button, index) in [
+          { icon: 'pi-share-alt', description: 'Share Chat' },
+          {
+            icon: 'pi-trash',
+            action: () => displayDeleteChatDialog(activeChat!.id),
+            description: 'Delete Chat',
+          },
+          { icon: 'pi-cog', description: 'Settings' },
         ]"
         :key="button.icon"
         variant="text"
@@ -94,9 +98,11 @@ const saveChatTitleHeader = async () => {
         size="small"
         @click="button.action"
         :disabled="activeChat === null"
-        :class="button.icon !== 'inbox' ? '-ml-4' : ''"
+        class="[&:not(:first-child)]:-ml-4"
+        :aria-label="button.description"
+        v-tooltip.bottom="{ value: button.description, showDelay: 1000 }"
       >
-        <i :class="`pi pi-${button.icon} text-gray-800`"></i>
+        <i :class="`pi ${button.icon} text-gray-800`"></i>
       </Button>
     </div>
   </div>

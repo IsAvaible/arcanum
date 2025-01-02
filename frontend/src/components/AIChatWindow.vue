@@ -6,6 +6,7 @@ import {
   IconField,
   InputIcon,
   InputText,
+  Textarea,
   SelectButton,
   ToggleSwitch,
   ContextMenu,
@@ -582,11 +583,18 @@ onMounted(async () => {
           <i class="pi pi-paperclip" style="font-size: 1.2rem; color: black"></i>
         </Button>
 
-        <InputText
+        <Textarea
           v-model="messageInput"
           placeholder="Type a message"
-          class="w-full"
-          @keyup.enter="sendMessage"
+          class="w-full max-h-24"
+          rows="1"
+          autoResize
+          @keyup.enter="
+            (event) => {
+              if (!event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey)
+                sendMessage()
+            }
+          "
         />
 
         <!-- Case Reference Validation Overlay -->
