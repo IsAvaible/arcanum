@@ -27,7 +27,7 @@ const openManualCaseCreation = () => {
   router.push({ name: 'case-create-manual' })
 }
 
-// Audio-Recorder
+// Audio Recording
 const isRecording = ref(false)
 const mediaRecorder = ref<MediaRecorder | null>(null)
 const audioChunks = ref<BlobPart[]>([])
@@ -71,6 +71,60 @@ const stopRecording = () => {
 const deleteRecording = () => {
   audioBlob.value = null
   audioUrl.value = ''
+}
+
+// Video Recording
+const isVideoRecording = ref(false)
+const videoStream = ref<MediaStream | null>(null)
+const videoChunks = ref<BlobPart[]>([])
+const videoBlob = ref<Blob | null>(null)
+const videoUrl = ref<string>('')
+
+const startVideoRecording = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+    isVideoRecording.value = true
+    videoStream.value = stream
+    mediaRecorder.value = new MediaRecorder(stream)
+
+    mediaRecorder.value.ondataavailable = (e) => {
+      videoChunks.value.push(e.data)
+    }
+
+    mediaRecorder.value.onstop = () => {
+      videoBlob.value = new Blob(videoChunks.value, { type: 'video/webm' })
+      videoUrl.value = URL.createObjectURL(videoBlob.value)
+    }
+
+    mediaRecorder.value.start()
+  } catch (_err) {
+    toast.add({
+      severity: 'error',
+      summary: 'Camera Error',
+      detail: 'Could not access the camera.',
+      life: 3000,
+    })
+  }
+}
+
+const stopVideoRecording = () => {
+  if (mediaRecorder.value) {
+    mediaRecorder.value.stop()
+    isVideoRecording.value = false
+    if (videoStream.value) {
+      videoStream.value.getTracks().forEach((track) => track.stop())
+      videoStream.value = null
+    }
+  }
+}
+
+const deleteVideoRecording = () => {
+  videoBlob.value = null
+  videoUrl.value = ''
+  if (videoStream.value) {
+    videoStream.value.getTracks().forEach((track) => track.stop())
+    videoStream.value = null
+  }
 }
 
 const loading = ref(false)
@@ -117,21 +171,39 @@ const openAICaseCreation = async () => {
         <FileDropzoneUpload v-model:files="files" />
         <!-- Audio Recording Section -->
         <div class="audio-recorder flex flex-col items-center gap-3 mb-4">
-          <p class="text-gray-600 text-sm">Or record audio to describe your case</p>
-          <button
-            @click="isRecording ? stopRecording() : startRecording()"
-            :aria-label="isRecording ? 'Stop Recording' : 'Start Recording'"
-            class="mic-button flex items-center gap-2 px-4 py-2 border rounded-lg shadow hover:bg-gray-100"
-          >
-            <span v-if="isRecording" class="recording-indicator"></span>
-            <i class="pi pi-microphone"></i>
-            <span>{{ isRecording ? 'Stop Recording' : 'Start Recording' }}</span>
-          </button>
+          <p class="text-gray-600 text-sm">Or record audio or video to describe your case</p>
+          <div class="flex gap-4">
+            <button
+              @click="isRecording ? stopRecording() : startRecording()"
+              :aria-label="isRecording ? 'Stop Recording' : 'Start Recording'"
+              class="mic-button flex items-center gap-2 px-4 py-2 border rounded-lg shadow hover:bg-gray-100"
+            >
+              <span v-if="isRecording" class="recording-indicator"></span>
+              <i class="pi pi-microphone"></i>
+              <span>{{ isRecording ? 'Stop Recording' : 'Start Recording' }}</span>
+            </button>
+            <button
+              @click="isVideoRecording ? stopVideoRecording() : startVideoRecording()"
+              :aria-label="isVideoRecording ? 'Stop Video Recording' : 'Start Video Recording'"
+              class="mic-button flex items-center gap-2 px-4 py-2 border rounded-lg shadow hover:bg-gray-100"
+            >
+              <span v-if="isVideoRecording" class="recording-indicator"></span>
+              <i class="pi pi-video"></i>
+              <span>{{ isVideoRecording ? 'Stop Video Recording' : 'Start Video Recording' }}</span>
+            </button>
+          </div>
 
           <div v-if="audioBlob" class="audio-controls mt-2">
             <audio :src="audioUrl" controls class="w-full"></audio>
             <button @click="deleteRecording" class="delete-button text-red-600 mt-2">
               Delete Recording
+            </button>
+          </div>
+
+          <div v-if="videoBlob" class="video-controls mt-2">
+            <video :src="videoUrl" controls class="w-full"></video>
+            <button @click="deleteVideoRecording" class="delete-button text-red-600 mt-2">
+              Delete Video
             </button>
           </div>
         </div>
