@@ -84,6 +84,11 @@ const previewFile = (event: MouseEvent, file: File) => {
   }
 }
 
+const closePopover = () => {
+  popover.value!.hide()
+  popoverPreviewFile.value = null
+}
+
 const displayRequirements = ref(false)
 const toggleRequirements = (event: MouseEvent) => {
   popover.value!.hide()
@@ -203,7 +208,7 @@ defineExpose({
           severity="secondary"
           class="p-button-rounded"
           aria-label="Close Preview"
-          @click="popoverPreviewFile = null"
+          @click="closePopover"
         />
       </div>
       <FilePreview class="h-96" :file="popoverPreviewFile" />
