@@ -40,6 +40,8 @@ import { AxiosError } from 'axios'
 import { MdEditor, MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 
+import { onMounted } from 'vue'
+
 const toast = useToast()
 const confirm = useConfirm()
 
@@ -80,11 +82,33 @@ const caseTypes = [
   },
 ]
 
-const peopleOptions: User[] = Array.from({ length: 15 }, (_, i) => ({
-  id: i + 1,
-  name: `Cat ${i + 1}`,
-  image: `https://placecats.com/${50 + i}/${50 + i}`,
-}))
+const peopleOptions: User[] = [
+  {
+    id: 1,
+    name: 'Cody Fisher',
+    image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar12.jpg',
+  },
+  {
+    id: 2,
+    name: 'Esther Howard',
+    image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar13.jpg',
+  },
+  {
+    id: 3,
+    name: 'Ralph Edwards',
+    image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar11.jpg',
+  },
+  {
+    id: 4,
+    name: 'Jerome Bell',
+    image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar10.jpg',
+  },
+  {
+    id: 5,
+    name: 'Darlene Robertson',
+    image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar9.jpg',
+  },
+]
 
 // Form validation setup
 const {
@@ -235,6 +259,19 @@ const onSubmit = handleSubmit(async (_values) => {
       detail: 'There was an error creating your case\n' + (error as AxiosError).message,
       life: 3000,
     })
+    const fetchUsersFromBackend = async () => {
+      try {
+        const response = await api.getUsers() // Benutzer aus Backend abrufen
+        fields.assignees.value.value = response.data.map(
+          (user: { name: string; image: string }) => user.name,
+        )
+      } catch (error) {
+        console.error('Error fetching users from backend:', error)
+      }
+    }
+
+    // Rufe die Benutzerdaten beim Laden der Komponente ab
+    onMounted(fetchUsersFromBackend)
     return
   }
 
