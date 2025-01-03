@@ -1,4 +1,4 @@
-const { Cases, Attachments } = require("../models");
+const { Cases, Attachments, ChangeHistory } = require("../models");
 const { body, validationResult } = require("express-validator");
 const upload = require("../configs/multerConfig.js");
 const attachmentService = require("../services/attachmentService");

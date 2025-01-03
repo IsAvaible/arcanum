@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.INTEGER,
                 allowNull: false,
                 references: {
-                    model: 'Cases', // Der Name der referenzierten Tabelle
+                    model: 'Cases', // Referenzierte Tabelle
                     key: 'id',
                 },
                 onUpdate: 'CASCADE',
@@ -28,7 +28,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         {
             tableName: 'ChangeHistory',
-            timestamps: true,
+            timestamps: false, // Deaktiviert Sequelize's automatische Verwaltung von createdAt und updatedAt
         }
     );
 
@@ -40,6 +40,7 @@ module.exports = (sequelize, DataTypes) => {
             onUpdate: 'CASCADE',
         });
     };
+
 
     return ChangeHistory;
 };

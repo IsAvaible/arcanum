@@ -15,6 +15,13 @@ module.exports = (sequelize, DataTypes) => {
         otherKey: "attachmentId",
         as: "attachments",
       });
+        // Assoziation zu ChangeHistory
+    Cases.hasMany(models.ChangeHistory, {
+        foreignKey: "case_id",
+        as: "changeHistory",
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
+    });
     }
   }
   Cases.init(
