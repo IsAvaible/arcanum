@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, useTemplateRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { Dialog, Button, Divider, useToast } from 'primevue'
 import FileDropzoneUpload from '@/components/file-handling/FileDropzoneUpload.vue'
@@ -20,6 +20,7 @@ const api = useApi()
 const router = useRouter()
 const files = ref<File[]>([])
 const showDialog = useVModel(props, 'visible', emit)
+const fileDropzone = useTemplateRef('fileDropzone')
 
 // Methods
 const openManualCaseCreation = () => {
@@ -31,8 +32,6 @@ const openManualCaseCreation = () => {
 const isRecording = ref(false)
 const mediaRecorder = ref<MediaRecorder | null>(null)
 const audioChunks = ref<BlobPart[]>([])
-const audioBlob = ref<Blob | null>(null)
-const audioUrl = ref<string>('')
 
 const startRecording = async () => {
   try {
@@ -46,8 +45,17 @@ const startRecording = async () => {
     }
 
     mediaRecorder.value.onstop = () => {
-      audioBlob.value = new Blob(audioChunks.value, { type: 'audio/wav' })
-      audioUrl.value = URL.createObjectURL(audioBlob.value)
+      // Create a file from the audio chunks
+      const file = new File(
+        [new Blob(audioChunks.value, { type: 'audio/wav' })],
+        `audio-recording_${new Date().toISOString()}.wav`,
+        {
+          type: 'audio/wav',
+        },
+      )
+
+      // Add the file to the file dropzone
+      fileDropzone.value?.addFile(file)
     }
 
     mediaRecorder.value.start()
@@ -67,6 +75,7 @@ const stopRecording = () => {
     isRecording.value = false
   }
 }
+
 
 const deleteRecording = () => {
   audioBlob.value = null
@@ -136,23 +145,28 @@ const openAICaseCreation = async () => {
       detail: 'Please select files to generate a case from',
       life: 3000,
     })
-  } else {
-    loading.value = true
-    try {
-      const result = await api.createCaseFromFilesPost({ files: files.value })
-      console.log(result)
-      await router.push('/cases/' + result.data[0].id)
-    } catch (error) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'An error occurred while creating the case:\n\t' + (error as AxiosError).message,
-        life: 3000,
-      })
-      console.error(error)
-    } finally {
-      loading.value = false
-    }
+    return
+  }
+
+  loading.value = true
+
+  try {
+    const result = await api.createCaseFromFilesPost({
+      files: files.value, // Original-File-Objekte werden gesendet
+    })
+
+    console.log(result)
+    await router.push('/cases/' + result.data[0].id)
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'An error occurred while creating the case:\n\t' + (error as AxiosError).message,
+      life: 3000,
+    })
+    console.error(error)
+  } finally {
+    loading.value = false
   }
 }
 </script>
@@ -168,7 +182,8 @@ const openAICaseCreation = async () => {
     <div class="p-4 space-y-6">
       <!-- Options Section -->
       <div class="flex flex-col space-y-4">
-        <FileDropzoneUpload v-model:files="files" />
+        <FileDropzoneUpload v-model:files="files" ref="fileDropzone" />
+
         <!-- Audio Recording Section -->
         <div class="audio-recorder flex flex-col items-center gap-3 mb-4">
           <p class="text-gray-600 text-sm">Or record audio or video to describe your case</p>
@@ -206,7 +221,20 @@ const openAICaseCreation = async () => {
               Delete Video
             </button>
           </div>
+          <p class="text-gray-600 text-sm">Or record audio to describe your case</p>
+          <button
+            @click="isRecording ? stopRecording() : startRecording()"
+            :aria-label="isRecording ? 'Stop Recording' : 'Start Recording'"
+            class="mic-button flex items-center gap-2 px-4 py-2 border rounded-lg shadow hover:bg-gray-100"
+          >
+            <div class="w-4 flex items-center justify-center">
+              <span v-if="isRecording" class="recording-indicator"></span>
+              <i v-else class="pi pi-microphone"></i>
+            </div>
+            <span>{{ isRecording ? 'Stop Recording' : 'Start Recording' }}</span>
+          </button>
         </div>
+
         <Button
           :loading="loading"
           :disabled="loading"
