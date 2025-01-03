@@ -2,11 +2,8 @@ import os
 import uuid
 from dotenv import load_dotenv
 
-from qdrant_client.models import VectorParams, Distance, PointStruct, Filter, FieldCondition, Range
+from qdrant_client.models import VectorParams, Distance, PointStruct, Filter
 from qdrant_client import QdrantClient
-from qdrant_client.models import VectorParams, Distance
-import numpy as np
-from qdrant_client.models import PointStruct
 from openai import AzureOpenAI
 
 load_dotenv()
