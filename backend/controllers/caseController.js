@@ -21,6 +21,11 @@ exports.showCaseDetail = async (req, res) => {
           as: "attachments",
           through: { attributes: [] },
         },
+        {
+          model: ChangeHistory,
+          as: "changeHistory",
+          attributes: ["changedAt"], // Passen Sie die Attribute entsprechend an
+        },
       ],
     });
 
@@ -351,6 +356,10 @@ exports.createCaseFromFiles = [
               model: Attachments,
               as: "attachments",
               through: { attributes: [] },
+            },
+            {
+              model: ChangeHistory,
+              as: "changeHistory",
             },
           ],
         });
