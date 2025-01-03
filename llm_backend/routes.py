@@ -3,7 +3,7 @@ from app import app
 
 from generate import (
     generate_case_langchain_production,
-    vector_db_test
+    vector_db_save_cases,
 )
 from chat import chat
 
@@ -21,9 +21,7 @@ def chat_langchain():
     if request.method == "POST":
         return chat(request)
 
-@app.route("/save_to_vector", methods=["POST"])
+@app.route("/save_to_vector_db", methods=["POST"])
 def save_to_vector():
     if request.method == "POST":
-        # response_dict = None
-        response_dict, code = generate_case_langchain_production(request)
-        return vector_db_test(response_dict)
+        return vector_db_save_cases(request)
