@@ -12,7 +12,7 @@ require('dotenv').config();
  * @returns {Object} JSON response with case details or an error message.
  */
 exports.showCaseDetail = async (req, res) => {
-  const caseId = parseInt(req.params.id, 10);
+  const caseId = parseInt(req.params.id, 10); // Überprüfen, ob caseId korrekt geparst wird
   try {
     const caseItem = await Cases.findByPk(caseId, {
       include: [
@@ -24,7 +24,7 @@ exports.showCaseDetail = async (req, res) => {
         {
           model: ChangeHistory,
           as: "changeHistory",
-          attributes: ["changedAt"], // Passen Sie die Attribute entsprechend an
+          attributes: ["updatedAt"], // Stelle sicher, dass der Spaltenname korrekt ist
         },
       ],
     });
@@ -39,6 +39,7 @@ exports.showCaseDetail = async (req, res) => {
     res.status(500).json({ message: "Error fetching case detail" });
   }
 };
+
 
 /**
  * Fetches a list of all cases, including their attachments.
@@ -356,10 +357,6 @@ exports.createCaseFromFiles = [
               model: Attachments,
               as: "attachments",
               through: { attributes: [] },
-            },
-            {
-              model: ChangeHistory,
-              as: "changeHistory",
             },
           ],
         });
