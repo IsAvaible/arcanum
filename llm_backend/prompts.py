@@ -25,7 +25,7 @@ system_prompt_old_msgs = "Given a chat history and the latest user question \
 
 # system prompt for case generation
 system_prompt_langchain_parser = """
-Generate information for a case based on the user's QUERY and the provided documents (CONTEXT), which may include text files and audio files.  
+Generate information for a case based on the user's QUERY and the provided documents (CONTEXT), which may include text files and audio files. Include as much information as possible!
 
 Always generate your answer in MARKDOWN!
 
