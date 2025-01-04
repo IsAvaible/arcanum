@@ -73,7 +73,7 @@ def extract_data_from_video(video_path, filehash):
     if duration < 600:
         vf_filter = "fps=1/2 ,scale=320:-1, drawtext=text='%{pts\:localtime\_strftime\:%H\\:%M\\:%S}':x=10:y=10:fontsize=12:fontcolor=white"
     else:
-        vf_filter = "fps=1/5 ,scale=320:-1, drawtext=text='%{pts\:localtime\_strftime\:%H\\:%M\\:%S}':x=10:y=10:fontsize=12:fontcolor=white"
+        vf_filter = "fps=1/10 ,scale=320:-1, drawtext=text='%{pts\:localtime\_strftime\:%H\\:%M\\:%S}':x=10:y=10:fontsize=12:fontcolor=white"
 
     output_pattern = os.path.join(frames_path, "frame_%04d.jpg")
 
@@ -139,6 +139,8 @@ def process_segments(frames, transcription, duration):
                 "segments" : []
             }
         }
+
+    print(transcription)
 
     if transcription is None:
         trans = "No transcription provided!"
@@ -256,11 +258,9 @@ def get_all_video_segments_in_dir(path):
     return f
 
 def dict_to_text(data):
-    if "type" not in data or "segments" not in data:
+    if "segments" not in data:
         raise ValueError("Ungültige Datenstruktur: 'type' oder 'segments' fehlt.")
 
-    if data["type"] != "transcription":
-        raise ValueError("Unerwarteter Typ: Nur 'transcription' wird unterstützt.")
 
     text = []
     for segment in data["segments"]:

@@ -85,6 +85,7 @@ def upload_file_method_production(files, socket_id):
     for file in sorted_attachments:
         filepath = file["filepath"]
         filehash = file["filehash"]
+        delete_temp_folder(filehash)
         file_id = file["id"] if "id" in file else file["file_id"]
         filename = file["filename"]
         # download file to temp folder

@@ -127,7 +127,6 @@ def transcribe(file, texts, llm, path, filename, filehash, whisper_prompt):
 
             # define data type
             data = {
-                "type": "transcription",
                 "segments": []
             }
             new_segments = generate_segment_dict(combined_segments)
