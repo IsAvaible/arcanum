@@ -1,3 +1,4 @@
+import json
 import math
 import os
 import subprocess
@@ -18,6 +19,8 @@ From these segments we are getting 50 frames (1 Frame every 2 Seconds)
 
 For cutting the videos we are using ffmpeg which is the most used software for video processing.
 """
+
+
 def cut_video_segments(input_file, filehash, segment_duration=split_secs):
 
     # define ouput
@@ -64,6 +67,10 @@ def extract_data_from_video(video_path, filehash):
     # get duration of video to check if we need splitting
     duration = total_frames / fps
 
+    if duration > 600:
+        split_secs = 200
+    else:
+        split_secs = 100
 
     # get segments if video longer 100 secs
     if (duration > split_secs):
@@ -77,8 +84,12 @@ def extract_data_from_video(video_path, filehash):
     for video in segments:
 
         # Scale video down to width of 320 and the corresponding height based on the aspect ratio
-        # get one frame each 2 seconds
-        vf_filter = "fps=1/2 ,scale=320:-1"
+        # get one frame each 2 seconds if video is under 10 minutes
+        # get one frame each 10 seconds if video is over 10 minutes
+        if duration < 600:
+            vf_filter = "fps=1/2 ,scale=320:-1"
+        else:
+            vf_filter = "fps=1/10 ,scale=320:-1"
 
         # FFmpeg-Befehl ausführen
         output_pattern = os.path.join(frames_path, "frame_%04d.jpg")
@@ -114,10 +125,9 @@ def extract_data_from_video(video_path, filehash):
     audio_output = os.path.join(audio_path, "audio.mp3")
     command = [
         "ffmpeg",
-        "-v", "quiet", #less logs
         "-y", # override file
-        "-i", single_video, # set input file
-        "-vn",
+        "-i", f'{single_video}', # set input file
+        "-acodec", "libmp3lame", # force mp3
         audio_output #define output
     ]
 
@@ -141,6 +151,15 @@ def process_segments(frames, result_dict, transcription):
     print(f"Segment Count: {frame_segments}")
     video_summary = ""
 
+    trans = dict_to_text(transcription)
+
+    transcription = {
+        "type" : "text",
+        "text" : f"This is the transcription of the audio:\n{trans}"
+    }
+
+    print(transcription)
+
     if frame_segments > 0:
         # prompt_dict will include all frames that we need to analyze
         prompt_dict = []
@@ -152,6 +171,7 @@ def process_segments(frames, result_dict, transcription):
 
             if video_summary == "":
                 prompt_dict = [
+                    transcription,
                     {
                         "type": "text",
                         "text": f"Here is part {str(i)} of {str(frame_segments)}. What are all frames showing, be as detailed as possible but please combine everything in a normal text"
@@ -159,9 +179,10 @@ def process_segments(frames, result_dict, transcription):
                 ]
             else:
                 prompt_dict = [
+                    transcription,
                     {
                         "type": "text",
-                        "text": f"Here is the summary: of the other parts: {video_summary}. Here is part {str(i)} of {str(frame_segments)}. What are all frames showing, be as detailed as possible but please combine everything in a normal text"
+                        "text": f"Here is the summary of the other parts: {video_summary}. Here is part {str(i)} of {str(frame_segments)}. What are all frames showing, be as detailed as possible but please combine everything in a normal text"
                     }
                 ]
             for j in range(0 + (50 * i), 49 * (i + 1)):
@@ -182,15 +203,10 @@ def process_segments(frames, result_dict, transcription):
         prompt_dict = []
         prompt_dict.clear()
         prompt_dict = [
+            transcription,
             {
                 "type": "text",
-                "text": """I have a video file that needs analysis. Please provide detailed insights, including the following:
-Key objects, actions, or events detected in the video.
-Sentiment analysis, if applicable to the content.
-Summary of the video’s main theme or message.
-Brands or Machine Names or Model numbers.
-The video should be processed for accuracy, and any detected patterns, anomalies, or highlights should be noted.
-"""
+                "text": "I have a video file that needs analysis. Please provide detailed insights. Key objects, actions, or events detected in the video. Sentiment analysis, if applicable to the content. Summary of the video’s main theme or message. Brands or Machine Names or Model numbers. The video should be processed for accuracy, and any detected patterns, anomalies, or highlights should be noted."
             }
         ]
         for j in range(0, len(frames)):
@@ -229,3 +245,22 @@ def get_all_video_segments_in_dir(path):
         for file in filenames:
             f.append(os.path.join(dirpath, file))
     return f
+
+def dict_to_text(data):
+    # Überprüfen, ob das Dict den erwarteten Schlüssel enthält
+    if "type" not in data or "segments" not in data:
+        raise ValueError("Ungültige Datenstruktur: 'type' oder 'segments' fehlt.")
+
+    if data["type"] != "transcription":
+        raise ValueError("Unerwarteter Typ: Nur 'transcription' wird unterstützt.")
+
+    # Aufbau des Textes aus den Segmenten
+    text = []
+    for segment in data["segments"]:
+        start = segment.get("start_timestamp", "Unbekannt")
+        end = segment.get("end_timestamp", "Unbekannt")
+        transcription = segment.get("transcription_text", "Kein Text vorhanden.")
+        text.append(f"From {start} to {end}:\n{transcription}\n\n")
+
+    # Zusammenfügen der Segmente
+    return "\n\n".join(text)
