@@ -1,4 +1,3 @@
-import json
 import math
 import os
 import subprocess
@@ -67,52 +66,31 @@ def extract_data_from_video(video_path, filehash):
     # get duration of video to check if we need splitting
     duration = total_frames / fps
 
-    if duration > 600:
-        split_secs = 200
+
+    # Scale video down to width of 320 and the corresponding height based on the aspect ratio
+    # get one frame each 2 seconds if video is under 10 minutes
+    # get one frame each 5 seconds if video is over 10 minutes
+    if duration < 600:
+        vf_filter = "fps=1/2 ,scale=320:-1"
     else:
-        split_secs = 100
+        vf_filter = "fps=1/5 ,scale=320:-1"
 
-    # get segments if video longer 100 secs
-    if (duration > split_secs):
-        segments_path = cut_video_segments(single_video, filehash)
-        segments = get_all_video_segments_in_dir(segments_path)
-    else:
-        segments = [single_video]
+    output_pattern = os.path.join(frames_path, "frame_%04d.jpg")
 
-    i = 0
-    # iterate over segments
-    for video in segments:
+    command = [
+        "ffmpeg",
+        "-v", "quiet", # less logs
+        "-y", #override file if exists
+        "-i", single_video, # input video
+        "-vf", vf_filter, # apply filter
+        output_pattern # define ouput pattern
+    ]
 
-        # Scale video down to width of 320 and the corresponding height based on the aspect ratio
-        # get one frame each 2 seconds if video is under 10 minutes
-        # get one frame each 10 seconds if video is over 10 minutes
-        if duration < 600:
-            vf_filter = "fps=1/2 ,scale=320:-1"
-        else:
-            vf_filter = "fps=1/10 ,scale=320:-1"
-
-        # FFmpeg-Befehl ausführen
-        output_pattern = os.path.join(frames_path, "frame_%04d.jpg")
-
-        # count the frames that have been already saved
-        counter = sum(1 for item in os.listdir(frames_path) if os.path.isfile(os.path.join(frames_path, item)))
-
-        command = [
-            "ffmpeg",
-            "-v", "quiet", # less logs
-            "-y", #override file if exists
-            "-i", video, # input video
-            "-vf", vf_filter, # apply filter
-            "-start_number", str(counter), # set start counter for the frames
-            output_pattern # define ouput pattern
-        ]
-
-        try:
-            subprocess.run(command, check=True)
-            i = i + 1
-            print(f"Saved frames: {output_pattern} ")
-        except subprocess.CalledProcessError as e:
-            print(f"Error FFMPEG (Frame Extraction): {e}")
+    try:
+        subprocess.run(command, check=True)
+        print(f"Saved frames: {output_pattern} ")
+    except subprocess.CalledProcessError as e:
+        print(f"Error FFMPEG (Frame Extraction): {e}")
 
 
     # we also need to transcribe the audio in the video
