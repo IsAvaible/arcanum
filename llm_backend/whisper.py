@@ -40,6 +40,7 @@ class Segment:
 
 
 def transcribe(file, texts, llm, path, filename, filehash, whisper_prompt):
+    print(path)
     if os.path.isfile(path) is True:
         # if text content was analyzed before, check here for any glossary terms
         if texts != "":
@@ -73,7 +74,11 @@ def transcribe(file, texts, llm, path, filename, filehash, whisper_prompt):
             # get multiple split segments
             segments = split_audio_with_overlap(path, segment_length_ms=split_length_ms, overlap_ms=500)
             for idx, segment in enumerate(segments):
-                print(f"segment {idx}")
+                dir = os.path.join(
+                    app.root_path, os.path.join(f"temp/{filehash}/audio")
+                )
+                if not os.path.exists(dir):
+                    os.makedirs(dir)
                 path = os.path.join(
                     app.root_path, os.path.join(f"temp/{filehash}/audio", f"audio_{idx}.mp3")
                 )
