@@ -40,7 +40,7 @@ import { AxiosError } from 'axios'
 import { MdEditor, MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 
-import { onMounted } from 'vue'
+import { defaultUserOptions } from '@/api/mockdata'
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -79,34 +79,6 @@ const caseTypes = [
     title: 'FAQ',
     description:
       'For documenting frequently asked questions or common inquiries to provide quick, standardized answers for future reference.',
-  },
-]
-
-const peopleOptions: User[] = [
-  {
-    id: 1,
-    name: 'Cody Fisher',
-    image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar12.jpg',
-  },
-  {
-    id: 2,
-    name: 'Esther Howard',
-    image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar13.jpg',
-  },
-  {
-    id: 3,
-    name: 'Ralph Edwards',
-    image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar11.jpg',
-  },
-  {
-    id: 4,
-    name: 'Jerome Bell',
-    image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar10.jpg',
-  },
-  {
-    id: 5,
-    name: 'Darlene Robertson',
-    image: 'https://www.primefaces.org/cdn/primevue/images/landing/apps/avatar9.jpg',
   },
 ]
 
@@ -240,6 +212,7 @@ const onSubmit = handleSubmit(async (_values) => {
       solution: fields.solution.value.value || undefined,
       priority: fields.priority.value.value || undefined,
       status: fields.status.value.value,
+      userOptions: defaultUserOptions as User[],
       // products: fields.selectedProducts.value.value,
     }
     await api.casesPost(requestParameters, {
@@ -259,20 +232,6 @@ const onSubmit = handleSubmit(async (_values) => {
       detail: 'There was an error creating your case\n' + (error as AxiosError).message,
       life: 3000,
     })
-    const fetchUsersFromBackend = async () => {
-      try {
-        const response = await api.getUsers() // Benutzer aus Backend abrufen
-        fields.assignees.value.value = response.data.map(
-          (user: { name: string; image: string }) => user.name,
-        )
-      } catch (error) {
-        console.error('Error fetching users from backend:', error)
-      }
-    }
-
-    // Rufe die Benutzerdaten beim Laden der Komponente ab
-    onMounted(fetchUsersFromBackend)
-    return
   }
 
   submitState.value = SubmitState.SUCCESS
@@ -446,7 +405,7 @@ const dialogPT = {
                 <UserSelector
                   @update:selected-users="fields.assignees.value.value = $event.map((u) => u.name)"
                   assigneeLabel="Assignees"
-                  :userOptions="peopleOptions"
+                  :userOptions="defaultUserOptions"
                   multi-select
                   :invalid="!!errors.assignees"
                 />
@@ -478,7 +437,7 @@ const dialogPT = {
                       fields.participants.value.value = $event.map((u) => u.name) || undefined
                     "
                     assigneeLabel="Participants"
-                    :userOptions="peopleOptions"
+                    :userOptions="defaultUserOptions"
                     multi-select
                     :invalid="!!errors.participants"
                   />

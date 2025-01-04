@@ -43,6 +43,8 @@ import { apiBlobToFile } from '@/functions/apiBlobToFile'
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
 
+import { defaultUserOptions } from '@/api/mockdata'
+
 const router = useRouter()
 const api = useApi()
 const toast = useToast()
@@ -59,12 +61,6 @@ const caseTypes = ref(
     value: value,
   })),
 )
-
-const users: User[] = Array.from({ length: 15 }, (_, i) => ({
-  id: i + 1,
-  name: `User ${i + 1}`,
-  image: `https://placecats.com/${50 + i}/${50 + i}`,
-}))
 
 /// Fetch Case Details from the API
 const loading = ref(true)
@@ -630,7 +626,7 @@ const toggleMenu = (event: Event) => {
                     "
                     assigneeLabel="Assignees"
                     :placeholder="inEditMode ? 'Select Assignees' : ''"
-                    :userOptions="users"
+                    :userOptions="defaultUserOptions as User[]"
                     multi-select
                     :disabled="!inEditMode"
                     :invalid="!!errors.assignees"
@@ -651,7 +647,7 @@ const toggleMenu = (event: Event) => {
                     "
                     assigneeLabel="Participants"
                     :placeholder="inEditMode ? 'Select Participants' : ''"
-                    :userOptions="users"
+                    :userOptions="defaultUserOptions as User[]"
                     multi-select
                     :disabled="!inEditMode"
                     :invalid="!!errors.participants"
