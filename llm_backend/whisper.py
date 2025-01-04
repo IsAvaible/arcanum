@@ -40,46 +40,71 @@ class Segment:
 
 
 def transcribe(file, texts, llm, path, filename, filehash, whisper_prompt):
-    # if text content was analyzed before, check here for any glossary terms
-    if texts != "":
-        system_prompt_langchain_parser = get_system_prompt("models")
-        messages = [
-            ("system", "{system_prompt}"),
-            ("human", "CONTEXT: {context}"),
-        ]
-        promptLangchain = ChatPromptTemplate.from_messages(messages).partial(
-            system_prompt=system_prompt_langchain_parser
-        )
-        promptLangchainInvoked = promptLangchain.invoke(
-            {"context": texts, "query": "Please give me the list back!"}
-        )
-        chain = llm
-        response = chain.invoke(promptLangchainInvoked)
-        whisper_prompt = response.content
-
-    # check file size because only 25Mb/request are allowed for Whisper transcription
-    file_size_mb = os.stat(path).st_size / (1024 * 1024)
-    texts += f" NEW AUDIO FILE {json.dumps(file)} - CONTENT: "
-
-    # define new dict for transcription
-    data = {
-        "type": "transcription",
-        "segments": [],
-    }
-
-    # if file greater 24Mb we need to split this file into multiple segments
-    if float(file_size_mb) > 24.0:
-        # get multiple split segments
-        segments = split_audio_with_overlap(path, segment_length_ms=split_length_ms, overlap_ms=500)
-        for idx, segment in enumerate(segments):
-            print(f"segment {idx}")
-            path = os.path.join(
-                app.root_path, os.path.join(f"temp/{filehash}/audio", f"audio_{idx}.mp3")
+    if os.path.isfile(path) is True:
+        # if text content was analyzed before, check here for any glossary terms
+        if texts != "":
+            system_prompt_langchain_parser = get_system_prompt("models")
+            messages = [
+                ("system", "{system_prompt}"),
+                ("human", "CONTEXT: {context}"),
+            ]
+            promptLangchain = ChatPromptTemplate.from_messages(messages).partial(
+                system_prompt=system_prompt_langchain_parser
             )
-            # save to mp3 format in temp folder
-            segment.export(path, format="mp3")
+            promptLangchainInvoked = promptLangchain.invoke(
+                {"context": texts, "query": "Please give me the list back!"}
+            )
+            chain = llm
+            response = chain.invoke(promptLangchainInvoked)
+            whisper_prompt = response.content
 
-            # Set up AzureChatOpenAI with the required configurations
+        # check file size because only 25Mb/request are allowed for Whisper transcription
+        file_size_mb = os.stat(path).st_size / (1024 * 1024)
+        texts += f" NEW AUDIO FILE {json.dumps(file)} - CONTENT: "
+
+        # define new dict for transcription
+        data = {
+            "type": "transcription",
+            "segments": [],
+        }
+
+        # if file greater 24Mb we need to split this file into multiple segments
+        if float(file_size_mb) > 24.0:
+            # get multiple split segments
+            segments = split_audio_with_overlap(path, segment_length_ms=split_length_ms, overlap_ms=500)
+            for idx, segment in enumerate(segments):
+                print(f"segment {idx}")
+                path = os.path.join(
+                    app.root_path, os.path.join(f"temp/{filehash}/audio", f"audio_{idx}.mp3")
+                )
+                # save to mp3 format in temp folder
+                segment.export(path, format="mp3")
+
+                # Set up AzureChatOpenAI with the required configurations
+                audio_file = open(path, "rb")
+                response = client.audio.transcriptions.create(
+                    file=audio_file,
+                    model=AZURE_DEPLOYMENT_WHISPER,
+                    response_format="verbose_json",
+                    prompt=whisper_prompt,
+                    timestamp_granularities=["segment"]
+                )
+
+                segments = response.segments
+                combined_segments = []
+
+                # to make the array not too large we are merging multiple (n = 4) transcription segments into one
+                n = 4
+                for i in range(0, len(segments), n):
+                    group_segments = list(islice(segments, i, i + n))
+                    combined_segments.append(combine_segments(group_segments))
+                generated_dict = generate_segment_dict(combined_segments, idx)
+
+                # attach generated dictionary to data dictionary
+                data["segments"].extend(generated_dict)
+            return data
+        else:
+            # if audio file is lower than 24mb
             audio_file = open(path, "rb")
             response = client.audio.transcriptions.create(
                 file=audio_file,
@@ -91,44 +116,23 @@ def transcribe(file, texts, llm, path, filename, filehash, whisper_prompt):
 
             segments = response.segments
             combined_segments = []
-
-            # to make the array not too large we are merging multiple (n = 4) transcription segments into one
-            n = 4
+            n = 3
             for i in range(0, len(segments), n):
                 group_segments = list(islice(segments, i, i + n))
                 combined_segments.append(combine_segments(group_segments))
-            generated_dict = generate_segment_dict(combined_segments, idx)
 
-            # attach generated dictionary to data dictionary
-            data["segments"].extend(generated_dict)
-        return data
+            # define data type
+            data = {
+                "type": "transcription",
+                "segments": []
+            }
+            new_segments = generate_segment_dict(combined_segments)
+            data["segments"] = new_segments
+            return data
     else:
-        # if audio file is lower than 24mb
-        audio_file = open(path, "rb")
-        response = client.audio.transcriptions.create(
-            file=audio_file,
-            model=AZURE_DEPLOYMENT_WHISPER,
-            response_format="verbose_json",
-            prompt=whisper_prompt,
-            timestamp_granularities=["segment"]
-        )
-
-        segments = response.segments
-        combined_segments = []
-        n = 3
-        for i in range(0, len(segments), n):
-            group_segments = list(islice(segments, i, i + n))
-            combined_segments.append(combine_segments(group_segments))
-
-        # define data type
-        data = {
-            "type": "transcription",
-            "segments": []
-        }
-        new_segments = generate_segment_dict(combined_segments)
-        data["segments"] = new_segments
+        data = None
+        print("no audio file")
         return data
-
 
 # this will generate a better reading timestamp (XX:YY:ZZ)
 def convert_timestamp_to_str(ts):

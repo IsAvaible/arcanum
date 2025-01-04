@@ -103,8 +103,10 @@ def extract_data_from_video(video_path, filehash):
     audio_output = os.path.join(audio_path, "audio.mp3")
     command = [
         "ffmpeg",
+        "-v", "quiet", # less logs
         "-y", # override file
         "-i", f'{single_video}', # set input file
+        "-b:a", '192k', # set input file
         "-acodec", "libmp3lame", # force mp3
         audio_output #define output
     ]
@@ -128,7 +130,10 @@ def process_segments(frames, result_dict, transcription):
     print(f"Segment Count: {frame_segments}")
     video_summary = ""
 
-    trans = dict_to_text(transcription)
+    if transcription is None:
+        trans = "No transcription provided!"
+    else:
+        trans = dict_to_text(transcription)
 
     transcription = {
         "type" : "text",
