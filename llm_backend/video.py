@@ -141,7 +141,6 @@ def extract_data_from_video(video_path, filehash):
     return frames_path, audio_output
 
 
-# todo bereits zusammengefasste frames hinzufügen und transcription
 def process_segments(frames, result_dict, transcription):
 
     print(f"Frame Count:{str(len(frames))}")
