@@ -71,9 +71,9 @@ def extract_data_from_video(video_path, filehash):
     # get one frame each 2 seconds if video is under 10 minutes
     # get one frame each 5 seconds if video is over 10 minutes
     if duration < 600:
-        vf_filter = "fps=1/2 ,scale=320:-1"
+        vf_filter = "fps=1/2 ,scale=320:-1, drawtext=text='%{pts\:localtime\_strftime\:%H\\:%M\\:%S}':x=10:y=10:fontsize=12:fontcolor=white"
     else:
-        vf_filter = "fps=1/5 ,scale=320:-1"
+        vf_filter = "fps=1/5 ,scale=320:-1, drawtext=text='%{pts\:localtime\_strftime\:%H\\:%M\\:%S}':x=10:y=10:fontsize=12:fontcolor=white"
 
     output_pattern = os.path.join(frames_path, "frame_%04d.jpg")
 
@@ -83,6 +83,7 @@ def extract_data_from_video(video_path, filehash):
         "-y", #override file if exists
         "-i", single_video, # input video
         "-vf", vf_filter, # apply filter
+        "-vsync", "0", # apply filter
         output_pattern # define ouput pattern
     ]
 
@@ -118,17 +119,26 @@ def extract_data_from_video(video_path, filehash):
         print(f"Error FFMPEG (Audio Extraction): {e}")
 
     # return path of frames and audio file
-    return frames_path, audio_output
+    return frames_path, audio_output, duration
 
 
-def process_segments(frames, result_dict, transcription):
+def process_segments(frames, transcription, duration):
+    seconds = round(duration / len(frames))
+
+    print("SECONDS "+str(seconds))
 
     print(f"Frame Count:{str(len(frames))}")
     # calculate how many rounds we need to analyze the frames
     # here we are dividing by 49 and rounding that value up
-    frame_segments = math.floor(len(frames) / 49)
+    frame_segments = math.floor(len(frames) / 25)
     print(f"Segment Count: {frame_segments}")
-    video_summary = ""
+
+    data = {
+            "type": "video_summary",
+            "content":  {
+                "segments" : []
+            }
+        }
 
     if transcription is None:
         trans = "No transcription provided!"
@@ -140,36 +150,46 @@ def process_segments(frames, result_dict, transcription):
         "text" : f"This is the transcription of the audio:\n{trans}"
     }
 
-    print(transcription)
-
     if frame_segments > 0:
         # prompt_dict will include all frames that we need to analyze
         prompt_dict = []
-
         # iterate over all segments (frame_count/50)
-        for i in range(0, frame_segments):
-            print("Analyzing Segment " + str(i) + " / " + str(frame_segments))
-            prompt_dict.clear()
+        video_summary = ""
 
-            if video_summary == "":
-                prompt_dict = [
-                    transcription,
-                    {
-                        "type": "text",
-                        "text": f"Here is part {str(i)} of {str(frame_segments)}. What are all frames showing, be as detailed as possible but please combine everything in a normal text"
-                    }
-                ]
+        total_iterations = len(frames)
+        max_group_size = 25
+
+        # Berechnung der Gruppen
+        groups = [max_group_size] * (total_iterations // max_group_size)
+        remainder = total_iterations % max_group_size
+
+        if remainder > 0:
+            groups.append(remainder)
+
+        start = 0
+        step = 0
+        for group in groups:
+            print("Analyzing Segment " + str(step+1) + " / " + str(frame_segments+1))
+            prompt_dict.clear()
+            if len(data["content"]["segments"]) == 0:
+                prompt_dict.append(transcription)
+                prompt_dict.append({
+                    "type": "text",
+                    "text": f"Here is part {str(step)} of {str(total_iterations)}. What are all frames showing, be as detailed as possible but please combine everything in a normal text"
+                })
             else:
                 prompt_dict = [
                     transcription,
                     {
                         "type": "text",
-                        "text": f"Here is the summary of the other parts: {video_summary}. Here is part {str(i)} of {str(frame_segments)}. What are all frames showing, be as detailed as possible but please combine everything in a normal text"
+                        "text": f"Here is the summary of the other parts: {video_summary}. Here is part {str(step)} of {str(total_iterations)}. What are all frames showing, be as detailed as possible but please combine everything in a normal text"
                     }
                 ]
-            for j in range(0 + (50 * i), 49 * (i + 1)):
-                # images need to be base64 encoded otherwise Azure OpenAI wont understand them
-                encoding = encode_image(frames[j])
+
+            start_timestamp = convert_timestamp_to_str((start) * seconds)
+            end_timestamp = convert_timestamp_to_str((start + group) * seconds)
+            for i in range(start, start + group):
+                encoding = encode_image(frames[i])
                 base64_image = {
                     "type": "image_url",
                     "image_url": {
@@ -179,11 +199,18 @@ def process_segments(frames, result_dict, transcription):
                 }
                 prompt_dict.append(base64_image)
             sum_part = image_to_openai(prompt_dict)
-            print(f"Segment {i} - {sum_part}")
-            video_summary = sum_part + " "
+            summary = {
+                "start_timestamp": start_timestamp,
+                "end_timestamp": end_timestamp,
+                "content": sum_part,
+            }
+            video_summary = video_summary + f"Video Summary Part {str(step)} of {str(frame_segments)} (Timestamps: {start_timestamp} - {end_timestamp}):\n" + sum_part + "\n\n"
+            data["content"]["segments"].append(summary)
+            start += group
+            step = step + 1
     else:
-        prompt_dict = []
-        prompt_dict.clear()
+        start_timestamp = convert_timestamp_to_str(0)
+        end_timestamp = convert_timestamp_to_str(len(frames)*seconds)
         prompt_dict = [
             transcription,
             {
@@ -202,14 +229,14 @@ def process_segments(frames, result_dict, transcription):
             }
             prompt_dict.append(base64_image)
         video_summary = image_to_openai(prompt_dict)
+        summary = {
+            "start_timestamp": start_timestamp,
+            "end_timestamp": end_timestamp,
+            "content": video_summary,
+        }
+        data["content"]["segments"].append(summary)
 
-    print(f"Complete Summary - {video_summary}")
-    #result = video_openai(video_summary, transcription)
-    result = video_summary
-    print(f"Complete Summary after LLM - {result}")
-    result_dict["video_summary"] = result
-    single_dict = result_dict
-    return single_dict
+    return data
 
 
 # method to get all frames in a directory
@@ -229,14 +256,12 @@ def get_all_video_segments_in_dir(path):
     return f
 
 def dict_to_text(data):
-    # Überprüfen, ob das Dict den erwarteten Schlüssel enthält
     if "type" not in data or "segments" not in data:
         raise ValueError("Ungültige Datenstruktur: 'type' oder 'segments' fehlt.")
 
     if data["type"] != "transcription":
         raise ValueError("Unerwarteter Typ: Nur 'transcription' wird unterstützt.")
 
-    # Aufbau des Textes aus den Segmenten
     text = []
     for segment in data["segments"]:
         start = segment.get("start_timestamp", "Unbekannt")
@@ -244,5 +269,12 @@ def dict_to_text(data):
         transcription = segment.get("transcription_text", "Kein Text vorhanden.")
         text.append(f"From {start} to {end}:\n{transcription}\n\n")
 
-    # Zusammenfügen der Segmente
     return "\n\n".join(text)
+
+def convert_timestamp_to_str(ts):
+    ts = int(ts)
+    return "{:02d}:{:02d}:{:02d}".format(
+        ts // 3600,  # Stunden
+        (ts % 3600) // 60,  # Minuten
+        ts % 60  # Sekunden
+    )

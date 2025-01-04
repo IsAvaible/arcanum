@@ -65,7 +65,6 @@ def transcribe(file, texts, llm, path, filename, filehash, whisper_prompt):
 
         # define new dict for transcription
         data = {
-            "type": "transcription",
             "segments": [],
         }
 

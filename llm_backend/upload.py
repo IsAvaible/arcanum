@@ -15,7 +15,6 @@ from video import process_segments, extract_data_from_video, get_all_frames_in_d
 from webdav import check_if_cached, download_cache, upload_cache_file, download_file_webdav
 from whisper import transcribe
 
-
 # All Allowed Extensions
 ALLOWED_EXTENSIONS = {"txt", "pdf", "html", "mp3", "wav", "png", "jpg", "jpeg", "gif", "bmp", "mp4"}
 
@@ -32,11 +31,13 @@ OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 '''
 Important Sorting function
 If multiple files were uploaded, Textbased files should have a higher priority than audio/video files
 Is needed for generating glossary terms out of Text files
 '''
+
 
 def sort_attachments(item):
     if item["mimetype"] == "application/pdf":
@@ -58,9 +59,9 @@ llm = AzureChatOpenAI(
     streaming=False,
 )
 
+
 # main upload method
 def upload_file_method_production(files, socket_id):
-
     files_as_dicts = []
     single_dict = {}
     files_as_dicts_json = ""
@@ -69,7 +70,6 @@ def upload_file_method_production(files, socket_id):
     whisper_prompt = ""
     # Set to true if you want to cache files in Sciebo/WebDav
     USE_CACHE = False
-
 
     # iterate over all files and add mimetype
     for file in files:
@@ -80,7 +80,6 @@ def upload_file_method_production(files, socket_id):
 
     # sort all attachments so textbased files will be analyzed first
     sorted_attachments = sorted(files, key=sort_attachments)
-
 
     # iterate over all sorted attachments
     for file in sorted_attachments:
@@ -169,19 +168,17 @@ def upload_file_method_production(files, socket_id):
                 socketio.emit('case_generation', {'message': f'Analyzing Video File ({filename})'}, to=socket_id)
                 texts += f" Content of Video File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
 
-                frame_path, audio_path = extract_data_from_video(path, filehash)
+                frame_path, audio_path, duration = extract_data_from_video(path, filehash)
                 frames = get_all_frames_in_dir(frame_path)
 
                 transcription = transcribe(file, texts, llm, audio_path, filename, filehash, whisper_prompt)
-                #texts += "  " + json.dumps(single_text, ensure_ascii=False)
-                result_dict = {
-                    "video_summary": "",
-                    "transcription": [transcription]
-                }
-                single_dict = process_segments(frames, result_dict, transcription)
+                video_summary = process_segments(frames, transcription, duration)
+                single_dict = [
+                    transcription,
+                    video_summary
+                ]
             else:
                 socketio.emit('case_generation', {'message': f'File ({filename}) cannot be processed'}, to=socket_id)
-
 
         ### CACHE TO MINIMIZE AZURE API CALLS
         if is_cached and USE_CACHE:
@@ -199,7 +196,7 @@ def upload_file_method_production(files, socket_id):
             file_path = write_to_file(filehash, json.dumps(content_dict, ensure_ascii=False, indent=2))
             upload_cache_file(file_path, filehash)
 
-
+        print(content_dict)
         # define a dictionary for a file
         file_as_dict = {
             "filename": filename,
@@ -207,12 +204,9 @@ def upload_file_method_production(files, socket_id):
             "filehash": filehash,
             "filepath": filepath,
             "file_id": file_id,
+            "content": content_dict
         }
 
-        try:
-            file_as_dict.update(content_dict)
-        except ValueError:
-            file_as_dict["content"] = single_text
 
         files_as_dicts.append(file_as_dict)
         files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False, indent=2)
