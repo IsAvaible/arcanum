@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start-backend": "node index.js & echo $! > server.pid",
+    "start-backend": "node index.js",
+    "run start-backend-ci": "node index.js & echo $! > server.pid",
     "format": "prettier . --write",
     "lint": "eslint .",
     "test": "echo \"No tests defined\" && exit 0",

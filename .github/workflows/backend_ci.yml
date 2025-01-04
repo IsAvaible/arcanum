@@ -69,7 +69,7 @@ jobs:
       # 6. Build and Validate
       - name: Build and Validate
         run: |
-          npm run start-backend &
+          npm run start-backend-ci &
           sleep 5
           npm run shutdown
         working-directory: backend
