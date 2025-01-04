@@ -101,13 +101,15 @@ def vector_db_save_cases(request):
     if response_dict:
         cases_dict = json.loads(response_dict.data)["cases"]
 
+    json_str = request.get_json(force=True)
+    attachments = json_str["attachments"]
+
     vectorstore = QdrantVectorstore()
+
+    for attachment in attachments:
+        vectorstore.insert_attachment(attachment)
     for case in cases_dict:
         vectorstore.insert_case(case)
-
-    # for entry in vectorstore.show_all_entries():
-    #     id = entry.id
-    #     vectorstore.delete_entry(id)
-
-    return "t", 200
+        
+    return "Cases Saved Successfully", 200
 

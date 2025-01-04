@@ -48,7 +48,7 @@ llm = AzureChatOpenAI(
     streaming=False,
 )
 
-def upload_file_method_production(files, pdf_extractor):
+def upload_file_method_production(files, pdf_extractor=None):
     files_as_dicts = []
     single_dict = {}
     files_as_dicts_json = ""
@@ -84,6 +84,8 @@ def upload_file_method_production(files, pdf_extractor):
                 transcription = transcribe(file, texts, llm, path, filename, whisper_prompt)
                 single_dict = transcription
                 texts += "  " + json.dumps(single_text, ensure_ascii=False)
+                single_dict["type"] = "audio"
+                single_dict["text"] = None
             elif mimetype == "application/pdf":
                 texts += f" Content of PDF File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 single_text = create_text_chunks_pdfplumber(path)
@@ -149,5 +151,3 @@ def upload_file_method_production(files, pdf_extractor):
         print(files_as_dicts_json)
         print("file_as_dict END")
     return files_as_dicts_json
-
-

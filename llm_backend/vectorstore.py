@@ -1,10 +1,12 @@
 import os
 import uuid
 from dotenv import load_dotenv
-
-from qdrant_client.models import VectorParams, Distance, PointStruct, Filter
+import json
+from qdrant_client.models import VectorParams, Distance, PointStruct, Filter, FieldCondition
 from qdrant_client import QdrantClient
 from openai import AzureOpenAI
+
+from upload import upload_file_method_production
 
 load_dotenv()
 
@@ -57,17 +59,18 @@ class QdrantVectorstore:
 
         return embedding
     
-    def insert_embedding(self, embedding, text, metadata={}):
+    def insert_embedding(self, embedding, text, id=None, metadata={}):
         vector_size = len(embedding)
         self.setup_collection(vector_size)
 
-        unique_id = str(uuid.uuid4())
+        if not id:
+            id = str(uuid.uuid4())
 
         self.client.upsert(
             collection_name=self.collection_name,
             points=[
                 PointStruct(
-                    id=unique_id,
+                    id=id,
                     vector=embedding,
                     payload={
                         "text": text,
@@ -90,8 +93,47 @@ class QdrantVectorstore:
         case_embedding = self.llm_embeddings.embeddings.create(input=case_string,model="text-embedding-ada-002")
         case_embedding = case_embedding.data[0].embedding
 
-        self.insert_embedding(embedding=case_embedding, text=case_string)
+        metadata =  {"case_id": None,
+                     "inserttype": "case",}
+
+        self.insert_embedding(embedding=case_embedding, text=case_string, metadata=metadata)
         print("Case added to Qdrant collection.")
+    
+    def insert_attachment(self, attachment):
+        """
+        Insert an attachment into the Qdrant collection.
+        
+        Args:
+            attachment (dict): The attachment dictionary to insert.
+        """
+        if self.search_by_metadata("file_id", attachment["file_id"]):
+            return
+
+        file = json.loads(upload_file_method_production([attachment]))[0]
+
+        attachment_string = "FILE-TYPE: "+ file["type"]+ "\n"
+        if file["type"] == "audio":
+            
+            attachment_string += "FILE-CONTENT: "
+            for segment in file["segments"]:
+                attachment_string += str(segment["transcription_text"])
+        else:
+            attachment_string += "FILE-CONTENT: "+ str(file["text"])        
+
+        response = self.llm_embeddings.embeddings.create(input=attachment_string,model="text-embedding-ada-002")
+        attachment_embedding = response.data[0].embedding
+
+        metadata =  {
+            "file_id": attachment["file_id"],
+            "filename": attachment["filename"],
+            "filepath": attachment["filepath"],
+            "size": attachment["size"],
+            "filehash": attachment["filehash"],
+            "mimetype": attachment["mimetype"],
+            "inserttype": "attachment"
+        }
+        self.insert_embedding(embedding=attachment_embedding, text=attachment_string, metadata=metadata)
+        print("Attachment added to Qdrant collection.")
 
     def search_vectors(self, query_vector, limit, filter_condition):
         """
@@ -124,6 +166,28 @@ class QdrantVectorstore:
         embedding = self.create_embedding(query)
 
         return self.search_vectors(embedding, limit, filter_condition)
+
+    def search_by_metadata(self, key, value, limit=1):
+        """
+        Search for an entry in the collection with a specific key-value pair in the metadata.
+        
+        Args:
+            key (str): The metadata key to search for.
+            value (str): The value of the metadata key to search for.
+            limit (int): The maximum number of results to return.
+        
+        Returns:
+            list: The search results.
+        """
+        filter_condition = FieldCondition(
+            key=f"metadata.{key}",
+            match={"value": value}
+        )
+        # Get the vector size from the collection configuration
+        collection_info = self.client.get_collection(self.collection_name)
+        vector_size = collection_info.config.params.vectors.size
+        default_query_vector = [0.0] * vector_size
+        return self.search_vectors(query_vector=default_query_vector, limit=limit, filter_condition=filter_condition)
     
     def case_to_string(self, case_dict):
         """
@@ -164,5 +228,9 @@ class QdrantVectorstore:
 
     def delete_entries(self, point_ids):
         self.client.delete(collection_name=self.collection_name, points_selector=point_ids)
-
+    
+    def delete_all_entries_in_collection(self):
+        entries = self.show_all_entries()
+        point_ids = [entry.id for entry in entries]
+        self.delete_entries(point_ids)
 
