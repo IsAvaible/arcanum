@@ -1,4 +1,4 @@
-const port = 443;
+const port = process.env.PORT || 443;
 const express = require("express");
 const app = express();
 const cors = require("cors");
