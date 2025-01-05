@@ -15,6 +15,7 @@ AZURE_DEPLOYMENT_GPT = os.getenv("AZURE_DEPLOYMENT_GPT")
 AZURE_DEPLOYMENT_EMBEDDING = os.getenv("AZURE_DEPLOYMENT_EMBEDDING")
 OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
 
+
 def chat(request):
     if request.method == "POST":
         prompt = request.form.get("prompt")
@@ -44,7 +45,7 @@ def chat(request):
             persist_directory=".chromadb/", embedding_function=embedding_function
         )
         # GET OLD MSGS
-        old_messages = [] ## from backend
+        old_messages = []  ## from backend
 
         if old_messages:
             all_msgs = "\n".join(x[1] for x in old_messages)
@@ -106,10 +107,7 @@ def chat(request):
 
         socketio.emit(f"stream{chat_counter}", {"content": "END_LLM_MESSAGE"})
 
-
         return "", 200
-
-
 
 
 def chat_message_to_json(message):

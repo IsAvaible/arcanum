@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, useTemplateRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { Dialog, Button, Divider, useToast } from 'primevue'
 import FileDropzoneUpload from '@/components/file-handling/FileDropzoneUpload.vue'
@@ -20,11 +20,60 @@ const api = useApi()
 const router = useRouter()
 const files = ref<File[]>([])
 const showDialog = useVModel(props, 'visible', emit)
+const fileDropzone = useTemplateRef('fileDropzone')
 
 // Methods
 const openManualCaseCreation = () => {
   showDialog.value = false
   router.push({ name: 'case-create-manual' })
+}
+
+// Audio-Recorder
+const isRecording = ref(false)
+const mediaRecorder = ref<MediaRecorder | null>(null)
+const audioChunks = ref<BlobPart[]>([])
+
+const startRecording = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    isRecording.value = true
+    audioChunks.value = []
+    mediaRecorder.value = new MediaRecorder(stream)
+
+    mediaRecorder.value.ondataavailable = (e) => {
+      audioChunks.value.push(e.data)
+    }
+
+    mediaRecorder.value.onstop = () => {
+      // Create a file from the audio chunks
+      const file = new File(
+        [new Blob(audioChunks.value, { type: 'audio/wav' })],
+        `audio-recording_${new Date().toISOString()}.wav`,
+        {
+          type: 'audio/wav',
+        },
+      )
+
+      // Add the file to the file dropzone
+      fileDropzone.value?.addFile(file)
+    }
+
+    mediaRecorder.value.start()
+  } catch (_err) {
+    toast.add({
+      severity: 'error',
+      summary: 'Microphone Error',
+      detail: 'Could not access the microphone.',
+      life: 3000,
+    })
+  }
+}
+
+const stopRecording = () => {
+  if (mediaRecorder.value) {
+    mediaRecorder.value.stop()
+    isRecording.value = false
+  }
 }
 
 const loading = ref(false)
@@ -36,23 +85,27 @@ const openAICaseCreation = async () => {
       detail: 'Please select files to generate a case from',
       life: 3000,
     })
-  } else {
-    loading.value = true
-    try {
-      const result = await api.createCaseFromFilesPost({ files: files.value })
-      console.log(result)
-      await router.push('/cases/' + result.data[0].id)
-    } catch (error) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'An error occurred while creating the case:\n\t' + (error as AxiosError).message,
-        life: 3000,
-      })
-      console.error(error)
-    } finally {
-      loading.value = false
-    }
+    return
+  }
+
+  loading.value = true
+
+  try {
+    const result = await api.createCaseFromFilesPost({
+      files: files.value, // Original-File-Objekte werden gesendet
+    })
+
+    await router.push('/cases/' + result.data[0].id)
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'An error occurred while creating the case:\n\t' + (error as AxiosError).message,
+      life: 3000,
+    })
+    console.error(error)
+  } finally {
+    loading.value = false
   }
 }
 </script>
@@ -68,7 +121,24 @@ const openAICaseCreation = async () => {
     <div class="p-4 space-y-6">
       <!-- Options Section -->
       <div class="flex flex-col space-y-4">
-        <FileDropzoneUpload v-model:files="files" />
+        <FileDropzoneUpload v-model:files="files" ref="fileDropzone" />
+
+        <!-- Audio Recording Section -->
+        <div class="audio-recorder flex flex-col items-center gap-3 mb-4">
+          <p class="text-gray-600 text-sm">Or record audio to describe your case</p>
+          <button
+            @click="isRecording ? stopRecording() : startRecording()"
+            :aria-label="isRecording ? 'Stop Recording' : 'Start Recording'"
+            class="mic-button flex items-center gap-2 px-4 py-2 border rounded-lg shadow hover:bg-gray-100"
+          >
+            <div class="w-4 flex items-center justify-center">
+              <span v-if="isRecording" class="recording-indicator"></span>
+              <i v-else class="pi pi-microphone"></i>
+            </div>
+            <span>{{ isRecording ? 'Stop Recording' : 'Start Recording' }}</span>
+          </button>
+        </div>
+
         <Button
           :loading="loading"
           :disabled="loading"
@@ -95,4 +165,34 @@ const openAICaseCreation = async () => {
   </Dialog>
 </template>
 
-<style scoped></style>
+<style scoped>
+.mic-button {
+  background: white;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.mic-button:hover {
+  background: #f3f4f6;
+}
+
+.recording-indicator {
+  width: 10px;
+  height: 10px;
+  background: red;
+  border-radius: 50%;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+}
+</style>

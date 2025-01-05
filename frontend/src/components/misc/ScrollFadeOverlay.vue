@@ -45,7 +45,7 @@ window.addEventListener('resize', () => containerRef.value?.dispatchEvent(new Ev
     <div
       v-if="axis === 'horizontal'"
       :class="[
-        'absolute top-0 left-0 h-full w-10 bg-gradient-to-r to-transparent pointer-events-none transition-opacity',
+        'absolute top-0 left-0 h-full w-10 bg-gradient-to-r to-transparent pointer-events-none transition-opacity z-10',
         arrivedState.left ? 'opacity-0' : 'opacity-100',
         fadeFrom,
       ]"
@@ -53,7 +53,7 @@ window.addEventListener('resize', () => containerRef.value?.dispatchEvent(new Ev
     <div
       v-if="axis === 'horizontal'"
       :class="[
-        'absolute top-0 right-0 h-full w-10 bg-gradient-to-l to-transparent pointer-events-none transition-opacity',
+        'absolute top-0 right-0 h-full w-10 bg-gradient-to-l to-transparent pointer-events-none transition-opacity z-10',
         arrivedState.right ? 'opacity-0' : 'opacity-100',
         fadeFrom,
       ]"
@@ -61,7 +61,7 @@ window.addEventListener('resize', () => containerRef.value?.dispatchEvent(new Ev
     <div
       v-if="axis === 'vertical'"
       :class="[
-        'absolute top-0 left-0 w-full h-10 bg-gradient-to-b to-transparent pointer-events-none transition-opacity',
+        'absolute top-0 left-0 w-full h-10 bg-gradient-to-b to-transparent pointer-events-none transition-opacity z-10',
         arrivedState.top ? 'opacity-0' : 'opacity-100',
         fadeFrom,
       ]"
@@ -69,7 +69,7 @@ window.addEventListener('resize', () => containerRef.value?.dispatchEvent(new Ev
     <div
       v-if="axis === 'vertical'"
       :class="[
-        'absolute bottom-0 left-0 w-full h-10 bg-gradient-to-t to-transparent pointer-events-none transition-opacity',
+        'absolute bottom-0 left-0 w-full h-10 bg-gradient-to-t to-transparent pointer-events-none transition-opacity z-10',
         arrivedState.bottom ? 'opacity-0' : 'opacity-100',
         fadeFrom,
       ]"

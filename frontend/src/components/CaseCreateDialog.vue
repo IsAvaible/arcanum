@@ -18,23 +18,30 @@ import { CoinsSwap, CpuWarning, QuestionMark, WarningTriangle } from '@iconoir/v
 import Label from '@/components/case-create-form/Label.vue'
 import CaseTypeSelector from '@/components/case-create-form/CaseTypeSelector.vue'
 import UserSelector, { type User } from '@/components/case-create-form/UserSelector.vue'
-import TempEditor from '@/components/case-create-form/TempEditor.vue'
-import ProductSelector from '@/components/case-create-form/ProductSelector.vue'
 import TeamSelector from '@/components/case-create-form/TeamSelector.vue'
-
-import { useCaseFormStepper } from '@/composables/useCaseFormStepper'
+import CasePrioritySelect from '@/components/case-form-fields/CaseStatusSelect/CasePrioritySelect.vue'
+import CaseStatusSelect from '@/components/case-form-fields/CaseStatusSelect/CaseStatusSelect.vue'
+import ScrollFadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
 import StepHeader from '@/components/case-create-form/StepHeader.vue'
 import CaseCreateStepper from '@/components/case-create-form/CaseCreateStepper.vue'
+
+import { useCaseFormStepper } from '@/composables/useCaseFormStepper'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { ref } from 'vue'
 import { useVModel } from '@vueuse/core'
 import { useApi } from '@/composables/useApi'
-import type { CasesPostCaseTypeEnum } from '@/api'
-import ScrollFadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
+import type { Case, CasesPostCaseTypeEnum } from '@/api'
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
 import { useConfirm } from 'primevue/useconfirm'
+import { AxiosError } from 'axios'
+
+import { MdEditor, MdPreview } from 'md-editor-v3'
+import 'md-editor-v3/lib/style.css'
+
+import { userOptions } from '@/api/mockdata'
+import { useRouter } from 'vue-router'
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -46,6 +53,7 @@ const props = defineProps<{
 const emit = defineEmits(['update:visible'])
 
 const api = useApi()
+const router = useRouter()
 
 const dialogVisible = useVModel(props, 'visible', emit)
 
@@ -76,12 +84,6 @@ const caseTypes = [
   },
 ]
 
-const peopleOptions: User[] = Array.from({ length: 15 }, (_, i) => ({
-  id: i + 1,
-  name: `Cat ${i + 1}`,
-  image: `https://placecats.com/${50 + i}/${50 + i}`,
-}))
-
 // Form validation setup
 const {
   handleSubmit,
@@ -95,6 +97,9 @@ const {
 // Form validation
 const fields = useCaseFields()
 
+// Default values
+fields.status.value.value = 'Open'
+
 /**
  * Check if the current step is valid
  * @param step The step to check
@@ -102,14 +107,17 @@ const fields = useCaseFields()
 const stepValid = (step: number = activeStep.value): boolean => {
   switch (step) {
     case 0:
-      return !(errors.value.title || errors.value.case_type)
+      return !(
+        errors.value.title ||
+        errors.value.case_type ||
+        errors.value.status ||
+        errors.value.priority
+      )
     case 1:
       return !(errors.value.assignees || errors.value.participants || errors.value.team)
     case 2:
       return !(errors.value.description || errors.value.solution)
     case 3:
-      return !errors.value.products
-    case 4:
       return true
     default:
       return false
@@ -125,6 +133,8 @@ const validateStep = async (step: number = activeStep.value) => {
     case 0:
       await fields.title.validate()
       await fields.type.validate()
+      await fields.status.validate()
+      await fields.priority.validate()
       return
     case 1:
       await fields.assignees.validate()
@@ -134,9 +144,6 @@ const validateStep = async (step: number = activeStep.value) => {
     case 2:
       await fields.description.validate()
       await fields.solution.validate()
-      return
-    case 3:
-      await fields.selectedProducts.validate()
       return
   }
 }
@@ -162,7 +169,6 @@ const steps = [
   { label: 'Basics', icon: 'pi-info-circle' },
   { label: 'People', icon: 'pi-user' },
   { label: 'Details', icon: 'pi-pen-to-square' },
-  { label: 'Products', icon: 'pi-warehouse' },
   { label: 'Review', icon: 'pi-star' },
 ]
 
@@ -193,30 +199,32 @@ enum SubmitState {
   ERROR,
 }
 const submitState = ref<SubmitState>(SubmitState.IDLE)
+let result: Case | null = null
 // Form submission
 const onSubmit = handleSubmit(async (_values) => {
   console.log('Submitting form', _values)
   submitState.value = SubmitState.SUBMITTING
   try {
-    await api.casesPost(
-      {
-        title: fields.title.value.value,
-        caseType: fields.type.value.value as CasesPostCaseTypeEnum,
-        assignee: fields.assignees.value.value,
-        // participants: fields.selectedParticipants.value.value,
-        // team: fields.selectedTeam.value.value,
-        description: fields.description.value.value,
-        solution: fields.solution.value.value,
-        priority: fields.priority.value.value,
-        status: 'Open',
-        // products: fields.selectedProducts.value.value,
-      },
-      {
+    const requestParameters = {
+      title: fields.title.value.value,
+      caseType: fields.type.value.value as CasesPostCaseTypeEnum,
+      assignee: fields.assignees.value.value,
+      // participants: fields.selectedParticipants.value.value,
+      // team: fields.selectedTeam.value.value,
+      description: fields.description.value.value,
+      solution: fields.solution.value.value || undefined,
+      priority: fields.priority.value.value || undefined,
+      status: fields.status.value.value,
+      userOptions: userOptions as User[],
+      // products: fields.selectedProducts.value.value,
+    }
+    result = (
+      await api.casesPost(requestParameters, {
         headers: {
           'Content-Type': 'application/json',
         },
-      },
-    )
+      })
+    ).data
   } catch (error) {
     submitState.value = SubmitState.ERROR
     setTimeout(() => {
@@ -226,12 +234,11 @@ const onSubmit = handleSubmit(async (_values) => {
     toast.add({
       severity: 'error',
       summary: 'Error Creating Case',
-      detail: 'There was an error creating your case',
+      detail: 'There was an error creating your case\n' + (error as AxiosError).message,
       life: 3000,
     })
     return
   }
-
   submitState.value = SubmitState.SUCCESS
   toast.add({
     severity: 'success',
@@ -240,6 +247,8 @@ const onSubmit = handleSubmit(async (_values) => {
     life: 3000,
   })
   dialogVisible.value = false
+  // Redirect to the new case
+  await router.push('/cases/' + result?.id)
 })
 
 const cancelCaseCreation = async () => {
@@ -345,6 +354,40 @@ const dialogPT = {
                   {{ errors.case_type }}
                 </Message>
               </div>
+
+              <Divider />
+
+              <div class="grid sm:grid-cols-2 sm:grid-rows-2 grid-flow-col gap-x-6">
+                <Label
+                  for="status"
+                  label="Status (*)"
+                  description="The current status of the new case"
+                />
+                <div class="w-full">
+                  <CaseStatusSelect
+                    v-model="fields.status.value.value"
+                    id="status"
+                    class="w-full"
+                    :invalid="!!errors.status"
+                  />
+                  <Message v-if="errors.status" severity="error" variant="simple" size="small">
+                    {{ errors.status }}
+                  </Message>
+                </div>
+
+                <Label for="priority" label="Priority" description="The priority of the new case" />
+                <div class="w-full">
+                  <CasePrioritySelect
+                    v-model="fields.priority.value.value"
+                    id="priority"
+                    class="w-full"
+                    :invalid="!!errors.priority"
+                  />
+                  <Message v-if="errors.priority" severity="error" variant="simple" size="small">
+                    {{ errors.priority }}
+                  </Message>
+                </div>
+              </div>
             </div>
           </AccordionContent>
         </AccordionPanel>
@@ -369,7 +412,7 @@ const dialogPT = {
                 <UserSelector
                   @update:selected-users="fields.assignees.value.value = $event.map((u) => u.name)"
                   assigneeLabel="Assignees"
-                  :userOptions="peopleOptions"
+                  :userOptions="userOptions"
                   multi-select
                   :invalid="!!errors.assignees"
                 />
@@ -398,10 +441,10 @@ const dialogPT = {
                 <div>
                   <UserSelector
                     @update:selected-users="
-                      fields.participants.value.value = $event.map((u) => u.name)
+                      fields.participants.value.value = $event.map((u) => u.name) || undefined
                     "
                     assigneeLabel="Participants"
-                    :userOptions="peopleOptions"
+                    :userOptions="userOptions"
                     multi-select
                     :invalid="!!errors.participants"
                   />
@@ -428,8 +471,9 @@ const dialogPT = {
             title="Details"
           />
           <AccordionContent>
-            <div class="h-full grid gap-y-4">
-              <div class="flex flex-col">
+            <div class="h-full grid grid-rows-2 grid-cols-1 gap-y-4">
+              <!-- Description Box -->
+              <div class="flex flex-col relative">
                 <Label
                   for="description"
                   label="Description"
@@ -437,24 +481,27 @@ const dialogPT = {
                   icon="pi-info-circle"
                   class="mb-3"
                 />
-                <TempEditor
+                <MdEditor
                   v-model="fields.description.value.value"
-                  editorStyle="flex: 1; min-height: 180px"
-                  class="flex-1 flex flex-col"
+                  class="!h-full min-h-56"
+                  language="en-US"
                   id="description"
                   :invalid="!!errors.description"
+                  noUploadImg
                 />
                 <Message
                   v-if="errors.description"
                   severity="error"
                   variant="simple"
                   size="small"
-                  class="-mt-5 ml-1 z-10"
+                  class="absolute bottom-0 mx-auto left-[50%] -translate-x-[50%] mb-1 z-10"
                 >
                   {{ errors.description }}
                 </Message>
               </div>
-              <div class="flex flex-col">
+
+              <!-- Solution Box -->
+              <div class="flex flex-col relative">
                 <Label
                   for="solution"
                   label="Solution"
@@ -462,19 +509,20 @@ const dialogPT = {
                   icon="pi-check-circle"
                   class="mb-3"
                 />
-                <TempEditor
+                <MdEditor
                   v-model="fields.solution.value.value"
-                  editorStyle="flex: 1; min-height: 180px"
-                  class="flex-1 flex flex-col"
+                  class="!h-full min-h-56"
+                  language="en-US"
                   id="solution"
                   :invalid="!!errors.solution"
+                  noUploadImg
                 />
                 <Message
                   v-if="errors.solution"
                   severity="error"
                   variant="simple"
                   size="small"
-                  class="-mt-5 ml-1 z-10"
+                  class="absolute bottom-0 mx-auto left-[50%] -translate-x-[50%] mb-1 z-10"
                 >
                   {{ errors.solution }}
                 </Message>
@@ -486,27 +534,6 @@ const dialogPT = {
         <AccordionPanel :value="3" :disabled="!isClickable(3)">
           <StepHeader
             :step="3"
-            :activeStep="activeStep"
-            :stepValid="stepValid"
-            :stepInteracted="stepInteracted"
-            title="Products"
-          />
-          <!-- Content for Products -->
-          <AccordionContent>
-            <div class="flex flex-col gap-y-3">
-              <Label
-                for="products"
-                label="Products"
-                description="Select the products related to this case"
-              />
-              <ProductSelector v-model="fields.selectedProducts.value.value" />
-            </div>
-          </AccordionContent>
-        </AccordionPanel>
-
-        <AccordionPanel :value="4" :disabled="!isClickable(4)">
-          <StepHeader
-            :step="4"
             :activeStep="activeStep"
             :stepValid="stepValid"
             :stepInteracted="stepInteracted"
@@ -529,6 +556,18 @@ const dialogPT = {
                         caseTypes.find((type) => type.title === fields.type.value.value)?.title ||
                         'Not selected'
                       }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-slate-600">Status</p>
+                    <p class="font-medium">
+                      {{ fields.status.value.value || 'No status selected' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-slate-600">Priority</p>
+                    <p class="font-medium">
+                      {{ fields.priority.value.value || 'No priority selected' }}
                     </p>
                   </div>
                 </div>
@@ -573,15 +612,12 @@ const dialogPT = {
                     <ScrollFadeOverlay
                       axis="vertical"
                       content-class="max-h-[150px]"
-                      fade-from="from-slate-50"
-                      class="ql-snow"
+                      fade-from="from-white"
+                      class="rounded-lg overflow-hidden"
                     >
-                      <div
-                        v-if="fields.description.value.value"
-                        class="ql-editor p-0 max-w-full overflow-auto"
-                        v-html="fields.description.value.value"
-                      ></div>
-                      <p v-else class="font-medium">No description provided</p>
+                      <MdPreview
+                        :model-value="fields.description.value.value ?? 'No description provided'"
+                      ></MdPreview>
                     </ScrollFadeOverlay>
                   </div>
                   <div>
@@ -589,31 +625,14 @@ const dialogPT = {
                     <ScrollFadeOverlay
                       axis="vertical"
                       content-class="max-h-[150px]"
-                      fade-from="from-slate-50"
-                      class="ql-snow"
+                      fade-from="from-white"
+                      class="rounded-lg overflow-hidden"
                     >
-                      <div
-                        v-if="fields.solution.value.value"
-                        class="ql-editor p-0 max-w-full max-h-[10px] overflow-auto"
-                        v-html="fields.solution.value.value"
-                      ></div>
-                      <p v-else class="font-medium">No solution provided</p>
+                      <MdPreview
+                        :model-value="fields.solution.value.value ?? 'No solution provided'"
+                      ></MdPreview>
                     </ScrollFadeOverlay>
                   </div>
-                </div>
-              </div>
-
-              <div class="bg-slate-50 p-4 rounded-lg">
-                <h2 class="text-xl font-semibold mb-4">Products</h2>
-                <div>
-                  <p class="text-sm text-slate-600">Selected Products</p>
-                  <p class="font-medium">
-                    {{
-                      fields.selectedProducts.value.value?.length
-                        ? fields.selectedProducts.value.value.join(', ')
-                        : 'No products selected'
-                    }}
-                  </p>
                 </div>
               </div>
 
@@ -664,7 +683,6 @@ const dialogPT = {
             :disabled="!!Object.keys(errors).length"
             v-if="activeStep == steps.length - 1 || formEndReached"
           />
-          {{ errors }}
         </div>
       </div>
     </template>

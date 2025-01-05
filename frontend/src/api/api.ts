@@ -339,25 +339,6 @@ export type CasePutPriorityEnum = typeof CasePutPriorityEnum[keyof typeof CasePu
 /**
  * 
  * @export
- * @interface CasesIdAttachmentsPost200Response
- */
-export interface CasesIdAttachmentsPost200Response {
-    /**
-     * ID of the case.
-     * @type {number}
-     * @memberof CasesIdAttachmentsPost200Response
-     */
-    'id'?: number;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof CasesIdAttachmentsPost200Response
-     */
-    'uploadedFiles'?: Array<string>;
-}
-/**
- * 
- * @export
  * @interface ModelError
  */
 export interface ModelError {
@@ -908,7 +889,7 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async casesIdAttachmentsPost(id: number, files?: Array<File>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CasesIdAttachmentsPost200Response>> {
+        async casesIdAttachmentsPost(id: number, files?: Array<File>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Case>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.casesIdAttachmentsPost(id, files, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.casesIdAttachmentsPost']?.[localVarOperationServerIndex]?.url;
@@ -1055,7 +1036,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        casesIdAttachmentsPost(requestParameters: DefaultApiCasesIdAttachmentsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<CasesIdAttachmentsPost200Response> {
+        casesIdAttachmentsPost(requestParameters: DefaultApiCasesIdAttachmentsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Case> {
             return localVarFp.casesIdAttachmentsPost(requestParameters.id, requestParameters.files, options).then((request) => request(axios, basePath));
         },
         /**
