@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/// Imports and Dependencies
 import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue'
 import {
   Avatar,
@@ -24,14 +25,14 @@ import AIChatSidebar from '@/components/ai-chat/AIChatSidebar.vue'
 import AIChatHeader from '@/components/ai-chat/AIChatHeader.vue'
 import { useRoute, useRouter } from 'vue-router'
 
+/// Reactive State Variables
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const confirm = useConfirm()
 
-/**
- * Reactive references for chat settings and inputs.
- */
+/// Chat Settings and Inputs
+/** Reactive references for chat settings and inputs. */
 const notification = ref(true)
 const sound = ref(false)
 const saveToDownloads = ref(false)
@@ -40,23 +41,22 @@ const mediaOptions = ['Media', 'Link', 'Docs']
 const messageInput = ref('')
 const activeChat = ref<ChatWithMessages | null>(null)
 
-/**
- * API instance for fetching and validating case references.
- */
+/// API Instance
+/** API instance for fetching and validating case references. */
 const api = useApi()
 
-/**
- * Regular expression to match case references like #10 in messages.
- */
-const caseReferenceRegex = /#(\d+)(?:[,.\s]|$)/g
+/// Regex Constants
+/** Regular expression to match case references like #10 in messages. */
+const caseReferenceRegex = /#(\d+)(?:[,\.\s]|$)/g
 
-/**
- * Fetches and sets the chat data from the API.
- */
+/// Chat Data Management
+/** State variables for chat data. */
 const chats = ref<Chat[] | null>(null)
 const chatsLoading = ref(false)
 const chatLoading = ref(false)
 const chatsError = ref<string | null>(null)
+
+/** Fetches and sets the chat data from the API. */
 const fetchChats = async () => {
   chatsLoading.value = true
   try {
@@ -114,6 +114,7 @@ const deleteChat = async (id: Chat['id']) => {
   }
 }
 
+/// Chat Deletion
 /**
  * Displays a confirmation dialog before deleting a chat.
  * @param id - The ID of the chat to delete.
@@ -143,6 +144,7 @@ const displayDeleteChatDialog = (id: Chat['id']) => {
   })
 }
 
+/// Chat Title Management
 /**
  * Saves the chat title to the API and updates the local state.
  * @param id - The ID of the chat to update.
@@ -168,9 +170,8 @@ const saveChatTitle = async (id: Chat['id'], title: string): Promise<boolean> =>
   }
 }
 
-/**
- * Context menu items for messages.
- */
+/// Message Context Menu
+/** Context menu items for messages. */
 const messageContextMenuItems = ref([
   {
     label: 'Copy',
@@ -200,6 +201,7 @@ const openMessageContextMenu = (event: MouseEvent, message: Message) => {
   messageContextMenu.value!.show(event)
 }
 
+/// Message Sending
 const invalidSubmissionAttempt = ref(false)
 const pendingMessage = ref<(Message & { state: string }) | null>(null)
 /**
@@ -231,6 +233,7 @@ const sendMessage = async () => {
   await sendPendingMessage()
 }
 
+/** Sends the pending message to the API. */
 const sendPendingMessage = async () => {
   if (!pendingMessage.value || !activeChat.value) {
     return
@@ -255,6 +258,7 @@ const sendPendingMessage = async () => {
   }
 }
 
+/// Message Deletion
 const deletingMessage = ref(false)
 /**
  * Deletes a message from the active chat.
@@ -280,6 +284,7 @@ const deleteMessage = async (id: Message['id']) => {
   }
 }
 
+/// Chat Creation
 const createChatLoading = ref(false)
 /**
  * Creates a new chat with a message.
@@ -307,6 +312,8 @@ const createChatWithMessage = async () => {
   }
 }
 
+/// Displayed Messages
+/** Computed property to display messages including pending ones. */
 const displayedMessages = computed<(Message & { state: string })[]>(() => {
   return (
     pendingMessage.value
@@ -324,9 +331,8 @@ watch(displayedMessages, () => {
   })
 })
 
-/**
- * Case reference validation logic.
- */
+/// Case Reference Validation
+/** Case reference validation logic. */
 const invalidCaseReferences = ref<number[]>([])
 const validatedCaseReferences = ref<Map<number, boolean>>(new Map())
 const isValidationInProgress = ref(false)
@@ -386,11 +392,10 @@ watch(messageInput, (newValue) => {
 })
 watch(messageInput, debouncedValidateCaseReferences)
 
-/**
- * Computed property to check if there are invalid case references.
- */
+/** Computed property to check if there are invalid case references. */
 const hasInvalidCaseReferences = computed(() => invalidCaseReferences.value.length > 0)
 
+/// Case References in Messages
 /**
  * Extracts and resolves case references from a given message.
  * @param message - The message containing case references.
@@ -423,11 +428,13 @@ const caseReferences = computed(() => {
   )
 })
 
+/// Lifecycle Hooks
 onMounted(async () => {
   if (route.params.chatId) {
     chatLoading.value = true
   }
   await fetchChats()
+
   /**
    * Watches for route changes and loads the chat based on the route parameter
    */
@@ -528,7 +535,11 @@ onMounted(async () => {
               'bg-red-700': message.state === 'failed',
             }"
             class="px-4 py-2 rounded-lg shadow-sm w-fit max-w-xs flex flex-col gap-y-2"
-            @contextmenu.prevent="openMessageContextMenu($event, message)"
+            @contextmenu.prevent="
+              (event) => {
+                if (message.id !== -1) openMessageContextMenu(event, message)
+              }
+            "
           >
             <p>
               <DynamicRouterLinkText
