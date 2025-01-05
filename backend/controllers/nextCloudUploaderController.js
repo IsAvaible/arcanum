@@ -69,7 +69,7 @@ async function uploadFile(localFilePath, remoteFilePath, fileName) {
   }
 
   // Define folder categories based on file type.
-  const folder = ["Audio/", "Images/", "Text/"];
+  const folder = ["Audio/", "Images/", "Text/", "Videos/"];
   const fileExtension = fileName.split(".").pop().toLowerCase();
   let folderPath = "";
 
@@ -89,6 +89,9 @@ async function uploadFile(localFilePath, remoteFilePath, fileName) {
     case "doc":
     case "pdf":
       folderPath = folder[2]; // Text/
+      break;
+    case "mp4":
+      folderPath = folder[3]; // Videos/
       break;
   }
 

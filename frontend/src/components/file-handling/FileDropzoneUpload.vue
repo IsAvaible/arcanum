@@ -24,7 +24,7 @@ const files = useVModel(props, 'files', emit)
 const popover = useTemplateRef('popover')
 const maxFileSize = 100 * 1024 * 1024 // 100 MB
 // All image types, audio types, pdf and text files
-const accept = 'image/*, audio/*, application/pdf, text/*'
+const accept = 'image/*, audio/*, application/pdf, text/*, video/*'
 const toast = useToast()
 type FileUploadType = InstanceType<typeof FileUpload>
 const fileUpload = useTemplateRef<FileUploadType & FileUploadState & { choose: () => void }>(
