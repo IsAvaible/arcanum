@@ -1,23 +1,25 @@
+import json
 import mimetypes
 import os
+import time
 
 from bs4 import BeautifulSoup
-from langchain_openai import AzureChatOpenAI
 from dotenv import load_dotenv
+from langchain_openai import AzureChatOpenAI
 
+from app import socketio
 from glossary import generate_glossary_terms
-from readwrite import write_to_file, read_from_file, text_to_dict
-from webdav import check_if_cached, download_cache, upload_cache_file
+from image import encode_image, image_to_openai
+from pdf import create_text_chunks_pdfplumber
+from readwrite import write_to_file, read_from_file, text_to_dict, delete_temp_folder
+from video import process_segments, extract_data_from_video, get_all_frames_in_dir
+from webdav import check_if_cached, download_cache, upload_cache_file, download_file_webdav
 from whisper import transcribe
-from pdf import (
-    create_text_chunks_pdfplumber,
-)
-from webdav import download_file_webdav
 
-import json
+# All Allowed Extensions
+ALLOWED_EXTENSIONS = {"txt", "pdf", "html", "mp3", "wav", "png", "jpg", "jpeg", "gif", "bmp", "mp4"}
 
-ALLOWED_EXTENSIONS = {"txt", "pdf", "html", "mp3", "wav"}
-
+# Load all needed Environment variables
 load_dotenv()
 
 AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
@@ -27,8 +29,16 @@ AZURE_DEPLOYMENT = os.getenv("AZURE_DEPLOYMENT_WHISPER")
 OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
 
 
+# simple checker if filename is allowed
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+'''
+Important Sorting function
+If multiple files were uploaded, Textbased files should have a higher priority than audio/video files
+Is needed for generating glossary terms out of Text files
+'''
 
 def sort_attachments(item):
     if item["mimetype"] == "application/pdf":
@@ -37,6 +47,8 @@ def sort_attachments(item):
         return 2
     return 1
 
+
+# Instantiate LLM
 llm = AzureChatOpenAI(
     azure_endpoint=AZURE_ENDPOINT,
     azure_deployment=AZURE_DEPLOYMENT_GPT,
@@ -48,42 +60,52 @@ llm = AzureChatOpenAI(
     streaming=False,
 )
 
-def upload_file_method_production(files, pdf_extractor):
+# main upload method
+def upload_file_method_production(files, socket_id):
     files_as_dicts = []
     single_dict = {}
     files_as_dicts_json = ""
     texts = ""
     single_text = None
-    # SET TRUE IF CACHING SHOULD BE ACTIVATED -> FALSE IF NOT
+    whisper_prompt = ""
+    # Set to true if you want to cache files in Sciebo/WebDav
     USE_CACHE = False
 
+    # iterate over all files and add mimetype
     for file in files:
         print (file)
         filepath = file["filepath"]
         mimetype = mimetypes.guess_type(filepath)
         file["mimetype"] = mimetype[0]
 
-
-    #sort attachments so audio come last
+    # sort all attachments so textbased files will be analyzed first
     sorted_attachments = sorted(files, key=sort_attachments)
 
-
+    # iterate over all sorted attachments
     for file in sorted_attachments:
         filepath = file["filepath"]
         filehash = file["filehash"]
+        delete_temp_folder(filehash)
         file_id = file["id"] if "id" in file else file["file_id"]
         filename = file["filename"]
         # download file to temp folder
         path = download_file_webdav(filepath, filename)
         mimetype = file["mimetype"]
-
+        # check if file was already analyzed based on filehash
         is_cached = check_if_cached(filehash)
 
+        socketio.emit('case_generation', {'message': f'Analyzing "{filename}"'}, to=socket_id)
+
+        # check if file is allowed
+        # if file was cached before this if clause will be skipped
         if allowed_file(filename) and (not is_cached or not USE_CACHE):
+            # upload audio file
             if "audio" in mimetype:
-                transcription = transcribe(file, texts, path, filename, files_as_dicts)
+                socketio.emit('case_generation', {'message': f'Transcribing Audio File ({filename})'}, to=socket_id)
+                transcription = transcribe(file, texts, llm, path, filename, filehash, whisper_prompt)
                 single_dict = transcription
                 texts += "  " + json.dumps(single_text, ensure_ascii=False)
+            # upload pdf file
             elif mimetype == "application/pdf":
                 texts += f" Content of PDF File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 single_text = create_text_chunks_pdfplumber(path)
@@ -120,7 +142,6 @@ def upload_file_method_production(files, pdf_extractor):
                     "glossary" : glossary_terms
                 }
 
-
         file_as_dict = {
             "filename": filename,
             "mimetype": mimetype,
@@ -140,6 +161,7 @@ def upload_file_method_production(files, pdf_extractor):
             print("NOT USING CACHE")
             file_path = write_to_file(filehash, json.dumps(file_as_dict, ensure_ascii=False, indent=2))
             upload_cache_file(file_path, filehash)
+
 
         files_as_dicts.append(file_as_dict)
 

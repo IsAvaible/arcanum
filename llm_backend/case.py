@@ -10,7 +10,7 @@ class CaseAttachment(BaseModel):
         ...,
         description="A list of all the glossary terms in this attachment."
     )
-"""   filename: str = Field(
+"""  filename: str = Field(
         ...,
         description="The name of the file, including its extension (e.g., 'document.pdf'), as stored in the system."
     )
@@ -35,7 +35,7 @@ class Case(BaseModel):
     )
     solution: str = Field(
         ...,
-        description="A proposed or implemented solution to address the case. Include all possible solution you can find! If not yet resolved, this can include potential steps or approaches to consider. Include granular Timestamps from Audio files!",
+        description="A proposed or implemented solution to address the case. Include all possible solutions you can find! If not yet resolved, this can include potential steps or approaches to consider. Include granular Timestamps from Audio files!",
     )
     """assignee: list[str] = Field(
         ...,
