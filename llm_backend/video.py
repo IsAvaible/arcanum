@@ -71,9 +71,9 @@ def extract_data_from_video(video_path, filehash):
     # get one frame each 2 seconds if video is under 10 minutes
     # get one frame each 5 seconds if video is over 10 minutes
     if duration < 600:
-        vf_filter = "fps=1/2 ,scale=320:-1, drawtext=text='%{pts\:localtime\_strftime\:%H\\:%M\\:%S}':x=10:y=10:fontsize=12:fontcolor=white"
+        vf_filter = "fps=1/2 ,scale=320:-1"
     else:
-        vf_filter = "fps=1/10 ,scale=320:-1, drawtext=text='%{pts\:localtime\_strftime\:%H\\:%M\\:%S}':x=10:y=10:fontsize=12:fontcolor=white"
+        vf_filter = "fps=1/10 ,scale=320:-1"
 
     output_pattern = os.path.join(frames_path, "frame_%04d.jpg")
 

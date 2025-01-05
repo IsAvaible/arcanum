@@ -40,7 +40,6 @@ class Segment:
 
 
 def transcribe(file, texts, llm, path, filename, filehash, whisper_prompt):
-    print(path)
     if os.path.isfile(path) is True:
         # if text content was analyzed before, check here for any glossary terms
         if texts != "":
