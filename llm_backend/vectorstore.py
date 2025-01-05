@@ -1,19 +1,20 @@
 import os
 import uuid
 from dotenv import load_dotenv
-import json
 from qdrant_client.models import VectorParams, Distance, PointStruct, Filter, FieldCondition
 from qdrant_client import QdrantClient
 from openai import AzureOpenAI
 
-from upload import upload_file_method_production
+from preprocess_files import process_attachment
 
 load_dotenv()
 
 AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
 AZURE_DEPLOYMENT_GPT = os.getenv("AZURE_DEPLOYMENT_GPT")
 AZURE_DEPLOYMENT_EMBEDDING = os.getenv("AZURE_DEPLOYMENT_EMBEDDING")
+AZURE_DEPLOYMENT_WHISPER = os.getenv("AZURE_DEPLOYMENT_WHISPER")
 OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
+AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 
 class QdrantVectorstore:
     def __init__(self, colletion_name="main_collection"):
@@ -30,7 +31,7 @@ class QdrantVectorstore:
             azure_deployment=AZURE_DEPLOYMENT_EMBEDDING,
             api_version=OPENAI_API_VERSION,
         )
-        self.setup_collection(self, 1536) # 1536 is the default vector size for text-embedding-ada-002 embeddings
+        self.setup_collection(1536) # 1536 is the default vector size for text-embedding-ada-002 embeddings
     
     def setup_collection(self, vector_size):
         """
@@ -110,19 +111,7 @@ class QdrantVectorstore:
         if self.search_by_metadata("file_id", attachment["file_id"]):
             return
 
-        file = json.loads(upload_file_method_production([attachment]))[0]
-
-        attachment_string = "FILE-TYPE: "+ file["type"]+ "\n"
-        if file["type"] == "audio":
-            
-            attachment_string += "FILE-CONTENT: "
-            for segment in file["segments"]:
-                attachment_string += str(segment["transcription_text"])
-        else:
-            attachment_string += "FILE-CONTENT: "+ str(file["text"])        
-
-        response = self.llm_embeddings.embeddings.create(input=attachment_string,model="text-embedding-ada-002")
-        attachment_embedding = response.data[0].embedding
+        file_dict = process_attachment(attachment)
 
         metadata =  {
             "file_id": attachment["file_id"],
@@ -131,9 +120,19 @@ class QdrantVectorstore:
             "size": attachment["size"],
             "filehash": attachment["filehash"],
             "mimetype": attachment["mimetype"],
-            "inserttype": "attachment"
+            "inserttype": "attachment-chunk"
         }
-        self.insert_embedding(embedding=attachment_embedding, text=attachment_string, metadata=metadata)
+
+        for chunk_index, chunk in enumerate(file_dict["chunks"]):
+            attachment_string = chunk
+
+            response = self.llm_embeddings.embeddings.create(input=attachment_string,model="text-embedding-ada-002")
+            attachment_embedding = response.data[0].embedding
+
+            metadata["chunk_number"] = chunk_index + 1
+
+            self.insert_embedding(embedding=attachment_embedding, text=attachment_string, metadata=metadata) 
+
         print("Attachment added to Qdrant collection.")
 
     def search_vectors(self, query_vector, limit, filter_condition):
@@ -200,7 +199,7 @@ class QdrantVectorstore:
         Returns:
             str: The string representation of the case.
         """
-        case_string = ""
+        case_string = "CASE:\n\n"
         
         ordered_keys = ['title', 'description', 'solution', 'assignee', 'status', 'attachments']  # Order to save the keys in
         
@@ -234,4 +233,3 @@ class QdrantVectorstore:
         entries = self.show_all_entries()
         point_ids = [entry.id for entry in entries]
         self.delete_entries(point_ids)
-
