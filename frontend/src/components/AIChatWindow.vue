@@ -61,7 +61,9 @@ const fetchChats = async () => {
   chatsLoading.value = true
   try {
     chats.value = (await api.chatsGet()).data
+    chatsError.value = null
   } catch (error) {
+    console.error(error)
     chatsError.value = (error as AxiosError).message
   }
   chatsLoading.value = false
@@ -466,6 +468,7 @@ onMounted(async () => {
       :set-active-chat="setActiveChat"
       :display-delete-chat-dialog="displayDeleteChatDialog"
       :save-chat-title="saveChatTitle"
+      @refresh-chats="fetchChats"
     />
 
     <div class="w-8/12 xl:w-6/12 flex flex-col">

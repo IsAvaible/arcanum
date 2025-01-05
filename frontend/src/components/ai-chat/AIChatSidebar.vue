@@ -23,6 +23,8 @@ const props = withDefaults(defineProps<Props>(), {
 const { activeChat, chats, chatsError, chatsLoading } = toRefs(props)
 const { setActiveChat: setActiveChatInner, displayDeleteChatDialog, saveChatTitle } = props
 
+const emit = defineEmits(['refreshChats'])
+
 const search = ref('')
 
 /**
@@ -135,7 +137,7 @@ const setActiveChat = async (chatId: Chat['id'] | null) => {
       <InputText v-model="search" type="text" placeholder="Search for chats..." class="w-full" />
       <InputIcon class="pi pi-search" />
     </IconField>
-    <div class="flex flex-col">
+    <div class="flex flex-col" v-if="!chatsError && !chatsLoading">
       <h3 class="uppercase text-slate-400 mb-4">Pinned</h3>
       <button
         v-for="chat in filteredPinnedChats"
@@ -148,9 +150,7 @@ const setActiveChat = async (chatId: Chat['id'] | null) => {
       >
         {{ chat.title ?? 'Untitled Chat' }}
       </button>
-      <p v-if="chatsLoading" class="text-gray-500 text-center">Loading chats...</p>
-      <p v-else-if="chatsError" class="text-red-500 text-center">Failed to load chats.</p>
-      <p v-else-if="filteredPinnedChats?.length == 0" class="text-gray-500 text-center">
+      <p v-if="filteredPinnedChats?.length == 0" class="text-gray-500 text-center">
         No pinned chats.
       </p>
     </div>
@@ -203,8 +203,20 @@ const setActiveChat = async (chatId: Chat['id'] | null) => {
           />
         </template>
       </button>
-      <p v-if="chatsLoading" class="text-gray-500 text-center">Loading chats...</p>
-      <p v-else-if="chatsError" class="text-red-500 text-center">Failed to load chats.</p>
+      <p v-if="chatsLoading" class="text-gray-500 text-center animate-pulse">Loading chats...</p>
+      <div class="flex flex-col gap-y-2" v-else-if="chatsError">
+        <div class="text-center bg-red-50 rounded-lg p-4">
+          <p class="text-red-500 font-semibold">Failed to load chats.</p>
+          <p class="text-slate-700 text-sm">Please check your connection and try again.</p>
+        </div>
+        <Button
+          label="Retry"
+          icon="pi pi-refresh"
+          @click="emit('refreshChats')"
+          outlined
+          severity="secondary"
+        />
+      </div>
       <p v-else-if="filteredChats?.length == 0" class="text-gray-500 text-center">
         No chats found.
       </p>

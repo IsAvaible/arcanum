@@ -1,7 +1,6 @@
 const { Chats, Messages, Cases, Attachments } = require("../models");
 const axios = require("axios");
 const { gatherChatContext } = require("../services/chatContextService");
-const attachmentService = require("../services/attachmentService");
 
 module.exports = {
   /**
@@ -324,7 +323,6 @@ module.exports = {
         await message.save();
         res.status(204).send();
       }
-
     } catch (error) {
       console.error("Error updating message:", error);
       res
