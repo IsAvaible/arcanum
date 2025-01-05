@@ -64,7 +64,9 @@ def transcribe(file, texts, llm, path, filename, filehash, whisper_prompt):
 
         # define new dict for transcription
         data = {
-            "segments": [],
+            "transcription": {
+                "segments":[]
+            }
         }
 
         # if file greater 24Mb we need to split this file into multiple segments
@@ -126,10 +128,12 @@ def transcribe(file, texts, llm, path, filename, filehash, whisper_prompt):
 
             # define data type
             data = {
-                "segments": []
+                "transcription": {
+                    "segments":[]
+                }
             }
             new_segments = generate_segment_dict(combined_segments)
-            data["segments"] = new_segments
+            data["transcription"]["segments"] = new_segments
             return data
     else:
         data = None

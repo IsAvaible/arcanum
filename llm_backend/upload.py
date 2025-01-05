@@ -111,8 +111,7 @@ def upload_file_method_production(files, socket_id):
                 texts += f" Content of PDF File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 single_text = create_text_chunks_pdfplumber(path)
                 single_dict = {
-                    "type": "pdf",
-                    "content": single_text
+                    "text": single_text
                 }
                 texts += " " + single_text
             # upload html file
@@ -125,8 +124,7 @@ def upload_file_method_production(files, socket_id):
                     texts += soup.get_text()
                     single_text = soup.get_text()
                 single_dict = {
-                    "type": "html",
-                    "content": single_text
+                    "text":  single_text
                 }
             # upload text file
             elif mimetype == "text/plain":
@@ -137,8 +135,7 @@ def upload_file_method_production(files, socket_id):
                     texts += contents
                     single_text = contents
                 single_dict = {
-                    "type": "txt",
-                    "content": single_text
+                    "text": single_text
                 }
             # upload image file
             elif "image" in mimetype:
@@ -161,8 +158,7 @@ def upload_file_method_production(files, socket_id):
                 ]
                 single_text = image_to_openai(prompt_dict)
                 single_dict = {
-                    "type": mimetype,
-                    "content": single_text
+                    "image": single_text
                 }
             # upload video file
             elif "video" in mimetype:
@@ -174,30 +170,15 @@ def upload_file_method_production(files, socket_id):
 
                 transcription = transcribe(file, texts, llm, audio_path, filename, filehash, whisper_prompt)
                 video_summary = process_segments(frames, transcription, duration)
-                single_dict = [
-                    transcription,
-                    video_summary
-                ]
+                single_dict = {
+                    "transcription" : transcription["transcription"],
+                    "video_summary" : video_summary["video_summary"]
+                }
             else:
                 socketio.emit('case_generation', {'message': f'File ({filename}) cannot be processed'}, to=socket_id)
 
-        ### CACHE TO MINIMIZE AZURE API CALLS
-        if is_cached and USE_CACHE:
-            # get cached file
-            socketio.emit('case_generation', {'message': f'Found file in cache ({filename})'}, to=socket_id)
-            print("USING CACHE")
-            cache_path = download_cache(filehash)
-            txt = read_from_file(cache_path)
-            content_dict = text_to_dict(txt)
-        else:
-            # if not cached -> upload to Sciebo
-            socketio.emit('case_generation', {'message': f'Saving file in cache ({filename})'}, to=socket_id)
-            print("NOT USING CACHE")
-            content_dict = single_dict
-            file_path = write_to_file(filehash, json.dumps(content_dict, ensure_ascii=False, indent=2))
-            upload_cache_file(file_path, filehash)
 
-        print(content_dict)
+
         # define a dictionary for a file
         file_as_dict = {
             "filename": filename,
@@ -205,8 +186,19 @@ def upload_file_method_production(files, socket_id):
             "filehash": filehash,
             "filepath": filepath,
             "file_id": file_id,
-            "content": content_dict
+            "content": single_dict
         }
+        ### CACHE TO MINIMIZE AZURE API CALLS
+        if is_cached and USE_CACHE:
+            print("USING CACHE")
+            cache_path = download_cache(filehash) # download cache file
+            txt = read_from_file(cache_path) # read cache file
+            file_as_dict = text_to_dict(txt) # file to dict
+        else:
+            print("NOT USING CACHE")
+            file_path = write_to_file(filehash, json.dumps(file_as_dict, ensure_ascii=False, indent=2))
+            upload_cache_file(file_path, filehash)
+
 
 
         files_as_dicts.append(file_as_dict)
