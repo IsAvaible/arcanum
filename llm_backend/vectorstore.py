@@ -6,6 +6,7 @@ from qdrant_client import QdrantClient
 from openai import AzureOpenAI
 
 from preprocess_files import process_attachment
+from app import app
 
 load_dotenv()
 
@@ -24,7 +25,7 @@ class QdrantVectorstore:
         Args:
             colletion_name (str): The name of the collection to use in Qdrant.
         """
-        self.client = QdrantClient(path="./.qdrantdb")
+        self.client = QdrantClient(path=os.path.join(app.root_path, "qdrantdb"))
         self.collection_name = colletion_name
         self.llm_embeddings = AzureOpenAI(
             azure_endpoint=AZURE_ENDPOINT,
@@ -82,7 +83,7 @@ class QdrantVectorstore:
             ]
         )
 
-    def insert_case(self, case):
+    def insert_case(self, case, id=None):
         """
         Insert a case into the Qdrant collection.
         
@@ -95,10 +96,10 @@ class QdrantVectorstore:
         case_embedding = self.llm_embeddings.embeddings.create(input=case_string,model="text-embedding-ada-002")
         case_embedding = case_embedding.data[0].embedding
 
-        metadata =  {"case_id": None,
+        metadata =  {"case_id": id,
                      "inserttype": "case",}
 
-        self.insert_embedding(embedding=case_embedding, text=case_string, metadata=metadata)
+        self.insert_embedding(embedding=case_embedding, id=id, text=case_string, metadata=metadata)
         print("Case added to Qdrant collection.")
     
     def insert_attachment(self, attachment):

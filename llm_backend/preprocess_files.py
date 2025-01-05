@@ -1,11 +1,14 @@
 import os
+import json
 import mimetypes
 import pdfplumber
 from openai import AzureOpenAI
 import re
 from dotenv import load_dotenv
 
-from webdav import download_file_webdav
+from webdav import check_if_cached,download_file_webdav, download_cache
+from upload import upload_file_method_production
+from readwrite import read_from_file
 
 
 load_dotenv()
@@ -19,39 +22,25 @@ AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 
 
 def process_attachment(file):
+    mimetype = file["mimetype"]
     filepath = file["filepath"]
-    mimetype = mimetypes.guess_type(filepath)
-    file["mimetype"] = mimetype[0]
-
     filehash = file["filehash"]
     file_id = file["id"] if "id" in file else file["file_id"]
     filename = file["filename"]
-    # download file to temp folder
-    path = download_file_webdav(filepath, filename)
-    mimetype = file["mimetype"]
 
-    print("NOT USING CACHE")
+    path = download_cache(filehash)
+    content_of_file = read_from_file(path)
+
+    file_dict1 = json.loads(file_json)
+
+
+
     if "audio" in mimetype:
-        client = AzureOpenAI(azure_endpoint=AZURE_ENDPOINT,
-                            api_version=OPENAI_API_VERSION,
-                            api_key=AZURE_OPENAI_API_KEY)
-        with open(path, "rb") as audio_file:
-            response = client.audio.transcriptions.create(
-                file=audio_file,
-                model=AZURE_DEPLOYMENT_WHISPER
-            )
-        transcription = response.text
-
         file_dict = {
             "type": "audio",
             "content": transcription,
         }
     elif "application/pdf" in mimetype:
-        pages = process_pdf(path)
-
-        text = ""
-        for index, page in enumerate(pages):
-            text += page
 
         file_dict = {
             "type": "pdf",
@@ -63,8 +52,6 @@ def process_attachment(file):
             "content": None,
         }
     elif "text/plain" in mimetype:
-        with open(path, "r", encoding="utf-8") as file:
-            contents = file.read()
         file_dict = {
             "type": "text",
             "content": contents,
