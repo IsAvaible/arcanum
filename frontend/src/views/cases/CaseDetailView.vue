@@ -43,6 +43,8 @@ import { apiBlobToFile } from '@/functions/apiBlobToFile'
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
 
+import { userOptions } from '@/api/mockdata'
+
 const router = useRouter()
 const api = useApi()
 const toast = useToast()
@@ -60,12 +62,6 @@ const caseTypes = ref(
   })),
 )
 
-const users: User[] = Array.from({ length: 15 }, (_, i) => ({
-  id: i + 1,
-  name: `User ${i + 1}`,
-  image: `https://placecats.com/${50 + i}/${50 + i}`,
-}))
-
 /// Fetch Case Details from the API
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -76,7 +72,13 @@ const fetchCase = async () => {
     caseDetails.value = (await api.casesIdGet({ id: Number(caseId.value) })).data
 
     if (!caseDetails.value.draft) {
-      resetForm({ values: caseDetails.value })
+      resetForm({
+        values: {
+          ...caseDetails.value,
+          // The API returns assignee instead of assignees
+          assignees: caseDetails.value.assignee as [string, ...string[]],
+        },
+      })
       nextTick(() => {
         form.value.dirty = false
       })
@@ -307,19 +309,20 @@ const uploadFiles = async () => {
   if (filesToUpload.value.length > 0) {
     uploading.value = true
     try {
-      const response = await api.casesIdAttachmentsPost({
+      const result = await api.casesIdAttachmentsPost({
         id: Number(caseId.value),
         files: filesToUpload.value,
       })
-      console.log(response)
 
       files.value.push(...filesToUpload.value)
       filesToUpload.value = []
 
+      caseDetails.value!.attachments = result.data.attachments
+
       toast.add({
         severity: 'success',
         summary: 'Success',
-        detail: 'Files uploaded successfully',
+        detail: `File${filesToUpload.value.length > 1 ? 's' : ''} uploaded successfully`,
         life: 3000,
       })
 
@@ -349,6 +352,16 @@ const deleteAttachment = async (attachment: CaseAllOfAttachments) => {
     })
 
     files.value = files.value.filter((f) => f.name !== attachment.filename)
+    caseDetails.value!.attachments = caseDetails.value!.attachments.filter(
+      (a) => a.id !== attachment.id,
+    )
+
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: 'File deleted successfully',
+      life: 2000,
+    })
   } catch (error) {
     toast.add({
       severity: 'error',
@@ -622,15 +635,18 @@ const toggleMenu = (event: Event) => {
               <Divider />
 
               <div class="field">
-                <label>Assignee</label>
+                <label>Assignees</label>
                 <div v-if="!loading">
                   <UserSelector
+                    :selected-users="
+                      userOptions.filter((u) => fields.assignees.value.value?.includes(u.name))
+                    "
                     @update:selected-users="
                       fields.assignees.value.value = $event.map((u) => u.name)
                     "
                     assigneeLabel="Assignees"
                     :placeholder="inEditMode ? 'Select Assignees' : ''"
-                    :userOptions="users"
+                    :userOptions="userOptions as User[]"
                     multi-select
                     :disabled="!inEditMode"
                     :invalid="!!errors.assignees"
@@ -646,12 +662,15 @@ const toggleMenu = (event: Event) => {
                 <label>Participants</label>
                 <div v-if="!loading">
                   <UserSelector
+                    :selected-users="
+                      userOptions.filter((u) => fields.participants.value.value?.includes(u.name))
+                    "
                     @update:selected-users="
                       fields.participants.value.value = $event.map((u) => u.name)
                     "
                     assigneeLabel="Participants"
                     :placeholder="inEditMode ? 'Select Participants' : ''"
-                    :userOptions="users"
+                    :userOptions="userOptions"
                     multi-select
                     :disabled="!inEditMode"
                     :invalid="!!errors.participants"
@@ -793,7 +812,9 @@ const toggleMenu = (event: Event) => {
 
     <!-- File Upload Popover -->
     <Dialog v-model:visible="fileUploadDialogVisible" modal class="lg:min-w-[50rem]">
-      <h2 class="text-xl font-semibold mb-4">Upload Additional Files</h2>
+      <template #header>
+        <h2 class="text-xl font-semibold mb-4">Upload Additional Files</h2>
+      </template>
       <FileDropzoneUpload v-model:files="filesToUpload">
         <template #file-list-footer>
           <Button

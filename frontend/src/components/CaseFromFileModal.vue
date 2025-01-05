@@ -95,7 +95,6 @@ const openAICaseCreation = async () => {
       files: files.value, // Original-File-Objekte werden gesendet
     })
 
-    console.log(result)
     await router.push('/cases/' + result.data[0].id)
   } catch (error) {
     toast.add({
