@@ -135,9 +135,7 @@ def process_segments(frames, transcription, duration):
 
     data = {
             "type": "video_summary",
-            "content":  {
-                "segments" : []
-            }
+            "segments" : [],
         }
 
     print(transcription)
@@ -173,7 +171,7 @@ def process_segments(frames, transcription, duration):
         for group in groups:
             print("Analyzing Segment " + str(step+1) + " / " + str(frame_segments+1))
             prompt_dict.clear()
-            if len(data["content"]["segments"]) == 0:
+            if len(data["segments"]) == 0:
                 prompt_dict.append(transcription)
                 prompt_dict.append({
                     "type": "text",
@@ -207,7 +205,7 @@ def process_segments(frames, transcription, duration):
                 "content": sum_part,
             }
             video_summary = video_summary + f"Video Summary Part {str(step)} of {str(frame_segments)} (Timestamps: {start_timestamp} - {end_timestamp}):\n" + sum_part + "\n\n"
-            data["content"]["segments"].append(summary)
+            data["segments"].append(summary)
             start += group
             step = step + 1
     else:
@@ -236,7 +234,7 @@ def process_segments(frames, transcription, duration):
             "end_timestamp": end_timestamp,
             "content": video_summary,
         }
-        data["content"]["segments"].append(summary)
+        data["segments"].append(summary)
 
     return data
 
