@@ -30,12 +30,12 @@ function checkFileName(file) {
  */
 function checkFileType(file, cb) {
   // Allowed file extensions
-  const filetypes = /jpeg|jpg|png|gif|txt|pdf|mp3|wav|doc/;
+  const filetypes = /jpeg|jpg|png|gif|txt|pdf|mp3|mp4|wav|doc/;
   const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
 
   // Allowed MIME types
   const mimetypes =
-    /image\/jpeg|image\/jpg|image\/png|image\/gif|text\/plain|application\/pdf|audio\/mpeg|audio\/wav|application\/msword/;
+    /image\/jpeg|image\/jpg|image\/png|image\/gif|text\/plain|video\/mp4|application\/pdf|audio\/mpeg|audio\/wav|application\/msword|audio\/flac|audio\/m4a|audio\/mp3|audio\/oga|audio\/ogg|video\/webm/;
   const mimetype = mimetypes.test(file.mimetype);
 
   if (mimetype && extname) {

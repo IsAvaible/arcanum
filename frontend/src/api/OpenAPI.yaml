@@ -191,16 +191,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                    description: ID of the case.
-                  uploadedFiles:
-                    type: array
-                    items:
-                      type: string
-                      description: List of successfully uploaded file names.
+                $ref: '#/components/schemas/Case'
         400:
           description: Validation error or unsupported file type.
           content:
