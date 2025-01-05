@@ -1,16 +1,11 @@
 <script setup lang="ts">
-import { ref, useTemplateRef } from 'vue'
+import { computed, ref, useTemplateRef, watch, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
-import { Dialog, Button, Divider, useToast } from 'primevue'
+import { Dialog, Button, Divider, Select, useToast } from 'primevue'
 import FileDropzoneUpload from '@/components/file-handling/FileDropzoneUpload.vue'
-import { useVModel } from '@vueuse/core'
+import { useDevicesList, useVModel } from '@vueuse/core'
 import { useApi } from '@/composables/useApi'
 import { AxiosError } from 'axios'
-
-// Define the type for FileDropzoneUpload instance
-interface FileDropzoneUploadInstance {
-  addFile: (file: File) => void
-}
 
 const props = defineProps<{
   /** The visibility of the dialog */
@@ -25,7 +20,7 @@ const api = useApi()
 const router = useRouter()
 const files = ref<File[]>([])
 const showDialog = useVModel(props, 'visible', emit)
-const fileDropzone = useTemplateRef<FileDropzoneUploadInstance>('fileDropzone')
+const fileDropzone = useTemplateRef('fileDropzone')
 
 // Methods
 const openManualCaseCreation = () => {
@@ -33,15 +28,51 @@ const openManualCaseCreation = () => {
   router.push({ name: 'case-create-manual' })
 }
 
+// Device List
+const { videoInputs: cameras, audioInputs: microphones } = useDevicesList({
+  requestPermissions: true,
+})
+const cameraOptions = computed(() =>
+  cameras.value.map((camera: MediaDeviceInfo) => ({
+    label: camera.label || `Camera ${camera.deviceId}`,
+    value: camera.deviceId,
+  })),
+)
+const microphoneOptions = computed(() =>
+  microphones.value.map((microphone: MediaDeviceInfo) => ({
+    label: microphone.label || `Microphone ${microphone.deviceId}`,
+    value: microphone.deviceId,
+  })),
+)
+const selectedCamera = ref<string | null>(null)
+const selectedMicrophone = ref<string | null>(null)
+
+// Set the first camera and microphone as the default selected devices once they are available
+watch(cameras, () => {
+  if (cameras.value.length > 0 && !selectedCamera.value) {
+    selectedCamera.value = cameras.value[0].deviceId
+  }
+  if (microphones.value.length > 0 && !selectedMicrophone.value) {
+    selectedMicrophone.value = microphones.value[0].deviceId
+  }
+})
+
 // Audio Recording
-const isRecording = ref(false)
+const isAudioRecording = ref(false)
 const mediaRecorder = ref<MediaRecorder | null>(null)
 const audioChunks = ref<BlobPart[]>([])
 
-const startRecording = async () => {
+const startAudioRecording = async () => {
+  if (mediaRecorder.value) {
+    mediaRecorder.value.stop()
+  }
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    isRecording.value = true
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        deviceId: selectedMicrophone.value ? { exact: selectedMicrophone.value } : undefined,
+      },
+    })
+    isAudioRecording.value = true
     audioChunks.value = []
     mediaRecorder.value = new MediaRecorder(stream)
 
@@ -64,7 +95,8 @@ const startRecording = async () => {
     }
 
     mediaRecorder.value.start()
-  } catch (_err) {
+  } catch (error) {
+    console.error(error)
     toast.add({
       severity: 'error',
       summary: 'Microphone Error',
@@ -74,10 +106,10 @@ const startRecording = async () => {
   }
 }
 
-const stopRecording = () => {
+const stopAudioRecording = () => {
   if (mediaRecorder.value) {
     mediaRecorder.value.stop()
-    isRecording.value = false
+    isAudioRecording.value = false
   }
 }
 
@@ -85,13 +117,22 @@ const stopRecording = () => {
 const isVideoRecording = ref(false)
 const videoStream = ref<MediaStream | null>(null)
 const videoChunks = ref<BlobPart[]>([])
+const videoRecordingPreview = useTemplateRef('videoRecordingPreview')
 
 const startVideoRecording = async () => {
+  if (mediaRecorder.value) {
+    mediaRecorder.value.stop()
+  }
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    videoStream.value = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        deviceId: selectedMicrophone.value ? { exact: selectedMicrophone.value } : undefined,
+      },
+      video: { deviceId: selectedCamera.value ? { exact: selectedCamera.value } : undefined },
+    })
     isVideoRecording.value = true
     videoChunks.value = []
-    mediaRecorder.value = new MediaRecorder(stream)
+    mediaRecorder.value = new MediaRecorder(videoStream.value, { mimeType: 'video/mp4' })
 
     mediaRecorder.value.ondataavailable = (e) => {
       videoChunks.value.push(e.data)
@@ -99,9 +140,9 @@ const startVideoRecording = async () => {
 
     mediaRecorder.value.onstop = () => {
       const audioFile = new File(
-        [new Blob(videoChunks.value, { type: 'audio/webm' })],
-        `audio-recording_${new Date().toISOString()}.webm`,
-        { type: 'audio/webm' },
+        [new Blob(videoChunks.value, { type: 'video/mp4' })],
+        `video-recording_${new Date().toISOString()}.mp4`,
+        { type: 'video/mp4' },
       )
       fileDropzone.value?.addFile(audioFile)
     }
@@ -128,6 +169,35 @@ const stopVideoRecording = () => {
   }
 }
 
+watchEffect(() => {
+  if (isVideoRecording.value && videoRecordingPreview.value) {
+    videoRecordingPreview.value.srcObject = videoStream.value
+  }
+})
+
+const buttonDevices = ref([
+  {
+    type: 'microphone',
+    label: 'Audio',
+    icon: 'microphone',
+    selected: selectedMicrophone,
+    options: microphoneOptions,
+    isRecording: isAudioRecording,
+    startRecording: startAudioRecording,
+    stopRecording: stopAudioRecording,
+  },
+  {
+    type: 'camera',
+    label: 'Camera',
+    icon: 'video',
+    selected: selectedCamera,
+    options: cameraOptions,
+    isRecording: isVideoRecording,
+    startRecording: startVideoRecording,
+    stopRecording: stopVideoRecording,
+  },
+])
+
 const loading = ref(false)
 const openAICaseCreation = async () => {
   if (files.value.length === 0) {
@@ -143,11 +213,8 @@ const openAICaseCreation = async () => {
   loading.value = true
 
   try {
-    const result = await api.createCaseFromFilesPost({
-      files: files.value, // Original-File-Objekte werden gesendet
-    })
+    const result = await api.createCaseFromFilesPost({ files: files.value })
 
-    console.log(result)
     await router.push('/cases/' + result.data[0].id)
   } catch (error) {
     toast.add({
@@ -171,10 +238,9 @@ const openAICaseCreation = async () => {
     class="max-w-5xl w-[calc(100%-3rem)] max-h-[calc(100%-3rem)]"
     modal
   >
-    <div class="p-4 space-y-6">
-      <!-- Options Section -->
-      <div class="flex flex-col space-y-4">
-        <!-- Updated FileDropzoneUpload component -->
+    <div class="p-4 relative">
+      <!-- Content -->
+      <div class="flex flex-col space-y-4" :class="{ invisible: isVideoRecording }">
         <FileDropzoneUpload
           v-model:files="files"
           ref="fileDropzone"
@@ -182,27 +248,50 @@ const openAICaseCreation = async () => {
         />
 
         <!-- Audio and Video Recording Section -->
-        <div class="audio-recorder flex flex-col items-center gap-3 mb-4">
-          <p class="text-gray-600 text-sm">Or record audio or video to describe your case</p>
+        <div class="flex flex-col items-center gap-3 mb-4">
+          <p class="text-gray-600 text-sm">or record an audio or a video to describe your case</p>
           <div class="flex gap-4">
-            <button
-              @click="isRecording ? stopRecording() : startRecording()"
-              :aria-label="isRecording ? 'Stop Recording' : 'Start Recording'"
-              class="mic-button flex items-center gap-2 px-4 py-2 border rounded-lg shadow hover:bg-gray-100"
-            >
-              <span v-if="isRecording" class="recording-indicator"></span>
-              <i class="pi pi-microphone"></i>
-              <span>{{ isRecording ? 'Stop Recording' : 'Start Recording' }}</span>
-            </button>
-            <button
-              @click="isVideoRecording ? stopVideoRecording() : startVideoRecording()"
-              :aria-label="isVideoRecording ? 'Stop Video Recording' : 'Start Video Recording'"
-              class="mic-button flex items-center gap-2 px-4 py-2 border rounded-lg shadow hover:bg-gray-100"
-            >
-              <span v-if="isVideoRecording" class="recording-indicator"></span>
-              <i class="pi pi-video"></i>
-              <span>{{ isVideoRecording ? 'Stop Video Recording' : 'Start Video Recording' }}</span>
-            </button>
+            <template v-for="device in buttonDevices" :key="device.type">
+              <Select
+                v-if="device.type === 'camera' ? cameras.length : true"
+                v-model="device.selected"
+                :options="device.options"
+                optionLabel="label"
+                optionValue="value"
+                :placeholder="`Select ${device.label}`"
+                class="border-none shadow"
+                :pt="{
+                  label: {
+                    class: 'hover:bg-gray-50 rounded-tl-md rounded-bl-md transition-colors',
+                  },
+                  dropdown: {
+                    class: 'hover:bg-gray-50 rounded-tr-md rounded-br-md transition-colors',
+                  },
+                  overlay: {
+                    class: 'neutral-primary',
+                  },
+                }"
+              >
+                <template #value>
+                  <button
+                    @click.stop="
+                      device.isRecording ? device.stopRecording() : device.startRecording()
+                    "
+                    class="flex items-center text-gray-600 gap-2 h-full pl-1"
+                  >
+                    <div class="w-4 flex items-center justify-center">
+                      <span v-if="device.isRecording" class="recording-indicator"></span>
+                      <i v-else :class="`pi pi-${device.icon}`"></i>
+                    </div>
+                    <span>{{
+                      device.isRecording
+                        ? `Stop ${device.label} Recording`
+                        : `Start ${device.label} Recording`
+                    }}</span>
+                  </button>
+                </template>
+              </Select>
+            </template>
           </div>
         </div>
 
@@ -228,22 +317,36 @@ const openAICaseCreation = async () => {
           @click="openManualCaseCreation"
         />
       </div>
+      <!-- Video Recording Preview -->
+      <div
+        class="absolute top-0 left-0 h-full w-full rounded-lg flex flex-col space-y-4 items-center justify-center"
+        v-if="isVideoRecording"
+      >
+        <div class="w-full flex-1 rounded-lg">
+          <video
+            ref="videoRecordingPreview"
+            muted
+            autoplay
+            class="flex-1 max-w-full max-h-full h-full rounded-lg mx-auto"
+            v-if="isVideoRecording"
+          />
+        </div>
+        <button
+          @click="isVideoRecording ? stopVideoRecording() : startVideoRecording()"
+          class="mic-button flex items-center gap-2 px-4 py-2 border rounded-lg shadow hover:bg-gray-100"
+        >
+          <div class="w-4 flex items-center justify-center">
+            <span v-if="isVideoRecording" class="recording-indicator"></span>
+            <i v-else class="pi pi-video"></i>
+          </div>
+          <span>{{ isVideoRecording ? 'Stop Video Recording' : 'Start Video Recording' }}</span>
+        </button>
+      </div>
     </div>
   </Dialog>
 </template>
 
 <style scoped>
-.mic-button {
-  background: white;
-  border: 1px solid #e5e7eb;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.mic-button:hover {
-  background: #f3f4f6;
-}
-
 .recording-indicator {
   width: 10px;
   height: 10px;
