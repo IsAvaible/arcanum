@@ -7,6 +7,11 @@ import { useVModel } from '@vueuse/core'
 import { useApi } from '@/composables/useApi'
 import { AxiosError } from 'axios'
 
+// Define the type for FileDropzoneUpload instance
+interface FileDropzoneUploadInstance {
+  addFile: (file: File) => void
+}
+
 const props = defineProps<{
   /** The visibility of the dialog */
   visible?: boolean
@@ -20,7 +25,7 @@ const api = useApi()
 const router = useRouter()
 const files = ref<File[]>([])
 const showDialog = useVModel(props, 'visible', emit)
-const fileDropzone = useTemplateRef('fileDropzone')
+const fileDropzone = useTemplateRef<FileDropzoneUploadInstance>('fileDropzone')
 
 // Methods
 const openManualCaseCreation = () => {
@@ -76,24 +81,16 @@ const stopRecording = () => {
   }
 }
 
-
-const deleteRecording = () => {
-  audioBlob.value = null
-  audioUrl.value = ''
-}
-
 // Video Recording
 const isVideoRecording = ref(false)
 const videoStream = ref<MediaStream | null>(null)
 const videoChunks = ref<BlobPart[]>([])
-const videoBlob = ref<Blob | null>(null)
-const videoUrl = ref<string>('')
 
 const startVideoRecording = async () => {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
     isVideoRecording.value = true
-    videoStream.value = stream
+    videoChunks.value = []
     mediaRecorder.value = new MediaRecorder(stream)
 
     mediaRecorder.value.ondataavailable = (e) => {
@@ -101,16 +98,20 @@ const startVideoRecording = async () => {
     }
 
     mediaRecorder.value.onstop = () => {
-      videoBlob.value = new Blob(videoChunks.value, { type: 'video/webm' })
-      videoUrl.value = URL.createObjectURL(videoBlob.value)
+      const audioFile = new File(
+        [new Blob(videoChunks.value, { type: 'audio/webm' })],
+        `audio-recording_${new Date().toISOString()}.webm`,
+        { type: 'audio/webm' },
+      )
+      fileDropzone.value?.addFile(audioFile)
     }
 
     mediaRecorder.value.start()
   } catch (_err) {
     toast.add({
       severity: 'error',
-      summary: 'Camera Error',
-      detail: 'Could not access the camera.',
+      summary: 'Recording Error',
+      detail: 'Could not access the microphone.',
       life: 3000,
     })
   }
@@ -124,15 +125,6 @@ const stopVideoRecording = () => {
       videoStream.value.getTracks().forEach((track) => track.stop())
       videoStream.value = null
     }
-  }
-}
-
-const deleteVideoRecording = () => {
-  videoBlob.value = null
-  videoUrl.value = ''
-  if (videoStream.value) {
-    videoStream.value.getTracks().forEach((track) => track.stop())
-    videoStream.value = null
   }
 }
 
@@ -182,9 +174,14 @@ const openAICaseCreation = async () => {
     <div class="p-4 space-y-6">
       <!-- Options Section -->
       <div class="flex flex-col space-y-4">
-        <FileDropzoneUpload v-model:files="files" ref="fileDropzone" />
+        <!-- Updated FileDropzoneUpload component -->
+        <FileDropzoneUpload
+          v-model:files="files"
+          ref="fileDropzone"
+          accept="image/*, audio/*, video/*, application/pdf, text/*"
+        />
 
-        <!-- Audio Recording Section -->
+        <!-- Audio and Video Recording Section -->
         <div class="audio-recorder flex flex-col items-center gap-3 mb-4">
           <p class="text-gray-600 text-sm">Or record audio or video to describe your case</p>
           <div class="flex gap-4">
@@ -207,32 +204,6 @@ const openAICaseCreation = async () => {
               <span>{{ isVideoRecording ? 'Stop Video Recording' : 'Start Video Recording' }}</span>
             </button>
           </div>
-
-          <div v-if="audioBlob" class="audio-controls mt-2">
-            <audio :src="audioUrl" controls class="w-full"></audio>
-            <button @click="deleteRecording" class="delete-button text-red-600 mt-2">
-              Delete Recording
-            </button>
-          </div>
-
-          <div v-if="videoBlob" class="video-controls mt-2">
-            <video :src="videoUrl" controls class="w-full"></video>
-            <button @click="deleteVideoRecording" class="delete-button text-red-600 mt-2">
-              Delete Video
-            </button>
-          </div>
-          <p class="text-gray-600 text-sm">Or record audio to describe your case</p>
-          <button
-            @click="isRecording ? stopRecording() : startRecording()"
-            :aria-label="isRecording ? 'Stop Recording' : 'Start Recording'"
-            class="mic-button flex items-center gap-2 px-4 py-2 border rounded-lg shadow hover:bg-gray-100"
-          >
-            <div class="w-4 flex items-center justify-center">
-              <span v-if="isRecording" class="recording-indicator"></span>
-              <i v-else class="pi pi-microphone"></i>
-            </div>
-            <span>{{ isRecording ? 'Stop Recording' : 'Start Recording' }}</span>
-          </button>
         </div>
 
         <Button
