@@ -178,7 +178,8 @@ watchEffect(() => {
 const buttonDevices = ref([
   {
     type: 'microphone',
-    label: 'Audio',
+    label: 'Microphone',
+    output: 'Audio',
     icon: 'microphone',
     selected: selectedMicrophone,
     options: microphoneOptions,
@@ -189,6 +190,7 @@ const buttonDevices = ref([
   {
     type: 'camera',
     label: 'Camera',
+    output: 'Video',
     icon: 'video',
     selected: selectedCamera,
     options: cameraOptions,
@@ -285,8 +287,8 @@ const openAICaseCreation = async () => {
                     </div>
                     <span>{{
                       device.isRecording
-                        ? `Stop ${device.label} Recording`
-                        : `Start ${device.label} Recording`
+                        ? `Stop ${device.output} Recording`
+                        : `Start ${device.output} Recording`
                     }}</span>
                   </button>
                 </template>
