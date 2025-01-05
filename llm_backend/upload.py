@@ -106,7 +106,7 @@ def upload_file_method_production(files, socket_id):
                 single_dict = transcription
                 texts += "  " + json.dumps(single_text, ensure_ascii=False)
             # upload pdf file
-            elif mimetype == "application/pdf":
+            elif "pdf" in mimetype:
                 texts += f" Content of PDF File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 single_text = create_text_chunks_pdfplumber(path)
                 glossary_terms = generate_glossary_terms(single_text)
@@ -116,7 +116,7 @@ def upload_file_method_production(files, socket_id):
                     "glossary" : glossary_terms
                 }
                 texts += " " + single_text
-            elif mimetype == "text/html":
+            elif "html" in mimetype:
                 texts += f" Content of HTML File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 with open(path, "r", encoding="utf-8") as file:
                     contents = file.read()
@@ -141,6 +141,44 @@ def upload_file_method_production(files, socket_id):
                     "text": single_text,
                     "glossary" : glossary_terms
                 }
+            # upload image file
+            elif "image" in mimetype:
+                socketio.emit('case_generation', {'message': f'Analyzing Image File ({filename})'}, to=socket_id)
+                texts += f" Content of Image File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
+                encoding = encode_image(path)
+                mime_type = mimetypes.guess_type(path)[0]
+                prompt_dict = [
+                    {
+                        "type": "text",
+                        "text": "What is this image showing, be as detailed as possible"
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:{mime_type};base64,{encoding}",
+                            "detail": "auto"
+                        }
+                    }
+                ]
+                single_text = image_to_openai(prompt_dict)
+                single_dict = {
+                    "type": mimetype,
+                    "content": single_text
+                }
+            # upload video file
+            elif "video" in mimetype:
+                socketio.emit('case_generation', {'message': f'Analyzing Video File ({filename})'}, to=socket_id)
+                texts += f" Content of Video File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
+
+                frame_path, audio_path, duration = extract_data_from_video(path, filehash)
+                frames = get_all_frames_in_dir(frame_path)
+
+                transcription = transcribe(file, texts, llm, audio_path, filename, filehash, whisper_prompt)
+                video_summary = process_segments(frames, transcription, duration)
+                single_dict = [
+                    transcription,
+                    video_summary
+                ]
 
         file_as_dict = {
             "filename": filename,
@@ -148,8 +186,8 @@ def upload_file_method_production(files, socket_id):
             "filehash": filehash,
             "filepath": filepath,
             "file_id": file_id,
+            "content": single_dict
         }
-        file_as_dict.update(single_dict)
 
         ### CACHE TO MINIMIZE AZURE API CALLS
         if is_cached and USE_CACHE:
@@ -164,7 +202,6 @@ def upload_file_method_production(files, socket_id):
 
 
         files_as_dicts.append(file_as_dict)
-
         files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False)
 
         print("file_as_dict")
