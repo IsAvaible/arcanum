@@ -30,6 +30,7 @@ class QdrantVectorstore:
             azure_deployment=AZURE_DEPLOYMENT_EMBEDDING,
             api_version=OPENAI_API_VERSION,
         )
+        self.setup_collection(self, 1536) # 1536 is the default vector size for text-embedding-ada-002 embeddings
     
     def setup_collection(self, vector_size):
         """
