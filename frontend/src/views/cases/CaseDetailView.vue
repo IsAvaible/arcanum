@@ -43,7 +43,7 @@ import { apiBlobToFile } from '@/functions/apiBlobToFile'
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
 
-import { defaultUserOptions } from '@/api/mockdata'
+import { userOptions } from '@/api/mockdata'
 
 const router = useRouter()
 const api = useApi()
@@ -72,7 +72,13 @@ const fetchCase = async () => {
     caseDetails.value = (await api.casesIdGet({ id: Number(caseId.value) })).data
 
     if (!caseDetails.value.draft) {
-      resetForm({ values: caseDetails.value })
+      resetForm({
+        values: {
+          ...caseDetails.value,
+          // The API returns assignee instead of assignees
+          assignees: caseDetails.value.assignee as [string, ...string[]],
+        },
+      })
       nextTick(() => {
         form.value.dirty = false
       })
@@ -618,15 +624,18 @@ const toggleMenu = (event: Event) => {
               <Divider />
 
               <div class="field">
-                <label>Assignee</label>
+                <label>Assignees</label>
                 <div v-if="!loading">
                   <UserSelector
+                    :selected-users="
+                      userOptions.filter((u) => fields.assignees.value.value?.includes(u.name))
+                    "
                     @update:selected-users="
                       fields.assignees.value.value = $event.map((u) => u.name)
                     "
                     assigneeLabel="Assignees"
                     :placeholder="inEditMode ? 'Select Assignees' : ''"
-                    :userOptions="defaultUserOptions as User[]"
+                    :userOptions="userOptions as User[]"
                     multi-select
                     :disabled="!inEditMode"
                     :invalid="!!errors.assignees"
@@ -642,12 +651,15 @@ const toggleMenu = (event: Event) => {
                 <label>Participants</label>
                 <div v-if="!loading">
                   <UserSelector
+                    :selected-users="
+                      userOptions.filter((u) => fields.participants.value.value?.includes(u.name))
+                    "
                     @update:selected-users="
                       fields.participants.value.value = $event.map((u) => u.name)
                     "
                     assigneeLabel="Participants"
                     :placeholder="inEditMode ? 'Select Participants' : ''"
-                    :userOptions="defaultUserOptions as User[]"
+                    :userOptions="userOptions"
                     multi-select
                     :disabled="!inEditMode"
                     :invalid="!!errors.participants"

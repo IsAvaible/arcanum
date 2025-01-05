@@ -40,7 +40,7 @@ import { AxiosError } from 'axios'
 import { MdEditor, MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 
-import { defaultUserOptions } from '@/api/mockdata'
+import { userOptions } from '@/api/mockdata'
 import { useRouter } from 'vue-router'
 
 const toast = useToast()
@@ -215,7 +215,7 @@ const onSubmit = handleSubmit(async (_values) => {
       solution: fields.solution.value.value || undefined,
       priority: fields.priority.value.value || undefined,
       status: fields.status.value.value,
-      userOptions: defaultUserOptions as User[],
+      userOptions: userOptions as User[],
       // products: fields.selectedProducts.value.value,
     }
     result = (
@@ -412,7 +412,7 @@ const dialogPT = {
                 <UserSelector
                   @update:selected-users="fields.assignees.value.value = $event.map((u) => u.name)"
                   assigneeLabel="Assignees"
-                  :userOptions="defaultUserOptions"
+                  :userOptions="userOptions"
                   multi-select
                   :invalid="!!errors.assignees"
                 />
@@ -444,7 +444,7 @@ const dialogPT = {
                       fields.participants.value.value = $event.map((u) => u.name) || undefined
                     "
                     assigneeLabel="Participants"
-                    :userOptions="defaultUserOptions"
+                    :userOptions="userOptions"
                     multi-select
                     :invalid="!!errors.participants"
                   />
