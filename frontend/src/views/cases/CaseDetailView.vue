@@ -309,19 +309,20 @@ const uploadFiles = async () => {
   if (filesToUpload.value.length > 0) {
     uploading.value = true
     try {
-      const response = await api.casesIdAttachmentsPost({
+      const result = await api.casesIdAttachmentsPost({
         id: Number(caseId.value),
         files: filesToUpload.value,
       })
-      console.log(response)
 
       files.value.push(...filesToUpload.value)
       filesToUpload.value = []
 
+      caseDetails.value!.attachments = result.data.attachments
+
       toast.add({
         severity: 'success',
         summary: 'Success',
-        detail: 'Files uploaded successfully',
+        detail: `File${filesToUpload.value.length > 1 ? 's' : ''} uploaded successfully`,
         life: 3000,
       })
 
@@ -351,6 +352,16 @@ const deleteAttachment = async (attachment: CaseAllOfAttachments) => {
     })
 
     files.value = files.value.filter((f) => f.name !== attachment.filename)
+    caseDetails.value!.attachments = caseDetails.value!.attachments.filter(
+      (a) => a.id !== attachment.id,
+    )
+
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: 'File deleted successfully',
+      life: 2000,
+    })
   } catch (error) {
     toast.add({
       severity: 'error',
@@ -801,7 +812,9 @@ const toggleMenu = (event: Event) => {
 
     <!-- File Upload Popover -->
     <Dialog v-model:visible="fileUploadDialogVisible" modal class="lg:min-w-[50rem]">
-      <h2 class="text-xl font-semibold mb-4">Upload Additional Files</h2>
+      <template #header>
+        <h2 class="text-xl font-semibold mb-4">Upload Additional Files</h2>
+      </template>
       <FileDropzoneUpload v-model:files="filesToUpload">
         <template #file-list-footer>
           <Button
