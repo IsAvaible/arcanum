@@ -8,8 +8,6 @@ module.exports = (io) => {
 
     // Receive token from LLM
     socket.on("llm_token", ({ socketId, token }) => {
-      //console.log("llm_token:", token);
-      // send to frontend
       io.to(socketId).emit("llm_token", { token });
     });
 
@@ -23,8 +21,9 @@ module.exports = (io) => {
       console.log("LLM connected with socket ID:", socket.id);
     });
 
-    socket.on("llm_end", ({ socket_id, content }) => {
-      io.to(socket_id).emit("llm_end", { content });
+    socket.on("llm_end", ({ socketId, content }) => {
+      // send to frontend
+      io.to(socketId).emit("llm_end", { content });
     });
   });
 };

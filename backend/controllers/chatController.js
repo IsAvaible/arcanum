@@ -1,13 +1,14 @@
-const { Chats, Messages } = require("../models");
+const { Chats, Messages, Cases, Attachments } = require("../models");
 const axios = require("axios");
 const { gatherChatContext } = require("../services/chatContextService");
+const attachmentService = require("../services/attachmentService");
 
 module.exports = {
   /**
    * @route POST /chats
    * @description Creates a new chat instance and returns its ID.
    * @param {string} [title.body.optional] - An optional title for the new chat.
-   * @returns {Object} 201 - A JSON object containing the newly created chat's ID.
+   * @returns {Object} 201 - A JSON object containing the newly created chat.
    * @returns {Error} 500 - Internal server error.
    */
   async createNewChat(req, res) {
@@ -19,7 +20,7 @@ module.exports = {
         updatedAt: new Date(),
       });
 
-      res.status(201).json({ chatId: newChat.id });
+      res.status(201).json(newChat);
     } catch (error) {
       console.error("Error creating chat:", error);
       res.status(500).json({ message: error.message || "Error creating chat" });
@@ -82,15 +83,15 @@ module.exports = {
   },
 
   /**
-   * @route POST /chats/:id/message
+   * @route POST /chats/:id/messages
    * @description Saves a new user message in the specified chat and sends the context to the LLM (Language Model).
    * @param {number} id.path.required - The ID of the chat to which the message will be added.
    * @param {Text} content.body.required - The content of the user's message (non-empty).
    * @param {string} socketId.body.required - An socket ID to track responses in real-time.
-   * @returns {Object} 200 - The updated chat with user and assisstant messages
+   * @returns {Object} 200 - The assisstant messages
    * @returns {Error} 400 - Missing or invalid message content.
    * @returns {Error} 404 - Chat not found.
-   * @returns {Error} 500 - Internal server error.
+   * @returns {Error} 500 - Internal server error or LLM module error.
    */
   async postMessage(req, res) {
     const chatId = parseInt(req.params.id, 10);
@@ -122,33 +123,39 @@ module.exports = {
         JSON.stringify({ socketId: socketId, message: content, context }),
       );
 
-      // Send to LLM and wait for a reply
-      // Expect a JSON here: { message: ‘The complete response from LLM’ }
-      // ...I_URL}/generate`, { socketId: socketId, context }); Could also send new messages in context here
-      const llmResponse = await axios.post(
-        `${process.env.LLM_API_URL}/generate`,
-        { socketId: socketId, message: content, context },
-      );
-      const { message: assistantMessageContent } = llmResponse.data;
+      try {
+        // Send to LLM and wait for a reply
+        // Expect a JSON here: { message: ‘The complete response from LLM’ }
+        // ...I_URL}/generate`, { socketId: socketId, context }); Could also send new messages in context here
+        const llmResponse = await axios.post(
+          `${process.env.LLM_API_URL}/generate`,
+          { socketId: socketId, message: content, context },
+        );
+        const { message: assistantMessageContent } = llmResponse.data;
 
-      console.log(
-        "Vom LLM Empfangen: ",
-        JSON.stringify(assistantMessageContent),
-      );
+        console.log(
+          "Vom LLM Empfangen: ",
+          JSON.stringify(assistantMessageContent),
+        );
 
-      // Save LLM response (assistant message)
-      await Messages.create({
-        chatId: chatId,
-        role: "assistant",
-        content: assistantMessageContent,
-        timestamp: new Date(),
-      });
+        // Save LLM response (assistant message)
+        let assistantMessage = await Messages.create({
+          chatId: chatId,
+          role: "assistant",
+          content: assistantMessageContent,
+          timestamp: new Date(),
+        });
 
-      const result = await gatherChatContext(chatId);
-      res.status(200).json(result);
+        res.status(200).json(assistantMessage);
+      } catch (error) {
+        console.error("LLM module error:", error.message || error);
+        return res
+          .status(500)
+          .json({ message: "Error communicating with the LLM module" });
+      }
     } catch (error) {
       console.error("Error sending message:", error);
-      res
+      return res
         .status(500)
         .json({ message: error.message || "Error sending message" });
     }
@@ -159,7 +166,7 @@ module.exports = {
    * @description Updates chat title
    * @param {number} id.path.required - The ID of the chat to update.
    * @param {string} [title.body.optional] - The new title of the chat.
-   * @returns {Object} 200 - A message indicating a successful update and the updated chat object.
+   * @returns {Object} 204 - Successful updated chat object.
    * @returns {Error} 404 - Chat not found.
    * @returns {Error} 500 - Internal server error.
    */
@@ -177,7 +184,7 @@ module.exports = {
       chat.updatedAt = new Date();
       await chat.save();
 
-      res.status(200).json({ message: "Chat updated successfully", chat });
+      res.status(204).send();
     } catch (error) {
       console.error("Error updating chat:", error);
       res.status(500).json({ message: error.message || "Error updating chat" });
@@ -188,7 +195,7 @@ module.exports = {
    * @route DELETE /chats/:id
    * @description Deletes a specific chat by its ID.
    * @param {number} id.path.required - The ID of the chat to delete.
-   * @returns {Object} 200 - A message indicating the chat was successfully deleted.
+   * @returns {Object} 204 - A message indicating the chat was successfully deleted.
    * @returns {Error} 404 - Chat not found.
    * @returns {Error} 500 - Internal server error.
    */
@@ -202,7 +209,7 @@ module.exports = {
       }
 
       await chat.destroy();
-      res.status(204).json({ message: "Chat deleted successfully" });
+      res.status(204).send();
     } catch (error) {
       console.error("Error deleting chat:", error);
       res.status(500).json({ message: error.message || "Error deleting chat" });
@@ -214,7 +221,7 @@ module.exports = {
    * @description Deletes a specific message by its ID within a given chat.
    * @param {number} chatId.path.required - The ID of the chat containing the message.
    * @param {number} messageId.path.required - The ID of the message to delete.
-   * @returns {Object} 200 - A message indicating the message was successfully deleted.
+   * @returns {Object} 204 - A message indicating the message was successfully deleted.
    * @returns {Error} 404 - Message or chat not found.
    * @returns {Error} 500 - Internal server error.
    */
@@ -231,7 +238,7 @@ module.exports = {
       }
 
       await message.destroy();
-      res.status(204).json({ message: "Message deleted successfully" });
+      res.status(204).send();
     } catch (error) {
       console.error("Error deleting message:", error);
       res
@@ -247,7 +254,8 @@ module.exports = {
    * @param {number} messageId.path.required - The ID of the message to update.
    * @param {string} content.body.required - The new content of the message.
    * @param {string} [socketId.body.optional] - Optional socket ID for sending the updated message to the LLM.
-   * @returns {Object} 200 - The updated chat with user and assisstant messages
+   * @returns {Object} 200 - The assistant message (SocketId was provided)
+   * @returns {Object} 204 - Updated user message (no SocketId)
    * @returns {Error} 400 - Missing or invalid message content.
    * @returns {Error} 404 - Message or chat not found.
    * @returns {Error} 500 - Internal server error.
@@ -277,38 +285,46 @@ module.exports = {
           JSON.stringify({ socketId: socketId, message: content, context }),
         );
 
-        // Send to LLM and wait for a reply
-        // Expect a JSON here: { message: ‘The complete response from LLM’ }
-        const llmResponse = await axios.post(
-          `${process.env.LLM_API_URL}/generate`,
-          { socketId: socketId, message: content, context },
-        );
-        const { message: assistantMessageContent } = llmResponse.data;
+        try {
+          // Send to LLM and wait for a reply
+          // Expect a JSON here: { message: ‘The complete response from LLM’ }
+          const llmResponse = await axios.post(
+            `${process.env.LLM_API_URL}/generate`,
+            { socketId: socketId, message: content, context },
+          );
+          const { message: assistantMessageContent } = llmResponse.data;
 
-        console.log(
-          "Vom LLM Empfangen: ",
-          JSON.stringify(assistantMessageContent),
-        );
+          console.log(
+            "Vom LLM Empfangen: ",
+            JSON.stringify(assistantMessageContent),
+          );
 
-        message.content = content;
-        message.timestamp = new Date();
-        await message.save();
+          message.content = content;
+          message.timestamp = new Date();
+          await message.save();
 
-        // Save LLM response (assistant message)
-        await Messages.create({
-          chatId: chatId,
-          role: "assistant",
-          content: assistantMessageContent,
-          timestamp: new Date(),
-        });
+          // Save LLM response (assistant message)
+          let newAssistantMsg = await Messages.create({
+            chatId: chatId,
+            role: "assistant",
+            content: assistantMessageContent,
+            timestamp: new Date(),
+          });
+
+          res.status(200).json(newAssistantMsg);
+        } catch (error) {
+          console.error("LLM module error:", error.message || error);
+          return res
+            .status(500)
+            .json({ message: "Error communicating with the LLM module" });
+        }
       } else {
         message.content = content;
         message.timestamp = new Date();
         await message.save();
+        res.status(204).send();
       }
 
-      const result = await gatherChatContext(chatId);
-      res.status(200).json(result);
     } catch (error) {
       console.error("Error updating message:", error);
       res
