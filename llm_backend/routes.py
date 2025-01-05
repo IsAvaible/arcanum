@@ -33,6 +33,6 @@ def save_to_vector():
         return vector_db_save_cases(request)
     
 @app.route("/save_to_vector_db_backend", methods=["POST"])
-def save_to_vector():
+def save_to_vector_db_backend():
     if request.method == "POST":
         return vector_db_save_cases_backend(request)

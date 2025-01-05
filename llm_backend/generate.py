@@ -19,14 +19,11 @@ from upload import upload_file_method_production
 
 load_dotenv()
 
-
 # Getting all Env Variables
 AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
 AZURE_DEPLOYMENT_GPT = os.getenv("AZURE_DEPLOYMENT_GPT")
 AZURE_DEPLOYMENT_EMBEDDING = os.getenv("AZURE_DEPLOYMENT_EMBEDDING")
 OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
-
-vectorstore = QdrantVectorstore()
 
 def start_quering_llm(invokedPrompt, llm, parser, max_tries=3) -> dict:
     """
@@ -128,6 +125,8 @@ def vector_db_save_cases(request):
     json_str = request.get_json(force=True)
     attachments = json_str["attachments"]
 
+    vectorstore = QdrantVectorstore()
+
     for attachment in attachments:
         vectorstore.insert_attachment(attachment)
     for case in cases_dict:
@@ -137,11 +136,18 @@ def vector_db_save_cases(request):
 
 def vector_db_save_cases_backend(request):
     json_str = request.get_json(force=True)
-    attachments = json_str["attachments"]
-
-    for attachment in attachments:
-        vectorstore.insert_attachment(attachment)
     for case in json_str:
-        vectorstore.insert_case(case)
+        attachments = case["attachments"]
+        case["attachments"] = [attachment["id"] for attachment in attachments]
+
+        vectorstore = QdrantVectorstore()
+        vectorstore.insert_case(case, id=case["id"])
+
+        for attachment in attachments:
+            vectorstore.insert_attachment(attachment)
+
+    return "Cases Saved Successfully", 200
+
+        
 
 

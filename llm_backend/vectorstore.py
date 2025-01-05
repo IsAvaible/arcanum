@@ -109,13 +109,13 @@ class QdrantVectorstore:
         Args:
             attachment (dict): The attachment dictionary to insert.
         """
-        if self.search_by_metadata("file_id", attachment["file_id"]):
+        if self.search_by_metadata("file_id", attachment["id"]):
             return
 
         file_dict = process_attachment(attachment)
 
         metadata =  {
-            "file_id": attachment["file_id"],
+            "file_id": attachment["id"],
             "filename": attachment["filename"],
             "filepath": attachment["filepath"],
             "size": attachment["size"],

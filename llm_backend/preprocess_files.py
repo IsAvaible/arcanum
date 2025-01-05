@@ -30,39 +30,37 @@ def process_attachment(file):
 
     path = download_cache(filehash)
     content_of_file = read_from_file(path)
-
-    file_dict1 = json.loads(file_json)
-
-
+    file_dict = json.loads(content_of_file)
+    file_dict["file_id"] = file_id
 
     if "audio" in mimetype:
-        file_dict = {
-            "type": "audio",
-            "content": transcription,
-        }
-    elif "application/pdf" in mimetype:
+        text = ""
+        for segment in file_dict["content"]["transcription"]["segments"]:
+            text += segment["transcription_text"]
+        file_dict["vectorstore-text"] = text
 
-        file_dict = {
-            "type": "pdf",
-            "content": text,
-        }
-    elif "text/html" in mimetype:
-        file_dict = {
-            "type": "html",
-            "content": None,
-        }
-    elif "text/plain" in mimetype:
-        file_dict = {
-            "type": "text",
-            "content": contents,
-        }
+    elif "image" in mimetype:
+        file_dict["vectorstore-text"] = file_dict["content"]["image"]
         
+    elif "video" in mimetype:
+        text = "TRANSCRIPTION: "
+        for segment in file_dict["content"]["transcription"]["segments"]:
+            text += segment["transcription_text"]
+        text += "VIDEO DESCRIPTION: "
+        for segment in file_dict["content"]["video_summary"]["segments"]:
+            text += segment["content"]
+        file_dict["vectorstore-text"] = text
 
-    file_dict["file_id"] = file_id
-    file_dict["filename"] = filename
-    file_dict["filepath"] = filepath
-    file_dict["filehash"] = filehash
-    file_dict["chunks"] = chunk_text(file_dict["content"])
+    elif "pdf" in mimetype:
+        file_dict["vectorstore-text"] = file_dict["content"]["text"]
+
+    elif "html" in mimetype:
+        file_dict["vectorstore-text"] = file_dict["content"]["text"]
+
+    elif "plain" in mimetype:
+        file_dict["vectorstore-text"] = file_dict["content"]["text"]
+
+    file_dict["chunks"] = chunk_text(file_dict["vectorstore-text"])
 
     return file_dict
 
@@ -112,10 +110,11 @@ def chunk_text(text, chunk_size=2000, overlap=700):
     
     while start < text_length:
         end = min(start + chunk_size, text_length)
+        if end == text_length:
+            chunks.append(text[start:end].strip())
+            break
         end = find_sentence_end(text, start, end)
         chunks.append(text[start:end].strip())
         start = end - overlap
-        if end == text_length:
-            break
     
     return chunks
