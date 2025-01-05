@@ -8,7 +8,7 @@ class CaseAttachment(BaseModel):
     )
     glossary: list[str] = Field(
         ...,
-        description="A list of all the glossary terms in this attachment."
+        description="A list of all the glossary terms in this attachment. Only Machine Names, Model Numbers, etc."
     )
 """  filename: str = Field(
         ...,
@@ -51,7 +51,7 @@ class Case(BaseModel):
     )
     glossary: list[str] = Field(
         ...,
-        description="All the Glossary terms used for generating this case",
+        description="All the Glossary terms used for generating this case. Only Machine Names, Model Numbers, etc.",
     )
 
 
