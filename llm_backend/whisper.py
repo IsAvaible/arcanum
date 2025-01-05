@@ -55,6 +55,7 @@ def transcribe(file, texts, llm, path, filename, filehash, file_as_dicts):
 
         # define new dict for transcription
         data = {
+            "type":"transcription",
             "segments": [],
         }
 
@@ -119,6 +120,7 @@ def transcribe(file, texts, llm, path, filename, filehash, file_as_dicts):
 
             # define data type
             data = {
+                "type" : "transcription",
                 "segments": []
             }
             new_segments = generate_segment_dict(combined_segments)
@@ -147,10 +149,9 @@ def combine_segments(group_segments):
 
 
 
-"""
-This method will generate a dictionary over the combined segments
-If there are splitted segments we need to adjust the start and end timestamp of the segments because Open AI Whisper will always start at 0 seconds for each segment uplaoded
-"""
+
+### This method will generate a dictionary over the combined segments
+### If there are splitted segments we need to adjust the start and end timestamp of the segments because Open AI Whisper will always start at 0 seconds for each segment uplaoded
 def generate_segment_dict(combined_segments, idx=0):
     new_segments = []
     for seg in combined_segments:
