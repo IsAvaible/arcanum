@@ -72,16 +72,13 @@ setTimeout(async () => {
 
 
     // 1. Alle Glossar-Einträge abrufen
-    //await testRequest("get", "/api/glossary");
+    await testRequest("get", "/api/glossary");
 
-    // 2. Einzelnen Glossar-Eintrag abrufen (Beispiel-ID 123)
-    //await testRequest("get", "/api/glossary/123");
+
   
-    // 3. Glossar-Einträge für einen bestimmten Case (Beispiel-ID 999)
-    //await testRequest("get", "/api/cases/999/glossary");
-  
+
     // 4. Glossar-Einträge suchen (Beispiel: MIG4300Pro)
-    //await testRequest("get", `/api/glossary/find?term=MIG4300Pro`);
+   // await testRequest("get", `/api/glossary/find?term=MIG4300Pro`);
 
 
   console.log("All Glossary test requests done.");
