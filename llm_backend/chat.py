@@ -22,7 +22,7 @@ def chat(request):
         if not prompt:
             return jsonify({"error": "No prompt provided"}), 400
 
-        chat_counter = request.form.get("chat_counter")
+        #chat_counter = request.form.get("chat_counter")
 
         llm = AzureChatOpenAI(
             azure_endpoint=AZURE_ENDPOINT,
