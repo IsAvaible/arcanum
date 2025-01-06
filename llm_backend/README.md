@@ -69,3 +69,6 @@
 }
 
 ```
+
+Generate Case(s) Diagramm
+![generate case](https://github.com/user-attachments/assets/5fd53c91-312e-4e82-a966-a92ce84a29f3)
