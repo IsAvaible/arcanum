@@ -327,19 +327,6 @@ export interface ChatWithMessages {
 /**
  * 
  * @export
- * @interface ChatsPost201Response
- */
-export interface ChatsPost201Response {
-    /**
-     * 
-     * @type {number}
-     * @memberof ChatsPost201Response
-     */
-    'chatId': number;
-}
-/**
- * 
- * @export
  * @interface Message
  */
 export interface Message {
@@ -1514,7 +1501,7 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async chatsIdPut(id: number, title?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Chat>> {
+        async chatsIdPut(id: number, title?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.chatsIdPut(id, title, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.chatsIdPut']?.[localVarOperationServerIndex]?.url;
@@ -1527,7 +1514,7 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async chatsPost(title?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ChatsPost201Response>> {
+        async chatsPost(title?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Chat>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.chatsPost(title, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.chatsPost']?.[localVarOperationServerIndex]?.url;
@@ -1733,7 +1720,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        chatsIdPut(requestParameters: DefaultApiChatsIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<Chat> {
+        chatsIdPut(requestParameters: DefaultApiChatsIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.chatsIdPut(requestParameters.id, requestParameters.title, options).then((request) => request(axios, basePath));
         },
         /**
@@ -1743,7 +1730,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        chatsPost(requestParameters: DefaultApiChatsPostRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<ChatsPost201Response> {
+        chatsPost(requestParameters: DefaultApiChatsPostRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<Chat> {
             return localVarFp.chatsPost(requestParameters.title, options).then((request) => request(axios, basePath));
         },
         /**

@@ -231,7 +231,18 @@ const sendMessage = async () => {
     return
   }
 
-  if (editingMessage.value) {
+  if (!editingMessage.value) {
+    pendingMessage.value = {
+      content: messageInput.value.trim(),
+      state: 'pending',
+      chatId: activeChat.value.id,
+      role: MessageRoleEnum.User,
+      timestamp: new Date().toISOString(),
+      id: -1,
+    }
+    messageInput.value = ''
+    await sendPendingMessage()
+  } else {
     const editedMessage = editingMessage.value
     const originalContent = editedMessage.content
     const editedContent = messageInput.value
@@ -264,17 +275,6 @@ const sendMessage = async () => {
       startEditingMessage(editedMessage)
       editingMessage.value!.content = originalContent
     }
-  } else {
-    pendingMessage.value = {
-      content: messageInput.value.trim(),
-      state: 'pending',
-      chatId: activeChat.value.id,
-      role: MessageRoleEnum.User,
-      timestamp: new Date().toISOString(),
-      id: -1,
-    }
-    messageInput.value = ''
-    await sendPendingMessage()
   }
 }
 
@@ -340,9 +340,10 @@ const createChatWithMessage = async () => {
   }
   createChatLoading.value = true
   try {
-    const { chatId } = (await api.chatsPost()).data
-    chats.value = [activeChat.value!, ...(chats.value ?? [])]
-    await router.push(`/ai/${chatId}`)
+    const chat = (await api.chatsPost()).data
+    chats.value = [chat, ...(chats.value ?? [])]
+    await router.push(`/ai/${chat.id}`)
+    activeChat.value = { ...chat, messages: [] }
     await sendMessage()
     createChatLoading.value = false
   } catch (error) {
@@ -511,6 +512,7 @@ onMounted(async () => {
   watch(
     () => route.params.chatId,
     async (newChatId) => {
+      if (createChatLoading.value) return
       if (newChatId) {
         try {
           await setActiveChat(Number(newChatId))
