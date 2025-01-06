@@ -67,7 +67,7 @@ try {
       credentials: true,
     },
   });
-  // Event-Listener für den Namespace
+  // Socket IO Listener
   io.on("connection", (socket) => {
     console.log(`Client connected to ${socket.id}`);
 
