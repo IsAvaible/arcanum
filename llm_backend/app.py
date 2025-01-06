@@ -12,8 +12,8 @@ CORS(app)
 app.secret_key = "super secret key"
 app.config["SECRET_KEY"] = "super secret key"
 # init SocketIO
-sio = socketio.Client()
-sio.connect("http://localhost:3000")
+sio = socketio.Client(engineio_logger=True, logger=True, ssl_verify=False)
+sio.connect("https://localhost:3000")
 # init upload folder
 app.config["UPLOAD_FOLDER"] = "upload"
 
