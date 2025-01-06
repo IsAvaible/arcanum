@@ -148,6 +148,63 @@ def vector_db_save_cases_backend(request):
 
     return "Cases Saved Successfully", 200
 
+def ask_question(request):
+    json_str = request.get_json(force=True)
+    messages = json_str
+
+    # Extract the latest user message
+    latest_user_message = next(
+        (message["content"] for message in reversed(messages) if message["role"] == "user"), None
+    )
+
+    if not latest_user_message:
+        return jsonify({"error": "No user message found"}), 400
+
+    vectorstore = QdrantVectorstore()
+
+    relevant_vectors = vectorstore.search_from_query(latest_user_message)
+
+    context = ""
+    doc_number = 1
+    for vector in relevant_vectors:
+        doc = vector.payload
+        text = doc["text"]
+        metadata = doc["metadata"]
+
+        if metadata["inserttype"] == "case":
+            text = f"Case content [doc_number:{doc_number}]:\n" + text
+        elif metadata["inserttype"] == "attachment-chunk":
+            text = metadata["filename"] + f" [doc_number:{doc_number}]:\n" + text
+
+        doc_number += 1
+
+        text += "\n\n---\n\n"
+
+        context += text
+
+    prompt = f"CONTEXT: {context}\n\nQUERY: {latest_user_message}"
+
+    llm = AzureChatOpenAI(
+        azure_endpoint=AZURE_ENDPOINT,
+        azure_deployment=AZURE_DEPLOYMENT_GPT,
+        openai_api_version=OPENAI_API_VERSION,
+        temperature=0,
+        max_tokens=None,
+        timeout=None,
+        max_retries=2,
+        streaming=False,
+    )
+
+    # Use the history from json_str
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant. Always cite the context in your response by writing '[doc_number:number]' and replacing number with the actual number of the document and doc_number staying the same for the program to corretly identfy your citing."},
+        *messages,
+        {"role": "user", "content": prompt},
+    ]
+    response = llm(messages).content
+
+    return jsonify({"response": response}), 200
+
         
 
 

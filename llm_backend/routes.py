@@ -4,7 +4,8 @@ from app import app
 from generate import (
     generate,
     vector_db_save_cases,
-    vector_db_save_cases_backend
+    vector_db_save_cases_backend,
+    ask_question,
 )
 from chat import chat
 
@@ -36,3 +37,8 @@ def save_to_vector():
 def save_to_vector_db_backend():
     if request.method == "POST":
         return vector_db_save_cases_backend(request)
+    
+@app.route("/ask_question", methods=["POST"])
+def ask_question_():
+    if request.method == "POST":
+        return ask_question(request)

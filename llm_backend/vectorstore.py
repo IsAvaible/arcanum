@@ -163,7 +163,7 @@ class QdrantVectorstore:
 
         return self.search_vectors(case_embedding, limit, filter_condition)
     
-    def search_case_from_query(self, query, limit=5, filter_condition=None):
+    def search_from_query(self, query, limit=5, filter_condition=None):
         embedding = self.create_embedding(query)
 
         return self.search_vectors(embedding, limit, filter_condition)
@@ -200,7 +200,7 @@ class QdrantVectorstore:
         Returns:
             str: The string representation of the case.
         """
-        case_string = "CASE:\n\n"
+        case_string = ""
         
         ordered_keys = ['title', 'description', 'solution', 'assignee', 'status', 'attachments']  # Order to save the keys in
         
