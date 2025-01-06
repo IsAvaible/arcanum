@@ -1,3 +1,4 @@
+import json
 import math
 import os
 import subprocess
@@ -138,8 +139,7 @@ def process_segments(frames, transcription, duration):
             "segments": []
         }
     }
-
-    print(transcription)
+    print (json.dumps(transcription, ensure_ascii=False, indent=2))
 
     if transcription is None:
         trans = "No transcription provided!"
@@ -257,7 +257,6 @@ def get_all_video_segments_in_dir(path):
     return f
 
 def dict_to_text(data):
-    print(data)
     text = []
     for segment in data["transcription"]["segments"]:
         start = segment.get("start_timestamp", "Unbekannt")
