@@ -134,9 +134,10 @@ def process_segments(frames, transcription, duration):
     print(f"Segment Count: {frame_segments}")
 
     data = {
-            "type": "video_summary",
-            "segments" : [],
+        "video_summary": {
+            "segments": []
         }
+    }
 
     print(transcription)
 
@@ -171,7 +172,7 @@ def process_segments(frames, transcription, duration):
         for group in groups:
             print("Analyzing Segment " + str(step+1) + " / " + str(frame_segments+1))
             prompt_dict.clear()
-            if len(data["segments"]) == 0:
+            if len(data["video_summary"]["segments"]) == 0:
                 prompt_dict.append(transcription)
                 prompt_dict.append({
                     "type": "text",
@@ -205,12 +206,12 @@ def process_segments(frames, transcription, duration):
                 "content": sum_part,
             }
             video_summary = video_summary + f"Video Summary Part {str(step)} of {str(frame_segments)} (Timestamps: {start_timestamp} - {end_timestamp}):\n" + sum_part + "\n\n"
-            data["segments"].append(summary)
+            data["video_summary"]["segments"].append(summary)
             start += group
             step = step + 1
     else:
         start_timestamp = convert_timestamp_to_str(0)
-        end_timestamp = convert_timestamp_to_str(len(frames)*seconds)
+        end_timestamp = convert_timestamp_to_str(len(frames) * seconds)
         prompt_dict = [
             transcription,
             {
@@ -234,7 +235,7 @@ def process_segments(frames, transcription, duration):
             "end_timestamp": end_timestamp,
             "content": video_summary,
         }
-        data["segments"].append(summary)
+        data["video_summary"]["segments"].append(summary)
 
     return data
 
@@ -256,12 +257,9 @@ def get_all_video_segments_in_dir(path):
     return f
 
 def dict_to_text(data):
-    if "segments" not in data:
-        raise ValueError("Ungültige Datenstruktur: 'type' oder 'segments' fehlt.")
-
-
+    print(data)
     text = []
-    for segment in data["segments"]:
+    for segment in data["transcription"]["segments"]:
         start = segment.get("start_timestamp", "Unbekannt")
         end = segment.get("end_timestamp", "Unbekannt")
         transcription = segment.get("transcription_text", "Kein Text vorhanden.")

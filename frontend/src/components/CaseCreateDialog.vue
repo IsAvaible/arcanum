@@ -31,7 +31,7 @@ import { useForm } from 'vee-validate'
 import { ref } from 'vue'
 import { useVModel } from '@vueuse/core'
 import { useApi } from '@/composables/useApi'
-import type { CasesPostCaseTypeEnum } from '@/api'
+import type { Case, CasesPostCaseTypeEnum } from '@/api'
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
 import { useConfirm } from 'primevue/useconfirm'
@@ -39,6 +39,9 @@ import { AxiosError } from 'axios'
 
 import { MdEditor, MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
+
+import { userOptions } from '@/api/mockdata'
+import { useRouter } from 'vue-router'
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -50,6 +53,7 @@ const props = defineProps<{
 const emit = defineEmits(['update:visible'])
 
 const api = useApi()
+const router = useRouter()
 
 const dialogVisible = useVModel(props, 'visible', emit)
 
@@ -79,12 +83,6 @@ const caseTypes = [
       'For documenting frequently asked questions or common inquiries to provide quick, standardized answers for future reference.',
   },
 ]
-
-const peopleOptions: User[] = Array.from({ length: 15 }, (_, i) => ({
-  id: i + 1,
-  name: `Cat ${i + 1}`,
-  image: `https://placecats.com/${50 + i}/${50 + i}`,
-}))
 
 // Form validation setup
 const {
@@ -201,6 +199,7 @@ enum SubmitState {
   ERROR,
 }
 const submitState = ref<SubmitState>(SubmitState.IDLE)
+let result: Case | null = null
 // Form submission
 const onSubmit = handleSubmit(async (_values) => {
   console.log('Submitting form', _values)
@@ -216,13 +215,16 @@ const onSubmit = handleSubmit(async (_values) => {
       solution: fields.solution.value.value || undefined,
       priority: fields.priority.value.value || undefined,
       status: fields.status.value.value,
+      userOptions: userOptions as User[],
       // products: fields.selectedProducts.value.value,
     }
-    await api.casesPost(requestParameters, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
+    result = (
+      await api.casesPost(requestParameters, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+    ).data
   } catch (error) {
     submitState.value = SubmitState.ERROR
     setTimeout(() => {
@@ -237,7 +239,6 @@ const onSubmit = handleSubmit(async (_values) => {
     })
     return
   }
-
   submitState.value = SubmitState.SUCCESS
   toast.add({
     severity: 'success',
@@ -246,6 +247,8 @@ const onSubmit = handleSubmit(async (_values) => {
     life: 3000,
   })
   dialogVisible.value = false
+  // Redirect to the new case
+  await router.push('/cases/' + result?.id)
 })
 
 const cancelCaseCreation = async () => {
@@ -409,7 +412,7 @@ const dialogPT = {
                 <UserSelector
                   @update:selected-users="fields.assignees.value.value = $event.map((u) => u.name)"
                   assigneeLabel="Assignees"
-                  :userOptions="peopleOptions"
+                  :userOptions="userOptions"
                   multi-select
                   :invalid="!!errors.assignees"
                 />
@@ -441,7 +444,7 @@ const dialogPT = {
                       fields.participants.value.value = $event.map((u) => u.name) || undefined
                     "
                     assigneeLabel="Participants"
-                    :userOptions="peopleOptions"
+                    :userOptions="userOptions"
                     multi-select
                     :invalid="!!errors.participants"
                   />

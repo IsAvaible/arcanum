@@ -107,16 +107,18 @@ def upload_file_method_production(files, socket_id):
                 texts += "  " + json.dumps(single_text, ensure_ascii=False)
             # upload pdf file
             elif "pdf" in mimetype:
+                socketio.emit('case_generation', {'message': f'Analyzing PDF File ({filename})'}, to=socket_id)
                 texts += f" Content of PDF File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 single_text = create_text_chunks_pdfplumber(path)
                 glossary_terms = generate_glossary_terms(single_text)
                 single_dict = {
-                    "type": "pdf",
                     "text": single_text,
                     "glossary" : glossary_terms
                 }
                 texts += " " + single_text
+            # upload html file
             elif "html" in mimetype:
+                socketio.emit('case_generation', {'message': f'Analyzing HTML File ({filename})'}, to=socket_id)
                 texts += f" Content of HTML File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 with open(path, "r", encoding="utf-8") as file:
                     contents = file.read()
@@ -125,11 +127,12 @@ def upload_file_method_production(files, socket_id):
                     single_text = soup.get_text()
                     glossary_terms = generate_glossary_terms(single_text)
                 single_dict = {
-                    "type": "html",
-                    "text": single_text,
+                    "text":  single_text,
                     "glossary" : glossary_terms
                 }
+            # upload text file
             elif mimetype == "text/plain":
+                socketio.emit('case_generation', {'message': f'Analyzing Text File ({filename})'}, to=socket_id)
                 texts += f" Content of Text File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 with open(path, "r", encoding="utf-8") as file:
                     contents = file.read()
@@ -137,7 +140,6 @@ def upload_file_method_production(files, socket_id):
                     single_text = contents
                     glossary_terms = generate_glossary_terms(single_text)
                 single_dict = {
-                    "type": "txt",
                     "text": single_text,
                     "glossary" : glossary_terms
                 }
@@ -162,8 +164,7 @@ def upload_file_method_production(files, socket_id):
                 ]
                 single_text = image_to_openai(prompt_dict)
                 single_dict = {
-                    "type": mimetype,
-                    "content": single_text
+                    "image": single_text
                 }
             # upload video file
             elif "video" in mimetype:
@@ -175,10 +176,12 @@ def upload_file_method_production(files, socket_id):
 
                 transcription = transcribe(file, texts, llm, audio_path, filename, filehash, whisper_prompt)
                 video_summary = process_segments(frames, transcription, duration)
-                single_dict = [
-                    transcription,
-                    video_summary
-                ]
+                single_dict = {
+                    "transcription" : transcription["transcription"],
+                    "video_summary" : video_summary["video_summary"]
+                }
+            else:
+                socketio.emit('case_generation', {'message': f'File ({filename}) cannot be processed'}, to=socket_id)
 
         file_as_dict = {
             "filename": filename,
@@ -188,7 +191,6 @@ def upload_file_method_production(files, socket_id):
             "file_id": file_id,
             "content": single_dict
         }
-
         ### CACHE TO MINIMIZE AZURE API CALLS
         if is_cached and USE_CACHE:
             print("USING CACHE")
@@ -202,11 +204,11 @@ def upload_file_method_production(files, socket_id):
 
 
         files_as_dicts.append(file_as_dict)
-        files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False)
+        files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False, indent=2)
 
-        print("file_as_dict")
-        print(files_as_dicts_json)
-        print("file_as_dict END")
+        # debug
+        write_to_file(str(time.time()), files_as_dicts_json)
+        # delete temp folder
+        delete_temp_folder(filehash)
+
     return files_as_dicts_json
-
-
