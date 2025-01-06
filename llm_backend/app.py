@@ -29,7 +29,7 @@ while not connected:
 app.config["UPLOAD_FOLDER"] = "upload"
 @sio.event
 def connect():
-    print('[INFO] Successfully connected to server.')
+    print('Successfully connected to websocket server.')
 
 
 
