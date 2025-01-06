@@ -1,3 +1,4 @@
+import json
 import os
 
 from dotenv import load_dotenv
@@ -46,8 +47,9 @@ def start_quering_llm(invokedPrompt, llm, parser, max_tries=3) -> dict:
         print(f"Couldn't get valid output in {try_number} tries")
         return {}
     else:
-        print(f"Generated valid output with {try_number} tries: {chain_output}")
+        print(f"Generated valid output with {try_number} tries")
 
+    print (json.dumps(chain_output, ensure_ascii=False, indent=2))
     return chain_output
 
 
