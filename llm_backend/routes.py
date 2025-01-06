@@ -12,9 +12,10 @@ routes = Blueprint("routes", __name__)
 
 @app.route("/test", methods=["GET"])
 def test():
+    socket_id = request.args.get('socket_id')
     try:
-        sio.emit(event="llm_message", data={'message': 'Test WebSocket Message...'})
-        return "test"
+        sio.emit(event="llm_message", data={"message": 'Test WebSocket Message...', "socket_id": socket_id})
+        return "Success"
     except Exception as ex:
         return str(ex)
 
