@@ -24,6 +24,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import AIChatSidebar from '@/components/ai-chat/AIChatSidebar.vue'
 import AIChatHeader from '@/components/ai-chat/AIChatHeader.vue'
 import { useRoute, useRouter } from 'vue-router'
+import type { MenuItem } from 'primevue/menuitem'
 
 /// Reactive State Variables
 const route = useRoute()
@@ -172,23 +173,31 @@ const saveChatTitle = async (id: Chat['id'], title: string): Promise<boolean> =>
 
 /// Message Context Menu
 /** Context menu items for messages. */
-const messageContextMenuItems = ref([
-  {
-    label: 'Copy',
-    icon: 'pi pi-copy',
-    command: () => {
-      navigator.clipboard.writeText(selectedContextMenuMessage.value!.content)
-    },
+const messageContextMenuCopyItem = ref<MenuItem>({
+  label: 'Copy',
+  icon: 'pi pi-copy',
+  command: () => {
+    navigator.clipboard.writeText(selectedContextMenuMessage.value!.content)
   },
-  {
-    label: 'Delete',
-    icon: 'pi pi-trash',
-    command: () => {
-      messageContextMenuItems.value[1].icon = 'pi pi-spinner pi-spin'
-      deleteMessage(selectedContextMenuMessage.value!.id)
-      messageContextMenuItems.value[1].icon = 'pi pi-trash'
-    },
+})
+const messageContextMenuDeleteItem = ref<MenuItem>({
+  label: 'Delete',
+  icon: 'pi pi-trash',
+  command: () => {
+    deleteMessage(selectedContextMenuMessage.value!.id)
   },
+})
+const messageContextMenuEditItem = ref<MenuItem>({
+  label: 'Edit',
+  icon: 'pi pi-pencil',
+  command: () => {
+    startEditingMessage(selectedContextMenuMessage.value!)
+  },
+})
+const messageContextMenuItems = computed<MenuItem[]>(() => [
+  messageContextMenuCopyItem.value,
+  messageContextMenuDeleteItem.value,
+  messageContextMenuEditItem.value,
 ])
 const messageContextMenu = useTemplateRef('messageContextMenu')
 const selectedContextMenuMessage = ref<Message | null>(null)
@@ -198,6 +207,7 @@ const selectedContextMenuMessage = ref<Message | null>(null)
  */
 const openMessageContextMenu = (event: MouseEvent, message: Message) => {
   selectedContextMenuMessage.value = message
+  messageContextMenuEditItem.value.visible = message.role === MessageRoleEnum.User
   messageContextMenu.value!.show(event)
 }
 
@@ -221,16 +231,51 @@ const sendMessage = async () => {
     return
   }
 
-  pendingMessage.value = {
-    content: messageInput.value.trim(),
-    state: 'pending',
-    chatId: activeChat.value.id,
-    role: MessageRoleEnum.User,
-    timestamp: new Date().toISOString(),
-    id: -1,
+  if (editingMessage.value) {
+    const editedMessage = editingMessage.value
+    const originalContent = editedMessage.content
+    const editedContent = messageInput.value
+    try {
+      // Update the UI
+      messageInput.value = messageInput.value.trim()
+      editingMessage.value.content = messageInput.value
+      editingMessage.value.state = 'pending'
+      editingMessage.value = null
+      showEditPopup.value = false
+      messageInput.value = originalMessageInput.value
+
+      // Send the edited message to the API
+      await api.chatsChatIdMessagesMessageIdPut({
+        chatId: activeChat.value.id,
+        messageId: editedMessage.id,
+        content: editedContent,
+      })
+
+      // Remove the pending state if the message was sent successfully
+      editedMessage.state = undefined
+    } catch (error) {
+      // Handle errors and revert the changes
+      toast.add({
+        severity: 'error',
+        summary: 'Failed to edit message',
+        detail: (error as AxiosError).message,
+        life: 3000,
+      })
+      startEditingMessage(editedMessage)
+      editingMessage.value!.content = originalContent
+    }
+  } else {
+    pendingMessage.value = {
+      content: messageInput.value.trim(),
+      state: 'pending',
+      chatId: activeChat.value.id,
+      role: MessageRoleEnum.User,
+      timestamp: new Date().toISOString(),
+      id: -1,
+    }
+    messageInput.value = ''
+    await sendPendingMessage()
   }
-  messageInput.value = ''
-  await sendPendingMessage()
 }
 
 /** Sends the pending message to the API. */
@@ -330,6 +375,31 @@ watch(displayedMessages, () => {
     })
   })
 })
+
+/// Message Editing
+const originalMessageInput = ref('')
+const editingMessage = ref<(Message & { state?: string }) | null>(null)
+const showEditPopup = ref(false)
+
+/**
+ * Starts editing a message in the chat.
+ * @param message The message to edit.
+ */
+const startEditingMessage = (message: Message) => {
+  originalMessageInput.value = messageInput.value
+  messageInput.value = message.content
+  editingMessage.value = message
+  showEditPopup.value = true
+}
+
+/**
+ * Cancels editing a message and reverts the changes.
+ */
+const cancelEditingMessage = () => {
+  messageInput.value = originalMessageInput.value
+  editingMessage.value = null
+  showEditPopup.value = false
+}
 
 /// Case Reference Validation
 /** Case reference validation logic. */
@@ -603,34 +673,59 @@ onMounted(async () => {
           class="w-full max-h-24"
           rows="1"
           autoResize
+          @keydown.enter.prevent
           @keyup.enter="
             (event) => {
-              if (!event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey)
+              if (!event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey) {
                 sendMessage()
+              } else {
+                messageInput += '\n'
+              }
             }
           "
         />
 
-        <!-- Case Reference Validation Overlay -->
-        <Transition name="fade">
-          <div
-            v-if="hasInvalidCaseReferences"
-            class="absolute bottom-full left-0 right-0 mx-8 mb-2 z-10"
-            :class="{ shake: invalidSubmissionAttempt }"
-          >
-            <div
-              class="bg-red-50 border border-red-400 text-red-900 px-4 py-2 rounded shadow-md flex items-center"
-            >
-              <i class="pi pi-exclamation-triangle mr-2"></i>
-              <span>
-                Your message contains{{ invalidCaseReferences.length > 1 ? '' : ' an' }} invalid
-                case reference{{ invalidCaseReferences.length > 1 ? 's' : '' }}: #{{
-                  invalidCaseReferences.join(', #')
-                }}
-              </span>
-            </div>
+        <div class="absolute bottom-full left-0 right-0 mb-2 z-10 mx-8">
+          <div class="flex flex-wrap justify-center items-center gap-2">
+            <!-- Edit Popup -->
+            <Transition name="fade">
+              <div
+                v-if="showEditPopup"
+                class="bg-primary-50 border border-primary-400 text-primary-900 px-4 py-2 rounded shadow-md flex items-center gap-2"
+              >
+                <i class="pi pi-pencil"></i>
+                Editing message: "{{ editingMessage?.content }}"
+                <button
+                  @click="cancelEditingMessage"
+                  class="flex items-center justify-center text-primary-600 hover:text-primary-900"
+                >
+                  <i class="pi pi-times text-sm"></i>
+                </button>
+              </div>
+            </Transition>
+
+            <!-- Case Reference Validation Overlay -->
+            <Transition name="fade">
+              <div
+                v-if="hasInvalidCaseReferences"
+                class=""
+                :class="{ shake: invalidSubmissionAttempt }"
+              >
+                <div
+                  class="bg-red-50 border border-red-400 text-red-900 px-4 py-2 rounded shadow-md flex items-center"
+                >
+                  <i class="pi pi-exclamation-triangle mr-2"></i>
+                  <span>
+                    Your message contains{{ invalidCaseReferences.length > 1 ? '' : ' an' }} invalid
+                    case reference{{ invalidCaseReferences.length > 1 ? 's' : '' }}: #{{
+                      invalidCaseReferences.join(', #')
+                    }}
+                  </span>
+                </div>
+              </div>
+            </Transition>
           </div>
-        </Transition>
+        </div>
 
         <!-- Send-Icon -->
         <Button variant="text" class="ml-2">
