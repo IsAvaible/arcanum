@@ -1,4 +1,4 @@
-const port = 443;
+const port = 3000;
 const express = require("express");
 const app = express();
 const cors = require("cors");
@@ -23,6 +23,8 @@ app.use(
       "http://localhost:5173", // Frontend (Development)
       "http://localhost:5174", // Swagger OpenAPI Editor
       "http://localhost:63342", // PHPStorm
+      "http://localhost:5001", // PHPStorm
+      process.env.LLM_API_URL, // LLM_Backend
     ],
     allowedHeaders: "*",
     exposedHeaders: "*",
@@ -62,12 +64,25 @@ try {
         "http://localhost:5173", // Frontend (Development)
         "http://localhost:5174", // Swagger OpenAPI Editor
         "http://localhost:63342", // PHPStorm
+        "http://localhost:5001", // PHPStorm
         process.env.LLM_API_URL, // LLM_Backend
       ],
       credentials: true,
     },
   });
-  tokenService(io);
+  // Event-Listener für den Namespace
+  io.on("connection", (socket) => {
+    console.log(`Client connected to ${socket.id}`);
+
+    socket.on("llm_message", (data) => {
+      console.log("Received custom-event:", data);
+    });
+
+    socket.on("disconnect", () => {
+      console.log(`Client disconnected : ${socket.id}`);
+    });
+  });
+
   server.listen(port, function (req, res) {
     console.log(`Server listening on port (${port})`);
   });

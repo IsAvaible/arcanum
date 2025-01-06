@@ -1,6 +1,6 @@
 from flask import request, Blueprint
 
-from app import app
+from app import app, sio
 from chat import chat
 from generate import (
     generate,
@@ -9,6 +9,14 @@ from generate import (
 routes = Blueprint("routes", __name__)
 
 ### Defining Routes
+
+@app.route("/test", methods=["GET"])
+def test():
+    try:
+        sio.emit(event="llm_message", data={'message': 'Test WebSocket Message...'})
+        return "test"
+    except Exception as ex:
+        return str(ex)
 
 # generate_case: Endpoint to send all files so the LLM can analyze and process them
 # returns json array containing one or more cases

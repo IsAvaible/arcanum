@@ -94,19 +94,19 @@ def upload_file_method_production(files, socket_id):
         # check if file was already analyzed based on filehash
         is_cached = check_if_cached(filehash)
 
-        sio.emit('llm_message', {'message': f'Analyzing "{filename}"', 'socket_id': socket_id}, to=socket_id)
+        sio.emit('llm_message', {'message': f'Analyzing "{filename}"', 'socket_id': socket_id})
         # check if file is allowed
         # if file was cached before this if clause will be skipped
         if allowed_file(filename) and (not is_cached or not USE_CACHE):
             # upload audio file
             if "audio" in mimetype:
-                sio.emit('llm_message', {'message': f'Transcribing Audio File "{filename}"', 'socket_id': socket_id}, to=socket_id)
+                sio.emit('llm_message', {'message': f'Transcribing Audio File "{filename}"', 'socket_id': socket_id})
                 transcription = transcribe(file, texts, llm, path, filename, filehash, whisper_prompt)
                 single_dict = transcription
                 texts += "  " + json.dumps(single_text, ensure_ascii=False)
             # upload pdf file
             elif "pdf" in mimetype:
-                sio.emit('llm_message', {'message': f'Analyzing PDF File "{filename}"', 'socket_id': socket_id}, to=socket_id)
+                sio.emit('llm_message', {'message': f'Analyzing PDF File "{filename}"', 'socket_id': socket_id})
                 texts += f" Content of PDF File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 single_text = create_text_chunks_pdfplumber(path)
                 single_dict = {
@@ -115,7 +115,7 @@ def upload_file_method_production(files, socket_id):
                 texts += " " + single_text
             # upload html file
             elif "html" in mimetype:
-                sio.emit('llm_message', {'message': f'Analyzing HTML File "{filename}"', 'socket_id': socket_id}, to=socket_id)
+                sio.emit('llm_message', {'message': f'Analyzing HTML File "{filename}"', 'socket_id': socket_id})
                 texts += f" Content of HTML File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 with open(path, "r", encoding="utf-8") as file:
                     contents = file.read()
@@ -127,7 +127,7 @@ def upload_file_method_production(files, socket_id):
                 }
             # upload text file
             elif mimetype == "text/plain":
-                sio.emit('llm_message', {'message': f'Analyzing Text File "{filename}"', 'socket_id': socket_id}, to=socket_id)
+                sio.emit('llm_message', {'message': f'Analyzing Text File "{filename}"', 'socket_id': socket_id})
                 texts += f" Content of Text File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 with open(path, "r", encoding="utf-8") as file:
                     contents = file.read()
@@ -138,7 +138,7 @@ def upload_file_method_production(files, socket_id):
                 }
             # upload image file
             elif "image" in mimetype:
-                sio.emit('llm_message', {'message': f'Analyzing Image File "{filename}"', 'socket_id': socket_id}, to=socket_id)
+                sio.emit('llm_message', {'message': f'Analyzing Image File "{filename}"', 'socket_id': socket_id})
                 texts += f" Content of Image File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 encoding = encode_image(path)
                 mime_type = mimetypes.guess_type(path)[0]
@@ -161,7 +161,7 @@ def upload_file_method_production(files, socket_id):
                 }
             # upload video file
             elif "video" in mimetype:
-                sio.emit('llm_message', {'message': f'Analyzing Video File "{filename}"', 'socket_id': socket_id}, to=socket_id)
+                sio.emit('llm_message', {'message': f'Analyzing Video File "{filename}"', 'socket_id': socket_id})
                 texts += f" Content of Video File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
 
                 frame_path, audio_path, duration = extract_data_from_video(path, filehash)
@@ -174,7 +174,7 @@ def upload_file_method_production(files, socket_id):
                     "video_summary" : video_summary["video_summary"]
                 }
             else:
-                sio.emit('llm_message', {'message': f'File "{filename}" cannot be processed', 'socket_id': socket_id}, to=socket_id)
+                sio.emit('llm_message', {'message': f'File "{filename}" cannot be processed', 'socket_id': socket_id})
 
 
 

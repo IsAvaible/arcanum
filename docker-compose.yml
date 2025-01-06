@@ -25,7 +25,7 @@ services:
     working_dir: /node_backend
     command: sh -c "npm install && npx sequelize-cli db:migrate --config ./configs/config.js && npm run start-backend"
     ports:
-      - "3000:443"
+      - "3000:3000"
     depends_on:
       - db
     env_file:
@@ -33,6 +33,8 @@ services:
     volumes:
       - ./backend:/node_backend
       - ./backend/certs:/node_backend/certs
+    networks:
+      - shared_network
   llm-backend:
     build: llm_backend
     container_name: llm_backend
@@ -48,6 +50,8 @@ services:
     working_dir: /llm_backend
     command: >
       sh -c "apt-get update && apt-get install -y ffmpeg && pip install --no-cache-dir -r ./requirements.txt && python main.py"
+    networks:
+      - shared_network
   db:
     image: postgres:15
     container_name: postgres_db
@@ -56,6 +60,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
-
+    networks:
+      - shared_network
 volumes:
   postgres-data:
+
+networks:
+  shared_network:
+    driver: bridge
