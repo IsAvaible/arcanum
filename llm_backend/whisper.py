@@ -3,13 +3,10 @@ import os
 from itertools import islice
 
 from dotenv import load_dotenv
-from langchain_core.prompts import ChatPromptTemplate
-from openai import AzureOpenAI
 
 from app import app
 from audio import split_audio_with_overlap
 from glossary import list_to_comma
-from prompts import get_system_prompt
 from openai import AzureOpenAI
 
 # load Env Variables
