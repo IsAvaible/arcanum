@@ -1,8 +1,8 @@
 import os
 
+import socketio
 from flask import Flask
 from flask_cors import CORS
-from flask_socketio import SocketIO
 
 # Init Flask
 app = Flask(__name__)
@@ -12,7 +12,8 @@ CORS(app)
 app.secret_key = "super secret key"
 app.config["SECRET_KEY"] = "super secret key"
 # init SocketIO
-socketio = SocketIO(app)
+sio = socketio.Client()
+sio.connect("http://localhost:3000")
 # init upload folder
 app.config["UPLOAD_FOLDER"] = "upload"
 
