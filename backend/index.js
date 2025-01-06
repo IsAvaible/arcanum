@@ -9,7 +9,6 @@ const fs = require("fs");
 
 const caseRoutes = require("./routes/caseRoutes");
 const uploadRoutes = require("./routes/exampleFileUpload");
-const tokenService = require("./services/tokenService");
 
 // for development only
 app.set("view engine", "ejs");
@@ -23,8 +22,6 @@ app.use(
       "http://localhost:5173", // Frontend (Development)
       "http://localhost:5174", // Swagger OpenAPI Editor
       "http://localhost:63342", // PHPStorm
-      "http://localhost:5001", // PHPStorm
-      process.env.LLM_API_URL, // LLM_Backend
     ],
     allowedHeaders: "*",
     exposedHeaders: "*",
@@ -75,7 +72,7 @@ try {
     console.log(`Client connected to ${socket.id}`);
 
     socket.on("llm_message", (data) => {
-      console.log("Received custom-event:", data);
+      console.log("Received 'llm_message' event:", data);
     });
 
     socket.on("disconnect", () => {
