@@ -73,7 +73,7 @@ def upload_file_method_production(files, socket_id):
 
     # iterate over all files and add mimetype
     for file in files:
-        print (file)
+        print (json.dumps(file, ensure_ascii=False, indent=2))
         filepath = file["filepath"]
         mimetype = mimetypes.guess_type(filepath)
         file["mimetype"] = mimetype[0]
