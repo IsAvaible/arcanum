@@ -78,7 +78,10 @@ setTimeout(async () => {
   
 
     // 4. Glossar-Einträge suchen (Beispiel: MIG4300Pro)
-   // await testRequest("get", `/api/glossary/find?term=MIG4300Pro`);
+    await testRequest("get", `/api/glossary/find?term=fakeGlossaryTerm2`);
+
+      // 5. Glossar-Eintrag anzeigen
+      await testRequest("get", `/api/glossary/1`);
 
 
   console.log("All Glossary test requests done.");
