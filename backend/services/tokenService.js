@@ -6,8 +6,8 @@ module.exports = (io) => {
     console.log("Client connected:", socket.id);
 
     // Receive token from LLM
-    socket.on("llm_message", ({ socketId, message }) => {
-      io.to(socketId).emit("llm_message", { message });
+    socket.on("llm_message", ({ socket_id, message }) => {
+      io.to(socket_id).emit("llm_message", { message });
     });
 
     socket.on("front_identify", () => {
