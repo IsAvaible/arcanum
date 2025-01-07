@@ -166,7 +166,6 @@ def process_segments(frames, transcription, duration):
         start = 0
         step = 0
         for group in groups:
-            print("Analyzing Segment " + str(step + 1) + " / " + str(frame_segments + 1))
             prompt_dict.clear()
             if len(data["video_summary"]["segments"]) == 0:
                 prompt_dict.append(transcription)

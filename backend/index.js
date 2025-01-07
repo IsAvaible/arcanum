@@ -1,4 +1,4 @@
-const port = process.env.PORT || 443;
+const port = 3000;
 const express = require("express");
 const app = express();
 const cors = require("cors");
@@ -9,8 +9,10 @@ const fs = require("fs");
 
 const caseRoutes = require("./routes/caseRoutes");
 const uploadRoutes = require("./routes/exampleFileUpload");
+
 const chatRoutes = require("./routes/chatRoutes");
 const tokenService = require("./services/tokenService");
+
 
 // for development only
 app.set("view engine", "ejs");
@@ -64,12 +66,14 @@ try {
         "http://localhost:5173", // Frontend (Development)
         "http://localhost:5174", // Swagger OpenAPI Editor
         "http://localhost:63342", // PHPStorm
+        "http://localhost:5001", // PHPStorm
         process.env.LLM_API_URL, // LLM_Backend
       ],
       credentials: true,
     },
   });
   tokenService(io);
+
   server.listen(port, function (req, res) {
     console.log(`Server listening on port (${port})`);
   });

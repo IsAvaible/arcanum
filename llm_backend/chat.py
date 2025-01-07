@@ -5,7 +5,6 @@ from flask import jsonify
 from langchain_chroma import Chroma
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 
-from app import socketio
 from prompts import get_system_prompt
 
 load_dotenv()
@@ -23,7 +22,7 @@ def chat(request):
         if not prompt:
             return jsonify({"error": "No prompt provided"}), 400
 
-        chat_counter = request.form.get("chat_counter")
+        #chat_counter = request.form.get("chat_counter")
 
         llm = AzureChatOpenAI(
             azure_endpoint=AZURE_ENDPOINT,
@@ -98,14 +97,11 @@ def chat(request):
         # LLM-Response streamen
         result = ""
         response_generator = llm.stream(messages)
-        socketio.emit(f"stream{chat_counter}", {"content": "START_LLM_MESSAGE"})
 
         for response_chunk in response_generator:
             result_chunk = response_chunk.content
             result += result_chunk
-            socketio.emit(f"stream{chat_counter}", {"content": result_chunk})
 
-        socketio.emit(f"stream{chat_counter}", {"content": "END_LLM_MESSAGE"})
 
         return "", 200
 
