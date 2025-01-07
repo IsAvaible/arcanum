@@ -64,12 +64,15 @@ try {
         "http://localhost:5173", // Frontend (Development)
         "http://localhost:5174", // Swagger OpenAPI Editor
         "http://localhost:63342", // PHPStorm
+        "http://localhost:5001", // PHPStorm
         process.env.LLM_API_URL, // LLM_Backend
       ],
       credentials: true,
     },
   });
+  // Socket IO Listener
   tokenService(io);
+
   server.listen(port, function (req, res) {
     console.log(`Server listening on port (${port})`);
   });
