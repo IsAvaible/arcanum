@@ -20,16 +20,14 @@ const props = defineProps<{
 
 // Group people by first letter of their name add Suggestions
 const groupedUserOptions = computed(() => {
-  const loggedInUserID = 4
-
-  const groupedPeople: { label: string; users: User[] }[] = [{ label: 'Suggestions', users: [] }]
+  type Group = { label: string; users: User[] }
+  const suggestionGroup: Group = { label: 'Suggestions', users: [] }
+  const groupedPeople: Group[] = [suggestionGroup]
 
   props.userOptions.forEach((user) => {
-    if (user.id === loggedInUserID) {
-      user = { ...user } // Clone the object to avoid mutating the original
-      user.name += ' (You)' // Add a suffix to the name
-
-      groupedPeople[0].users.push(user)
+    // Add the current user to the 'Suggestions' group
+    if (user.name.endsWith(' (You)')) {
+      suggestionGroup.users.push(user)
     }
 
     const groupLabel = 'Users' // Group by some property, e.g. person.name[0].toUpperCase()

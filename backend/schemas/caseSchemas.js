@@ -1,5 +1,4 @@
 const z = require("zod");
-const { check } = require("express-validator");
 
 const attachmentSchema = z.object({
   id: z.number().int().positive().optional(),
@@ -18,9 +17,9 @@ const caseSchema = z.object({
   case_type: z.enum(["Problem", "Incident", "Change", "FAQ"]),
   title: z.string().min(3),
   description: z.string().min(1),
-  solution: z.string().min(1).nullable(),
+  solution: z.string().min(1).optional().or(z.literal("")),
   assignee: z.string().min(1).optional(),
-  status: z.enum(["Open", "inProgress", "Solved", "Closed"]).optional(),
+  status: z.enum(["Open", "In Progress", "Solved", "Closed"]).optional(),
   priority: z.enum(["Low", "Medium", "High"]).optional(),
   draft: z.string().optional(),
   craftedAt: z.date().optional(),

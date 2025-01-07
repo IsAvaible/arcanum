@@ -1,0 +1,80 @@
+name: Backend CI
+
+on:
+  push:
+    paths:
+      - 'backend/**'
+  pull_request:
+    paths:
+      - 'backend/**'
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:latest
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+
+    env:
+      NODE_ENV: test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: testdb
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_PORT: 5432
+      POSTGRES_DIALECT: "postgres"
+      PORT: 3000
+
+    steps:
+      # 1. Checkout Repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Node.js Setup
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      # 3. Install Backend Dependencies
+      - name: Install backend dependencies
+        run: npm install
+        working-directory: backend
+
+      # 4. Validate Environment
+      - name: Validate Environment
+        run: cat .env || echo "No .env file found"
+        working-directory: backend
+
+      # 5. Linting
+      - name: Run Linting
+        run: npm run lint
+        working-directory: backend
+
+      - name: Free port 3000 if in use
+        run: |
+          if lsof -i:3000; then
+            echo "Port 3000 in use, killing process..."
+            kill -9 $(lsof -t -i:3000)
+          fi
+        working-directory: backend
+
+      # 6. Build and Validate
+      - name: Build and Validate
+        run: |
+          npm run start-backend-ci &
+          sleep 5
+          npm run shutdown
+        working-directory: backend
+
+      # 7. Testing
+      - name: Run Tests
+        run: npm test
+        working-directory: backend

@@ -1,22 +1,22 @@
 import { useField } from 'vee-validate'
-import type { CaseCaseTypeEnum, CasePriorityEnum, CaseStatusEnum } from '@/api'
+import { type CaseSchemaType } from '@/validation/schemas'
 
 export const useCaseFields = () => {
   return {
-    title: useField<string>('title'),
-    type: useField<CaseCaseTypeEnum>('case_type'),
-    status: useField<CaseStatusEnum>('status'),
-    priority: useField<CasePriorityEnum>('priority'),
+    title: useField<CaseSchemaType['title']>('title'),
+    type: useField<CaseSchemaType['case_type']>('case_type'),
+    status: useField<CaseSchemaType['status']>('status'),
+    priority: useField<CaseSchemaType['priority']>('priority'),
 
-    description: useField<string>('description'),
-    solution: useField<string>('solution'),
+    description: useField<CaseSchemaType['description']>('description'),
+    solution: useField<CaseSchemaType['solution']>('solution'),
 
     assignees: useField<string[]>('assignees'),
-    participants: useField<string[]>('participants'),
-    team: useField<string>('team'),
+    participants: useField<CaseSchemaType['participants']>('participants'),
+    team: useField<CaseSchemaType['team']>('team'),
 
-    selectedProducts: useField<number[]>('products'),
+    selectedProducts: useField<CaseSchemaType['products']>('products'),
 
-    draft: useField<boolean>('draft'),
+    draft: useField<CaseSchemaType['draft']>('draft'),
   }
 }

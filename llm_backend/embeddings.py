@@ -1,10 +1,10 @@
-from dotenv import load_dotenv
-
 import os
-from langchain_chroma.vectorstores import Chroma
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+from dotenv import load_dotenv
 from langchain.docstore.document import Document
+from langchain_chroma.vectorstores import Chroma
 from langchain_openai import AzureOpenAIEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 # Load environment variables from .env file
 load_dotenv()
@@ -19,7 +19,7 @@ embedding_model = AzureOpenAIEmbeddings(
     api_version=OPENAI_API_VERSION,
 )
 
-
+# Split Text content into multiple segments
 def split_texts(content):
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000, chunk_overlap=500, separators=["\n\n", "\n", ".", "?", "!"]
@@ -28,7 +28,7 @@ def split_texts(content):
 
     return texts
 
-
+# Create Embeddings for Vector DB
 def create_embeddings(texts, filename, id):
     texts = split_texts(texts)
     i = 0
