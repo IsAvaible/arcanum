@@ -47,12 +47,6 @@ router.put(
 ); // Update a message
 router.get("/chats/:id/export", chatController.exportChat); // Export chat
 
-router.post(
-  "/chats/:id/messages/files",
-  multerMiddleware,
-  escapeData(["content", "socketId"]),
-  validateData(chatSchema),
-  chatController.postMessageWithFiles,
-);//Accepts files, create user/assistant message. Optionally, create a new case
+
 
 module.exports = router;
