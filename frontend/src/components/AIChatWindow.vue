@@ -25,6 +25,8 @@ import AIChatSidebar from '@/components/ai-chat/AIChatSidebar.vue'
 import AIChatHeader from '@/components/ai-chat/AIChatHeader.vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { MenuItem } from 'primevue/menuitem'
+import { io, Socket } from 'socket.io-client'
+import { BASE_PATH as BACKEND_API_BASE_PATH } from '@/api/base'
 
 /// Reactive State Variables
 const route = useRoute()
@@ -45,6 +47,10 @@ const activeChat = ref<ChatWithMessages | null>(null)
 /// API Instance
 /** API instance for fetching and validating case references. */
 const api = useApi()
+
+/// Socket Connection
+/** Socket connection for real-time chat updates. */
+let socket: Socket | null = null
 
 /// Regex Constants
 /** Regular expression to match case references like #10 in messages. */
@@ -70,6 +76,34 @@ const fetchChats = async () => {
   chatsLoading.value = false
 }
 
+const registerSocket = () => {
+  if (socket) {
+    // Disconnect the existing socket
+    socket.disconnect()
+  }
+  socket = io(BACKEND_API_BASE_PATH, { rejectUnauthorized: false })
+
+  socket.on('connect', () => {
+    socket!.on('llm_token', (data: { socketId: string; content: string }) => {
+      if (data.socketId === socket?.id) {
+        pendingLLMMessage.value = {
+          content: data.content,
+          state: 'generating',
+          chatId: activeChat.value!.id,
+          role: MessageRoleEnum.Assistant,
+          timestamp: new Date().toISOString(),
+          id: -2,
+        }
+      }
+    })
+
+    socket!.on('llm_end', (data) => {
+      activeChat.value?.messages.push(data.message)
+      pendingLLMMessage.value = null
+    })
+  })
+}
+
 /**
  * Sets the active chat to the selected chat.
  * @param chatId - The ID of the chat to set as active.
@@ -84,6 +118,7 @@ const setActiveChat = async (chatId: Chat['id'] | null) => {
     chatLoading.value = true
     try {
       activeChat.value = (await api.chatsIdGet({ id: chatId })).data
+      registerSocket()
       if (!route.params.chatId || Number(route.params.chatId) !== chatId) {
         await router.push(`/ai/${chatId}`)
       }
@@ -214,6 +249,7 @@ const openMessageContextMenu = (event: MouseEvent, message: Message) => {
 /// Message Sending
 const invalidSubmissionAttempt = ref(false)
 const pendingMessage = ref<(Message & { state: string }) | null>(null)
+const pendingLLMMessage = ref<(Message & { state: string }) | null>(null)
 /**
  * Handles sending a message in the active chat.
  * Validates message input and appends it to the chat messages.
@@ -288,7 +324,7 @@ const sendPendingMessage = async () => {
       await api.chatsIdMessagesPost({
         id: activeChat.value!.id,
         content: pendingMessage.value!.content,
-        socketId: 'TODO',
+        socketId: socket!.id!,
       })
     ).data
     pendingMessage.value = null
@@ -344,6 +380,7 @@ const createChatWithMessage = async () => {
     chats.value = [chat, ...(chats.value ?? [])]
     await router.push(`/ai/${chat.id}`)
     activeChat.value = { ...chat, messages: [] }
+    registerSocket()
     await sendMessage()
     createChatLoading.value = false
   } catch (error) {
@@ -361,11 +398,11 @@ const createChatWithMessage = async () => {
 /// Displayed Messages
 /** Computed property to display messages including pending ones. */
 const displayedMessages = computed<(Message & { state: string })[]>(() => {
-  return (
-    pendingMessage.value
-      ? [...(activeChat.value?.messages ?? []), pendingMessage.value]
-      : (activeChat.value?.messages ?? [])
-  ) as (Message & { state: string })[]
+  return [
+    ...(activeChat.value?.messages ?? []),
+    ...(pendingMessage.value ? [pendingMessage.value] : []),
+    ...(pendingLLMMessage.value ? [pendingLLMMessage.value] : []),
+  ] as (Message & { state: string })[]
 })
 
 watch(displayedMessages, () => {
@@ -615,6 +652,7 @@ onMounted(async () => {
           >
             <p>
               <DynamicRouterLinkText
+                class="whitespace-pre-wrap"
                 :text="message.content"
                 :regex="caseReferenceRegex"
                 to="/cases/"
