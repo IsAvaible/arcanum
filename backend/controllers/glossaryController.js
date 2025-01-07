@@ -59,7 +59,6 @@ module.exports = {
    * @route POST /glossary
    * @description Creates a new glossary entry.
    * @param {string} term.body.required - The term (title) of the glossary entry.
-   * @param {string} definition.body - Optional definition or description of the glossary entry.
    * @returns {Object} 201 - The newly created glossary entry.
    * @returns {Error} 400 - If term is missing or invalid.
    * @returns {Error} 500 - Internal server error.
@@ -67,13 +66,12 @@ module.exports = {
   createGlossaryEntry: async (req, res) => {
     try {
       // Beispielhafte Felder: term, definition
-      const { term, definition } = req.body;
+      const { term } = req.body;
       if (!term) {
         return res.status(400).json({ message: 'Field "term" is required.' });
       }
       const newEntry = await Glossary.create({
         term,
-        definition: definition || null
       });
       return res.status(201).json(newEntry);
     } catch (error) {
@@ -104,9 +102,6 @@ module.exports = {
       // Felder aktualisieren
       if (term !== undefined) {
         glossaryEntry.term = term;
-      }
-      if (definition !== undefined) {
-        glossaryEntry.definition = definition;
       }
 
       await glossaryEntry.save();
