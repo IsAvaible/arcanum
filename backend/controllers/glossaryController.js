@@ -128,7 +128,7 @@ module.exports = {
         return res.status(404).json({ message: 'Glossary entry not found.' });
       }
       await glossaryEntry.destroy();
-      return res.status(204);
+      return res.status(204).send();
     } catch (error) {
       console.error('Error in deleteGlossaryEntry:', error);
       return res.status(500).json({ message: error.message || 'Failed to delete glossary entry.' });
@@ -276,12 +276,12 @@ module.exports = {
         return res.status(404).json({ message: 'Attachment not found.' });
       }
 
-      await glossaryEntry.removeAttachments(attachment);
-      // Or removeAttachment(attachment) if your association auto-generates that method name
+      await glossaryEntry.removeAttachment(attachment);
 
 
 
-      return res.status(204);
+
+      return res.status(204).send();
     } catch (error) {
       console.error('Error in deleteAttachmentFromGlossary:', error);
       return res
@@ -317,7 +317,7 @@ module.exports = {
       await glossaryEntry.removeCases(theCase);
 
 
-      return res.status(204);
+      return res.status(204).send();
     } catch (error) {
       console.error('Error in deleteCaseFromGlossary:', error);
       return res

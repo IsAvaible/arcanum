@@ -12,7 +12,7 @@ const {
 router.get('/glossary', glossaryController.getAllGlossaryEntries);
 
 // "find" nach Query-Parameter (z. B. /glossary/find?term=MIG4300Pro)
-router.get('/glossary/find',escapeData(["term",]), validateData(glossarySchema), glossaryController.findGlossaryEntries);
+router.get('/glossary/find',escapeData(["term",]), glossaryController.findGlossaryEntries);
 router.get('/glossary/:id', glossaryController.getGlossaryEntryById);
 
 // Create, Update and delete Glossary
