@@ -3,27 +3,27 @@ const express = require("express");
 const bodyParser = require("body-parser");
 
 /**
- * Simuliert das Senden von Tokens an das Backend.
+ * Simuliert das Senden von messages an das Backend.
  *
  * @param {Object} socket - Die Socket.io-Client-Instanz, die mit dem Backend verbunden ist.
- * @param {string} socketId - Die Socket-ID des Frontend-Clients, an den die Tokens geroutet werden sollen.
- * @param {Array<string>} tokens - Ein Array von Strings, die als einzelne Tokens gesendet werden.
- * @param {number} intervalMs - Zeit in Millisekunden zwischen zwei Token-Sendungen.
+ * @param {string} socketId - Die Socket-ID des Frontend-Clients, an den die messages geroutet werden sollen.
+ * @param {Array<string>} messages - Ein Array von Strings, die als einzelne messages gesendet werden.
+ * @param {number} intervalMs - Zeit in Millisekunden zwischen zwei message-Sendungen.
  */
-function simulateTokenSending(socket, socketId, tokens, intervalMs = 500) {
+function simulateMessageSending(socket, socketId, messages, intervalMs = 500) {
   let index = 0;
 
   const interval = setInterval(() => {
-    if (index < tokens.length) {
-      const token = tokens[index];
-      console.log("Sending token:", token);
-      socket.emit("llm_token", { socketId, token });
+    if (index < messages.length) {
+      const message = messages[index];
+      console.log("Sending message:", message);
+      socket.emit("llm_message", { socketId, message });
       index++;
     } else {
       clearInterval(interval);
 
-      // Wenn alle Tokens gesendet sind, sende das end-Event
-      const finalMessage = tokens.join("");
+      // Wenn alle messages gesendet sind, sende das end-Event
+      const finalMessage = messages.join("");
       console.log("Sending llm_end with content:", finalMessage);
       socket.emit("llm_end", { socketId, content: finalMessage });
     }
@@ -78,9 +78,9 @@ app.post("/generate_case", async (req, res) => {
     console.log("Received attachments from client:", attachments);
   }
 
-  // Beispiel-Tokens, die schrittweise gesendet werden
+  // Beispiel-messages, die schrittweise gesendet werden
   // Hier kannst du natürlich beliebigen Text generieren
-  const tokens = [
+  const messages = [
     "Reading",
     " ",
     "files",
@@ -98,7 +98,7 @@ app.post("/generate_case", async (req, res) => {
   ];
 
   // Beantworte den HTTP-Request sofort mit JSON
-  // (Während parallel Tokens über Socket gesendet werden)
+  // (Während parallel messages über Socket gesendet werden)
   try {
     // Beispiel-Rückgabe:
     // - message: final LLM message
@@ -119,9 +119,9 @@ app.post("/generate_case", async (req, res) => {
       ],
     };
 
-    // Starte das Senden der Tokens
-    simulateTokenSending(socket, socketId, tokens, 100);
-    // Kurze Verzögerung, damit das Token-Streaming Zeit hat, loszulaufen
+    // Starte das Senden der messages
+    simulateMessageSending(socket, socketId, messages, 100);
+    // Kurze Verzögerung, damit das message-Streaming Zeit hat, loszulaufen
     await new Promise((resolve) => setTimeout(resolve, 1600));
 
     // Sende die JSON-Antwort an den aufrufenden Client (Backend)
@@ -144,9 +144,9 @@ app.post("/generate", async (req, res) => {
     context,
   );
 
-  // Hier könnten Sie je nach message/context Tokens generieren
-  // Wir nehmen einfach Fake-Tokens an:
-  const tokens = [
+  // Hier könnten Sie je nach message/context messages generieren
+  // Wir nehmen einfach Fake-messages an:
+  const messages = [
     "This",
     " ",
     "is",
@@ -162,8 +162,8 @@ app.post("/generate", async (req, res) => {
     "message.",
   ];
   try {
-    // Tokens asynchron über Socket senden
-    simulateTokenSending(socket, socketId, tokens, 100);
+    // messages asynchron über Socket senden
+    simulateMessageSending(socket, socketId, messages, 100);
     await new Promise((resolve) => setTimeout(resolve, 1400));
 
     // Sofortige HTTP-Response an den Request

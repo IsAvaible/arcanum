@@ -23,8 +23,8 @@ socket.on("connect", () => {
   socket.emit("front_identify");
 });
 
-socket.on("llm_token", ({ token }) => {
-  console.log("Received token from Backend:", token);
+socket.on("llm_message", ({ message }) => {
+  console.log("Received message from Backend:", message);
 });
 
 socket.on("llm_end", ({ content }) => {
@@ -137,23 +137,6 @@ setTimeout(async () => {
       "delete",
       `/api/chats/${chatId}/messages/${lastUserMessageId + 2}`,
     );
-
-    console.log("Testing file upload...");
-
-    const formData = new FormData();
-    formData.append("socketId", socket.id);
-    formData.append("content", "Hallo vom File-Test");
-    formData.append("files", fs.createReadStream("../test/testfile.txt"));
-
-    const res = await axios.post(
-      backendUrl + `/api/chats/${chatId}/messages/files`,
-      formData,
-      {
-        headers: formData.getHeaders(),
-        httpsAgent: new (require("https").Agent)({ rejectUnauthorized: false }),
-      },
-    );
-    console.log("File upload => status:", res.status, JSON.stringify(res.data));
 
     await new Promise((resolve) => setTimeout(resolve, 5000));
     // Export the chat
