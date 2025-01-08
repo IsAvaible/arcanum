@@ -116,9 +116,6 @@ def generate(request):
             promptLangchainInvoked, llm, case_parser_json, max_tries=3
         )
 
-        print(json.dumps(response_dict, ensure_ascii=False, indent=2))
-
-
         cases = response_dict["cases"]
         attachment_files = json.loads(context)
         glossary_terms = []
@@ -157,22 +154,15 @@ def generate(request):
                         att_id = att["id"]
                         file_id = file["file_id"]
                         if att_id == file_id:
-                            print("FILE")
-                            print(json.dumps(file, ensure_ascii=False, indent=2))
                             if term in json.dumps(file, ensure_ascii=False, indent=2):
-                                print(term + " in json")
                                 if "glossary" not in att:
                                     att["glossary"] = []
                                 if term not in att["glossary"]:
-                                    print("added to attachment")
-                                    print(att["id"])
                                     att["glossary"].append(term)
 
-
-
+        # debug
         write_to_file(str(time.time()), cases)
 
-        print("AFTER")
         print(json.dumps(response_dict, ensure_ascii=False, indent=2))
         # return case json
         return jsonify(response_dict), 200
