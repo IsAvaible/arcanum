@@ -110,7 +110,7 @@ module.exports = {
       const context = await gatherChatContext(chatId);
 
       // store User-message
-      await Messages.create({
+      const userMessage = await Messages.create({
         chatId: chatId,
         role: "user",
         content: content,
@@ -145,7 +145,7 @@ module.exports = {
           timestamp: new Date(),
         });
 
-        res.status(200).json(assistantMessage);
+        res.status(200).json({ userMessage, assistantMessage });
       } catch (error) {
         console.error("LLM module error:", error.message || error);
         return res

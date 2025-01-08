@@ -469,9 +469,13 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Message'
+                type: object
+                required: [userMessage, assistantMessage]
+                properties:
+                  userMessage:
+                    $ref: '#/components/schemas/Message'
+                  assistantMessage:
+                    $ref: '#/components/schemas/Message'
         500:
           description: Error deleting message.
           content:

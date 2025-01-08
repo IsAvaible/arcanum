@@ -320,14 +320,16 @@ const sendPendingMessage = async () => {
     return
   }
   try {
-    activeChat.value.messages = (
+    const { userMessage, assistantMessage } = (
       await api.chatsIdMessagesPost({
         id: activeChat.value!.id,
         content: pendingMessage.value!.content,
         socketId: socket.value?.connected ? socket.value!.id! : '-1',
       })
     ).data
+    activeChat.value.messages.push(userMessage, assistantMessage)
     pendingMessage.value = null
+    pendingLLMMessage.value = null
   } catch (error) {
     toast.add({
       severity: 'error',

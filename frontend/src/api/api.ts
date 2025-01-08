@@ -327,6 +327,25 @@ export interface ChatWithMessages {
 /**
  * 
  * @export
+ * @interface ChatsIdMessagesPost200Response
+ */
+export interface ChatsIdMessagesPost200Response {
+    /**
+     * 
+     * @type {Message}
+     * @memberof ChatsIdMessagesPost200Response
+     */
+    'userMessage': Message;
+    /**
+     * 
+     * @type {Message}
+     * @memberof ChatsIdMessagesPost200Response
+     */
+    'assistantMessage': Message;
+}
+/**
+ * 
+ * @export
  * @interface Message
  */
 export interface Message {
@@ -1487,7 +1506,7 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async chatsIdMessagesPost(id: number, content: string, socketId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<Message>>> {
+        async chatsIdMessagesPost(id: number, content: string, socketId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ChatsIdMessagesPost200Response>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.chatsIdMessagesPost(id, content, socketId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.chatsIdMessagesPost']?.[localVarOperationServerIndex]?.url;
@@ -1710,7 +1729,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        chatsIdMessagesPost(requestParameters: DefaultApiChatsIdMessagesPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<Message>> {
+        chatsIdMessagesPost(requestParameters: DefaultApiChatsIdMessagesPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<ChatsIdMessagesPost200Response> {
             return localVarFp.chatsIdMessagesPost(requestParameters.id, requestParameters.content, requestParameters.socketId, options).then((request) => request(axios, basePath));
         },
         /**
