@@ -1,4 +1,3 @@
-import json
 import math
 import os
 import subprocess
@@ -9,7 +8,6 @@ from app import app
 from image import encode_image, image_to_openai
 
 split_secs = 100
-
 
 """
 OpenAI has a limit of 50 pictures each request. If we have a 10 min video that would be too less information.
@@ -22,7 +20,6 @@ For cutting the videos we are using ffmpeg which is the most used software for v
 
 
 def cut_video_segments(input_file, filehash, segment_duration=split_secs):
-
     # define ouput
     output_path = os.path.join(
         app.root_path, os.path.join(f"temp/{filehash}/", "video_segments")
@@ -33,7 +30,7 @@ def cut_video_segments(input_file, filehash, segment_duration=split_secs):
 
     command = [
         "ffmpeg",
-        "-v", "quiet", # less logs
+        "-v", "quiet",  # less logs
         "-i", input_file,  # Input file
         "-c", "copy",  # Copy codec to avoid re-encoding
         "-map", "0",  # Map all streams
@@ -43,7 +40,7 @@ def cut_video_segments(input_file, filehash, segment_duration=split_secs):
         output_pattern  # Output file pattern
     ]
 
-    #run ffmpeg process
+    # run ffmpeg process
     try:
         subprocess.run(command, check=True)
         return output_path
@@ -67,7 +64,6 @@ def extract_data_from_video(video_path, filehash):
     # get duration of video to check if we need splitting
     duration = total_frames / fps
 
-
     # Scale video down to width of 320 and the corresponding height based on the aspect ratio
     # get one frame each 2 seconds if video is under 10 minutes
     # get one frame each 5 seconds if video is over 10 minutes
@@ -80,12 +76,12 @@ def extract_data_from_video(video_path, filehash):
 
     command = [
         "ffmpeg",
-        "-v", "quiet", # less logs
-        "-y", #override file if exists
-        "-i", single_video, # input video
-        "-vf", vf_filter, # apply filter
-        "-vsync", "0", # apply filter
-        output_pattern # define ouput pattern
+        "-v", "quiet",  # less logs
+        "-y",  # override file if exists
+        "-i", single_video,  # input video
+        "-vf", vf_filter,  # apply filter
+        "-vsync", "0",  # apply filter
+        output_pattern  # define ouput pattern
     ]
 
     try:
@@ -93,7 +89,6 @@ def extract_data_from_video(video_path, filehash):
         print(f"Saved frames: {output_pattern} ")
     except subprocess.CalledProcessError as e:
         print(f"Error FFMPEG (Frame Extraction): {e}")
-
 
     # we also need to transcribe the audio in the video
     audio_path = os.path.join(
@@ -105,12 +100,12 @@ def extract_data_from_video(video_path, filehash):
     audio_output = os.path.join(audio_path, "audio.mp3")
     command = [
         "ffmpeg",
-        "-v", "quiet", # less logs
-        "-y", # override file
-        "-i", f'{single_video}', # set input file
-        "-b:a", '192k', # set input file
-        "-acodec", "libmp3lame", # force mp3
-        audio_output #define output
+        "-v", "quiet",  # less logs
+        "-y",  # override file
+        "-i", f'{single_video}',  # set input file
+        "-b:a", '192k',  # set input file
+        "-acodec", "libmp3lame",  # force mp3
+        audio_output  # define output
     ]
 
     try:
@@ -126,7 +121,7 @@ def extract_data_from_video(video_path, filehash):
 def process_segments(frames, transcription, duration):
     seconds = round(duration / len(frames))
 
-    print("SECONDS "+str(seconds))
+    print("SECONDS " + str(seconds))
 
     print(f"Frame Count:{str(len(frames))}")
     # calculate how many rounds we need to analyze the frames
@@ -139,7 +134,8 @@ def process_segments(frames, transcription, duration):
             "segments": []
         }
     }
-    print (json.dumps(transcription, ensure_ascii=False, indent=2))
+
+    print(transcription)
 
     if transcription is None:
         trans = "No transcription provided!"
@@ -147,8 +143,8 @@ def process_segments(frames, transcription, duration):
         trans = dict_to_text(transcription)
 
     transcription = {
-        "type" : "text",
-        "text" : f"This is the transcription of the audio:\n{trans}"
+        "type": "text",
+        "text": f"This is the transcription of the audio:\n{trans}"
     }
 
     if frame_segments > 0:
@@ -170,7 +166,7 @@ def process_segments(frames, transcription, duration):
         start = 0
         step = 0
         for group in groups:
-            print("Analyzing Segment " + str(step+1) + " / " + str(frame_segments+1))
+            print("Analyzing Segment " + str(step + 1) + " / " + str(frame_segments + 1))
             prompt_dict.clear()
             if len(data["video_summary"]["segments"]) == 0:
                 prompt_dict.append(transcription)
@@ -248,6 +244,7 @@ def get_all_frames_in_dir(path):
             f.append(os.path.join(dirpath, file))
     return f
 
+
 # method to get all video segments in a directory
 def get_all_video_segments_in_dir(path):
     f = []
@@ -256,7 +253,9 @@ def get_all_video_segments_in_dir(path):
             f.append(os.path.join(dirpath, file))
     return f
 
+
 def dict_to_text(data):
+    print(data)
     text = []
     for segment in data["transcription"]["segments"]:
         start = segment.get("start_timestamp", "Unbekannt")
@@ -265,6 +264,7 @@ def dict_to_text(data):
         text.append(f"From {start} to {end}:\n{transcription}\n\n")
 
     return "\n\n".join(text)
+
 
 def convert_timestamp_to_str(ts):
     ts = int(ts)
