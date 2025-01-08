@@ -173,23 +173,6 @@ def generate(request):
 
 
 def vector_db_save_cases(request):
-    response_dict, code = generate_case_langchain_production(request)
-    if response_dict:
-        cases_dict = json.loads(response_dict.data)["cases"]
-
-    json_str = request.get_json(force=True)
-    attachments = json_str["attachments"]
-
-    vectorstore = QdrantVectorstore()
-
-    for attachment in attachments:
-        vectorstore.insert_attachment(attachment)
-    for case in cases_dict:
-        vectorstore.insert_case(case)
-        
-    return "Cases Saved Successfully", 200
-
-def vector_db_save_cases_backend(request):
     json_str = request.get_json(force=True)
     for case in json_str:
         attachments = case["attachments"]
@@ -251,21 +234,23 @@ def transform_messages_for_llm(messages):
 
 def ask_question(request):
     json_str = request.get_json(force=True)
-    messages = json_str
+    socket_id = json_str["socketId"]
+    messages = json_str["context"]
+    latest_user_message = json_str["message"]
 
-    massages_only_role_content = transform_messages_for_llm(messages)
+    messages_only_role_content = transform_messages_for_llm(messages)
 
     # Extract the latest user message
-    latest_user_message = next(
-        (message["content"] for message in reversed(messages) if message["role"] == "user"), None
-    )
+    # latest_user_message = next(
+    #     (message["content"] for message in reversed(messages) if message["role"] == "user"), None
+    # )
 
     if not latest_user_message:
         return jsonify({"error": "No user message found"}), 400
 
     vectorstore = QdrantVectorstore()
 
-    standalone_question = transform_to_standalone_question(json.dumps(massages_only_role_content))
+    standalone_question = transform_to_standalone_question(json.dumps(messages_only_role_content))
     relevant_vectors = vectorstore.search_from_query(standalone_question)
 
     replacement_dict = {}
@@ -299,21 +284,29 @@ def ask_question(request):
         max_tokens=None,
         timeout=None,
         max_retries=2,
-        streaming=False,
+        streaming=True,
     )
 
     # Use the history from json_str
-    messages = [
+    prompt_messages = [
         {"role": "system", "content": "You are a helpful assistant. Answer user questions based only on the provided context, which includes cases of problems with machines and their solutions, manuals, notes, transcribed and textualized video, audio, and image content, and other related documents. Always respond in the same language as the user. Cite the context in your response by writing '[doc_number:number]' and replacing number with the actual number of the document and doc_number staying the same for the program to correctly identify your citing. Ignore if previous responses used different citing formats. Just stick to the describe citing format."},
-        *massages_only_role_content,
+        *messages_only_role_content,
         {"role": "system", "content": f"CONTEXT for next query: {context}"},
         {"role": "user", "content": user_query},
     ]
-    response = llm(messages).content
+    stream = llm.stream(prompt_messages)
 
-    response = replace_doc_number(response, replacement_dict)
+    concatenated_tokens = ""
+    for stream_token in stream:
+        token = stream_token.content
+        concatenated_tokens += token
+        edited_reponse = replace_doc_number(concatenated_tokens, replacement_dict)
+        sio.emit('llm_message', {'message': edited_reponse, 'socket_id': socket_id})
+    
+    ai_message = replace_doc_number(edited_reponse, replacement_dict)
+    sio.emit('llm_end', {'message': ai_message, 'socket_id': socket_id})
 
-    return jsonify({"response": response}), 200
+    return jsonify({"message": ai_message}), 200
 
         
 

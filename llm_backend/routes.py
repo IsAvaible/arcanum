@@ -5,7 +5,6 @@ from chat import chat
 from generate import (
     generate,
     vector_db_save_cases,
-    vector_db_save_cases_backend,
     ask_question,
 )
 from chat import chat
@@ -38,17 +37,13 @@ def chat_langchain():
     if request.method == "POST":
         return chat(request)
 
+
 @app.route("/save_to_vector_db", methods=["POST"])
-def save_to_vector():
+def save_to_vector_db():
     if request.method == "POST":
         return vector_db_save_cases(request)
     
-@app.route("/save_to_vector_db_backend", methods=["POST"])
-def save_to_vector_db_backend():
-    if request.method == "POST":
-        return vector_db_save_cases_backend(request)
-    
-@app.route("/ask_question", methods=["POST"])
+@app.route("/generate", methods=["POST"])
 def ask_question_():
     if request.method == "POST":
         return ask_question(request)
