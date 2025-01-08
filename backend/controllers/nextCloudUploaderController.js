@@ -100,7 +100,7 @@ async function uploadFile(localFilePath, remoteFilePath, fileName) {
     try {
         const directoryItems = await listFiles(remoteFilePath + folderPath);
         remoteFilePath = remoteFilePath + folderPath + hashedFileContent.toString() + '.' + fileExtension;
-        
+        remoteEncryptedFilePath = remoteFilePath + '.enc';
         if(directoryItems !== undefined){
             for (const item of directoryItems) {
                     //console.log('Item:', item.basename + " == " + hashedFileContent.toString()+ "." + fileExtension);
@@ -113,15 +113,17 @@ async function uploadFile(localFilePath, remoteFilePath, fileName) {
                 console.log('Can not list Folder content');
             }
         
-        try {
-            const encryptedData = encrypt(fileContent);
-            fileContent = encryptedData;
-            await nextcloudClient.putFileContents(remoteFilePath, fileContent);
-            console.log('File uploaded successfully');
+      await nextcloudClient.putFileContents(remoteFilePath, fileContent);
+      console.log('File uploaded successfully');
 
-        } catch (error) {
-            console.error('Error encrypting file:', error);
-        }
+      try {
+        const encryptedData = encrypt(fileContent);
+        await nextcloudClient.putFileContents(remoteEncryptedFilePath, encryptedData);
+        console.log('File encrypted successfully');
+      }
+      catch (error) {
+        console.error('Error encrypting file:', error);
+      }
 
     } catch (error) {
         console.error('Error uploading file:', error);
@@ -150,8 +152,8 @@ async function downloadFile(remoteFilePath, localFilePath) {
     const fileContent = await nextcloudClient.getFileContents(remoteFilePath);
     
     try {
-      const decryptedData = decrypt(fileContent);
-      fileContent = decryptedData;
+      /* const decryptedData = decrypt(fileContent);
+      fileContent = decryptedData; */
 
       fs.writeFileSync(localFilePath, fileContent);
       console.log("File downloaded successfully");
@@ -175,14 +177,15 @@ async function downloadFileAndReturn(remoteFilePath) {
   try {
     const fileContent = await nextcloudClient.getFileContents(remoteFilePath);
     console.log("File downloaded successfully");
+    return fileContent;
 
-    try {
+  /*   try {
       const decryptedData = decrypt(fileContent);
       return decryptedData;
     }
     catch (error) {
       console.error("Error decrypting file:", error);
-    }
+    } */
 
   } catch (error) {
     console.error("Error downloading file:", error);
