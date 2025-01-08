@@ -15,6 +15,12 @@ module.exports = (sequelize, DataTypes) => {
         otherKey: "attachmentId",
         as: "attachments",
       });
+      Cases.belongsToMany(models.Glossary, {
+        through: 'GlossaryCases',
+        as: 'glossary',          // <-- Wichtig: Alias "glossaries"
+        foreignKey: 'caseId',
+        otherKey: 'glossaryId',
+      });
     }
   }
   Cases.init(

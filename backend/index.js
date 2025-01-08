@@ -7,6 +7,7 @@ const https = require("https");
 const fs = require("fs");
 
 const caseRoutes = require("./routes/caseRoutes");
+const glossaryRoutes = require("./routes/glossaryRoutes");
 const uploadRoutes = require("./routes/exampleFileUpload");
 
 app.use(
@@ -48,6 +49,8 @@ app.use(express.urlencoded({ extended: true }));
 
 //Routen verwenden
 app.use("/api", caseRoutes);
+app.use("/api", glossaryRoutes);
+
 app.use("/", uploadRoutes);
 
 app.get("/", (req, res) => {
