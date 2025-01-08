@@ -41,10 +41,11 @@ class Segment:
 def transcribe(file, texts, llm, path, filename, filehash, file_as_dicts):
     if os.path.isfile(path) is True:
         glossary_terms = []
-        print(glossary_terms)
         for dict in file_as_dicts:
-            if dict["glossary"] is not None:
-                glossary_terms.append(dict["glossary"])
+            if dict["content"]["glossary"] is not None:
+                for term in dict["content"]["glossary"]:
+                    glossary_terms.append(term)
+                print(glossary_terms)
 
         whisper_prompt = list_to_comma(glossary_terms)
 
