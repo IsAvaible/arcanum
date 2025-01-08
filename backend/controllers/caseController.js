@@ -1,9 +1,9 @@
-const { Cases, Attachments, ChangeHistory } = require("../models");
+const { Cases, Attachments, Glossary, ChangeHistory } = require("../models");
 const { body, validationResult } = require("express-validator");
 const upload = require("../configs/multerConfig.js");
 const attachmentService = require("../services/attachmentService");
 const axios = require("axios");
-require('dotenv').config();
+require("dotenv").config();
 
 /**
  * Fetches the details of a specific case, including its attachments.
@@ -25,6 +25,11 @@ exports.showCaseDetail = async (req, res) => {
           model: ChangeHistory,
           as: "changeHistory",
           attributes: ["updatedAt"], // Stelle sicher, dass der Spaltenname korrekt ist
+        },
+        {
+          model: Glossary,
+          as: "glossary",
+          through: { attributes: [] },
         },
       ],
     });
@@ -259,26 +264,24 @@ exports.updateCase = [
 ];
 
 
-
 /**
  * Creates a new case from uploaded files and data received from an external LLM.
- * @param {Object} req - Express request object, containing uploaded files and optional socket_id in `req.body`.
+ * @param {Object} req - Express request object, containing uploaded files and socket_id in `req.body`.
  * @param {Object} res - Express response object to send the created case(s) or error messages.
  * @returns {Object} JSON response with the created case(s) or an error message.
  */
 exports.createCaseFromFiles = [
   // Main request handler.
   async (req, res) => {
-    const socket_id = 123;
-
     try {
+      const { socketId } = req.body;
       // Process uploaded files and create attachments.
       const attachmentInstances =
         await attachmentService.uploadFilesAndCreateAttachments(req.files);
 
       // Prepare data to send to the LLM.
       const llmRequestData = {
-        socket_id: socket_id,
+        socket_id: socketId,
         attachments: attachmentInstances,
       };
 
@@ -293,70 +296,84 @@ exports.createCaseFromFiles = [
       const responseData = llmResponse.data;
       console.log("Received from LLM: ", JSON.stringify(llmResponse.data));
 
-      // Define allowed fields for creating cases.
-      const allowedFields = [
-        "title",
-        "description",
-        "solution",
-        "assignee",
-        "status",
-        "case_type",
-        "priority",
-        "attachments",
-      ];
 
-      if (responseData.cases) {
-        // Ensure cases is always an array.
-        const casesArray = Array.isArray(responseData.cases)
-          ? responseData.cases
-          : [responseData.cases];
-
-        let newIds = [];
-
-        for (const caseData of casesArray) {
-          let attachments = [];
-          let extrCase = {};
-
-          // Extract only allowed fields from the response.
-          allowedFields.forEach((field) => {
-            if (caseData[field] !== undefined) {
-              if (field === "attachments") {
-                attachments = caseData[field];
-              } else if (
-                field === "assignee" &&
-                typeof caseData[field] === "string"
-              ) {
-                extrCase[field] = JSON.parse(caseData[field]);
-              } else {
-                extrCase[field] = caseData[field];
-              }
-            }
+      if (responseData.cases && Array.isArray(responseData.cases)) {
+        const newCaseIds = [];
+        for (const caseData of responseData.cases) {
+          // A) CASE speichern
+          const newCase = await Cases.create({
+            title: caseData.title,
+            description: caseData.description,
+            solution: caseData.solution,
+            status: caseData.status,
+            assignee: caseData.assignee,
+            case_type: caseData.case_type,
+            priority: caseData.priority,
+            draft: true,
           });
 
-          extrCase["draft"] = true; // Mark as draft initially.
-
-          // Create a new case in the database.
-          const newCase = await Cases.create(extrCase);
-          newIds.push(newCase.id);
-
-          // Link attachments to the new case.
-          if (attachments && attachments.length > 0) {
-            const attachmentInstances = await Attachments.findAll({
-              where: { id: attachments },
-            });
-
-            await newCase.addAttachments(attachmentInstances);
+          if (Array.isArray(caseData.glossary)) {
+            for (const glossaryTerm of caseData.glossary) {
+              // findOrCreate => [instanz, created]
+              const [glossaryInstance] = await Glossary.findOrCreate({
+                where: { term: glossaryTerm },
+                defaults: { term: glossaryTerm }
+              });
+              await newCase.addGlossary(glossaryInstance);
+            }
           }
+
+          if (Array.isArray(caseData.attachments)) {
+            // IDs extrahieren
+            const attachmentIds = caseData.attachments.map(att => att.id);
+            
+            // Datenbank-Instanzen finden
+            const foundAttachments = await Attachments.findAll({
+              where: { id: attachmentIds }
+            });
+            await newCase.addAttachments(foundAttachments);
+
+            // Attachment-Glossar
+            for (const attObj of caseData.attachments) {
+              const attachInst = foundAttachments.find(a => a.id === attObj.id);
+              if (!attachInst) continue;
+
+              if (Array.isArray(attObj.glossary)) {
+                for (const term of attObj.glossary) {
+                  const [glossaryInstance] = await Glossary.findOrCreate({
+                    where: { term },
+                    defaults: { term }
+                  });
+                  await attachInst.addGlossary(glossaryInstance);
+                }
+              }
+            }
+          }
+
+          newCaseIds.push(newCase.id);
         }
+
 
         // Fetch all created cases with their attachments.
         const casesAll = await Cases.findAll({
-          where: { id: newIds },
+          where: { id: newCaseIds },
           include: [
+            {
+              model: Glossary,
+              as: 'glossary', // Muss zu den Associations passen
+              through: { attributes: [] }
+            },
             {
               model: Attachments,
               as: "attachments",
               through: { attributes: [] },
+              include: [
+                {
+                  model: Glossary,
+                  as: "glossary",
+                  through: { attributes: [] },
+                },
+              ],
             },
           ],
         });

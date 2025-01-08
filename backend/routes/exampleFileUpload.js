@@ -47,19 +47,15 @@ router.post("/upload", (req, res) => {
         req.file.filename,
       );
       console.log("File uploaded to Nextcloud:", result);
-      res
-        .status(200)
-        .json({
-          message: "File uploaded to Nextcloud and scanned successfully!",
-        });
+      res.status(200).json({
+        message: "File uploaded to Nextcloud and scanned successfully!",
+      });
     } catch (error) {
       console.log("Error uploading file:", error);
-      res
-        .status(500)
-        .json({
-          message: "Error uploading file to Nextcloud or scanning for malware.",
-          error,
-        });
+      res.status(500).json({
+        message: "Error uploading file to Nextcloud or scanning for malware.",
+        error,
+      });
     }
   });
 });

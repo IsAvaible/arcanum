@@ -22,6 +22,12 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: "CASCADE",
         onUpdate: "CASCADE",
     });
+      Cases.belongsToMany(models.Glossary, {
+        through: 'GlossaryCases',
+        as: 'glossary',          // <-- Wichtig: Alias "glossaries"
+        foreignKey: 'caseId',
+        otherKey: 'glossaryId',
+      });
     }
   }
   Cases.init(
