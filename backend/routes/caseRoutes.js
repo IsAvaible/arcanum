@@ -87,7 +87,6 @@ router.put("/cases/:id", multerMiddleware, caseController.updateCase);
  */
 router.delete("/cases/:id", caseController.deleteCase);
 
-
 /**
  * @route GET /cases/:id/attachments/:fileId
  * @description Downloads an attachment of a specific case.
@@ -97,7 +96,10 @@ router.delete("/cases/:id", caseController.deleteCase);
  * @returns {Error} 404 - Case or attachment not found.
  * @returns {Error} 500 - Internal server error.
  */
-router.get("/cases/:id/attachments/:fileId", attachmentController.downloadAttachment);
+router.get(
+  "/cases/:id/attachments/:fileId",
+  attachmentController.downloadAttachment,
+);
 
 /**
  * @route POST /cases/:id/attachments
@@ -108,8 +110,10 @@ router.get("/cases/:id/attachments/:fileId", attachmentController.downloadAttach
  * @returns {Error} 404 - Case not found.
  * @returns {Error} 500 - Internal server error.
  */
-router.post("/cases/:id/attachments", attachmentController.addAttachmentsToCase);
-
+router.post(
+  "/cases/:id/attachments",
+  attachmentController.addAttachmentsToCase,
+);
 
 /**
  * @route DELETE /cases/:id/attachments/:fileId
@@ -127,14 +131,20 @@ router.delete(
 
 /**
  * @route POST /createCaseFromFiles
- * @description Creates one or multiple new cases based on uploaded files and data returned from an external LLM.  
+ * @description Creates one or multiple new cases based on uploaded files and data returned from an external LLM.
  * The LLM returns case data (title, description, etc.) and references to attachments.
  * @param {file} files.formData.required - Files to process for creating case(s).
+ * @param {string} [socketId] - Id of Socket where the Tokens are send to.
  * @returns {Object|Object[]} 201 - The newly created case(s) with attachments.
  * @returns {Object} 200 - If LLM returns a message but no cases, returns an object with { message: string }.
  * @returns {Error} 500 - Internal server error or LLM error.
  */
-router.post("/createCaseFromFiles",multerMiddleware, caseController.createCaseFromFiles);
+router.post(
+  "/createCaseFromFiles",
+  multerMiddleware,
+  escapeData(["socketId"]),
+  caseController.createCaseFromFiles,
+);
 
 /**
  * @route PUT /confirmCase/:id

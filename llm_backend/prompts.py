@@ -68,7 +68,6 @@ You are an advanced language processing assistant. Your task is to analyze the t
 
 Product names
 Model numbers or designations
-Names of people, companies, or organizations
 Specific place names
 The extracted entities should be combined into a single, comma-separated list with no additional formatting. Ensure all terms are unique and listed only once. Ignore any irrelevant or generic terms.
 """

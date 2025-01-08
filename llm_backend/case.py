@@ -3,21 +3,9 @@ from pydantic import Field, BaseModel, ValidationError
 
 # maybe for future use
 class CaseAttachment(BaseModel):
-    file_id: int = Field(
+    id: int = Field(
         ...,
         description="A unique numeric identifier for the file within the system."
-    )
-    filename: str = Field(
-        ...,
-        description="The name of the file, including its extension (e.g., 'document.pdf'), as stored in the system."
-    )
-    filepath: str = Field(
-        ...,
-        description="The full path to the file's location on the system, specifying where the file is stored."
-    )
-    filehash: str = Field(
-        ...,
-        description="A unique hash generated for the file to verify its integrity and identify its contents."
     )
 
 
@@ -35,10 +23,6 @@ class Case(BaseModel):
         ...,
         description="A proposed or implemented solution to address the case. Include all possible solutions you can find! If not yet resolved, this can include potential steps or approaches to consider. Include granular Timestamps from Audio files!",
     )
-    """assignee: list[str] = Field(
-        ...,
-        description="The name or identifier of the person responsible for handling or resolving the case.",
-    )"""
     status: str = Field(
         ...,
         description="The current state of the case, such as 'Open', 'In Progress', 'Solved' or 'Closed' to track its progression.",
@@ -51,9 +35,9 @@ class Case(BaseModel):
         ...,
         description="The Priority of the case, such as 'High', 'Medium', 'Low'.",
     )
-    attachments: list[int] = Field(
+    attachments: list[CaseAttachment] = Field(
         ...,
-        description="All the File-Ids that were used to generate this Case.",
+        description="All the Attachments that were used to generate this Case.",
     )
 
 

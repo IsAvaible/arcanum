@@ -3,12 +3,11 @@ import os
 from itertools import islice
 
 from dotenv import load_dotenv
-from langchain_core.prompts import ChatPromptTemplate
-from openai import AzureOpenAI
 
 from app import app
 from audio import split_audio_with_overlap
-from prompts import get_system_prompt
+from glossary import list_to_comma
+from openai import AzureOpenAI
 
 # load Env Variables
 load_dotenv()
@@ -39,24 +38,17 @@ class Segment:
         return f"({self.start}, {self.end}, {self.text})"
 
 
-def transcribe(file, texts, llm, path, filename, filehash, whisper_prompt):
+def transcribe(file, texts, path, filehash, file_as_dicts):
     if os.path.isfile(path) is True:
-        # if text content was analyzed before, check here for any glossary terms
-        if texts != "":
-            system_prompt_langchain_parser = get_system_prompt("models")
-            messages = [
-                ("system", "{system_prompt}"),
-                ("human", "CONTEXT: {context}"),
-            ]
-            promptLangchain = ChatPromptTemplate.from_messages(messages).partial(
-                system_prompt=system_prompt_langchain_parser
-            )
-            promptLangchainInvoked = promptLangchain.invoke(
-                {"context": texts, "query": "Please give me the list back!"}
-            )
-            chain = llm
-            response = chain.invoke(promptLangchainInvoked)
-            whisper_prompt = response.content
+        glossary_terms = []
+        for dict in file_as_dicts:
+            if dict["content"]["glossary"] is not None:
+                for term in dict["content"]["glossary"]:
+                    glossary_terms.append(term)
+                print(glossary_terms)
+
+        whisper_prompt = list_to_comma(glossary_terms)
+
 
         # check file size because only 25Mb/request are allowed for Whisper transcription
         file_size_mb = os.stat(path).st_size / (1024 * 1024)
