@@ -1,15 +1,13 @@
 from pydantic import Field, BaseModel, ValidationError
 
-#maybe for future use
+
+# maybe for future use
 class CaseAttachment(BaseModel):
     id: int = Field(
         ...,
         description="A unique numeric identifier for the file within the system."
     )
-    """glossary: list[str] = Field(
-        ...,
-        description="A list of all the glossary terms in this attachment. Only Machine Names, Model Numbers, etc. and only from textual files NO video summaries NO transcriptions NO image files"
-    )"""
+
 
 # defining the desired output of the llm
 class Case(BaseModel):
@@ -23,7 +21,7 @@ class Case(BaseModel):
     )
     solution: str = Field(
         ...,
-        description="A proposed or implemented solution to address the case. Include all possible solutions you can find! If not yet resolved, this can include potential steps or approaches to consider. Include granular Timestamps ONLY from Audio AND OR VIDEO files!",
+        description="A proposed or implemented solution to address the case. Include all possible solutions you can find! If not yet resolved, this can include potential steps or approaches to consider. Include granular Timestamps from Audio files!",
     )
     """assignee: list[str] = Field(
         ...,
@@ -33,18 +31,22 @@ class Case(BaseModel):
         ...,
         description="The current state of the case, such as 'Open', 'In Progress', 'Solved' or 'Closed' to track its progression.",
     )
+    case_type: str = Field(
+        ...,
+        description="The Type of a case, such as 'Problem', 'Incident', 'Change', 'FAQ'.",
+    )
+    priority: str = Field(
+        ...,
+        description="The Priority of the case, such as 'High', 'Medium', 'Low'.",
+    )
     attachments: list[CaseAttachment] = Field(
         ...,
-        description="All the Attachments that were used to generate this Case.",
+        description="All the File-Ids that were used to generate this Case.",
     )
-""" glossary: list[str] = Field(
-        ...,
-        description="All the Glossary terms used for generating this case. Only Machine Names, Model Numbers, etc. and only from textual files NO video summaries NO transcriptions NO image files",
-    )"""
 
 
 class CaseArray(BaseModel):
-    cases: list[Case] = Field(..., description="A list of one or multiple cases.")
+    cases: list[Case] = Field(..., description="A list of one or multiple cases.", min_length=1)
 
 def check_if_output_is_valid(chain_output):
     try:
