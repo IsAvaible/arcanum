@@ -23,10 +23,6 @@ class Case(BaseModel):
         ...,
         description="A proposed or implemented solution to address the case. Include all possible solutions you can find! If not yet resolved, this can include potential steps or approaches to consider. Include granular Timestamps from Audio files!",
     )
-    """assignee: list[str] = Field(
-        ...,
-        description="The name or identifier of the person responsible for handling or resolving the case.",
-    )"""
     status: str = Field(
         ...,
         description="The current state of the case, such as 'Open', 'In Progress', 'Solved' or 'Closed' to track its progression.",
