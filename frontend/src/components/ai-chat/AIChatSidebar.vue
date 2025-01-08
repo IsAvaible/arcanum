@@ -130,7 +130,14 @@ const setActiveChat = async (chatId: Chat['id'] | null) => {
     <div class="flex flex-col gap-6 pt-3 pb-2 sticky top-0 bg-white z-10">
       <div class="flex items-center justify-between gap-6 text-gray-800">
         <h2 class="text-2xl font-medium lead">Chats</h2>
-        <Button icon="pi pi-plus" text @click="setActiveChat(null)" />
+        <Button
+          icon="pi pi-plus"
+          text
+          @click="setActiveChat(null)"
+          :class="{
+            'invisible pointer-events-none': activeChat === null,
+          }"
+        />
       </div>
     </div>
     <IconField>
