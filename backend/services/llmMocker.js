@@ -22,6 +22,7 @@ function simulateMessageSending(socket, socketId, messages, intervalMs = 500) {
     } else {
       clearInterval(interval);
 
+
       // Wenn alle messages gesendet sind, sende das end-Event
       const finalMessage = messages.join("");
       console.log("Sending llm_end with content:", finalMessage);
@@ -35,6 +36,7 @@ function simulateMessageSending(socket, socketId, messages, intervalMs = 500) {
 // -------------------------------------------
 const backendUrl = "https://localhost:443"; // URL des eigentlichen Backends
 // Socket.io-Client mit Backend verbinden
+
 const socket = io(backendUrl, {
   rejectUnauthorized: false,
 });
@@ -45,6 +47,7 @@ app.use(bodyParser.json());
 // -------------------------------------------
 // Socket Event Handler
 // -------------------------------------------
+
 
 socket.on("connect", () => {
   console.log(
@@ -78,6 +81,7 @@ app.post("/generate_case", async (req, res) => {
     console.log("Received attachments from client:", attachments);
   }
 
+
   // Beispiel-messages, die schrittweise gesendet werden
   // Hier kannst du natürlich beliebigen Text generieren
   const messages = [
@@ -98,8 +102,16 @@ app.post("/generate_case", async (req, res) => {
   ];
 
   // Beantworte den HTTP-Request sofort mit JSON
-  // (Während parallel messages über Socket gesendet werden)
+  // (Während parallel Tokens über Socket gesendet werden)
   try {
+      
+    const attachmentsWithGlossary = attachments?.map((att) => {
+      return {
+        id: att.id,
+        glossary: ["fakeGlossaryTerm1", "fakeGlossaryTerm2"], // z. B. zwei Fake-Begriffe
+      };
+    }) || [];
+
     // Beispiel-Rückgabe:
     // - message: final LLM message
     // - cases: ein Array aus Cases, wie es das Backend erwartet
@@ -114,14 +126,15 @@ app.post("/generate_case", async (req, res) => {
           priority: "Low",
           // Simulieren wir: Der LLM schickt die IDs zurück,
           // die er in der Bearbeitung gefunden hat:
-          attachments: attachments?.map((att) => att.id) || [],
+          attachments: attachmentsWithGlossary,
         },
       ],
     };
 
-    // Starte das Senden der messages
+    // Starte das Senden der Tokens
     simulateMessageSending(socket, socketId, messages, 100);
-    // Kurze Verzögerung, damit das message-Streaming Zeit hat, loszulaufen
+    // Kurze Verzögerung, damit das Token-Streaming Zeit hat, loszulaufen
+
     await new Promise((resolve) => setTimeout(resolve, 1600));
 
     // Sende die JSON-Antwort an den aufrufenden Client (Backend)
@@ -133,6 +146,7 @@ app.post("/generate_case", async (req, res) => {
     });
   }
 });
+
 // -------------------------------------------
 // /generate Endpoint
 // -------------------------------------------
@@ -183,3 +197,4 @@ const PORT = 5001;
 app.listen(PORT, () => {
   console.log(`LLM Mocker running on http://localhost:${PORT}`);
 });
+

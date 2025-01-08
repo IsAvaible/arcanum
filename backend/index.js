@@ -1,4 +1,4 @@
-const port = process.env.PORT || 443;
+const port = 3000;
 const express = require("express");
 const app = express();
 const cors = require("cors");
@@ -8,9 +8,11 @@ const https = require("https");
 const fs = require("fs");
 
 const caseRoutes = require("./routes/caseRoutes");
+const glossaryRoutes = require("./routes/glossaryRoutes");
 const uploadRoutes = require("./routes/exampleFileUpload");
 const chatRoutes = require("./routes/chatRoutes");
 const tokenService = require("./services/tokenService");
+
 
 // for development only
 app.set("view engine", "ejs");
@@ -39,8 +41,9 @@ app.use(express.json()); // Fügt die JSON-Parsing-Middleware hinzu
 app.use(express.urlencoded({ extended: true }));
 
 //Routen verwenden
-app.use("/api", caseRoutes);
 app.use("/", uploadRoutes);
+app.use("/api", caseRoutes);
+app.use("/api", glossaryRoutes);
 app.use("/api", chatRoutes);
 
 app.get("/", (req, res) => {
@@ -70,7 +73,6 @@ try {
       credentials: true,
     },
   });
-  // Socket IO Listener
   tokenService(io);
 
   server.listen(port, function (req, res) {

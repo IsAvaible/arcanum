@@ -1,4 +1,6 @@
+import json
 import os
+import time
 
 from dotenv import load_dotenv
 from flask import jsonify
@@ -8,6 +10,7 @@ from langchain_openai import AzureChatOpenAI
 
 from app import sio
 from case import CaseArray, check_if_output_is_valid
+from readwrite import write_to_file
 from prompts import get_system_prompt
 from upload import upload_file_method_production
 
@@ -46,7 +49,7 @@ def start_quering_llm(invokedPrompt, llm, parser, max_tries=3) -> dict:
         print(f"Couldn't get valid output in {try_number} tries")
         return {}
     else:
-        print(f"Generated valid output with {try_number} tries: {chain_output}")
+        print(f"Generated valid output with {try_number} tries")
 
     return chain_output
 
@@ -79,6 +82,10 @@ def generate(request):
 
         # Upload File method converts into Context (Text)
         context = upload_file_method_production(attachments, socket_id)
+        data = json.loads(context)
+        formatted_json_string = json.dumps(data, ensure_ascii=False, indent=2)
+        print(formatted_json_string)
+        print("ALL ATTACHMENTS ANALYZED")
 
         sio.emit('llm_message', {'message': 'Finalizing Case Generation...', 'socket_id': socket_id})
         # get system prompt for case generation
@@ -108,5 +115,53 @@ def generate(request):
             promptLangchainInvoked, llm, case_parser_json, max_tries=3
         )
 
+        cases = response_dict["cases"]
+        attachment_files = json.loads(context)
+        glossary_terms = []
+
+        # add glossary from analyzed file to response (attachments)
+        for case in cases:
+            for att in case["attachments"]:
+                for file in attachment_files:
+                    att_id = att["id"]
+                    file_id = file["file_id"]
+                    if att_id == file_id:
+                        if "glossary" in file["content"]:
+                            for term in file["content"]["glossary"]:
+                                if "glossary" not in case:
+                                    att["glossary"] = []
+                                if term not in att["glossary"]:
+                                    att["glossary"].append(term)
+                                if term not in glossary_terms:
+                                    glossary_terms.append(term)
+
+        # check if glossary term was mentioned in solution, title or description
+        # if yes add to glossary of the case
+        for case in cases:
+            for term in glossary_terms:
+                if term in case["solution"] or term in case["title"] or term in case["description"]:
+                    if "glossary" not in case:
+                        case["glossary"] = []
+                    if term not in case["glossary"]:
+                        case["glossary"].append(term)
+
+
+        for case in cases:
+            for att in case["attachments"]:
+                for file in attachment_files:
+                    for term in glossary_terms:
+                        att_id = att["id"]
+                        file_id = file["file_id"]
+                        if att_id == file_id:
+                            if term in json.dumps(file, ensure_ascii=False, indent=2):
+                                if "glossary" not in att:
+                                    att["glossary"] = []
+                                if term not in att["glossary"]:
+                                    att["glossary"].append(term)
+
+        # debug
+        write_to_file(str(time.time()), cases)
+
+        print(json.dumps(response_dict, ensure_ascii=False, indent=2))
         # return case json
         return jsonify(response_dict), 200

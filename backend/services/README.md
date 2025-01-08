@@ -1,6 +1,5 @@
 How to Setup Mocker 
 
-
 LLM Mocker: A simulated language model server that sends token streams (via Socket.io) back to the Backend whenever /generate_case or /generate is called.
 Frontend Mocker: A script that simulates a frontend client by calling the Backend endpoints, uploading files, and receiving real-time responses.
 
@@ -10,6 +9,9 @@ cd backend
 
 Install dependencies (if you haven’t already):
 npm install
+
+Postgres must run locally and migration up to date: npx sequelize-cli db:migrate --config ./configs/config.js
+
 
 Run the backend:
 npm run start-backend
