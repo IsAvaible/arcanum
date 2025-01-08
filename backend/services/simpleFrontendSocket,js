@@ -1,0 +1,44 @@
+const express = require("express");
+const { io } = require("socket.io-client");
+const axios = require("axios");
+const fs = require("fs");
+const FormData = require("form-data");
+
+// Da self-signed Zertifikat
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
+const app = express();
+const PORT = 8080;
+
+// URL des Backends
+const backendUrl = "https://localhost:3000";
+
+// Socket mit Backend verbinden
+const socket = io(backendUrl, {
+  rejectUnauthorized: false,
+});
+
+socket.on("connect", () => {
+  console.log("Frontend-Simulator connected to backend, Socket ID:", socket.id);
+  socket.emit("front_identify");
+});
+
+socket.on("llm_message", ({ message }) => {
+  console.log("Received message from Backend:", message);
+});
+
+socket.on("llm_end", ({ content }) => {
+  console.log("Final message received:", content);
+});
+
+socket.on("connect_error", (err) => {
+  console.error("Connection error:", err);
+});
+
+app.get("/", (req, res) => {
+    res.send("Frontend Mocker running...");
+  });
+  
+  app.listen(PORT, () => {
+    console.log(`Frontend Mocker running on http://localhost:${PORT}`);
+  });
