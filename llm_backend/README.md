@@ -101,32 +101,30 @@ Generate Case(s) Diagramm
 
 ### Beispiel Request: 
 ```
-[
-    {
-        "id": 24,
-        "title": "Merkwürdige Geräusche und Abschaltung des Schweißgeräts MIG4300Pro",
-        "description": "Das Schweißgerät MIG4300Pro macht merkwürdige Geräusche, die auf eine mögliche Überlastung des Motors oder ein internes Problem hindeuten. Zusätzlich schaltet sich das Gerät bei längeren Schweißnähten ab. Die Stromversorgung wurde überprüft und das Gerät ist an derselben Steckdose wie immer angeschlossen. Die Lüftungsschlitze sind frei, was auf ein anderes Problem hinweist. [SMS_1_PDF.pdf: 09:12 - 09:17]",
-        "solution": "Es wurde festgestellt, dass der Draht in der Drahtzuführung verhakt war. Nach der Neuausrichtung der Drahtrolle scheint das Problem behoben zu sein. [SMS_1_PDF.pdf: 09:20 - 09:23]",
-        "assignee": null,
-        "status": "Solved",
-        "case_type": "Problem",
-        "priority": "Medium",
-        "draft": true,
-        "createdAt": "2025-01-05T13:24:29.740Z",
-        "updatedAt": "2025-01-05T13:24:29.740Z",
-        "attachments": [
-            {
-                "id": 14,
-                "filename": "SMS_1_PDF.pdf",
-                "filepath": "/IP_WKS/Text/f4ea323f129f8fc199b0539726729f1375153a0c715b0fd8c63fa48fa9361bfd.pdf",
-                "mimetype": "application/pdf",
-                "size": 34666,
-                "uploadedAt": "2025-01-05T13:22:06.258Z",
-                "filehash": "f4ea323f129f8fc199b0539726729f1375153a0c715b0fd8c63fa48fa9361bfd",
-                "createdAt": "2025-01-05T13:22:06.258Z",
-                "updatedAt": "2025-01-05T13:22:06.259Z"
-            }
-        ]
-    }
-]
+  {
+      "id": 24,
+      "title": "Merkwürdige Geräusche und Abschaltung des Schweißgeräts MIG4300Pro",
+      "description": "Das Schweißgerät MIG4300Pro macht merkwürdige Geräusche, die auf eine mögliche Überlastung des Motors oder ein internes Problem hindeuten. Zusätzlich schaltet sich das Gerät bei längeren Schweißnähten ab. Die Stromversorgung wurde überprüft und das Gerät ist an derselben Steckdose wie immer angeschlossen. Die Lüftungsschlitze sind frei, was auf ein anderes Problem hinweist. [SMS_1_PDF.pdf: 09:12 - 09:17]",
+      "solution": "Es wurde festgestellt, dass der Draht in der Drahtzuführung verhakt war. Nach der Neuausrichtung der Drahtrolle scheint das Problem behoben zu sein. [SMS_1_PDF.pdf: 09:20 - 09:23]",
+      "assignee": null,
+      "status": "Solved",
+      "case_type": "Problem",
+      "priority": "Medium",
+      "draft": true,
+      "createdAt": "2025-01-05T13:24:29.740Z",
+      "updatedAt": "2025-01-05T13:24:29.740Z",
+      "attachments": [
+          {
+              "id": 14,
+              "filename": "SMS_1_PDF.pdf",
+              "filepath": "/IP_WKS/Text/f4ea323f129f8fc199b0539726729f1375153a0c715b0fd8c63fa48fa9361bfd.pdf",
+              "mimetype": "application/pdf",
+              "size": 34666,
+              "uploadedAt": "2025-01-05T13:22:06.258Z",
+              "filehash": "f4ea323f129f8fc199b0539726729f1375153a0c715b0fd8c63fa48fa9361bfd",
+              "createdAt": "2025-01-05T13:22:06.258Z",
+              "updatedAt": "2025-01-05T13:22:06.259Z"
+          }
+      ]
+  }
 ```
