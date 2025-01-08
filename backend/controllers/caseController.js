@@ -1,4 +1,4 @@
-const { Cases, Attachments, Glossary } = require("../models");
+const { Cases, Attachments, Glossary, ChangeHistory } = require("../models");
 const { body, validationResult } = require("express-validator");
 const upload = require("../configs/multerConfig.js");
 const attachmentService = require("../services/attachmentService");
@@ -12,7 +12,7 @@ require("dotenv").config();
  * @returns {Object} JSON response with case details or an error message.
  */
 exports.showCaseDetail = async (req, res) => {
-  const caseId = parseInt(req.params.id, 10);
+  const caseId = parseInt(req.params.id, 10); // Überprüfen, ob caseId korrekt geparst wird
   try {
     const caseItem = await Cases.findByPk(caseId, {
       include: [
@@ -22,10 +22,15 @@ exports.showCaseDetail = async (req, res) => {
           through: { attributes: [] },
         },
         {
+          model: ChangeHistory,
+          as: "changeHistory",
+          attributes: ["updatedAt"], // Stelle sicher, dass der Spaltenname korrekt ist
+        },
+        {
           model: Glossary,
           as: "glossary",
           through: { attributes: [] },
-        }
+        },
       ],
     });
 
@@ -39,6 +44,7 @@ exports.showCaseDetail = async (req, res) => {
     res.status(500).json({ message: "Error fetching case detail" });
   }
 };
+
 
 /**
  * Fetches a list of all cases, including their attachments.
@@ -97,6 +103,8 @@ exports.deleteCase = async (req, res) => {
       }
     }
 
+    await ChangeHistory.destroy({ where: { case_id: caseId } });
+
     await caseItemToDelete.destroy();
     res.status(204).send();
   } catch (error) {
@@ -148,6 +156,10 @@ exports.createCase = [
       if (attachmentInstances.length > 0) {
         await newCase.addAttachments(attachmentInstances);
       }
+      await ChangeHistory.create({
+        case_id: newCase.id,
+        updatedAt: new Date(),
+      });
 
       const caseWithAttachments = await Cases.findByPk(newCase.id, {
         include: [
@@ -155,6 +167,10 @@ exports.createCase = [
             model: Attachments,
             as: "attachments",
             through: { attributes: [] },
+          },
+          {
+            model: ChangeHistory,
+            as: "changeHistory",
           },
         ],
       });
@@ -177,7 +193,7 @@ exports.updateCase = [
     const caseId = parseInt(req.params.id, 10);
 
     try {
-      // Define allowed fields for update.
+      // Define allowed fields for update
       const allowedFields = [
         "title",
         "description",
@@ -189,7 +205,7 @@ exports.updateCase = [
         "draft",
       ];
 
-      // Filter update data to include only allowed fields.
+      // Extract only allowed fields from the request body
       const updateData = {};
       allowedFields.forEach((field) => {
         if (req.body[field] !== undefined) {
@@ -203,17 +219,26 @@ exports.updateCase = [
         return res.status(404).json({ message: "Case not found" });
       }
 
+      // Update the case in the database
       const updatedCase = await caseItem.update(updateData);
 
       if (!updatedCase) {
-        return res.status(404).json({ message: "Error updating Case" });
+        return res.status(404).json({ message: "Error updating case" });
       }
-      // Process uploaded files and create new attachments.
+
+      // Process uploaded files and create new attachments
       const attachmentInstances =
-        await attachmentService.uploadFilesAndCreateAttachments(req.files);
+          await attachmentService.uploadFilesAndCreateAttachments(req.files);
 
       if (attachmentInstances.length > 0) {
         await updatedCase.addAttachments(attachmentInstances);
+      }
+
+      if (Object.keys(req.body).length > 0) {
+        await ChangeHistory.create({
+          case_id: caseId,
+          updatedAt: new Date(),
+        });
       }
 
       const caseWithAttachments = await Cases.findByPk(caseId, {
@@ -222,6 +247,10 @@ exports.updateCase = [
             model: Attachments,
             as: "attachments",
             through: { attributes: [] },
+          },
+          {
+            model: ChangeHistory,
+            as: "changeHistory",
           },
         ],
       });
@@ -233,6 +262,7 @@ exports.updateCase = [
     }
   },
 ];
+
 
 /**
  * Creates a new case from uploaded files and data received from an external LLM.
