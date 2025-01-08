@@ -168,16 +168,15 @@ def generate(request):
 
 
 def vector_db_save_cases(request):
-    json_str = request.get_json(force=True)
-    for case in json_str:
-        attachments = case["attachments"]
-        case["attachments"] = [attachment["id"] for attachment in attachments]
+    case = request.get_json(force=True)
+    attachments = case["attachments"]
+    case["attachments"] = [attachment["id"] for attachment in attachments]
 
-        vectorstore = QdrantVectorstore()
-        vectorstore.insert_case(case, id=case["id"])
+    vectorstore = QdrantVectorstore()
+    vectorstore.insert_case(case, id=case["id"])
 
-        for attachment in attachments:
-            vectorstore.insert_attachment(attachment)
+    for attachment in attachments:
+        vectorstore.insert_attachment(attachment)
 
     return "Cases Saved Successfully", 200
 
