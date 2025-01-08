@@ -28,6 +28,7 @@ socket.on("llm_message", ({ message }) => {
   console.log("Received message from Backend:", message);
 });
 
+
 socket.on("llm_end", ({ content }) => {
   console.log("Final message received:", content);
 });

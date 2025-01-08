@@ -22,6 +22,7 @@ function simulateMessageSending(socket, socketId, messages, intervalMs = 500) {
     } else {
       clearInterval(interval);
 
+
       // Wenn alle messages gesendet sind, sende das end-Event
       const finalMessage = messages.join("");
       console.log("Sending llm_end with content:", finalMessage);

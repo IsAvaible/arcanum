@@ -1,6 +1,4 @@
-
 How to Setup Mocker 
-
 
 LLM Mocker: A simulated language model server that sends token streams (via Socket.io) back to the Backend whenever /generate_case or /generate is called.
 Frontend Mocker: A script that simulates a frontend client by calling the Backend endpoints, uploading files, and receiving real-time responses.
