@@ -11,6 +11,10 @@ const caseRoutes = require("./routes/caseRoutes");
 const glossaryRoutes = require("./routes/glossaryRoutes");
 const uploadRoutes = require("./routes/exampleFileUpload");
 
+const chatRoutes = require("./routes/chatRoutes");
+const tokenService = require("./services/tokenService");
+
+
 // for development only
 app.set("view engine", "ejs");
 
@@ -42,6 +46,7 @@ app.use("/api", caseRoutes);
 app.use("/api", glossaryRoutes);
 
 app.use("/", uploadRoutes);
+app.use("/api", chatRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -70,18 +75,7 @@ try {
       credentials: true,
     },
   });
-  // Socket IO Listener
-  io.on("connection", (socket) => {
-    console.log(`Client connected to ${socket.id}`);
-
-    socket.on("llm_message", (data) => {
-      console.log("Received 'llm_message' event:", data);
-    });
-
-    socket.on("disconnect", () => {
-      console.log(`Client disconnected : ${socket.id}`);
-    });
-  });
+  tokenService(io);
 
   server.listen(port, function (req, res) {
     console.log(`Server listening on port (${port})`);
