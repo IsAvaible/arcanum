@@ -9,6 +9,7 @@ from langchain_openai import AzureChatOpenAI
 
 from app import sio
 from image import encode_image, image_to_openai
+from glossary import generate_glossary_terms
 from pdf import create_text_chunks_pdfplumber
 from readwrite import write_to_file, read_from_file, text_to_dict, delete_temp_folder
 from video import process_segments, extract_data_from_video, get_all_frames_in_dir
@@ -67,7 +68,6 @@ def upload_file_method_production(files, socket_id):
     files_as_dicts_json = ""
     texts = ""
     single_text = None
-    whisper_prompt = ""
     # Set to true if you want to cache files in Sciebo/WebDav
     USE_CACHE = False
 
@@ -101,7 +101,7 @@ def upload_file_method_production(files, socket_id):
             # upload audio file
             if "audio" in mimetype:
                 sio.emit('llm_message', {'message': f'Transcribing Audio File "{filename}"', 'socket_id': socket_id})
-                transcription = transcribe(file, texts, llm, path, filename, filehash, whisper_prompt)
+                transcription = transcribe(file, texts, path, filehash, files_as_dicts)
                 single_dict = transcription
                 texts += "  " + json.dumps(single_text, ensure_ascii=False)
             # upload pdf file
@@ -109,8 +109,10 @@ def upload_file_method_production(files, socket_id):
                 sio.emit('llm_message', {'message': f'Analyzing PDF File "{filename}"', 'socket_id': socket_id})
                 texts += f" Content of PDF File - File ID: {file_id} - Filename: '{filename}' - Filepath: {filepath} - FileHash: {filehash} -> CONTENT OF FILE: "
                 single_text = create_text_chunks_pdfplumber(path)
+                glossary_terms = generate_glossary_terms(single_text)
                 single_dict = {
-                    "text": single_text
+                    "text": single_text,
+                    "glossary" : glossary_terms
                 }
                 texts += " " + single_text
             # upload html file
@@ -122,8 +124,10 @@ def upload_file_method_production(files, socket_id):
                     soup = BeautifulSoup(contents)
                     texts += soup.get_text()
                     single_text = soup.get_text()
+                    glossary_terms = generate_glossary_terms(single_text)
                 single_dict = {
-                    "text":  single_text
+                    "text":  single_text,
+                    "glossary" : glossary_terms
                 }
             # upload text file
             elif mimetype == "text/plain":
@@ -133,8 +137,10 @@ def upload_file_method_production(files, socket_id):
                     contents = file.read()
                     texts += contents
                     single_text = contents
+                    glossary_terms = generate_glossary_terms(single_text)
                 single_dict = {
-                    "text": single_text
+                    "text": single_text,
+                    "glossary" : glossary_terms
                 }
             # upload image file
             elif "image" in mimetype:
@@ -167,7 +173,7 @@ def upload_file_method_production(files, socket_id):
                 frame_path, audio_path, duration = extract_data_from_video(path, filehash)
                 frames = get_all_frames_in_dir(frame_path)
 
-                transcription = transcribe(file, texts, llm, audio_path, filename, filehash, whisper_prompt)
+                transcription = transcribe(file, texts, audio_path, filehash, files_as_dicts)
                 video_summary = process_segments(frames, transcription, duration)
                 single_dict = {
                     "transcription" : transcription["transcription"],

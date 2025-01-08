@@ -11,6 +11,8 @@ cd backend
 Install dependencies (if you haven’t already):
 npm install
 
+Postgres must run locally and migration up to date: npx sequelize-cli db:migrate --config ./configs/config.js
+
 Run the backend:
 npm run start-backend
 
