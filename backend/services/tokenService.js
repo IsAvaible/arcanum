@@ -18,9 +18,9 @@ module.exports = (io) => {
       console.log("LLM connected with socket ID:", socket.id);
     });
 
-    socket.on("llm_end", ({ socketId, content }) => {
+    socket.on("llm_end", ({ socket_id, message }) => {
       // send to frontend
-      io.to(socketId).emit("llm_end", { content });
+      io.to(socket_id).emit("llm_end", { message });
     });
   });
 };
