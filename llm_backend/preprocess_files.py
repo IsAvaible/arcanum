@@ -1,13 +1,11 @@
 import os
 import json
-import mimetypes
 import pdfplumber
-from openai import AzureOpenAI
 import re
 from dotenv import load_dotenv
 
-from webdav import check_if_cached,download_file_webdav, download_cache
-from upload import upload_file_method_production
+from webdav import download_cache
+
 from readwrite import read_from_file
 
 
@@ -23,10 +21,8 @@ AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 
 def process_attachment(file):
     mimetype = file["mimetype"]
-    filepath = file["filepath"]
     filehash = file["filehash"]
     file_id = file["id"] if "id" in file else file["file_id"]
-    filename = file["filename"]
 
     path = download_cache(filehash)
     content_of_file = read_from_file(path)
