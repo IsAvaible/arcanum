@@ -41,7 +41,7 @@ class Case(BaseModel):
     )
     attachments: list[CaseAttachment] = Field(
         ...,
-        description="All the File-Ids that were used to generate this Case.",
+        description="All the Attachments that were used to generate this Case.",
     )
 
 
