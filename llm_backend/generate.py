@@ -300,7 +300,10 @@ def ask_question(request):
     ai_message = replace_doc_number(edited_reponse, replacement_dict)
     sio.emit('llm_end', {'message': ai_message, 'socket_id': socket_id})
 
-    return jsonify(ai_message), 200
+    msg = {
+        "message" : ai_message
+    }
+    return jsonify(msg), 200
 
         
 
