@@ -38,7 +38,7 @@ class Segment:
         return f"({self.start}, {self.end}, {self.text})"
 
 
-def transcribe(file, texts, llm, path, filename, filehash, file_as_dicts):
+def transcribe(file, texts, path, filehash, file_as_dicts):
     if os.path.isfile(path) is True:
         glossary_terms = []
         for dict in file_as_dicts:
