@@ -72,3 +72,61 @@
 
 Generate Case(s) Diagramm
 ![generate case](https://github.com/user-attachments/assets/5fd53c91-312e-4e82-a966-a92ce84a29f3)
+
+## LLM Chat
+![LLM Chat](https://github.com/user-attachments/assets/086f05c8-755c-4c9f-bfd4-3c2aa5b66f86)
+
+### Beispiel Request:
+```
+{
+  "socketId": "12345",
+  "message": "Welche Probleme sind bisher mit Schweißgeräten aufgetreten?",
+  "context": [
+    {"role": "user", "content": "Hallo"},
+    {"role": "assistant", "content": "Hallo, wie kann ich dir helfen?"}
+  ]
+}
+```
+### Beispiel Response:
+```
+"Ein Problem, das mit dem Schweißgerät MIG4300Pro aufgetreten ist, betrifft merkwürdige Geräusche, die auf eine mögliche Überlastung des Motors oder ein internes Problem hindeuten. Zusätzlich schaltet sich das Gerät bei längeren Schweißnähten ab. Die Stromversorgung wurde überprüft und das Gerät war an derselben Steckdose wie immer angeschlossen. Die Lüftungsschlitze waren frei, was auf ein anderes Problem hinwies. Es wurde festgestellt, dass der Draht in der Drahtzuführung verhakt war. Nach der Neuausrichtung der Drahtrolle scheint das Problem behoben zu sein [file:14][case:24]."
+```
+### Beispiel Response Socket:
+```
+["llm_message",{"message":"Ein Problem, das mit dem Schwei\u00dfger\u00e4t MIG4300Pro aufgetreten ist, betrifft merkw\u00fcrdige Ger\u00e4usche, die auf eine m\u00f6gliche \u00dcberlastung des Motors oder ein internes Problem hindeuten. Zus\u00e4tzlich schaltet sich das Ger\u00e4t bei l\u00e4ngeren Schwei\u00dfn\u00e4hten ab. Die Stromversorgung wurde \u00fcberpr\u00fcft und das Ger\u00e4t war an derselben Steckdose wie immer angeschlossen. Die L\u00fcftungsschlitze waren frei, was auf ein anderes Problem hinwies. Es wurde festgestellt, dass der Draht in der Drahtzuf\u00fchrung verhakt war. Nach der Neuausrichtung der Drahtrolle scheint das Problem behoben zu sein [file:14][case:24].","socket_id":"12345"}]
+```
+
+## Save to VectorDB
+![LLM save case](https://github.com/user-attachments/assets/f6d51fcd-d177-4b0d-ae91-94d578a2ea39)
+
+### Beispiel Request: 
+```
+[
+    {
+        "id": 24,
+        "title": "Merkwürdige Geräusche und Abschaltung des Schweißgeräts MIG4300Pro",
+        "description": "Das Schweißgerät MIG4300Pro macht merkwürdige Geräusche, die auf eine mögliche Überlastung des Motors oder ein internes Problem hindeuten. Zusätzlich schaltet sich das Gerät bei längeren Schweißnähten ab. Die Stromversorgung wurde überprüft und das Gerät ist an derselben Steckdose wie immer angeschlossen. Die Lüftungsschlitze sind frei, was auf ein anderes Problem hinweist. [SMS_1_PDF.pdf: 09:12 - 09:17]",
+        "solution": "Es wurde festgestellt, dass der Draht in der Drahtzuführung verhakt war. Nach der Neuausrichtung der Drahtrolle scheint das Problem behoben zu sein. [SMS_1_PDF.pdf: 09:20 - 09:23]",
+        "assignee": null,
+        "status": "Solved",
+        "case_type": "Problem",
+        "priority": "Medium",
+        "draft": true,
+        "createdAt": "2025-01-05T13:24:29.740Z",
+        "updatedAt": "2025-01-05T13:24:29.740Z",
+        "attachments": [
+            {
+                "id": 14,
+                "filename": "SMS_1_PDF.pdf",
+                "filepath": "/IP_WKS/Text/f4ea323f129f8fc199b0539726729f1375153a0c715b0fd8c63fa48fa9361bfd.pdf",
+                "mimetype": "application/pdf",
+                "size": 34666,
+                "uploadedAt": "2025-01-05T13:22:06.258Z",
+                "filehash": "f4ea323f129f8fc199b0539726729f1375153a0c715b0fd8c63fa48fa9361bfd",
+                "createdAt": "2025-01-05T13:22:06.258Z",
+                "updatedAt": "2025-01-05T13:22:06.259Z"
+            }
+        ]
+    }
+]
+```
