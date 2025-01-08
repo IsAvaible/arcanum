@@ -67,7 +67,6 @@ def upload_file_method_production(files, socket_id):
     files_as_dicts_json = ""
     texts = ""
     single_text = None
-    whisper_prompt = ""
     # Set to true if you want to cache files in Sciebo/WebDav
     USE_CACHE = False
 
