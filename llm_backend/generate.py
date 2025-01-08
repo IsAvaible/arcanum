@@ -8,7 +8,7 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import AzureChatOpenAI
 
-from app import socketio
+from app import sio
 from case import CaseArray, check_if_output_is_valid
 from readwrite import write_to_file
 from prompts import get_system_prompt
@@ -63,7 +63,7 @@ def generate(request):
         # gets socket_id to send message to frontend
         socket_id = json_str["socket_id"]
 
-        socketio.emit('case_generation', {'message': 'Starting Case Generation...'}, to=socket_id)
+        sio.emit('llm_message', {'message': 'Starting Case Generation...', 'socket_id': socket_id})
 
         # Prompt for generating JSON and including all context
         prompt = "Please create metadata for a new case based on the Context provided and return them in JSON! Please try include all necessary information that the context has!"
@@ -87,8 +87,7 @@ def generate(request):
         print(formatted_json_string)
         print("ALL ATTACHMENTS ANALYZED")
 
-        socketio.emit('case_generation', {'message': 'Finalizing Case Generation...'}, to=socket_id)
-
+        sio.emit('llm_message', {'message': 'Finalizing Case Generation...', 'socket_id': socket_id})
         # get system prompt for case generation
         system_prompt_langchain_parser = get_system_prompt("langchain_parser")
         # validate json for multiple cases
