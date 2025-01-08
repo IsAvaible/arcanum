@@ -7,7 +7,6 @@ from generate import (
     vector_db_save_cases,
     ask_question,
 )
-from chat import chat
 
 routes = Blueprint("routes", __name__)
 

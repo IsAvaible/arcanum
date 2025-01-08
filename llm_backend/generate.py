@@ -1,14 +1,6 @@
 import json
 import os
 import time
-
-from dotenv import load_dotenv
-from flask import jsonify
-from case import CaseArray, check_if_output_is_valid
-from prompts import get_system_prompt
-from upload import upload_file_method_production
-from vectorstore import QdrantVectorstore
-import json
 import re
 
 from langchain_core.output_parsers import JsonOutputParser
@@ -16,10 +8,13 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import AzureChatOpenAI
 
 from app import sio
+from dotenv import load_dotenv
+from flask import jsonify
 from case import CaseArray, check_if_output_is_valid
-from readwrite import write_to_file
 from prompts import get_system_prompt
 from upload import upload_file_method_production
+from vectorstore import QdrantVectorstore
+from readwrite import write_to_file
 
 load_dotenv()
 
