@@ -6,23 +6,11 @@ class CaseAttachment(BaseModel):
         ...,
         description="A unique numeric identifier for the file within the system."
     )
-    glossary: list[str] = Field(
+    """glossary: list[str] = Field(
         ...,
-        description="A list of all the glossary terms in this attachment. Only Machine Names, Model Numbers, etc. and only from textual files not video/audio/image files"
-    )
-"""  filename: str = Field(
-        ...,
-        description="The name of the file, including its extension (e.g., 'document.pdf'), as stored in the system."
-    )
-    filepath: str = Field(
-        ...,
-        description="The full path to the file's location on the system, specifying where the file is stored."
-    )
-    filehash: str = Field(
-        ...,
-        description="A unique hash generated for the file to verify its integrity and identify its contents."
-    )
-"""
+        description="A list of all the glossary terms in this attachment. Only Machine Names, Model Numbers, etc. and only from textual files NO video summaries NO transcriptions NO image files"
+    )"""
+
 # defining the desired output of the llm
 class Case(BaseModel):
     title: str = Field(
@@ -35,7 +23,7 @@ class Case(BaseModel):
     )
     solution: str = Field(
         ...,
-        description="A proposed or implemented solution to address the case. Include all possible solutions you can find! If not yet resolved, this can include potential steps or approaches to consider. Include granular Timestamps from Audio files!",
+        description="A proposed or implemented solution to address the case. Include all possible solutions you can find! If not yet resolved, this can include potential steps or approaches to consider. Include granular Timestamps ONLY from Audio AND OR VIDEO files!",
     )
     """assignee: list[str] = Field(
         ...,
@@ -49,10 +37,10 @@ class Case(BaseModel):
         ...,
         description="All the Attachments that were used to generate this Case.",
     )
-    glossary: list[str] = Field(
+""" glossary: list[str] = Field(
         ...,
-        description="All the Glossary terms used for generating this case. Only Machine Names, Model Numbers, etc. and only from textual files not video/audio/image files",
-    )
+        description="All the Glossary terms used for generating this case. Only Machine Names, Model Numbers, etc. and only from textual files NO video summaries NO transcriptions NO image files",
+    )"""
 
 
 class CaseArray(BaseModel):
