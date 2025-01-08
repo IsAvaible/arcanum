@@ -11,9 +11,13 @@ def write_to_file(hash, content):
     dir_path = os.path.join(app.root_path, "temp", hash)
     os.makedirs(dir_path, exist_ok=True)  # Erstellt das Verzeichnis, falls nötig
 
+    #delete temp file to rewrite
+    if os.path.exists(dir_path):
+        os.rmdir(dir_path)
+        os.mkdir(dir_path)
+
     # file path
     file_path = os.path.join(dir_path, f"{hash}.json")
-
     try:
         # write file
         with open(file_path, "w", encoding="utf-8") as file:
