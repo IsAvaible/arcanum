@@ -1,24 +1,14 @@
-const port = process.env.PORT || 443;
+const port = 3000;
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const { Server } = require("socket.io");
 
 const https = require("https");
 const fs = require("fs");
 
 const caseRoutes = require("./routes/caseRoutes");
 const uploadRoutes = require("./routes/exampleFileUpload");
-
-app.use(
-  cors({
-    origin: [
-      "http://localhost:8080", // Frontend (Docker)
-      "http://localhost:4173", // Frontend (Production)
-      "http://localhost:5173", // Frontend (Development)
-      "http://localhost:63342", // PHPStorm
-    ],
-  }),
-);
 
 // for development only
 app.set("view engine", "ejs");
@@ -63,14 +53,36 @@ const credentials = {
 // for https uncomment the following lines
 try {
   const server = https.createServer(credentials, app);
+  const io = new Server(server, {
+    cors: {
+      origin: [
+        "http://localhost:8080", // Frontend (Docker)
+        "http://localhost:4173", // Frontend (Production)
+        "http://localhost:5173", // Frontend (Development)
+        "http://localhost:5174", // Swagger OpenAPI Editor
+        "http://localhost:63342", // PHPStorm
+        "http://localhost:5001", // PHPStorm
+        process.env.LLM_API_URL, // LLM_Backend
+      ],
+      credentials: true,
+    },
+  });
+  // Socket IO Listener
+  io.on("connection", (socket) => {
+    console.log(`Client connected to ${socket.id}`);
+
+    socket.on("llm_message", (data) => {
+      console.log("Received 'llm_message' event:", data);
+    });
+
+    socket.on("disconnect", () => {
+      console.log(`Client disconnected : ${socket.id}`);
+    });
+  });
+
   server.listen(port, function (req, res) {
-    console.log(`Example app listening on port 3000 (${port})`);
+    console.log(`Server listening on port (${port})`);
   });
 } catch (err) {
   console.error(err);
 }
-
-// for https comment the following line
-// app.listen(port, () => {
-//   console.log(`Example app listening on port ${port}`)
-// })
