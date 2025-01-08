@@ -50,7 +50,7 @@ const api = useApi()
 
 /// Socket Connection
 /** Socket connection for real-time chat updates. */
-let socket: Socket | null = null
+const socket = ref<Socket | null>(null)
 
 /// Regex Constants
 /** Regular expression to match case references like #10 in messages. */
@@ -77,15 +77,15 @@ const fetchChats = async () => {
 }
 
 const registerSocket = () => {
-  if (socket) {
+  if (socket.value) {
     // Disconnect the existing socket
-    socket.disconnect()
+    socket.value.disconnect()
   }
-  socket = io(BACKEND_API_BASE_PATH, { rejectUnauthorized: false })
+  socket.value = io(BACKEND_API_BASE_PATH, { rejectUnauthorized: false })
 
-  socket.on('connect', () => {
-    socket!.on('llm_token', (data: { socketId: string; content: string }) => {
-      if (data.socketId === socket?.id) {
+  socket.value.on('connect', () => {
+    socket.value!.on('llm_token', (data: { socketId: string; content: string }) => {
+      if (data.socketId === socket.value!.id) {
         pendingLLMMessage.value = {
           content: data.content,
           state: 'generating',
@@ -97,7 +97,7 @@ const registerSocket = () => {
       }
     })
 
-    socket!.on('llm_end', (data) => {
+    socket.value!.on('llm_end', (data) => {
       activeChat.value?.messages.push(data.message)
       pendingLLMMessage.value = null
     })
@@ -324,7 +324,7 @@ const sendPendingMessage = async () => {
       await api.chatsIdMessagesPost({
         id: activeChat.value!.id,
         content: pendingMessage.value!.content,
-        socketId: socket!.id!,
+        socketId: socket.value?.connected ? socket.value!.id! : '-1',
       })
     ).data
     pendingMessage.value = null
