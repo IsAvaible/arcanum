@@ -100,7 +100,7 @@ def upload_file_method_production(files, socket_id):
             # upload audio file
             if "audio" in mimetype:
                 sio.emit('llm_message', {'message': f'Transcribing Audio File "{filename}"', 'socket_id': socket_id})
-                transcription = transcribe(file, texts, llm, path, filename, filehash, whisper_prompt)
+                transcription = transcribe(file, texts, llm, path, filename, filehash, files_as_dicts)
                 single_dict = transcription
                 texts += "  " + json.dumps(single_text, ensure_ascii=False)
             # upload pdf file
@@ -166,7 +166,7 @@ def upload_file_method_production(files, socket_id):
                 frame_path, audio_path, duration = extract_data_from_video(path, filehash)
                 frames = get_all_frames_in_dir(frame_path)
 
-                transcription = transcribe(file, texts, llm, audio_path, filename, filehash, whisper_prompt)
+                transcription = transcribe(file, texts, llm, audio_path, filename, filehash, files_as_dicts)
                 video_summary = process_segments(frames, transcription, duration)
                 single_dict = {
                     "transcription" : transcription["transcription"],
