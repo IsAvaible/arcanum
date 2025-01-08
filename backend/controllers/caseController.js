@@ -447,6 +447,17 @@ exports.confirmCase = [
         ],
       });
 
+      console.log("Sending to LLM: ", JSON.stringify(updatedCaseWithAttachments));
+
+      // Send data to the LLM endpoint.
+      const llmResponse = await axios.post(
+        `${process.env.LLM_API_URL}/save_to_vector_db`,
+        updatedCaseWithAttachments,
+      );
+
+      //const responseData = llmResponse.data;
+      console.log("Received from LLM: ", JSON.stringify(llmResponse.data));
+
       // Send the updated case as the response.
       res.json(updatedCaseWithAttachments);
     } catch (error) {
