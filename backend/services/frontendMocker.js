@@ -13,6 +13,7 @@ const PORT = 8080;
 // URL des Backends
 const backendUrl = "https://localhost:443";
 
+
 // Socket mit Backend verbinden
 const socket = io(backendUrl, {
   rejectUnauthorized: false,
@@ -26,6 +27,7 @@ socket.on("connect", () => {
 socket.on("llm_message", ({ message }) => {
   console.log("Received message from Backend:", message);
 });
+
 
 socket.on("llm_end", ({ content }) => {
   console.log("Final message received:", content);

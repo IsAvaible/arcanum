@@ -1,4 +1,3 @@
-
 const { io } = require("socket.io-client");
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -22,6 +21,7 @@ function simulateMessageSending(socket, socketId, messages, intervalMs = 500) {
       index++;
     } else {
       clearInterval(interval);
+
 
       // Wenn alle messages gesendet sind, sende das end-Event
       const finalMessage = messages.join("");
