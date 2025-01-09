@@ -11,7 +11,7 @@ const app = express();
 const PORT = 8080;
 
 // URL des Backends
-const backendUrl = "https://localhost:443";
+const backendUrl = "https://localhost:3000";
 
 
 // Socket mit Backend verbinden
