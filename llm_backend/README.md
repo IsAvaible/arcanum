@@ -97,7 +97,7 @@ Generate Case(s) Diagramm
 ```
 
 ## Save to VectorDB
-![LLM save case](https://github.com/user-attachments/assets/f6d51fcd-d177-4b0d-ae91-94d578a2ea39)
+![LLM save to vectordb](https://github.com/user-attachments/assets/273db51d-69cf-48f6-ac7c-2b1348a90ee1)
 
 ### Beispiel Request: 
 ```
