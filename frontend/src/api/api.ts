@@ -156,6 +156,12 @@ export interface Case {
      * @memberof Case
      */
     'attachments': Array<Attachment>;
+    /**
+     * List of changes made to the case.
+     * @type {Array<CaseChangeHistoryEntry>}
+     * @memberof Case
+     */
+    'changeHistory': Array<CaseChangeHistoryEntry>;
 }
 
 export const CaseStatusEnum = {
@@ -258,6 +264,31 @@ export type CaseBasePriorityEnum = typeof CaseBasePriorityEnum[keyof typeof Case
 
 /**
  *
+ * @export
+ * @interface CaseChangeHistoryEntry
+ */
+export interface CaseChangeHistoryEntry {
+    /**
+     * ID of the change history entry.
+     * @type {number}
+     * @memberof CaseChangeHistoryEntry
+     */
+    'id': number;
+    /**
+     * ID of the case the change was made to.
+     * @type {number}
+     * @memberof CaseChangeHistoryEntry
+     */
+    'caseId': number;
+    /**
+     * Timestamp the change was made at.
+     * @type {string}
+     * @memberof CaseChangeHistoryEntry
+     */
+    'updatedAt': string;
+}
+/**
+ * 
  * @export
  * @interface Chat
  */

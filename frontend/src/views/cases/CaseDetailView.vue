@@ -17,6 +17,7 @@ import Menu from 'primevue/menu'
 import Dialog from 'primevue/dialog'
 import Skeleton from 'primevue/skeleton'
 import Divider from 'primevue/divider'
+import Timeline from 'primevue/timeline'
 
 import { MdEditor } from 'md-editor-v3'
 
@@ -28,6 +29,7 @@ import FileDropzoneUpload from '@/components/file-handling/FileDropzoneUpload.vu
 import UserSelector, { type User } from '@/components/case-create-form/UserSelector.vue'
 import CaseStatusSelect from '@/components/case-form-fields/CaseStatusSelect/CaseStatusSelect.vue'
 import CasePrioritySelect from '@/components/case-form-fields/CaseStatusSelect/CasePrioritySelect.vue'
+import ScrollFadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
 
 // Types
 import type { AxiosError } from 'axios'
@@ -143,9 +145,17 @@ const handleSave = handleSubmit(
     saveLoading.value = true
     try {
       if (caseDetails.value!.draft) {
-        await api.confirmCaseIdPut({ id: Number(caseId.value), ...values })
+        caseDetails.value = (
+          await api.confirmCaseIdPut({
+            id: Number(caseId.value),
+            ...values,
+            assignee: values.assignees,
+          })
+        ).data
       } else {
-        await api.casesIdPut({ id: Number(caseId.value), ...values })
+        caseDetails.value = (
+          await api.casesIdPut({ id: Number(caseId.value), ...values, assignee: values.assignees })
+        ).data
       }
       resetForm({ values: values })
       await nextTick(() => {
@@ -445,9 +455,32 @@ const menuItems = [
   },
 ]
 
+/**
+ * Toggle the more actions menu
+ * @param event The click event
+ */
 const toggleMenu = (event: Event) => {
   moreMenu.value.toggle(event)
 }
+
+/**
+ * Format the date to a human-readable format
+ * @param date The date to format
+ */
+const formatDate = (date: string | Date) => {
+  return new Date(date).toLocaleString()
+}
+
+const changeHistoryEvents = computed(() => {
+  return caseDetails.value
+    ? caseDetails.value.changeHistory.map((entry) => ({
+        status: 'Updated',
+        date: formatDate(entry.updatedAt),
+        icon: 'pi pi-calendar',
+        color: '#3B82F6',
+      }))
+    : []
+})
 </script>
 
 <template>
@@ -732,7 +765,7 @@ const toggleMenu = (event: Event) => {
         </template>
       </Card>
 
-      <!-- Data Card -->
+      <!-- Attachments Card -->
       <Card class="mt-6">
         <template #title>
           <div class="flex items-center justify-between">
@@ -793,6 +826,34 @@ const toggleMenu = (event: Event) => {
             </template>
           </FileDropzoneUpload>
           <Skeleton v-else height="10rem" />
+        </template>
+      </Card>
+
+      <!-- Change History Card -->
+      <Card class="mt-6">
+        <template #title>
+          <h2 class="text-xl font-semibold mb-4">Change History</h2>
+        </template>
+        <template #content>
+          <ScrollFadeOverlay axis="vertical" content-class="max-h-[190px]">
+            <Timeline :value="changeHistoryEvents" align="left">
+              <template #marker="slotProps">
+                <span
+                  class="flex w-10 h-10 items-center justify-center text-white rounded-full z-10 shadow-sm bg-gray-800"
+                >
+                  <i class="pi pi-file-edit -mr-0.5"></i>
+                </span>
+              </template>
+              <template #content="slotProps">
+                <div class="flex items-center justify-between pt-2">
+                  <p class="font-semibold text-gray-800">
+                    Case Updated -
+                    <span class="text-sm text-gray-600">{{ slotProps.item.date }}</span>
+                  </p>
+                </div>
+              </template>
+            </Timeline>
+          </ScrollFadeOverlay>
         </template>
       </Card>
     </div>
@@ -878,5 +939,9 @@ const toggleMenu = (event: Event) => {
 /* Add margin-top to main content container */
 .max-w-7xl {
   margin-top: 60px;
+}
+
+:deep(.p-timeline-event-opposite) {
+  @apply flex-initial;
 }
 </style>
