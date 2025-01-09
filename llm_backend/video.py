@@ -4,7 +4,7 @@ import subprocess
 
 import cv2
 
-from app import app
+from app import app, sio
 from image import encode_image, image_to_openai
 
 split_secs = 100
@@ -118,7 +118,7 @@ def extract_data_from_video(video_path, filehash):
     return frames_path, audio_output, duration
 
 
-def process_segments(frames, transcription, duration):
+def process_segments(frames, transcription, duration, socket_id):
     seconds = round(duration / len(frames))
 
     print("SECONDS " + str(seconds))
@@ -166,7 +166,7 @@ def process_segments(frames, transcription, duration):
         start = 0
         step = 0
         for group in groups:
-            print("Analyzing Segment " + str(step + 1) + " / " + str(frame_segments + 1))
+            sio.emit('llm_message', {'message': f'Analyzing Video Chunk {step+1}/{str(len(groups))}', 'socket_id': socket_id})
             prompt_dict.clear()
             if len(data["video_summary"]["segments"]) == 0:
                 prompt_dict.append(transcription)
@@ -206,6 +206,7 @@ def process_segments(frames, transcription, duration):
             start += group
             step = step + 1
     else:
+        sio.emit('llm_message', {'message': 'Analyzing Video Chunk...', 'socket_id': socket_id})
         start_timestamp = convert_timestamp_to_str(0)
         end_timestamp = convert_timestamp_to_str(len(frames) * seconds)
         prompt_dict = [

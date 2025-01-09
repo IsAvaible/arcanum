@@ -9,7 +9,6 @@ import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import Button from 'primevue/button'
 import Divider from 'primevue/divider'
-import ConfirmDialog from 'primevue/confirmdialog'
 
 import { useToast } from 'primevue'
 
@@ -295,7 +294,6 @@ const dialogPT = {
     :closable="false"
     :pt="dialogPT"
   >
-    <ConfirmDialog></ConfirmDialog>
     <template #header>
       <div class="w-full -m-5 p-5 box-content bg-white rounded-t-xl overflow-x-auto">
         <CaseCreateStepper

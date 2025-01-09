@@ -101,7 +101,7 @@ def upload_file_method_production(files, socket_id):
             # upload audio file
             if "audio" in mimetype:
                 sio.emit('llm_message', {'message': f'Transcribing Audio File "{filename}"', 'socket_id': socket_id})
-                transcription = transcribe(file, texts, path, filehash, files_as_dicts)
+                transcription = transcribe(file, texts, path, filehash, files_as_dicts, socket_id)
                 single_dict = transcription
                 texts += "  " + json.dumps(single_text, ensure_ascii=False)
             # upload pdf file
@@ -173,15 +173,14 @@ def upload_file_method_production(files, socket_id):
                 frame_path, audio_path, duration = extract_data_from_video(path, filehash)
                 frames = get_all_frames_in_dir(frame_path)
 
-                transcription = transcribe(file, texts, audio_path, filehash, files_as_dicts)
-                video_summary = process_segments(frames, transcription, duration)
+                transcription = transcribe(file, texts, audio_path, filehash, files_as_dicts, socket_id)
+                video_summary = process_segments(frames, transcription, duration, socket_id)
                 single_dict = {
                     "transcription" : transcription["transcription"],
                     "video_summary" : video_summary["video_summary"]
                 }
             else:
                 sio.emit('llm_message', {'message': f'File "{filename}" cannot be processed', 'socket_id': socket_id})
-
 
 
         # define a dictionary for a file
@@ -195,15 +194,16 @@ def upload_file_method_production(files, socket_id):
         }
         ### CACHE TO MINIMIZE AZURE API CALLS
         if is_cached and USE_CACHE:
+            sio.emit('llm_message', {'message': f'Getting "{filename}" from Cache', 'socket_id': socket_id})
             print("USING CACHE")
             cache_path = download_cache(filehash) # download cache file
             txt = read_from_file(cache_path) # read cache file
             file_as_dict = text_to_dict(txt) # file to dict
         else:
+            sio.emit('llm_message', {'message': f'Saving file "{filename}" to Cache', 'socket_id': socket_id})
             print("NOT USING CACHE")
             file_path = write_to_file(filehash, json.dumps(file_as_dict, ensure_ascii=False, indent=2))
             upload_cache_file(file_path, filehash)
-
 
 
         files_as_dicts.append(file_as_dict)

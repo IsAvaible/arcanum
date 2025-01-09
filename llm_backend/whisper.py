@@ -4,7 +4,7 @@ from itertools import islice
 
 from dotenv import load_dotenv
 
-from app import app
+from app import app, sio
 from audio import split_audio_with_overlap
 from glossary import list_to_comma
 from openai import AzureOpenAI
@@ -38,7 +38,7 @@ class Segment:
         return f"({self.start}, {self.end}, {self.text})"
 
 
-def transcribe(file, texts, path, filehash, file_as_dicts):
+def transcribe(file, texts, path, filehash, file_as_dicts, socket_id):
     if os.path.isfile(path) is True:
         glossary_terms = []
         for dict in file_as_dicts:
@@ -65,8 +65,10 @@ def transcribe(file, texts, path, filehash, file_as_dicts):
         # if file greater 24Mb we need to split this file into multiple segments
         if float(file_size_mb) > 24.0:
             # get multiple split segments
-            segments = split_audio_with_overlap(path, segment_length_ms=split_length_ms, overlap_ms=500)
-            for idx, segment in enumerate(segments):
+            sio.emit('llm_message', {'message': 'Splitting Audio in multiple chunks...', 'socket_id': socket_id})
+            chunks = split_audio_with_overlap(path, segment_length_ms=split_length_ms, overlap_ms=500)
+            for idx, segment in enumerate(chunks):
+                sio.emit('llm_message', {'message': f'Transcribing Audio Chunk {idx+1}/{len(chunks)}', 'socket_id': socket_id})
                 dir = os.path.join(
                     app.root_path, os.path.join(f"temp/{filehash}/audio")
                 )
@@ -102,6 +104,7 @@ def transcribe(file, texts, path, filehash, file_as_dicts):
                 data["transcription"]["segments"].extend(generated_dict)
             return data
         else:
+            sio.emit('llm_message', {'message': 'Transcribing audio...', 'socket_id': socket_id})
             # if audio file is lower than 24mb
             audio_file = open(path, "rb")
             response = client.audio.transcriptions.create(

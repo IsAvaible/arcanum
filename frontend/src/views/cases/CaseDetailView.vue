@@ -17,7 +17,6 @@ import Menu from 'primevue/menu'
 import Dialog from 'primevue/dialog'
 import Skeleton from 'primevue/skeleton'
 import Divider from 'primevue/divider'
-import ConfirmDialog from 'primevue/confirmdialog'
 import Timeline from 'primevue/timeline'
 
 import { MdEditor } from 'md-editor-v3'
@@ -30,6 +29,7 @@ import FileDropzoneUpload from '@/components/file-handling/FileDropzoneUpload.vu
 import UserSelector, { type User } from '@/components/case-create-form/UserSelector.vue'
 import CaseStatusSelect from '@/components/case-form-fields/CaseStatusSelect/CaseStatusSelect.vue'
 import CasePrioritySelect from '@/components/case-form-fields/CaseStatusSelect/CasePrioritySelect.vue'
+import ScrollFadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
 
 // Types
 import type { AxiosError } from 'axios'
@@ -45,7 +45,6 @@ import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
 
 import { userOptions } from '@/api/mockdata'
-import ScrollFadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
 
 const router = useRouter()
 const api = useApi()
@@ -486,7 +485,6 @@ const changeHistoryEvents = computed(() => {
 
 <template>
   <div class="max-w-7xl w-[80vw] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <ConfirmDialog />
     <!-- Unsaved changes banner -->
     <div v-if="inEditMode && form.dirty" class="unsaved-banner">
       <div class="banner-content">
