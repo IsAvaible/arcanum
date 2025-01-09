@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { computed, ref, useTemplateRef, watch, watchEffect } from 'vue'
+import { computed, onMounted, ref, useTemplateRef, watch, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import { Dialog, Button, Divider, Select, useToast } from 'primevue'
 import FileDropzoneUpload from '@/components/file-handling/FileDropzoneUpload.vue'
 import { useDevicesList, useVModel } from '@vueuse/core'
 import { useApi } from '@/composables/useApi'
 import { AxiosError } from 'axios'
+import { io, Socket } from 'socket.io-client'
+import { BASE_PATH as BACKEND_API_BASE_PATH } from '@/api/base'
+import { type StatusMessage } from '@/api'
 
 const props = defineProps<{
   /** The visibility of the dialog */
@@ -22,10 +25,36 @@ const files = ref<File[]>([])
 const showDialog = useVModel(props, 'visible', emit)
 const fileDropzone = useTemplateRef('fileDropzone')
 
+const generateButtonLabel = ref<string | ''>('Generate Case(s) From Files')
 // Methods
 const openManualCaseCreation = () => {
   showDialog.value = false
   router.push({ name: 'case-create-manual' })
+}
+
+const socket = ref<Socket | null>(null)
+const pendingLLMMessage = ref<(StatusMessage & {}) | null>(null)
+/// Socket Connection
+/** Socket connection for real-time chat updates. */
+const registerSocket = () => {
+  if (socket.value) {
+    // Disconnect the existing socket
+    socket.value.disconnect()
+  }
+  socket.value = io(BACKEND_API_BASE_PATH.replace(/(.*?)(\/api)(.*)/, '$1$3'), {
+    rejectUnauthorized: false,
+  })
+
+  socket.value.on('connect', () => {
+    console.log('Connected ' + socket.value!.id)
+    socket.value!.on('llm_message', (data: { message: string }) => {
+      console.log(data)
+      pendingLLMMessage.value = {
+        content: data.message,
+      }
+      generateButtonLabel.value = pendingLLMMessage.value.content
+    })
+  })
 }
 
 // Device List
@@ -174,6 +203,9 @@ watchEffect(() => {
     videoRecordingPreview.value.srcObject = videoStream.value
   }
 })
+onMounted(async () => {
+  registerSocket()
+})
 
 const buttonDevices = ref([
   {
@@ -215,7 +247,10 @@ const openAICaseCreation = async () => {
   loading.value = true
 
   try {
-    const result = await api.createCaseFromFilesPost({ files: files.value })
+    const result = await api.createCaseFromFilesPost({
+      files: files.value,
+      socketId: socket.value?.connected ? socket.value!.id! : '-1',
+    })
 
     await router.push('/cases/' + result.data[0].id)
   } catch (error) {
@@ -300,7 +335,7 @@ const openAICaseCreation = async () => {
         <Button
           :loading="loading"
           :disabled="loading"
-          :label="`Generat${loading ? 'ing' : 'e'} Case From Files`"
+          :label="generateButtonLabel"
           icon="pi pi-sparkles"
           class="w-full bg-gradient-to-tr from-green-500 via-blue-600 to-purple-700 border-none opacity-85 transition-opacity"
           :class="{
