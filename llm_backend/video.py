@@ -166,7 +166,7 @@ def process_segments(frames, transcription, duration, socket_id):
         start = 0
         step = 0
         for group in groups:
-            sio.emit('llm_message', {'message': f'Analyzing Video Segment {step+1}/{str(len(groups))}', 'socket_id': socket_id})
+            sio.emit('llm_message', {'message': f'Analyzing Video Chunk {step+1}/{str(len(groups))}', 'socket_id': socket_id})
             prompt_dict.clear()
             if len(data["video_summary"]["segments"]) == 0:
                 prompt_dict.append(transcription)
@@ -206,7 +206,7 @@ def process_segments(frames, transcription, duration, socket_id):
             start += group
             step = step + 1
     else:
-        sio.emit('llm_message', {'message': f'Analyzing Video Segment...', 'socket_id': socket_id})
+        sio.emit('llm_message', {'message': 'Analyzing Video Chunk...', 'socket_id': socket_id})
         start_timestamp = convert_timestamp_to_str(0)
         end_timestamp = convert_timestamp_to_str(len(frames) * seconds)
         prompt_dict = [

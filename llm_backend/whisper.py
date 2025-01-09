@@ -66,9 +66,9 @@ def transcribe(file, texts, path, filehash, file_as_dicts, socket_id):
         if float(file_size_mb) > 24.0:
             # get multiple split segments
             sio.emit('llm_message', {'message': 'Splitting Audio in multiple chunks...', 'socket_id': socket_id})
-            segments = split_audio_with_overlap(path, segment_length_ms=split_length_ms, overlap_ms=500)
-            for idx, segment in enumerate(segments):
-                sio.emit('llm_message', {'message': f'Transcribing Audio Chunk {idx+1}/{len(segments)}', 'socket_id': socket_id})
+            chunks = split_audio_with_overlap(path, segment_length_ms=split_length_ms, overlap_ms=500)
+            for idx, segment in enumerate(chunks):
+                sio.emit('llm_message', {'message': f'Transcribing Audio Chunk {idx+1}/{len(chunks)}', 'socket_id': socket_id})
                 dir = os.path.join(
                     app.root_path, os.path.join(f"temp/{filehash}/audio")
                 )
@@ -104,7 +104,7 @@ def transcribe(file, texts, path, filehash, file_as_dicts, socket_id):
                 data["transcription"]["segments"].extend(generated_dict)
             return data
         else:
-            sio.emit('llm_message', {'message': f'Transcribing audio...', 'socket_id': socket_id})
+            sio.emit('llm_message', {'message': 'Transcribing audio...', 'socket_id': socket_id})
             # if audio file is lower than 24mb
             audio_file = open(path, "rb")
             response = client.audio.transcriptions.create(
