@@ -54,7 +54,7 @@ const socket = ref<Socket | null>(null)
 
 /// Regex Constants
 /** Regular expression to match case references like #10 in messages. */
-const caseReferenceRegex = /#(\d+)(?:[,\.\s]|$)/g
+const caseReferenceRegex = /\[case:(\d+)]/g
 
 /// Chat Data Management
 /** State variables for chat data. */
@@ -81,24 +81,24 @@ const registerSocket = () => {
     // Disconnect the existing socket
     socket.value.disconnect()
   }
-  socket.value = io(BACKEND_API_BASE_PATH, { rejectUnauthorized: false })
+  socket.value = io(BACKEND_API_BASE_PATH.replace(/(.*?)(\/api)(.*)/, '$1$3'), {
+    rejectUnauthorized: false,
+  })
 
   socket.value.on('connect', () => {
-    socket.value!.on('llm_token', (data: { socketId: string; content: string }) => {
-      if (data.socketId === socket.value!.id) {
-        pendingLLMMessage.value = {
-          content: data.content,
-          state: 'generating',
-          chatId: activeChat.value!.id,
-          role: MessageRoleEnum.Assistant,
-          timestamp: new Date().toISOString(),
-          id: -2,
-        }
+    socket.value!.on('llm_message', (data: { message: string }) => {
+      console.log(data, socket.value!.id)
+      pendingLLMMessage.value = {
+        content: data.message,
+        state: 'generating',
+        chatId: activeChat.value!.id,
+        role: MessageRoleEnum.Assistant,
+        timestamp: new Date().toISOString(),
+        id: -2,
       }
     })
 
-    socket.value!.on('llm_end', (data) => {
-      activeChat.value?.messages.push(data.message)
+    socket.value!.on('llm_end', (_data: { message: string }) => {
       pendingLLMMessage.value = null
     })
   })
@@ -512,17 +512,13 @@ const hasInvalidCaseReferences = computed(() => invalidCaseReferences.value.leng
  * @returns Array of case reference objects.
  */
 const getCaseReferences = (message: string): { id: number; case: Promise<Case> }[] => {
-  const caseReferences = message.match(caseReferenceRegex)
+  const caseReferences = message.matchAll(caseReferenceRegex)
 
-  return (
-    caseReferences?.map((reference) => {
-      const id = Number(reference.replace('#', ''))
-      return {
-        id,
-        case: api.casesIdGet({ id }).then((response) => response.data),
-      }
-    }) || []
-  )
+  const caseIds = [...new Set([...caseReferences].map((match) => Number(match[1])))]
+  return caseIds.map((id) => ({
+    id,
+    case: api.casesIdGet({ id }).then((response) => response.data),
+  }))
 }
 
 /**
