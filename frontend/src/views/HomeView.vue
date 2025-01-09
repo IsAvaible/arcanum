@@ -20,6 +20,12 @@ const features = ref([
     icon: 'pi-cog',
     link: '/settings',
   },
+  {
+    title: 'UX Glossar',
+    description: 'Explore essential UX terms and definitions',
+    icon: 'pi-book',
+    link: '/glossary',
+  },
 ])
 </script>
 

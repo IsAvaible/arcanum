@@ -18,6 +18,7 @@ import Dialog from 'primevue/dialog'
 import Skeleton from 'primevue/skeleton'
 import Divider from 'primevue/divider'
 import Timeline from 'primevue/timeline'
+import Sidebar from 'primevue/sidebar'
 
 import { MdEditor } from 'md-editor-v3'
 
@@ -46,6 +47,15 @@ import { useCaseFields } from '@/validation/fields'
 import { until } from '@vueuse/core'
 
 import { userOptions } from '@/api/mockdata'
+
+// Glossary Types
+interface GlossaryTerm {
+  term: string
+  relatedCases?: string[]
+  usageCount?: number
+  lastUsed?: Date
+  dateAdded?: Date
+}
 
 const router = useRouter()
 const api = useApi()
@@ -93,6 +103,126 @@ const fetchCase = async () => {
   } finally {
     loading.value = false
   }
+}
+
+// Glossary data
+const glossaryData = ref<GlossaryTerm[]>([
+  {
+    term: 'Schweißgerät MIG4300Pro',
+    relatedCases: ['Case #2', 'Case #4'],
+    usageCount: 245,
+    lastUsed: new Date('2024-01-20'),
+    dateAdded: new Date('2023-06-15'),
+  },
+  {
+    term: 'Motor',
+    relatedCases: ['Case #7'],
+    usageCount: 189,
+    lastUsed: new Date('2024-01-22'),
+    dateAdded: new Date('2023-08-01'),
+  },
+  {
+    term: 'Stromversorgung',
+    relatedCases: ['Case #3', 'Case #12'],
+    usageCount: 150,
+    lastUsed: new Date('2024-01-15'),
+    dateAdded: new Date('2023-07-10'),
+  },
+  {
+    term: 'Lüftungsschlitze',
+    relatedCases: ['Case #9'],
+    usageCount: 85,
+    lastUsed: new Date('2024-01-05'),
+    dateAdded: new Date('2023-09-20'),
+  },
+  {
+    term: 'Drahtzuführung',
+    relatedCases: ['Case #10', 'Case #12'],
+    usageCount: 200,
+    lastUsed: new Date('2024-01-18'),
+    dateAdded: new Date('2023-07-25'),
+  },
+  {
+    term: 'Drahtrolle',
+    relatedCases: ['Case #9', 'Case #14'],
+    usageCount: 120,
+    lastUsed: new Date('2024-01-10'),
+    dateAdded: new Date('2023-10-10'),
+  },
+])
+
+// Glossary state
+const sidebarVisible = ref(false)
+const selectedTerm = ref<GlossaryTerm | null>(null)
+
+// Get terms used in the current case
+const usedGlossaryTerms = computed(() => {
+  if (!caseDetails.value) return []
+
+  const text = [caseDetails.value.description || '', caseDetails.value.solution || '']
+    .join(' ')
+    .toLowerCase()
+
+  const terms = glossaryData.value.filter((term) => text.includes(term.term.toLowerCase()))
+
+  console.log('Used glossary terms:', terms)
+  return terms
+})
+
+// Handle term selection
+const handleTermSelect = (term: GlossaryTerm) => {
+  selectedTerm.value = term
+  sidebarVisible.value = true
+}
+
+// Handle view all glossary terms
+const handleViewAllTerms = () => {
+  router.push({ name: 'Glossar' })
+}
+
+// Handle glossary term clicks
+const _handleGlossaryTermClick = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+  if (target.classList.contains('glossary-term')) {
+    const termText = target.textContent
+    if (termText) {
+      const term = glossaryData.value.find((t) => t.term === termText)
+      if (term) {
+        selectedTerm.value = term
+        sidebarVisible.value = true
+      }
+    }
+  }
+}
+
+// Process content to highlight glossary terms
+const _processContent = (content: string | undefined): string => {
+  if (!content) return ''
+
+  let processedContent = content
+  glossaryData.value.forEach((term) => {
+    const regex = new RegExp(`\\b${term.term}\\b`, 'gi')
+    processedContent = processedContent.replace(
+      regex,
+      `<button class="glossary-term" type="button">$&</button>`,
+    )
+  })
+
+  console.log('Processed content:', processedContent)
+  return processedContent
+}
+
+/**
+ * Format the date to a human-readable format
+ * @param date The date to format
+ */
+const formatDate = (date?: Date | string) => {
+  if (!date) return ''
+  return new Intl.DateTimeFormat('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(date))
 }
 
 // Lifecycle Hooks
@@ -526,14 +656,6 @@ const toggleMenu = (event: Event) => {
   moreMenu.value.toggle(event)
 }
 
-/**
- * Format the date to a human-readable format
- * @param date The date to format
- */
-const formatDate = (date: string | Date) => {
-  return new Date(date).toLocaleString()
-}
-
 const changeHistoryEvents = computed(() => {
   return caseDetails.value?.changeHistory
     ? caseDetails.value.changeHistory.map((entry) => ({
@@ -892,6 +1014,54 @@ const changeHistoryEvents = computed(() => {
         </template>
       </Card>
 
+      <!-- Glossary Card -->
+      <Card class="mt-6">
+        <template #title>
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-semibold mb-4">Glossary Terms</h2>
+            <Button
+              icon="pi pi-book"
+              rounded
+              severity="secondary"
+              @click="handleViewAllTerms"
+              v-tooltip.left="'View all terms'"
+            />
+          </div>
+        </template>
+        <template #content>
+          <div v-if="usedGlossaryTerms.length > 0" class="space-y-3">
+            <div
+              v-for="term in usedGlossaryTerms"
+              :key="term.term"
+              class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-emerald-200 hover:shadow-sm transition-all cursor-pointer"
+              @click="handleTermSelect(term)"
+            >
+              <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                <i class="pi pi-book text-emerald-500"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-sm font-medium text-gray-900 truncate">{{ term.term }}</h3>
+                <div class="flex items-center gap-2 mt-1 text-sm text-gray-500">
+                  <span v-if="term.usageCount" class="flex items-center">
+                    <i class="pi pi-chart-bar mr-1"></i>
+                    {{ term.usageCount }} Verwendungen
+                  </span>
+                </div>
+              </div>
+              <i class="pi pi-chevron-right text-gray-400"></i>
+            </div>
+          </div>
+          <div v-else class="text-center py-8">
+            <div
+              class="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-50 flex items-center justify-center"
+            >
+              <i class="pi pi-book text-gray-400 text-lg"></i>
+            </div>
+            <p class="text-gray-500">No associated Glossary Terms</p>
+          </div>
+        </template>
+      </Card>
+
       <!-- Change History Card -->
       <Card class="mt-6">
         <template #title>
@@ -957,6 +1127,66 @@ const changeHistoryEvents = computed(() => {
       :file="selectedFile"
       :file-properties="selectedFileProperties"
     />
+
+    <!-- Glossary Sidebar -->
+    <Sidebar
+      v-model:visible="sidebarVisible"
+      position="right"
+      :style="{ width: '35rem' }"
+      class="p-sidebar-lg"
+    >
+      <template v-if="selectedTerm">
+        <div class="px-2">
+          <!-- Term Header -->
+          <div class="mb-8">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                <i class="pi pi-book text-emerald-500 text-lg"></i>
+              </div>
+              <div>
+                <h2 class="text-xl font-semibold text-gray-900">{{ selectedTerm.term }}</h2>
+              </div>
+            </div>
+
+            <!-- Usage Statistics -->
+            <div class="flex gap-4 mt-4">
+              <div class="bg-gray-50 rounded-lg p-3 flex-1">
+                <div class="text-sm text-gray-500">Verwendungen</div>
+                <div class="text-lg font-semibold text-gray-900">
+                  {{ selectedTerm.usageCount || 0 }}
+                </div>
+              </div>
+              <div class="bg-gray-50 rounded-lg p-3 flex-1">
+                <div class="text-sm text-gray-500">Zuletzt verwendet</div>
+                <div class="text-lg font-semibold text-gray-900">
+                  {{ formatDate(selectedTerm.lastUsed) || 'Nie' }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Term Content -->
+          <div class="space-y-8">
+            <!-- Related Cases -->
+            <div v-if="selectedTerm.relatedCases?.length">
+              <h3 class="text-sm font-medium text-gray-700 mb-3">Verwandte Fälle</h3>
+              <div class="space-y-2">
+                <div
+                  v-for="caseRef in selectedTerm.relatedCases"
+                  :key="caseRef"
+                  class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-emerald-200 hover:shadow-sm transition-all cursor-pointer"
+                >
+                  <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                    <i class="pi pi-file text-emerald-500"></i>
+                  </div>
+                  <span class="text-sm text-gray-600">{{ caseRef }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </Sidebar>
   </div>
 </template>
 
@@ -1003,6 +1233,26 @@ const changeHistoryEvents = computed(() => {
 /* Add margin-top to main content container */
 .max-w-7xl {
   margin-top: 60px;
+}
+
+.glossary-term {
+  color: #0645ad;
+  cursor: pointer;
+  text-decoration: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  border: none;
+  font: inherit;
+}
+
+.glossary-term:hover {
+  text-decoration: underline;
+  color: #0b0080;
+}
+
+:deep(.prose) {
+  @apply text-gray-900;
 }
 
 :deep(.p-timeline-event-opposite) {
