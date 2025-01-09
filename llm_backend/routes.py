@@ -1,7 +1,6 @@
 from flask import request, Blueprint
 
 from app import app, sio
-from chat import chat
 from generate import (
     generate,
     vector_db_save_cases,
