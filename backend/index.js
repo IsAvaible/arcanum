@@ -10,7 +10,6 @@ const fs = require("fs");
 const caseRoutes = require("./routes/caseRoutes");
 const glossaryRoutes = require("./routes/glossaryRoutes");
 const uploadRoutes = require("./routes/exampleFileUpload");
-
 const chatRoutes = require("./routes/chatRoutes");
 const tokenService = require("./services/tokenService");
 
@@ -42,10 +41,9 @@ app.use(express.json()); // Fügt die JSON-Parsing-Middleware hinzu
 app.use(express.urlencoded({ extended: true }));
 
 //Routen verwenden
+app.use("/", uploadRoutes);
 app.use("/api", caseRoutes);
 app.use("/api", glossaryRoutes);
-
-app.use("/", uploadRoutes);
 app.use("/api", chatRoutes);
 
 app.get("/", (req, res) => {

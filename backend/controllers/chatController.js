@@ -1,7 +1,6 @@
 const { Chats, Messages, Cases, Attachments } = require("../models");
 const axios = require("axios");
 const { gatherChatContext } = require("../services/chatContextService");
-const attachmentService = require("../services/attachmentService");
 
 module.exports = {
   /**
@@ -57,15 +56,18 @@ module.exports = {
    */
   async getChatMessages(req, res) {
     const chatId = parseInt(req.params.id, 10);
+
     try {
       const chat = await Chats.findByPk(chatId, {
         include: [
           {
             model: Messages,
             as: "messages",
-            order: [["timestamp", "ASC"]],
           },
         ],
+      });
+      chat.messages = chat.messages.sort((a, b) => {
+        return new Date(a.timestamp) - new Date(b.timestamp);
       });
 
       if (!chat) {
@@ -110,7 +112,7 @@ module.exports = {
       const context = await gatherChatContext(chatId);
 
       // store User-message
-      await Messages.create({
+      const userMessage = await Messages.create({
         chatId: chatId,
         role: "user",
         content: content,
@@ -145,7 +147,7 @@ module.exports = {
           timestamp: new Date(),
         });
 
-        res.status(200).json(assistantMessage);
+        res.status(200).json({ userMessage, assistantMessage });
       } catch (error) {
         console.error("LLM module error:", error.message || error);
         return res
@@ -252,9 +254,9 @@ module.exports = {
    * @param {number} chatId.path.required - The ID of the chat containing the message.
    * @param {number} messageId.path.required - The ID of the message to update.
    * @param {string} content.body.required - The new content of the message.
-   * @param {string} [socketId.body.optional] - Optional socket ID for sending the updated message to the LLM.
-   * @returns {Object} 200 - The assisstant message (SocketId was provided)
-   * @returns {Object} 204 - Updated user message(no SocketId) 
+   * @param {string} [socketId.body.required] - Socket ID for sending the updated message to the LLM.
+   * @returns {Object} 200 - The assistant message (SocketId was provided)
+   * @returns {Object} 204 - Updated user message (no SocketId)
    * @returns {Error} 400 - Missing or invalid message content.
    * @returns {Error} 404 - Message or chat not found.
    * @returns {Error} 500 - Internal server error.
@@ -269,61 +271,67 @@ module.exports = {
     }
 
     try {
-      let message = await Messages.findOne({
+      let userMessage = await Messages.findOne({
         where: { id: messageId, chatId: chatId },
       });
-      if (!message) {
+      let assistantMessage = await Messages.findOne({
+        where: { id: messageId + 1, chatId: chatId, role: "assistant" },
+      });
+      if (!userMessage) {
         return res.status(404).json({ message: "Message not found" });
       }
 
-      if (socketId) {
-        const context = await gatherChatContext(chatId);
+      let context = await gatherChatContext(chatId);
+
+      console.log(
+        "Sende ans LLM: ",
+        JSON.stringify({ socketId: socketId, message: content, context }),
+      );
+
+      let assistantMessageContent;
+      try {
+        // Send to LLM and wait for a reply
+        // Expect a JSON here: { message: ‘The complete response from LLM’ }
+        const llmResponse = await axios.post(
+          `${process.env.LLM_API_URL}/generate`,
+          { socketId: socketId, message: content, context },
+        );
+        const { message } = llmResponse.data;
+        assistantMessageContent = message;
 
         console.log(
-          "Sende ans LLM: ",
-          JSON.stringify({ socketId: socketId, message: content, context }),
+          "Vom LLM Empfangen: ",
+          JSON.stringify(assistantMessageContent),
         );
-
-        try {
-          // Send to LLM and wait for a reply
-          // Expect a JSON here: { message: ‘The complete response from LLM’ }
-          const llmResponse = await axios.post(
-            `${process.env.LLM_API_URL}/generate`,
-            { socketId: socketId, message: content, context },
-          );
-          const { message: assistantMessageContent } = llmResponse.data;
-
-          console.log(
-            "Vom LLM Empfangen: ",
-            JSON.stringify(assistantMessageContent),
-          );
-
-          message.content = content;
-          message.timestamp = new Date();
-          await message.save();
-
-          // Save LLM response (assistant message)
-          let newAssistantMsg = await Messages.create({
-            chatId: chatId,
-            role: "assistant",
-            content: assistantMessageContent,
-            timestamp: new Date(),
-          });
-
-          res.status(200).json(newAssistantMsg);
-        } catch (error) {
-          console.error("LLM module error:", error.message || error);
-          return res
-            .status(500)
-            .json({ message: "Error communicating with the LLM module" });
-        }
-      } else {
-        message.content = content;
-        message.timestamp = new Date();
-        await message.save();
-        res.status(204).send();
+      } catch (error) {
+        console.error("LLM module error:", error.message || error);
+        return res
+          .status(500)
+          .json({ message: "Error communicating with the LLM module" });
       }
+      userMessage.content = content;
+      await userMessage.save();
 
+      // Save LLM response (assistant message)
+      if (assistantMessage) {
+        assistantMessage.content = assistantMessageContent;
+      } else {
+        const timestamp = new Date(userMessage.timestamp);
+        timestamp.setMilliseconds(timestamp.getMilliseconds() + 1);
+        assistantMessage = await Messages.create({
+          chatId: chatId,
+          role: "assistant",
+          content: assistantMessageContent,
+          timestamp: timestamp,
+        });
+      }
+      await assistantMessage.save();
+
+      context = await gatherChatContext(chatId);
+      if (!context || context.length === 0) {
+        console.warn("Empty context retrieved:", context);
+      }
+      res.status(200).json(context);
     } catch (error) {
       console.error("Error updating message:", error);
       res

@@ -26,11 +26,9 @@ async function gatherChatContext(chatId) {
     }
 
     // Nachrichten nach timestamp sortieren
-    const sortedMessages = chat.messages.sort((a, b) => {
+    return chat.messages.sort((a, b) => {
       return new Date(a.timestamp) - new Date(b.timestamp);
     });
-
-    return sortedMessages;
   } catch (error) {
     console.error("Error gathering chat context:", error);
     return [];

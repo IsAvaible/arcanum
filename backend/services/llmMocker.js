@@ -34,7 +34,7 @@ function simulateMessageSending(socket, socketId, messages, intervalMs = 500) {
 // -------------------------------------------
 // Globale Variablen / Setup
 // -------------------------------------------
-const backendUrl = "https://localhost:443"; // URL des eigentlichen Backends
+const backendUrl = "https://localhost:3000"; // URL des eigentlichen Backends
 // Socket.io-Client mit Backend verbinden
 
 const socket = io(backendUrl, {

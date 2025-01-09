@@ -357,7 +357,7 @@ const dialogPT = {
 
               <Divider />
 
-              <div class="grid sm:grid-cols-2 sm:grid-rows-2 grid-flow-col gap-x-6">
+              <div class="grid sm:grid-cols-2 sm:grid-rows-2 grid-flow-col gap-x-6 gap-y-4">
                 <Label
                   for="status"
                   label="Status (*)"
