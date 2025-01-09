@@ -13,7 +13,6 @@ from flask import jsonify
 from case import CaseArray, check_if_output_is_valid
 from prompts import get_system_prompt
 from upload import upload_file_method_production
-from vectorstore import QdrantVectorstore
 from readwrite import write_to_file
 
 load_dotenv()
@@ -167,18 +166,17 @@ def generate(request):
         return jsonify(response_dict), 200
 
 
-def vector_db_save_cases(request):
+def vector_db_save_cases(request, vectorstore):
     case = request.get_json(force=True)
     attachments = case["attachments"]
     case["attachments"] = [attachment["id"] for attachment in attachments]
 
-    vectorstore = QdrantVectorstore()
     vectorstore.insert_case(case, id=case["id"])
 
     for attachment in attachments:
         vectorstore.insert_attachment(attachment)
 
-    return "Cases Saved Successfully", 200
+    return "Case and Attachments Saved Successfully", 200
 
 def transform_to_standalone_question(chat_history):
     system_prompt = """
@@ -226,7 +224,7 @@ def transform_messages_for_llm(messages):
     return [{'role': message['role'], 'content': message['content']} for message in messages[:-1]]
 
 
-def ask_question(request):
+def ask_question(request, vectorstore):
     json_str = request.get_json(force=True)
     socket_id = json_str["socketId"]
     messages = json_str["context"]
@@ -234,15 +232,8 @@ def ask_question(request):
 
     messages_only_role_content = transform_messages_for_llm(messages)
 
-    # Extract the latest user message
-    # latest_user_message = next(
-    #     (message["content"] for message in reversed(messages) if message["role"] == "user"), None
-    # )
-
     if not latest_user_message:
         return jsonify({"error": "No user message found"}), 400
-
-    vectorstore = QdrantVectorstore()
 
     standalone_question = transform_to_standalone_question(json.dumps(messages_only_role_content))
     relevant_vectors = vectorstore.search_from_query(standalone_question)
