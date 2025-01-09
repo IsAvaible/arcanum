@@ -841,7 +841,7 @@ const changeHistoryEvents = computed(() => {
                 <span
                   class="flex w-10 h-10 items-center justify-center text-white rounded-full z-10 shadow-sm bg-gray-800"
                 >
-                  <i class="pi pi-file-edit"></i>
+                  <i class="pi pi-file-edit -mr-0.5"></i>
                 </span>
               </template>
               <template #content="slotProps">
