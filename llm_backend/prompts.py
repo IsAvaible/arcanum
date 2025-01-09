@@ -49,9 +49,9 @@ NEVER include personal names or sensitive data, especially when using audio file
 If CONTEXT contains TRANSCRIPTION DATA:  
 - Extract relevant information from each segment.  
 - Attach each piece of information to the **smallest possible timestamp range** in the format `[file_name: start_timestamp - end_timestamp]`.  
-  - The timestamp range should cover **only the part of the audio where the information is mentioned**, not the entire segment.  
-  - Ideally, the range should be no longer than **20-30 seconds**, unless the information spans a longer period.  
-- Do not group or merge timestamps unless explicitly instructed.  
+- The timestamp range should cover **only the part of the audio where the information is mentioned**, not the entire segment.  
+- Ideally, the range should be no longer than **20-30 seconds**, unless the information spans a longer period.  
+- ONLY USE Audio transcriptions for timestamps not Text files like PDFs!
 
 If CONTEXT contains VIDEO SUMMARIES:
 - Extract relevant information from each segment.
@@ -70,6 +70,7 @@ Product names
 Model numbers or designations
 Specific place names
 The extracted entities should be combined into a single, comma-separated list with no additional formatting. Ensure all terms are unique and listed only once. Ignore any irrelevant or generic terms.
+Do not include Names of Persons
 """
 
 # system prompt for analyzing images

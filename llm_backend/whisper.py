@@ -42,10 +42,11 @@ def transcribe(file, texts, path, filehash, file_as_dicts, socket_id):
     if os.path.isfile(path) is True:
         glossary_terms = []
         for dict in file_as_dicts:
-            if dict["content"]["glossary"] is not None:
-                for term in dict["content"]["glossary"]:
-                    glossary_terms.append(term)
-                print(glossary_terms)
+            if "content" in dict:
+                if "glossary" in dict["content"]:
+                    if dict["content"]["glossary"] is not None:
+                        for term in dict["content"]["glossary"]:
+                            glossary_terms.append(term)
 
         whisper_prompt = list_to_comma(glossary_terms)
 
@@ -100,7 +101,7 @@ def transcribe(file, texts, path, filehash, file_as_dicts, socket_id):
                 generated_dict = generate_segment_dict(combined_segments, idx)
 
                 # attach generated dictionary to data dictionary
-                data["segments"].extend(generated_dict)
+                data["transcription"]["segments"].extend(generated_dict)
             return data
         else:
             sio.emit('llm_message', {'message': f'Analyzing Audio file...', 'socket_id': socket_id})
@@ -122,11 +123,6 @@ def transcribe(file, texts, path, filehash, file_as_dicts, socket_id):
                 combined_segments.append(combine_segments(group_segments))
 
             # define data type
-            data = {
-                "transcription": {
-                    "segments":[]
-                }
-            }
             new_segments = generate_segment_dict(combined_segments)
             data["transcription"]["segments"] = new_segments
             return data

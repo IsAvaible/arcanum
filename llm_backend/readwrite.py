@@ -13,7 +13,7 @@ def write_to_file(hash, content):
 
     #delete temp file to rewrite
     if os.path.exists(dir_path):
-        os.rmdir(dir_path)
+        shutil.rmtree(dir_path, ignore_errors=True)
         os.mkdir(dir_path)
 
     # file path
