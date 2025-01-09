@@ -922,7 +922,7 @@ onMounted(async () => {
       <div class="mt-4">
         <SelectButton v-model="media" class="w-full flex [&>*]:w-full" :options="mediaOptions" />
       </div>
-      <FilePreview class="flex-1 mt-4" :file="selectedFile" v-if="filePreviewVisible" />
+      <FilePreview class="flex-1 mt-4" :file="selectedFile!" v-if="filePreviewVisible" />
     </div>
   </div>
 </template>
