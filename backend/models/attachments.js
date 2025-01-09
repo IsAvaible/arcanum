@@ -12,6 +12,13 @@ module.exports = (sequelize, DataTypes) => {
         otherKey: "caseId",
         as: "cases",
       });
+      // Attachment kann zu mehreren Glossar-Einträgen gehören (n:m)
+      Attachments.belongsToMany(models.Glossary, {
+        through: 'GlossaryAttachments',
+        foreignKey: 'attachmentId',
+        otherKey: 'glossaryId',
+        as: 'glossary'
+      });
     }
   }
 

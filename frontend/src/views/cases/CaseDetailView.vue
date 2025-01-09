@@ -17,7 +17,7 @@ import Menu from 'primevue/menu'
 import Dialog from 'primevue/dialog'
 import Skeleton from 'primevue/skeleton'
 import Divider from 'primevue/divider'
-import ConfirmDialog from 'primevue/confirmdialog'
+import Timeline from 'primevue/timeline'
 import Sidebar from 'primevue/sidebar'
 
 import { MdEditor } from 'md-editor-v3'
@@ -30,10 +30,11 @@ import FileDropzoneUpload from '@/components/file-handling/FileDropzoneUpload.vu
 import UserSelector, { type User } from '@/components/case-create-form/UserSelector.vue'
 import CaseStatusSelect from '@/components/case-form-fields/CaseStatusSelect/CaseStatusSelect.vue'
 import CasePrioritySelect from '@/components/case-form-fields/CaseStatusSelect/CasePrioritySelect.vue'
+import ScrollFadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
 
 // Types
 import type { AxiosError } from 'axios'
-import type { Case, CaseAllOfAttachments } from '@/api'
+import type { Case, Attachment } from '@/api'
 import { CaseCaseTypeEnum } from '@/api'
 
 // Functions
@@ -43,6 +44,8 @@ import { apiBlobToFile } from '@/functions/apiBlobToFile'
 // Validation
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
+
+import { userOptions } from '@/api/mockdata'
 
 // Glossary Types
 interface GlossaryTerm {
@@ -70,12 +73,6 @@ const caseTypes = ref(
   })),
 )
 
-const users: User[] = Array.from({ length: 15 }, (_, i) => ({
-  id: i + 1,
-  name: `User ${i + 1}`,
-  image: `https://placecats.com/${50 + i}/${50 + i}`,
-}))
-
 /// Fetch Case Details from the API
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -86,7 +83,13 @@ const fetchCase = async () => {
     caseDetails.value = (await api.casesIdGet({ id: Number(caseId.value) })).data
 
     if (!caseDetails.value.draft) {
-      resetForm({ values: caseDetails.value })
+      resetForm({
+        values: {
+          ...caseDetails.value,
+          // The API returns assignee instead of assignees
+          assignees: caseDetails.value.assignee as [string, ...string[]],
+        },
+      })
       nextTick(() => {
         form.value.dirty = false
       })
@@ -177,7 +180,7 @@ const handleViewAllTerms = () => {
 }
 
 // Handle glossary term clicks
-const handleGlossaryTermClick = (event: MouseEvent) => {
+const _handleGlossaryTermClick = (event: MouseEvent) => {
   const target = event.target as HTMLElement
   if (target.classList.contains('glossary-term')) {
     const termText = target.textContent
@@ -192,7 +195,7 @@ const handleGlossaryTermClick = (event: MouseEvent) => {
 }
 
 // Process content to highlight glossary terms
-const processContent = (content: string | undefined): string => {
+const _processContent = (content: string | undefined): string => {
   if (!content) return ''
 
   let processedContent = content
@@ -208,8 +211,11 @@ const processContent = (content: string | undefined): string => {
   return processedContent
 }
 
-// Format date helper
-const formatDate = (date?: Date) => {
+/**
+ * Format the date to a human-readable format
+ * @param date The date to format
+ */
+const formatDate = (date?: Date | string) => {
   if (!date) return ''
   return new Intl.DateTimeFormat('de-DE', {
     day: '2-digit',
@@ -269,9 +275,17 @@ const handleSave = handleSubmit(
     saveLoading.value = true
     try {
       if (caseDetails.value!.draft) {
-        await api.confirmCaseIdPut({ id: Number(caseId.value), casePut: values })
+        caseDetails.value = (
+          await api.confirmCaseIdPut({
+            id: Number(caseId.value),
+            ...values,
+            assignee: values.assignees,
+          })
+        ).data
       } else {
-        await api.casesIdPut({ id: Number(caseId.value), ...values })
+        caseDetails.value = (
+          await api.casesIdPut({ id: Number(caseId.value), ...values, assignee: values.assignees })
+        ).data
       }
       resetForm({ values: values })
       await nextTick(() => {
@@ -434,19 +448,20 @@ const uploadFiles = async () => {
   if (filesToUpload.value.length > 0) {
     uploading.value = true
     try {
-      const response = await api.casesIdAttachmentsPost({
+      const result = await api.casesIdAttachmentsPost({
         id: Number(caseId.value),
         files: filesToUpload.value,
       })
-      console.log(response)
 
       files.value.push(...filesToUpload.value)
       filesToUpload.value = []
 
+      caseDetails.value!.attachments = result.data.attachments
+
       toast.add({
         severity: 'success',
         summary: 'Success',
-        detail: 'Files uploaded successfully',
+        detail: `File${filesToUpload.value.length > 1 ? 's' : ''} uploaded successfully`,
         life: 3000,
       })
 
@@ -466,16 +481,26 @@ const uploadFiles = async () => {
   }
 }
 
-const deleteAttachment = async (attachment: CaseAllOfAttachments) => {
+const deleteAttachment = async (attachment: Attachment) => {
   deletingFileId.value = attachment.id
 
   try {
-    await api.casesIdAttachmentsFileIdDelete({
+    await api.casesIdAttachmentsAttachmentIdDelete({
       id: Number(caseId.value),
-      fileId: attachment.id,
+      attachmentId: attachment.id,
     })
 
     files.value = files.value.filter((f) => f.name !== attachment.filename)
+    caseDetails.value!.attachments = caseDetails.value!.attachments.filter(
+      (a) => a.id !== attachment.id,
+    )
+
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: 'File deleted successfully',
+      life: 2000,
+    })
   } catch (error) {
     toast.add({
       severity: 'error',
@@ -497,7 +522,7 @@ const selectedFileProperties = ref<FileProperties | null>(null)
 const loadingFileId = ref<number | null>(null)
 const deletingFileId = ref<number | null>(null)
 
-const openAttachmentInDrawer = async (attachment: CaseAllOfAttachments) => {
+const openAttachmentInDrawer = async (attachment: Attachment) => {
   // Check if the attachment is already in the files array
   let file = files.value.find((f) => f.name === attachment.filename)
   if (!file) {
@@ -505,10 +530,10 @@ const openAttachmentInDrawer = async (attachment: CaseAllOfAttachments) => {
     // If not, download the file from the server
     try {
       file = await apiBlobToFile(
-        await api.casesIdAttachmentsFileIdGet(
+        await api.casesIdAttachmentsAttachmentIdDownloadGet(
           {
             id: Number(caseId.value),
-            fileId: attachment.id,
+            attachmentId: attachment.id,
           },
           { responseType: 'blob' },
         ),
@@ -560,14 +585,28 @@ const menuItems = [
   },
 ]
 
+/**
+ * Toggle the more actions menu
+ * @param event The click event
+ */
 const toggleMenu = (event: Event) => {
   moreMenu.value.toggle(event)
 }
+
+const changeHistoryEvents = computed(() => {
+  return caseDetails.value
+    ? caseDetails.value.changeHistory.map((entry) => ({
+        status: 'Updated',
+        date: formatDate(entry.updatedAt),
+        icon: 'pi pi-calendar',
+        color: '#3B82F6',
+      }))
+    : []
+})
 </script>
 
 <template>
   <div class="max-w-7xl w-[80vw] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <ConfirmDialog />
     <!-- Unsaved changes banner -->
     <div v-if="inEditMode && form.dirty" class="unsaved-banner">
       <div class="banner-content">
@@ -749,15 +788,18 @@ const toggleMenu = (event: Event) => {
               <Divider />
 
               <div class="field">
-                <label>Assignee</label>
+                <label>Assignees</label>
                 <div v-if="!loading">
                   <UserSelector
+                    :selected-users="
+                      userOptions.filter((u) => fields.assignees.value.value?.includes(u.name))
+                    "
                     @update:selected-users="
                       fields.assignees.value.value = $event.map((u) => u.name)
                     "
                     assigneeLabel="Assignees"
                     :placeholder="inEditMode ? 'Select Assignees' : ''"
-                    :userOptions="users"
+                    :userOptions="userOptions as User[]"
                     multi-select
                     :disabled="!inEditMode"
                     :invalid="!!errors.assignees"
@@ -773,12 +815,15 @@ const toggleMenu = (event: Event) => {
                 <label>Participants</label>
                 <div v-if="!loading">
                   <UserSelector
+                    :selected-users="
+                      userOptions.filter((u) => fields.participants.value.value?.includes(u.name))
+                    "
                     @update:selected-users="
                       fields.participants.value.value = $event.map((u) => u.name)
                     "
                     assigneeLabel="Participants"
                     :placeholder="inEditMode ? 'Select Participants' : ''"
-                    :userOptions="users"
+                    :userOptions="userOptions"
                     multi-select
                     :disabled="!inEditMode"
                     :invalid="!!errors.participants"
@@ -800,27 +845,18 @@ const toggleMenu = (event: Event) => {
           <h2 class="text-xl font-semibold mb-4">Description</h2>
         </template>
         <template #content>
-          <div v-if="!loading">
-            <div v-if="!inEditMode">
-              <div
-                class="prose max-w-none"
-                v-html="processContent(fields.description.value.value)"
-                @click="handleGlossaryTermClick"
-              />
-            </div>
-            <MdEditor
-              v-else
-              v-model="fields.description.value.value"
-              class="min-h-64 resize-y"
-              style="height: 16rem"
-              language="en-US"
-              id="description"
-              :disabled="!inEditMode"
-              :invalid="!!errors.description"
-              noUploadImg
-              ref="descriptionMdEditor"
-            />
-          </div>
+          <MdEditor
+            v-if="!loading"
+            v-model="fields.description.value.value"
+            class="min-h-64 resize-y"
+            style="height: 16rem"
+            language="en-US"
+            id="description"
+            :disabled="!inEditMode"
+            :invalid="!!errors.description"
+            noUploadImg
+            ref="descriptionMdEditor"
+          />
           <Skeleton v-else height="2.5rem" />
           <small v-if="errors.description" class="p-error block mt-1">{{
             errors.description
@@ -834,81 +870,24 @@ const toggleMenu = (event: Event) => {
           <h2 class="text-xl font-semibold mb-4">Solution</h2>
         </template>
         <template #content>
-          <div v-if="!loading">
-            <div v-if="!inEditMode">
-              <div
-                class="prose max-w-none"
-                v-html="processContent(fields.solution.value.value)"
-                @click="handleGlossaryTermClick"
-              />
-            </div>
-            <MdEditor
-              v-else
-              v-model="fields.solution.value.value"
-              class="min-h-64 resize-y"
-              style="height: 16rem"
-              language="en-US"
-              id="solution"
-              :disabled="!inEditMode"
-              :invalid="!!errors.solution"
-              noUploadImg
-              ref="solutionMdEditor"
-            />
-          </div>
+          <MdEditor
+            v-if="!loading"
+            v-model="fields.solution.value.value"
+            class="min-h-64 resize-y"
+            style="height: 16rem"
+            language="en-US"
+            id="solution"
+            :disabled="!inEditMode"
+            :invalid="!!errors.solution"
+            noUploadImg
+            ref="solutionMdEditor"
+          />
           <Skeleton v-else height="2.5rem" />
           <small v-if="errors.solution" class="p-error block mt-1">{{ errors.solution }}</small>
         </template>
       </Card>
 
-      <!-- Glossary Card -->
-      <Card class="mt-6">
-        <template #title>
-          <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold mb-4">Glossar Begriffe</h2>
-            <Button
-              icon="pi pi-book"
-              rounded
-              severity="secondary"
-              @click="handleViewAllTerms"
-              v-tooltip.left="'Alle Begriffe anzeigen'"
-            />
-          </div>
-        </template>
-        <template #content>
-          <div v-if="usedGlossaryTerms.length > 0" class="space-y-3">
-            <div
-              v-for="term in usedGlossaryTerms"
-              :key="term.term"
-              class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-emerald-200 hover:shadow-sm transition-all cursor-pointer"
-              @click="handleTermSelect(term)"
-            >
-              <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                <i class="pi pi-book text-emerald-500"></i>
-              </div>
-              <div class="flex-1 min-w-0">
-                <h3 class="text-sm font-medium text-gray-900 truncate">{{ term.term }}</h3>
-                <div class="flex items-center gap-2 mt-1 text-sm text-gray-500">
-                  <span v-if="term.usageCount" class="flex items-center">
-                    <i class="pi pi-chart-bar mr-1"></i>
-                    {{ term.usageCount }} Verwendungen
-                  </span>
-                </div>
-              </div>
-              <i class="pi pi-chevron-right text-gray-400"></i>
-            </div>
-          </div>
-          <div v-else class="text-center py-8">
-            <div
-              class="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-50 flex items-center justify-center"
-            >
-              <i class="pi pi-book text-gray-400 text-lg"></i>
-            </div>
-            <p class="text-gray-500">Keine Glossarbegriffe gefunden</p>
-          </div>
-        </template>
-      </Card>
-
-      <!-- Data Card -->
+      <!-- Attachments Card -->
       <Card class="mt-6">
         <template #title>
           <div class="flex items-center justify-between">
@@ -971,6 +950,82 @@ const toggleMenu = (event: Event) => {
           <Skeleton v-else height="10rem" />
         </template>
       </Card>
+
+      <!-- Glossary Card -->
+      <Card class="mt-6">
+        <template #title>
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-semibold mb-4">Glossary Terms</h2>
+            <Button
+              icon="pi pi-book"
+              rounded
+              severity="secondary"
+              @click="handleViewAllTerms"
+              v-tooltip.left="'View all terms'"
+            />
+          </div>
+        </template>
+        <template #content>
+          <div v-if="usedGlossaryTerms.length > 0" class="space-y-3">
+            <div
+              v-for="term in usedGlossaryTerms"
+              :key="term.term"
+              class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-emerald-200 hover:shadow-sm transition-all cursor-pointer"
+              @click="handleTermSelect(term)"
+            >
+              <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                <i class="pi pi-book text-emerald-500"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-sm font-medium text-gray-900 truncate">{{ term.term }}</h3>
+                <div class="flex items-center gap-2 mt-1 text-sm text-gray-500">
+                  <span v-if="term.usageCount" class="flex items-center">
+                    <i class="pi pi-chart-bar mr-1"></i>
+                    {{ term.usageCount }} Verwendungen
+                  </span>
+                </div>
+              </div>
+              <i class="pi pi-chevron-right text-gray-400"></i>
+            </div>
+          </div>
+          <div v-else class="text-center py-8">
+            <div
+              class="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-50 flex items-center justify-center"
+            >
+              <i class="pi pi-book text-gray-400 text-lg"></i>
+            </div>
+            <p class="text-gray-500">No associated Glossary Terms</p>
+          </div>
+        </template>
+      </Card>
+
+      <!-- Change History Card -->
+      <Card class="mt-6">
+        <template #title>
+          <h2 class="text-xl font-semibold mb-4">Change History</h2>
+        </template>
+        <template #content>
+          <ScrollFadeOverlay axis="vertical" content-class="max-h-[190px]">
+            <Timeline :value="changeHistoryEvents" align="left">
+              <template #marker="slotProps">
+                <span
+                  class="flex w-10 h-10 items-center justify-center text-white rounded-full z-10 shadow-sm bg-gray-800"
+                >
+                  <i class="pi pi-file-edit -mr-0.5"></i>
+                </span>
+              </template>
+              <template #content="slotProps">
+                <div class="flex items-center justify-between pt-2">
+                  <p class="font-semibold text-gray-800">
+                    Case Updated -
+                    <span class="text-sm text-gray-600">{{ slotProps.item.date }}</span>
+                  </p>
+                </div>
+              </template>
+            </Timeline>
+          </ScrollFadeOverlay>
+        </template>
+      </Card>
     </div>
     <div
       v-else
@@ -986,7 +1041,9 @@ const toggleMenu = (event: Event) => {
 
     <!-- File Upload Popover -->
     <Dialog v-model:visible="fileUploadDialogVisible" modal class="lg:min-w-[50rem]">
-      <h2 class="text-xl font-semibold mb-4">Upload Additional Files</h2>
+      <template #header>
+        <h2 class="text-xl font-semibold mb-4">Upload Additional Files</h2>
+      </template>
       <FileDropzoneUpload v-model:files="filesToUpload">
         <template #file-list-footer>
           <Button
@@ -1132,5 +1189,9 @@ const toggleMenu = (event: Event) => {
 
 :deep(.prose) {
   @apply text-gray-900;
+}
+
+:deep(.p-timeline-event-opposite) {
+  @apply flex-initial;
 }
 </style>

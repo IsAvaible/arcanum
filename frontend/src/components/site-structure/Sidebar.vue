@@ -23,10 +23,11 @@ const menuItems: { label: string; items: MenuItem[] }[] = [
     label: '',
     items: [
       { path: '/', label: 'Home', icon: 'pi pi-home' },
-      { path: '/chat', label: 'Chat', icon: 'pi pi-comments' },
-      { path: '/notifications', label: 'Notifications', icon: 'pi pi-bell' },
-      { path: '/glossary', label: 'Glossar', icon: 'pi pi-book' },
       { path: '/cases', label: 'Cases', icon: 'pi pi-briefcase' },
+      { path: '/chat', label: 'Chat', icon: 'pi pi-comments' },
+      { path: '/ai', label: 'Arcanum', icon: 'pi pi-microchip-ai' },
+      { path: '/glossary', label: 'Glossary', icon: 'pi pi-book' },
+      { path: '/notifications', label: 'Notifications', icon: 'pi pi-bell' },
     ],
   },
   {

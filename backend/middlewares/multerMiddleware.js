@@ -20,8 +20,8 @@ const upload = multer({
     },
   }),
 
-  // Sets the file size limit to 50MB.
-  limits: { fileSize: 52428800 },
+  // Sets the file size limit to 100MB.
+  limits: { fileSize: 100000000 },
 
   /**
    * Filters uploaded files based on their names and types.
@@ -30,9 +30,11 @@ const upload = multer({
    * @param {Function} cb - The callback to indicate success or failure.
    */
   fileFilter: function (req, file, cb) {
-    // Validate the file name.
+    // Validate the file name
+    file.originalname = Buffer.from(file.originalname, "latin1").toString(
+      "utf-8",
+    );
     fileUploadController.checkFileName(file);
-
     // Validate the file type.
     fileUploadController.checkFileType(file, cb);
 

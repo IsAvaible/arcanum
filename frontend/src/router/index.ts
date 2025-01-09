@@ -4,6 +4,7 @@ import CaseListView from '@/views/cases/CaseListView.vue'
 import CaseDetail from '@/views/cases/CaseDetailView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import ChatWindow from '@/components/ChatWindow.vue'
+import AIChatWindow from '@/components/AIChatWindow.vue'
 import Glossary from '@/views/glossar/Glossary.vue'
 
 const router = createRouter({
@@ -45,11 +46,22 @@ const router = createRouter({
       component: NotFoundView,
     },
     {
-      path: '/chat', // Route for Chat
+      path: '/chat',
       name: 'Chat',
       component: ChatWindow,
     },
-    { path: '/glossary', name: 'Glossar', component: Glossary },
+    {
+      path: '/ai',
+      name: 'AI',
+      component: AIChatWindow,
+      children: [
+        {
+          path: ':chatId',
+          component: AIChatWindow,
+        },
+      ],
+    },
+    { path: '/glossary', name: 'Glossary', component: Glossary },
   ],
 })
 

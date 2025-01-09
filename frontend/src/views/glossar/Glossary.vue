@@ -17,9 +17,7 @@
         ]"
         @click="activeLetters.includes(letter) && filterByLetter(letter)"
         v-tooltip.right="
-          activeLetters.includes(letter)
-            ? `Zeige Begriffe mit ${letter}`
-            : 'Keine Begriffe verfügbar'
+          activeLetters.includes(letter) ? `Show terms with ${letter}` : 'No terms available'
         "
       >
         {{ letter }}
@@ -30,23 +28,21 @@
     <div class="flex-1 px-8 py-8 max-w-5xl">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-2xl font-semibold text-gray-900">Glossar</h1>
-        <p class="mt-2 text-gray-600">
-          Durchsuchen Sie die am häufigsten verwendeten Begriffe und Definitionen.
-        </p>
+        <h1 class="text-2xl font-semibold text-gray-900">Glossary</h1>
+        <p class="mt-2 text-gray-600">Browse the most commonly used terms and definitions.</p>
       </div>
 
       <!-- Search and Filters -->
       <div class="flex gap-4 mb-8">
-        <span class="p-input-icon-left flex-1">
+        <span class="p-input-icon-left flex flex-row gap-x-2 items-center flex-1">
           <i class="pi pi-search" />
-          <InputText v-model="searchTerm" placeholder="Begriffe durchsuchen..." class="w-full" />
+          <InputText v-model="searchTerm" placeholder="Search terms..." class="w-full" />
         </span>
         <div class="flex gap-3">
           <!-- Filter Button with Overlay Panel -->
           <Button
             class="filter-button"
-            v-tooltip.bottom="'Filter Begriffe'"
+            v-tooltip.bottom="'Filter terms'"
             @click="toggleFilterOverlay"
             aria-haspopup="true"
             aria-controls="filter-overlay"
@@ -63,7 +59,7 @@
           <!-- Sort Button with Overlay Panel -->
           <Button
             class="sort-button"
-            v-tooltip.bottom="'Sortiere Begriffe'"
+            v-tooltip.bottom="'Sort terms'"
             @click="toggleSortOverlay"
             aria-haspopup="true"
             aria-controls="sort-overlay"
@@ -77,7 +73,7 @@
       <!-- Sort Overlay -->
       <OverlayPanel ref="sortOverlay" class="w-72">
         <div class="p-4">
-          <h3 class="text-sm font-medium text-gray-700 mb-3">Sortierung</h3>
+          <h3 class="text-sm font-medium text-gray-700 mb-3">Sorting</h3>
           <div class="space-y-2">
             <div
               v-for="option in sortOptions"
@@ -108,7 +104,7 @@
           class="text-sm text-gray-500 hover:text-emerald-600"
           @click="selectedCategories = []"
         >
-          Filter zurücksetzen
+          Reset filters
         </Button>
       </div>
 
@@ -134,7 +130,7 @@
                       <div class="flex items-center gap-2 mt-1 text-sm text-gray-500">
                         <span v-if="term.usageCount" class="flex items-center">
                           <i class="pi pi-chart-bar mr-1"></i>
-                          {{ term.usageCount }} Verwendungen
+                          {{ term.usageCount }} Usages
                         </span>
                         <span v-if="term.lastUsed" class="flex items-center">
                           <i class="pi pi-clock mr-1"></i>
@@ -145,7 +141,7 @@
                   </div>
                   <div class="mt-2 flex items-center gap-3">
                     <span class="text-sm text-gray-500">
-                      {{ term.relatedCases?.length || 0 }} Referenzen
+                      {{ term.relatedCases?.length || 0 }} References
                     </span>
                   </div>
                 </div>
@@ -163,10 +159,10 @@
         >
           <i class="pi pi-search text-emerald-500 text-xl"></i>
         </div>
-        <h3 class="text-lg font-medium text-gray-900">Keine Begriffe gefunden</h3>
-        <p class="text-gray-500 mt-2">Versuchen Sie, Ihre Suchkriterien anzupassen</p>
+        <h3 class="text-lg font-medium text-gray-900">No terms found</h3>
+        <p class="text-gray-500 mt-2">Try adjusting your search criteria</p>
         <Button link class="mt-4 text-emerald-600 hover:text-emerald-700" @click="resetFilters">
-          Filter zurücksetzen
+          Reset filters
         </Button>
       </div>
     </div>
@@ -194,15 +190,15 @@
             <!-- Usage Statistics -->
             <div class="flex gap-4 mt-4">
               <div class="bg-gray-50 rounded-lg p-3 flex-1">
-                <div class="text-sm text-gray-500">Verwendungen</div>
+                <div class="text-sm text-gray-500">Usages</div>
                 <div class="text-lg font-semibold text-gray-900">
                   {{ selectedTerm.usageCount || 0 }}
                 </div>
               </div>
               <div class="bg-gray-50 rounded-lg p-3 flex-1">
-                <div class="text-sm text-gray-500">Zuletzt verwendet</div>
+                <div class="text-sm text-gray-500">Last used</div>
                 <div class="text-lg font-semibold text-gray-900">
-                  {{ formatDate(selectedTerm.lastUsed) || 'Nie' }}
+                  {{ formatDate(selectedTerm.lastUsed) || 'Never' }}
                 </div>
               </div>
             </div>
@@ -212,7 +208,7 @@
           <div class="space-y-8">
             <!-- Related Cases -->
             <div v-if="selectedTerm.relatedCases?.length">
-              <h3 class="text-sm font-medium text-gray-700 mb-3">Verwandte Fälle</h3>
+              <h3 class="text-sm font-medium text-gray-700 mb-3">Related Cases</h3>
               <div class="space-y-2">
                 <div
                   v-for="caseRef in selectedTerm.relatedCases"

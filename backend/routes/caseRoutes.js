@@ -87,17 +87,59 @@ router.put("/cases/:id", multerMiddleware, caseController.updateCase);
  */
 router.delete("/cases/:id", caseController.deleteCase);
 
+/**
+ * @route GET /cases/attachments/:attachmentId
+ * @description Retrieves a specific attachment by its ID.
+ * @param {number} attachmentId.path.required - The ID of the attachment to retrieve.
+ * @returns {Object} 200 - The requested attachment object.
+ * @returns {Error} 404 - Attachment not found.
+ * @returns {Error} 500 - Internal server error.
+ */
+router.get(
+  "/cases/attachments/:attachmentId",
+  attachmentController.getAttachment,
+);
 
 /**
- * @route GET /cases/:id/attachments/:fileId
+ * @route GET /cases/:id/attachments/:attachmentId
+ * @description Retrieves a specific attachment of a case.
+ * @param {number} id.path.required - The ID of the case.
+ * @param {number} attachmentId.path.required - The ID of the attachment to retrieve.
+ * @returns {Object} 200 - The requested attachment object.
+ * @returns {Error} 404 - Case or attachment not found.
+ * @returns {Error} 500 - Internal server error.
+ */
+router.get(
+  "/cases/:id/attachments/:attachmentId",
+  attachmentController.getAttachment,
+);
+
+/**
+ * @route GET /cases/attachments/:attachmentId/download
+ * @description Downloads an attachment by its ID.
+ * @param {number} attachmentId.path.required - The ID of the attachment to download.
+ * @returns {file} 200 - The requested file.
+ * @returns {Error} 404 - Attachment not found.
+ * @returns {Error} 500 - Internal server error.
+ */
+router.get(
+  "/cases/attachments/:attachmentId/download",
+  attachmentController.downloadAttachment,
+);
+
+/**
+ * @route GET /cases/:id/attachments/:attachmentId/download
  * @description Downloads an attachment of a specific case.
  * @param {number} id.path.required - The ID of the case.
- * @param {number} fileId.path.required - The ID of the attachment to download.
+ * @param {number} attachmentId.path.required - The ID of the attachment to download.
  * @returns {file} 200 - The requested file.
  * @returns {Error} 404 - Case or attachment not found.
  * @returns {Error} 500 - Internal server error.
  */
-router.get("/cases/:id/attachments/:fileId", attachmentController.downloadAttachment);
+router.get(
+  "/cases/:id/attachments/:attachmentId/download",
+  attachmentController.downloadAttachment,
+);
 
 /**
  * @route POST /cases/:id/attachments
@@ -108,33 +150,41 @@ router.get("/cases/:id/attachments/:fileId", attachmentController.downloadAttach
  * @returns {Error} 404 - Case not found.
  * @returns {Error} 500 - Internal server error.
  */
-router.post("/cases/:id/attachments", attachmentController.addAttachmentsToCase);
-
+router.post(
+  "/cases/:id/attachments",
+  attachmentController.addAttachmentsToCase,
+);
 
 /**
- * @route DELETE /cases/:id/attachments/:fileId
+ * @route DELETE /cases/:id/attachments/:attachmentId
  * @description Deletes an attachment from a specified case.
  * @param {number} id.path.required - The ID of the case.
- * @param {number} fileId.path.required - The ID of the attachment to delete.
+ * @param {number} attachmentId.path.required - The ID of the attachment to delete.
  * @returns {String} 200 - Confirmation message.
  * @returns {Error} 404 - Case or attachment not found.
  * @returns {Error} 500 - Internal server error.
  */
 router.delete(
-  "/cases/:id/attachments/:fileId",
+  "/cases/:id/attachments/:attachmentId",
   attachmentController.deleteAttachmentFromCase,
 );
 
 /**
  * @route POST /createCaseFromFiles
- * @description Creates one or multiple new cases based on uploaded files and data returned from an external LLM.  
+ * @description Creates one or multiple new cases based on uploaded files and data returned from an external LLM.
  * The LLM returns case data (title, description, etc.) and references to attachments.
  * @param {file} files.formData.required - Files to process for creating case(s).
+ * @param {string} [socketId] - Id of Socket where the Tokens are send to.
  * @returns {Object|Object[]} 201 - The newly created case(s) with attachments.
  * @returns {Object} 200 - If LLM returns a message but no cases, returns an object with { message: string }.
  * @returns {Error} 500 - Internal server error or LLM error.
  */
-router.post("/createCaseFromFiles",multerMiddleware, caseController.createCaseFromFiles);
+router.post(
+  "/createCaseFromFiles",
+  multerMiddleware,
+  escapeData(["socketId"]),
+  caseController.createCaseFromFiles,
+);
 
 /**
  * @route PUT /confirmCase/:id

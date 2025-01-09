@@ -12,7 +12,7 @@ const features = ref([
     title: 'Generative AI',
     description: 'Automate your case creation process',
     icon: 'pi-microchip-ai',
-    link: '/chat',
+    link: '/ai',
   },
   {
     title: 'Settings',
