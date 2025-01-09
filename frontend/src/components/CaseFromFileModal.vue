@@ -46,9 +46,7 @@ const registerSocket = () => {
   })
 
   socket.value.on('connect', () => {
-    console.log('Connected ' + socket.value!.id)
     socket.value!.on('llm_message', (data: { message: string }) => {
-      console.log(data)
       pendingLLMMessage.value = {
         content: data.message,
       }
