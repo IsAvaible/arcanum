@@ -74,22 +74,6 @@
         </div>
       </div>
 
-      <!-- Filter Overlay -->
-      <OverlayPanel ref="filterOverlay" class="w-80">
-        <div class="p-4">
-          <h3 class="text-sm font-medium text-gray-700 mb-3">Nach Kategorie filtern</h3>
-          <div class="flex flex-wrap gap-2">
-            <Chip
-              v-for="category in categories"
-              :key="category"
-              :label="category"
-              :class="selectedCategories.includes(category) ? 'bg-emerald-50 text-emerald-600' : ''"
-              @click="toggleCategory(category)"
-            />
-          </div>
-        </div>
-      </OverlayPanel>
-
       <!-- Sort Overlay -->
       <OverlayPanel ref="sortOverlay" class="w-72">
         <div class="p-4">
@@ -160,15 +144,6 @@
                     </div>
                   </div>
                   <div class="mt-2 flex items-center gap-3">
-                    <div class="flex gap-2">
-                      <Tag
-                        v-for="(tag, index) in term.tags?.slice(0, 2)"
-                        :key="index"
-                        :value="tag"
-                        severity="success"
-                        rounded
-                      />
-                    </div>
                     <span class="text-sm text-gray-500">
                       {{ term.relatedCases?.length || 0 }} Referenzen
                     </span>
@@ -212,9 +187,6 @@
                 <i class="pi pi-book text-emerald-500 text-lg"></i>
               </div>
               <div>
-                <div class="text-sm text-emerald-600 font-medium">
-                  {{ selectedTerm.tags?.[0] || 'Allgemein' }}
-                </div>
                 <h2 class="text-xl font-semibold text-gray-900">{{ selectedTerm.term }}</h2>
               </div>
             </div>
@@ -238,26 +210,6 @@
 
           <!-- Term Content -->
           <div class="space-y-8">
-            <!-- Definition -->
-            <div class="bg-gray-50 rounded-xl p-4">
-              <h3 class="text-sm font-medium text-gray-700 mb-2">Definition</h3>
-              <p class="text-gray-600">{{ selectedTerm.definition }}</p>
-            </div>
-
-            <!-- Tags -->
-            <div v-if="selectedTerm.tags?.length">
-              <h3 class="text-sm font-medium text-gray-700 mb-3">Tags</h3>
-              <div class="flex flex-wrap gap-2">
-                <Tag
-                  v-for="tag in selectedTerm.tags"
-                  :key="tag"
-                  :value="tag"
-                  severity="success"
-                  rounded
-                />
-              </div>
-            </div>
-
             <!-- Related Cases -->
             <div v-if="selectedTerm.relatedCases?.length">
               <h3 class="text-sm font-medium text-gray-700 mb-3">Verwandte Fälle</h3>
@@ -286,15 +238,12 @@ import { ref, computed } from 'vue'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Sidebar from 'primevue/sidebar'
-import Tag from 'primevue/tag'
 import Chip from 'primevue/chip'
 import Badge from 'primevue/badge'
 import OverlayPanel from 'primevue/overlaypanel'
 
 interface GlossaryTerm {
   term: string
-  definition: string
-  tags?: string[]
   relatedCases?: string[]
   usageCount?: number
   lastUsed?: Date
@@ -305,60 +254,42 @@ interface GlossaryTerm {
 const glossaryData = ref<GlossaryTerm[]>([
   {
     term: 'Schweißgerät MIG4300Pro',
-    definition:
-      'Ein professionelles Schweißgerät, das in verschiedenen industriellen Anwendungen eingesetzt wird. Es ist für präzises und effizientes Schweißen ausgelegt.',
-    tags: ['Equipment', 'Professional'],
-    relatedCases: ['Case #123', 'Case #456'],
+    relatedCases: ['Case #2', 'Case #4'],
     usageCount: 245,
     lastUsed: new Date('2024-01-20'),
     dateAdded: new Date('2023-06-15'),
   },
   {
     term: 'Motor',
-    definition:
-      'Ein mechanisches Gerät, das elektrische Energie in mechanische Bewegung umwandelt. Wird in Schweißgeräten verwendet, um verschiedene Funktionen auszuführen.',
-    tags: ['Component', 'Mechanical'],
-    relatedCases: ['Case #789'],
+    relatedCases: ['Case #7'],
     usageCount: 189,
     lastUsed: new Date('2024-01-22'),
     dateAdded: new Date('2023-08-01'),
   },
   {
     term: 'Stromversorgung',
-    definition:
-      'Die Quelle elektrischer Energie, die für den Betrieb eines Geräts erforderlich ist. Eine stabile Stromversorgung ist entscheidend für die Funktion eines Schweißgeräts.',
-    tags: ['Power', 'Essential'],
-    relatedCases: ['Case #234', 'Case #567'],
+    relatedCases: ['Case #3', 'Case #12'],
     usageCount: 150,
     lastUsed: new Date('2024-01-15'),
     dateAdded: new Date('2023-07-10'),
   },
   {
     term: 'Lüftungsschlitze',
-    definition:
-      'Öffnungen an Geräten wie Schweißgeräten, die den Luftstrom ermöglichen, um Überhitzung zu vermeiden.',
-    tags: ['Component', 'Safety'],
-    relatedCases: ['Case #890'],
+    relatedCases: ['Case #9'],
     usageCount: 85,
     lastUsed: new Date('2024-01-05'),
     dateAdded: new Date('2023-09-20'),
   },
   {
     term: 'Drahtzuführung',
-    definition:
-      'Ein Mechanismus in Schweißgeräten, der den Schweißdraht kontinuierlich zur Schweißstelle zuführt.',
-    tags: ['Component', 'Process'],
-    relatedCases: ['Case #345', 'Case #678'],
+    relatedCases: ['Case #10', 'Case #12'],
     usageCount: 200,
     lastUsed: new Date('2024-01-18'),
     dateAdded: new Date('2023-07-25'),
   },
   {
     term: 'Drahtrolle',
-    definition:
-      'Eine Spule oder Rolle, auf der der Schweißdraht aufgerollt ist. Sie wird im Schweißgerät verwendet, um den Draht bereitzustellen.',
-    tags: ['Component', 'Consumable'],
-    relatedCases: ['Case #901', 'Case #234'],
+    relatedCases: ['Case #9', 'Case #14'],
     usageCount: 120,
     lastUsed: new Date('2024-01-10'),
     dateAdded: new Date('2023-10-10'),
@@ -384,7 +315,6 @@ const filterOverlay = ref()
 const sortOverlay = ref()
 
 // Categories and filters
-const categories = ['Equipment', 'Component', 'Process', 'Safety', 'Power']
 const selectedCategories = ref<string[]>([])
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
@@ -444,21 +374,12 @@ const filteredAndSortedTerms = computed(() => {
 
   // Apply search filter
   if (searchTerm.value) {
-    terms = terms.filter(
-      (term) =>
-        term.term.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
-        term.definition.toLowerCase().includes(searchTerm.value.toLowerCase()),
-    )
+    terms = terms.filter((term) => term.term.toLowerCase().includes(searchTerm.value.toLowerCase()))
   }
 
   // Apply letter filter
   if (selectedLetter.value) {
     terms = terms.filter((term) => term.term.toUpperCase().startsWith(selectedLetter.value))
-  }
-
-  // Apply category filter
-  if (selectedCategories.value.length > 0) {
-    terms = terms.filter((term) => term.tags?.some((tag) => selectedCategories.value.includes(tag)))
   }
 
   // Apply sorting
