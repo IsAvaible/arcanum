@@ -5,6 +5,7 @@ const multerMiddleware = require("../middlewares/multerMiddleware");
 const {
   validateData,
   escapeData,
+  authenticateJWT,
 } = require("../middlewares/validationMiddleware");
 const { caseSchema } = require("../schemas/caseSchemas");
 const attachmentController = require("../controllers/attachmentController");
@@ -15,7 +16,7 @@ const attachmentController = require("../controllers/attachmentController");
  * @returns {Object[]} 200 - An array of case objects.
  * @returns {Error} 500 - Internal server error.
  */
-router.get("/cases/", caseController.showCaseList);
+router.get("/cases/",authenticateJWT, caseController.showCaseList);
 
 /**
  * @route GET /cases/:id

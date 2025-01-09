@@ -3,6 +3,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const { Server } = require("socket.io");
+const cookieParser = require("cookie-parser");
 
 const https = require("https");
 const fs = require("fs");
@@ -16,6 +17,8 @@ const tokenService = require("./services/tokenService");
 
 // for development only
 app.set("view engine", "ejs");
+//
+app.use(cookieParser());
 
 // Use CORS middleware, see: https://expressjs.com/en/resources/middleware/cors.html
 app.use(
@@ -59,6 +62,7 @@ const credentials = {
 // for https uncomment the following lines
 try {
   const server = https.createServer(credentials, app);
+  
   const io = new Server(server, {
     cors: {
       origin: [

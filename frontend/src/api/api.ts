@@ -23,6 +23,7 @@ import type { RequestArgs } from './base';
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError, operationServerMap } from './base';
 
+globalAxios.defaults.withCredentials = true;
 /**
  *
  * @export
