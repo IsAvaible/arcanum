@@ -114,10 +114,12 @@ const setActiveChat = async (chatId: Chat['id'] | null) => {
     if (route.params.chatId) {
       await router.push('/ai')
     }
+    pendingMessage.value = pendingLLMMessage.value = null
   } else {
     chatLoading.value = true
     try {
       activeChat.value = (await api.chatsIdGet({ id: chatId })).data
+      pendingMessage.value = pendingLLMMessage.value = null
       registerSocket()
       if (!route.params.chatId || Number(route.params.chatId) !== chatId) {
         await router.push(`/ai/${chatId}`)
