@@ -147,10 +147,16 @@ const handleSave = handleSubmit(
     try {
       if (caseDetails.value!.draft) {
         caseDetails.value = (
-          await api.confirmCaseIdPut({ id: Number(caseId.value), ...values })
+          await api.confirmCaseIdPut({
+            id: Number(caseId.value),
+            ...values,
+            assignee: values.assignees,
+          })
         ).data
       } else {
-        caseDetails.value = (await api.casesIdPut({ id: Number(caseId.value), ...values })).data
+        caseDetails.value = (
+          await api.casesIdPut({ id: Number(caseId.value), ...values, assignee: values.assignees })
+        ).data
       }
       resetForm({ values: values })
       await nextTick(() => {
