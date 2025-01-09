@@ -695,7 +695,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/CaseBase'
         - type: object
-          required: [id, draft, createdAt, updatedAt, attachments]
+          required: [id, draft, createdAt, updatedAt, attachments, changeHistory]
           properties:
             id:
               type: integer
@@ -716,6 +716,11 @@ components:
               items:
                 $ref: '#/components/schemas/Attachment'
               description: List of attachments attached to the case.
+            changeHistory:
+              type: array
+              items:
+                $ref: '#/components/schemas/CaseChangeHistoryEntry'
+              description: List of changes made to the case.
 
     CasePost:
       allOf:
@@ -792,6 +797,21 @@ components:
           type: string
           format: date-time
 
+    CaseChangeHistoryEntry:
+      type: object
+      required: [id, caseId, updatedAt]
+      properties:
+        id:
+          type: integer
+          description: ID of the change history entry.
+        caseId:
+          type: integer
+          description: ID of the case the change was made to.
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp the change was made at.
+
     Chat:
       type: object
       required: [id]
@@ -843,6 +863,7 @@ components:
           type: string
           format: date-time
           description: Time the message was sent.
+
     Error:
       type: object
       properties:

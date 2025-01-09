@@ -45,7 +45,6 @@ exports.showCaseDetail = async (req, res) => {
   }
 };
 
-
 /**
  * Fetches a list of all cases, including their attachments.
  * @param {Object} req - Express request object.
@@ -103,7 +102,7 @@ exports.deleteCase = async (req, res) => {
       }
     }
 
-    await ChangeHistory.destroy({ where: { case_id: caseId } });
+    await ChangeHistory.destroy({ where: { caseId: caseId } });
 
     await caseItemToDelete.destroy();
     res.status(204).send();
@@ -157,7 +156,7 @@ exports.createCase = [
         await newCase.addAttachments(attachmentInstances);
       }
       await ChangeHistory.create({
-        case_id: newCase.id,
+        caseId: newCase.id,
         updatedAt: new Date(),
       });
 
@@ -228,7 +227,7 @@ exports.updateCase = [
 
       // Process uploaded files and create new attachments
       const attachmentInstances =
-          await attachmentService.uploadFilesAndCreateAttachments(req.files);
+        await attachmentService.uploadFilesAndCreateAttachments(req.files);
 
       if (attachmentInstances.length > 0) {
         await updatedCase.addAttachments(attachmentInstances);
@@ -236,7 +235,7 @@ exports.updateCase = [
 
       if (Object.keys(req.body).length > 0) {
         await ChangeHistory.create({
-          case_id: caseId,
+          caseId: caseId,
           updatedAt: new Date(),
         });
       }
@@ -262,7 +261,6 @@ exports.updateCase = [
     }
   },
 ];
-
 
 /**
  * Creates a new case from uploaded files and data received from an external LLM.
@@ -296,7 +294,6 @@ exports.createCaseFromFiles = [
       const responseData = llmResponse.data;
       console.log("Received from LLM: ", JSON.stringify(llmResponse.data));
 
-
       if (responseData.cases && Array.isArray(responseData.cases)) {
         const newCaseIds = [];
         for (const caseData of responseData.cases) {
@@ -317,7 +314,7 @@ exports.createCaseFromFiles = [
               // findOrCreate => [instanz, created]
               const [glossaryInstance] = await Glossary.findOrCreate({
                 where: { term: glossaryTerm },
-                defaults: { term: glossaryTerm }
+                defaults: { term: glossaryTerm },
               });
               await newCase.addGlossary(glossaryInstance);
             }
@@ -325,24 +322,26 @@ exports.createCaseFromFiles = [
 
           if (Array.isArray(caseData.attachments)) {
             // IDs extrahieren
-            const attachmentIds = caseData.attachments.map(att => att.id);
-            
+            const attachmentIds = caseData.attachments.map((att) => att.id);
+
             // Datenbank-Instanzen finden
             const foundAttachments = await Attachments.findAll({
-              where: { id: attachmentIds }
+              where: { id: attachmentIds },
             });
             await newCase.addAttachments(foundAttachments);
 
             // Attachment-Glossar
             for (const attObj of caseData.attachments) {
-              const attachInst = foundAttachments.find(a => a.id === attObj.id);
+              const attachInst = foundAttachments.find(
+                (a) => a.id === attObj.id,
+              );
               if (!attachInst) continue;
 
               if (Array.isArray(attObj.glossary)) {
                 for (const term of attObj.glossary) {
                   const [glossaryInstance] = await Glossary.findOrCreate({
                     where: { term },
-                    defaults: { term }
+                    defaults: { term },
                   });
                   await attachInst.addGlossary(glossaryInstance);
                 }
@@ -353,15 +352,14 @@ exports.createCaseFromFiles = [
           newCaseIds.push(newCase.id);
         }
 
-
         // Fetch all created cases with their attachments.
         const casesAll = await Cases.findAll({
           where: { id: newCaseIds },
           include: [
             {
               model: Glossary,
-              as: 'glossary', // Muss zu den Associations passen
-              through: { attributes: [] }
+              as: "glossary", // Muss zu den Associations passen
+              through: { attributes: [] },
             },
             {
               model: Attachments,
@@ -447,7 +445,10 @@ exports.confirmCase = [
         ],
       });
 
-      console.log("Sending to LLM: ", JSON.stringify(updatedCaseWithAttachments));
+      console.log(
+        "Sending to LLM: ",
+        JSON.stringify(updatedCaseWithAttachments),
+      );
 
       // Send data to the LLM endpoint.
       const llmResponse = await axios.post(

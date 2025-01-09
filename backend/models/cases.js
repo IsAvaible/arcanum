@@ -15,18 +15,18 @@ module.exports = (sequelize, DataTypes) => {
         otherKey: "attachmentId",
         as: "attachments",
       });
-        // Assoziation zu ChangeHistory
-    Cases.hasMany(models.ChangeHistory, {
-        foreignKey: "case_id",
+      // Assoziation zu ChangeHistory
+      Cases.hasMany(models.ChangeHistory, {
+        foreignKey: "caseId",
         as: "changeHistory",
         onDelete: "CASCADE",
         onUpdate: "CASCADE",
-    });
+      });
       Cases.belongsToMany(models.Glossary, {
-        through: 'GlossaryCases',
-        as: 'glossary',          // <-- Wichtig: Alias "glossaries"
-        foreignKey: 'caseId',
-        otherKey: 'glossaryId',
+        through: "GlossaryCases",
+        as: "glossary", // <-- Wichtig: Alias "glossaries"
+        foreignKey: "caseId",
+        otherKey: "glossaryId",
       });
     }
   }
