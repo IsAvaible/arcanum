@@ -90,7 +90,7 @@ const fetchChats = async () => {
   chatsLoading.value = false
 }
 
-const registerSocket = () => {
+const registerSocket = async () => {
   if (socket.value) {
     // Disconnect the existing socket
     socket.value.disconnect()
@@ -288,6 +288,7 @@ const sendMessage = async () => {
   }
 
   if (!editingMessage.value) {
+    // Sending a new message
     pendingMessage.value = {
       content: messageInput.value.trim(),
       state: 'pending',
@@ -299,6 +300,7 @@ const sendMessage = async () => {
     messageInput.value = ''
     await sendPendingMessage()
   } else {
+    // Editing a message
     const editedMessage = editingMessage.value
     const originalContent = editedMessage.content
     const editedContent = messageInput.value
@@ -312,11 +314,14 @@ const sendMessage = async () => {
       messageInput.value = originalMessageInput.value
 
       // Send the edited message to the API
-      await api.chatsChatIdMessagesMessageIdPut({
-        chatId: activeChat.value.id,
-        messageId: editedMessage.id,
-        content: editedContent,
-      })
+      activeChat.value.messages = (
+        await api.chatsChatIdMessagesMessageIdPut({
+          chatId: activeChat.value.id,
+          messageId: editedMessage.id,
+          content: editedContent,
+        })
+      ).data
+      pendingMessage.value = pendingLLMMessage.value = null
 
       // Remove the pending state if the message was sent successfully
       editedMessage.state = undefined
@@ -348,8 +353,7 @@ const sendPendingMessage = async () => {
       })
     ).data
     activeChat.value.messages.push(userMessage, assistantMessage)
-    pendingMessage.value = null
-    pendingLLMMessage.value = null
+    pendingMessage.value = pendingLLMMessage.value = null
   } catch (error) {
     toast.add({
       severity: 'error',

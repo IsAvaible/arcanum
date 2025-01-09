@@ -1586,7 +1586,7 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async chatsChatIdMessagesMessageIdPut(chatId: number, messageId: number, content: string, socketId?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ChatWithMessages>> {
+        async chatsChatIdMessagesMessageIdPut(chatId: number, messageId: number, content: string, socketId?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<Message>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.chatsChatIdMessagesMessageIdPut(chatId, messageId, content, socketId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.chatsChatIdMessagesMessageIdPut']?.[localVarOperationServerIndex]?.url;
@@ -1856,7 +1856,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        chatsChatIdMessagesMessageIdPut(requestParameters: DefaultApiChatsChatIdMessagesMessageIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<ChatWithMessages> {
+        chatsChatIdMessagesMessageIdPut(requestParameters: DefaultApiChatsChatIdMessagesMessageIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<Message>> {
             return localVarFp.chatsChatIdMessagesMessageIdPut(requestParameters.chatId, requestParameters.messageId, requestParameters.content, requestParameters.socketId, options).then((request) => request(axios, basePath));
         },
         /**
