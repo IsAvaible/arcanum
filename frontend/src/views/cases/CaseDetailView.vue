@@ -304,7 +304,11 @@ watch(
         { immediate: true },
       )
       watch(
-        [() => fields.solution.value.value, () => fields.description.value.value],
+        [
+          () => fields.solution.value.value,
+          () => fields.description.value.value,
+          () => inEditMode.value,
+        ],
         (value) => {
           if (value) {
             // Inject media references into the solution and description editors
