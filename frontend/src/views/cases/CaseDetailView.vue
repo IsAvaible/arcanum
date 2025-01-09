@@ -17,7 +17,7 @@ import Menu from 'primevue/menu'
 import Dialog from 'primevue/dialog'
 import Skeleton from 'primevue/skeleton'
 import Divider from 'primevue/divider'
-import ConfirmDialog from 'primevue/confirmdialog'
+import Timeline from 'primevue/timeline'
 
 import { MdEditor } from 'md-editor-v3'
 
@@ -29,10 +29,11 @@ import FileDropzoneUpload from '@/components/file-handling/FileDropzoneUpload.vu
 import UserSelector, { type User } from '@/components/case-create-form/UserSelector.vue'
 import CaseStatusSelect from '@/components/case-form-fields/CaseStatusSelect/CaseStatusSelect.vue'
 import CasePrioritySelect from '@/components/case-form-fields/CaseStatusSelect/CasePrioritySelect.vue'
+import ScrollFadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
 
 // Types
 import type { AxiosError } from 'axios'
-import type { Case, CaseAllOfAttachments } from '@/api'
+import type { Case, Attachment } from '@/api'
 import { CaseCaseTypeEnum } from '@/api'
 
 // Functions
@@ -43,6 +44,8 @@ import { apiBlobToFile } from '@/functions/apiBlobToFile'
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
 import { until } from '@vueuse/core'
+
+import { userOptions } from '@/api/mockdata'
 
 const router = useRouter()
 const api = useApi()
@@ -61,12 +64,6 @@ const caseTypes = ref(
   })),
 )
 
-const users: User[] = Array.from({ length: 15 }, (_, i) => ({
-  id: i + 1,
-  name: `User ${i + 1}`,
-  image: `https://placecats.com/${50 + i}/${50 + i}`,
-}))
-
 /// Fetch Case Details from the API
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -77,7 +74,13 @@ const fetchCase = async () => {
     caseDetails.value = (await api.casesIdGet({ id: Number(caseId.value) })).data
 
     if (!caseDetails.value.draft) {
-      resetForm({ values: caseDetails.value })
+      resetForm({
+        values: {
+          ...caseDetails.value,
+          // The API returns assignee instead of assignees
+          assignees: caseDetails.value.assignee as [string, ...string[]],
+        },
+      })
       nextTick(() => {
         form.value.dirty = false
       })
@@ -143,9 +146,17 @@ const handleSave = handleSubmit(
     saveLoading.value = true
     try {
       if (caseDetails.value!.draft) {
-        await api.confirmCaseIdPut({ id: Number(caseId.value), casePut: values })
+        caseDetails.value = (
+          await api.confirmCaseIdPut({
+            id: Number(caseId.value),
+            ...values,
+            assignee: values.assignees,
+          })
+        ).data
       } else {
-        await api.casesIdPut({ id: Number(caseId.value), ...values })
+        caseDetails.value = (
+          await api.casesIdPut({ id: Number(caseId.value), ...values, assignee: values.assignees })
+        ).data
       }
       resetForm({ values: values })
       await nextTick(() => {
@@ -308,19 +319,20 @@ const uploadFiles = async () => {
   if (filesToUpload.value.length > 0) {
     uploading.value = true
     try {
-      const response = await api.casesIdAttachmentsPost({
+      const result = await api.casesIdAttachmentsPost({
         id: Number(caseId.value),
         files: filesToUpload.value,
       })
-      console.log(response)
 
       files.value.push(...filesToUpload.value)
       filesToUpload.value = []
 
+      caseDetails.value!.attachments = result.data.attachments
+
       toast.add({
         severity: 'success',
         summary: 'Success',
-        detail: 'Files uploaded successfully',
+        detail: `File${filesToUpload.value.length > 1 ? 's' : ''} uploaded successfully`,
         life: 3000,
       })
 
@@ -340,16 +352,26 @@ const uploadFiles = async () => {
   }
 }
 
-const deleteAttachment = async (attachment: CaseAllOfAttachments) => {
+const deleteAttachment = async (attachment: Attachment) => {
   deletingFileId.value = attachment.id
 
   try {
-    await api.casesIdAttachmentsFileIdDelete({
+    await api.casesIdAttachmentsAttachmentIdDelete({
       id: Number(caseId.value),
-      fileId: attachment.id,
+      attachmentId: attachment.id,
     })
 
     files.value = files.value.filter((f) => f.name !== attachment.filename)
+    caseDetails.value!.attachments = caseDetails.value!.attachments.filter(
+      (a) => a.id !== attachment.id,
+    )
+
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: 'File deleted successfully',
+      life: 2000,
+    })
   } catch (error) {
     toast.add({
       severity: 'error',
@@ -375,7 +397,7 @@ const deletingFileId = ref<number | null>(null)
 const _timeStampRegex =
   /\[(.*?\.(?:wav|flac|m4a|mp3|mp4|mpeg|mpga|oga|ogg|webm): \d{2}:\d{2}:\d{2}) - .*?]/g
 
-const openAttachmentInDrawer = async (attachment: CaseAllOfAttachments) => {
+const openAttachmentInDrawer = async (attachment: Attachment) => {
   // Check if the attachment is already in the files array
   let file = files.value.find((f) => f.name === attachment.filename)
   if (!file) {
@@ -383,10 +405,10 @@ const openAttachmentInDrawer = async (attachment: CaseAllOfAttachments) => {
     // If not, download the file from the server
     try {
       file = await apiBlobToFile(
-        await api.casesIdAttachmentsFileIdGet(
+        await api.casesIdAttachmentsAttachmentIdDownloadGet(
           {
             id: Number(caseId.value),
-            fileId: attachment.id,
+            attachmentId: attachment.id,
           },
           { responseType: 'blob' },
         ),
@@ -460,14 +482,36 @@ const menuItems = [
   },
 ]
 
+/**
+ * Toggle the more actions menu
+ * @param event The click event
+ */
 const toggleMenu = (event: Event) => {
   moreMenu.value.toggle(event)
 }
+
+/**
+ * Format the date to a human-readable format
+ * @param date The date to format
+ */
+const formatDate = (date: string | Date) => {
+  return new Date(date).toLocaleString()
+}
+
+const changeHistoryEvents = computed(() => {
+  return caseDetails.value
+    ? caseDetails.value.changeHistory.map((entry) => ({
+        status: 'Updated',
+        date: formatDate(entry.updatedAt),
+        icon: 'pi pi-calendar',
+        color: '#3B82F6',
+      }))
+    : []
+})
 </script>
 
 <template>
   <div class="max-w-7xl w-[80vw] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <ConfirmDialog />
     <!-- Unsaved changes banner -->
     <div v-if="inEditMode && form.dirty" class="unsaved-banner">
       <div class="banner-content">
@@ -649,15 +693,18 @@ const toggleMenu = (event: Event) => {
               <Divider />
 
               <div class="field">
-                <label>Assignee</label>
+                <label>Assignees</label>
                 <div v-if="!loading">
                   <UserSelector
+                    :selected-users="
+                      userOptions.filter((u) => fields.assignees.value.value?.includes(u.name))
+                    "
                     @update:selected-users="
                       fields.assignees.value.value = $event.map((u) => u.name)
                     "
                     assigneeLabel="Assignees"
                     :placeholder="inEditMode ? 'Select Assignees' : ''"
-                    :userOptions="users"
+                    :userOptions="userOptions as User[]"
                     multi-select
                     :disabled="!inEditMode"
                     :invalid="!!errors.assignees"
@@ -673,12 +720,15 @@ const toggleMenu = (event: Event) => {
                 <label>Participants</label>
                 <div v-if="!loading">
                   <UserSelector
+                    :selected-users="
+                      userOptions.filter((u) => fields.participants.value.value?.includes(u.name))
+                    "
                     @update:selected-users="
                       fields.participants.value.value = $event.map((u) => u.name)
                     "
                     assigneeLabel="Participants"
                     :placeholder="inEditMode ? 'Select Participants' : ''"
-                    :userOptions="users"
+                    :userOptions="userOptions"
                     multi-select
                     :disabled="!inEditMode"
                     :invalid="!!errors.participants"
@@ -742,7 +792,7 @@ const toggleMenu = (event: Event) => {
         </template>
       </Card>
 
-      <!-- Data Card -->
+      <!-- Attachments Card -->
       <Card class="mt-6">
         <template #title>
           <div class="flex items-center justify-between">
@@ -805,6 +855,34 @@ const toggleMenu = (event: Event) => {
           <Skeleton v-else height="10rem" />
         </template>
       </Card>
+
+      <!-- Change History Card -->
+      <Card class="mt-6">
+        <template #title>
+          <h2 class="text-xl font-semibold mb-4">Change History</h2>
+        </template>
+        <template #content>
+          <ScrollFadeOverlay axis="vertical" content-class="max-h-[190px]">
+            <Timeline :value="changeHistoryEvents" align="left">
+              <template #marker="slotProps">
+                <span
+                  class="flex w-10 h-10 items-center justify-center text-white rounded-full z-10 shadow-sm bg-gray-800"
+                >
+                  <i class="pi pi-file-edit -mr-0.5"></i>
+                </span>
+              </template>
+              <template #content="slotProps">
+                <div class="flex items-center justify-between pt-2">
+                  <p class="font-semibold text-gray-800">
+                    Case Updated -
+                    <span class="text-sm text-gray-600">{{ slotProps.item.date }}</span>
+                  </p>
+                </div>
+              </template>
+            </Timeline>
+          </ScrollFadeOverlay>
+        </template>
+      </Card>
     </div>
     <div
       v-else
@@ -820,7 +898,9 @@ const toggleMenu = (event: Event) => {
 
     <!-- File Upload Popover -->
     <Dialog v-model:visible="fileUploadDialogVisible" modal class="lg:min-w-[50rem]">
-      <h2 class="text-xl font-semibold mb-4">Upload Additional Files</h2>
+      <template #header>
+        <h2 class="text-xl font-semibold mb-4">Upload Additional Files</h2>
+      </template>
       <FileDropzoneUpload v-model:files="filesToUpload">
         <template #file-list-footer>
           <Button
@@ -887,5 +967,9 @@ const toggleMenu = (event: Event) => {
 /* Add margin-top to main content container */
 .max-w-7xl {
   margin-top: 60px;
+}
+
+:deep(.p-timeline-event-opposite) {
+  @apply flex-initial;
 }
 </style>

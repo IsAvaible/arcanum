@@ -1,24 +1,18 @@
-const port = 443;
+const port = 3000;
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const { Server } = require("socket.io");
 
 const https = require("https");
 const fs = require("fs");
 
 const caseRoutes = require("./routes/caseRoutes");
+const glossaryRoutes = require("./routes/glossaryRoutes");
 const uploadRoutes = require("./routes/exampleFileUpload");
+const chatRoutes = require("./routes/chatRoutes");
+const tokenService = require("./services/tokenService");
 
-app.use(
-  cors({
-    origin: [
-      "http://localhost:8080", // Frontend (Docker)
-      "http://localhost:4173", // Frontend (Production)
-      "http://localhost:5173", // Frontend (Development)
-      "http://localhost:63342", // PHPStorm
-    ],
-  }),
-);
 
 // for development only
 app.set("view engine", "ejs");
@@ -47,8 +41,10 @@ app.use(express.json()); // Fügt die JSON-Parsing-Middleware hinzu
 app.use(express.urlencoded({ extended: true }));
 
 //Routen verwenden
-app.use("/api", caseRoutes);
 app.use("/", uploadRoutes);
+app.use("/api", caseRoutes);
+app.use("/api", glossaryRoutes);
+app.use("/api", chatRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -63,14 +59,25 @@ const credentials = {
 // for https uncomment the following lines
 try {
   const server = https.createServer(credentials, app);
+  const io = new Server(server, {
+    cors: {
+      origin: [
+        "http://localhost:8080", // Frontend (Docker)
+        "http://localhost:4173", // Frontend (Production)
+        "http://localhost:5173", // Frontend (Development)
+        "http://localhost:5174", // Swagger OpenAPI Editor
+        "http://localhost:63342", // PHPStorm
+        "http://localhost:5001", // PHPStorm
+        process.env.LLM_API_URL, // LLM_Backend
+      ],
+      credentials: true,
+    },
+  });
+  tokenService(io);
+
   server.listen(port, function (req, res) {
-    console.log(`Example app listening on port 3000 (${port})`);
+    console.log(`Server listening on port (${port})`);
   });
 } catch (err) {
   console.error(err);
 }
-
-// for https comment the following line
-// app.listen(port, () => {
-//   console.log(`Example app listening on port ${port}`)
-// })

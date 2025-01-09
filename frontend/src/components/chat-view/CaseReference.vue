@@ -25,7 +25,6 @@ const caseData = ref<Case | null>(null)
 const caseID = ref<number | null>(null)
 
 const popover = useTemplateRef('popover')
-const component = useTemplateRef('component')
 
 const timer = ref<number | null>(null)
 
