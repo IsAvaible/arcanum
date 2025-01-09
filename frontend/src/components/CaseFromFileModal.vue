@@ -25,7 +25,7 @@ const files = ref<File[]>([])
 const showDialog = useVModel(props, 'visible', emit)
 const fileDropzone = useTemplateRef('fileDropzone')
 
-const generateButtonLabel = ref<string | ''>('Generate Case(s) From Files')
+const generateButtonLabel = ref<string | ''>('Generate Case From Files')
 // Methods
 const openManualCaseCreation = () => {
   showDialog.value = false
@@ -263,6 +263,7 @@ const openAICaseCreation = async () => {
     console.error(error)
   } finally {
     loading.value = false
+    generateButtonLabel.value = 'Generate Case From Files'
   }
 }
 </script>

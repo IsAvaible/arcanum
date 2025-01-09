@@ -67,7 +67,7 @@ def transcribe(file, texts, path, filehash, file_as_dicts, socket_id):
             sio.emit('llm_message', {'message': 'Splitting Audio in multiple chunks...', 'socket_id': socket_id})
             segments = split_audio_with_overlap(path, segment_length_ms=split_length_ms, overlap_ms=500)
             for idx, segment in enumerate(segments):
-                sio.emit('llm_message', {'message': f'Analyzing Chunk {idx}/{len(segments)}', 'socket_id': socket_id})
+                sio.emit('llm_message', {'message': f'Analyzing Chunk {idx+1}/{len(segments)}', 'socket_id': socket_id})
                 dir = os.path.join(
                     app.root_path, os.path.join(f"temp/{filehash}/audio")
                 )
