@@ -34,6 +34,14 @@ class QdrantVectorstore:
         )
         self.setup_collection(1536) # 1536 is the default vector size for text-embedding-ada-002 embeddings
     
+    def __enter__(self):
+        # Initialize or open resources
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        # Clean up or close resources
+        self.client.close()
+
     def setup_collection(self, vector_size):
         """
         Setup a collection in Qdrant with the specified vector size if it does not already exist.
