@@ -617,7 +617,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChatWithMessages'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
         400:
           description: Missing or invalid message content.
           content:

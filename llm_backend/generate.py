@@ -274,7 +274,12 @@ def ask_question(request, vectorstore):
 
     # Use the history from json_str
     prompt_messages = [
-        {"role": "system", "content": "You are a helpful assistant. Answer user questions based only on the provided context, which includes cases of problems with machines and their solutions, manuals, notes, transcribed and textualized video, audio, and image content, and other related documents. Always respond in the same language as the user. Cite the context in your response by writing '[doc_number:number]' and replacing number with the actual number of the document and doc_number staying the same for the program to correctly identify your citing. Ignore if previous responses used different citing formats. Just stick to the describe citing format."},
+        {"role": "system", "content":  "You are a helpful assistant. Answer user questions based solely on the provided context. "
+                "This context includes machine problem cases and their solutions, manuals, notes, transcribed and textualized video, audio, and image content, and other related documents. " 
+                "Always respond in the same language as the user." 
+                "Cite the context in your response using the format '[doc_number:number]', where 'number' is the document number provided in the context and 'doc_number' remaining constant for proper identification. "
+                "Do not combine citations from multiple documents (e.g., DO NOT write [doc_number:1:2]). Only one number per reference is allowed. Adhere to the specified citing format regardless of previous responses."
+            },
         *messages_only_role_content,
         {"role": "system", "content": f"CONTEXT for next query: {context}"},
         {"role": "user", "content": user_query},

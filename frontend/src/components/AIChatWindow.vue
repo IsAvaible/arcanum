@@ -90,7 +90,7 @@ const fetchChats = async () => {
   chatsLoading.value = false
 }
 
-const registerSocket = () => {
+const registerSocket = async () => {
   if (socket.value) {
     // Disconnect the existing socket
     socket.value.disconnect()
@@ -99,21 +99,25 @@ const registerSocket = () => {
     rejectUnauthorized: false,
   })
 
-  socket.value.on('connect', () => {
-    socket.value!.on('llm_message', (data: { message: string }) => {
-      console.log(data, socket.value!.id)
-      pendingLLMMessage.value = {
-        content: data.message,
-        state: 'generating',
-        chatId: activeChat.value!.id,
-        role: MessageRoleEnum.Assistant,
-        timestamp: new Date().toISOString(),
-        id: -2,
-      }
-    })
+  // Return a promise that resolves when the socket is connected
+  return new Promise<void>((resolve) => {
+    socket.value!.on('connect', () => {
+      socket.value!.on('llm_message', (data: { message: string }) => {
+        pendingLLMMessage.value = {
+          content: data.message,
+          state: 'generating',
+          chatId: activeChat.value!.id,
+          role: MessageRoleEnum.Assistant,
+          timestamp: new Date().toISOString(),
+          id: -2,
+        }
+      })
 
-    socket.value!.on('llm_end', (_data: { message: string }) => {
-      pendingLLMMessage.value = null
+      socket.value!.on('llm_end', (_data: { message: string }) => {
+        pendingLLMMessage.value = null
+      })
+
+      resolve()
     })
   })
 }
@@ -284,6 +288,7 @@ const sendMessage = async () => {
   }
 
   if (!editingMessage.value) {
+    // Sending a new message
     pendingMessage.value = {
       content: messageInput.value.trim(),
       state: 'pending',
@@ -295,6 +300,7 @@ const sendMessage = async () => {
     messageInput.value = ''
     await sendPendingMessage()
   } else {
+    // Editing a message
     const editedMessage = editingMessage.value
     const originalContent = editedMessage.content
     const editedContent = messageInput.value
@@ -308,11 +314,14 @@ const sendMessage = async () => {
       messageInput.value = originalMessageInput.value
 
       // Send the edited message to the API
-      await api.chatsChatIdMessagesMessageIdPut({
-        chatId: activeChat.value.id,
-        messageId: editedMessage.id,
-        content: editedContent,
-      })
+      activeChat.value.messages = (
+        await api.chatsChatIdMessagesMessageIdPut({
+          chatId: activeChat.value.id,
+          messageId: editedMessage.id,
+          content: editedContent,
+        })
+      ).data
+      pendingMessage.value = pendingLLMMessage.value = null
 
       // Remove the pending state if the message was sent successfully
       editedMessage.state = undefined
@@ -344,8 +353,7 @@ const sendPendingMessage = async () => {
       })
     ).data
     activeChat.value.messages.push(userMessage, assistantMessage)
-    pendingMessage.value = null
-    pendingLLMMessage.value = null
+    pendingMessage.value = pendingLLMMessage.value = null
   } catch (error) {
     toast.add({
       severity: 'error',
@@ -398,7 +406,7 @@ const createChatWithMessage = async () => {
     chats.value = [chat, ...(chats.value ?? [])]
     await router.push(`/ai/${chat.id}`)
     activeChat.value = { ...chat, messages: [] }
-    registerSocket()
+    await registerSocket()
     await sendMessage()
     createChatLoading.value = false
   } catch (error) {
