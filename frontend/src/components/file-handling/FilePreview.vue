@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 const _props = defineProps<{
   file: File
 }>()
 
-const objectURL = URL.createObjectURL(_props.file)
+const objectURL = computed(() => {
+  return URL.createObjectURL(_props.file)
+})
 </script>
 
 <template>

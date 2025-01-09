@@ -26,6 +26,61 @@ import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError, operationServerM
 /**
  * 
  * @export
+ * @interface Attachment
+ */
+export interface Attachment {
+    /**
+     * ID of the attachment.
+     * @type {number}
+     * @memberof Attachment
+     */
+    'id': number;
+    /**
+     * 
+     * @type {string}
+     * @memberof Attachment
+     */
+    'filename': string;
+    /**
+     * Path to the attachment file.
+     * @type {string}
+     * @memberof Attachment
+     */
+    'filepath': string;
+    /**
+     * Hash of the attachment file.
+     * @type {string}
+     * @memberof Attachment
+     */
+    'filehash': string;
+    /**
+     * MIME type of the attachment file.
+     * @type {string}
+     * @memberof Attachment
+     */
+    'mimetype': string;
+    /**
+     * Size of the attachment file in bytes.
+     * @type {number}
+     * @memberof Attachment
+     */
+    'size': number;
+    /**
+     * 
+     * @type {string}
+     * @memberof Attachment
+     */
+    'createdAt': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof Attachment
+     */
+    'updatedAt': string;
+}
+/**
+ * 
+ * @export
  * @interface Case
  */
 export interface Case {
@@ -96,11 +151,11 @@ export interface Case {
      */
     'updatedAt': string;
     /**
-     * List of file names attached to the case.
-     * @type {Array<CaseAllOfAttachments>}
+     * List of attachments attached to the case.
+     * @type {Array<Attachment>}
      * @memberof Case
      */
-    'attachments': Array<CaseAllOfAttachments>;
+    'attachments': Array<Attachment>;
 }
 
 export const CaseStatusEnum = {
@@ -127,61 +182,6 @@ export const CasePriorityEnum = {
 
 export type CasePriorityEnum = typeof CasePriorityEnum[keyof typeof CasePriorityEnum];
 
-/**
- * 
- * @export
- * @interface CaseAllOfAttachments
- */
-export interface CaseAllOfAttachments {
-    /**
-     * ID of the attachment.
-     * @type {number}
-     * @memberof CaseAllOfAttachments
-     */
-    'id': number;
-    /**
-     * 
-     * @type {string}
-     * @memberof CaseAllOfAttachments
-     */
-    'filename': string;
-    /**
-     * Path to the attachment file.
-     * @type {string}
-     * @memberof CaseAllOfAttachments
-     */
-    'filepath': string;
-    /**
-     * Hash of the attachment file.
-     * @type {string}
-     * @memberof CaseAllOfAttachments
-     */
-    'filehash': string;
-    /**
-     * MIME type of the attachment file.
-     * @type {string}
-     * @memberof CaseAllOfAttachments
-     */
-    'mimetype': string;
-    /**
-     * Size of the attachment file in bytes.
-     * @type {number}
-     * @memberof CaseAllOfAttachments
-     */
-    'size': number;
-    /**
-     * 
-     * @type {string}
-     * @memberof CaseAllOfAttachments
-     */
-    'createdAt': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CaseAllOfAttachments
-     */
-    'updatedAt': string;
-}
 /**
  * 
  * @export
@@ -415,6 +415,74 @@ export interface ModelError {
 export const DefaultApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
+         * Download an attachment by its ID.
+         * @summary Download an attachment
+         * @param {number} attachmentId ID of the attachment to download.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        casesAttachmentsAttachmentIdDownloadGet: async (attachmentId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'attachmentId' is not null or undefined
+            assertParamExists('casesAttachmentsAttachmentIdDownloadGet', 'attachmentId', attachmentId)
+            const localVarPath = `/cases/attachments/{attachmentId}/download`
+                .replace(`{${"attachmentId"}}`, encodeURIComponent(String(attachmentId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Retrieve an attachment by its ID.
+         * @summary Retrieve an attachment
+         * @param {number} attachmentId ID of the attachment to retrieve.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        casesAttachmentsAttachmentIdGet: async (attachmentId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'attachmentId' is not null or undefined
+            assertParamExists('casesAttachmentsAttachmentIdGet', 'attachmentId', attachmentId)
+            const localVarPath = `/cases/attachments/{attachmentId}`
+                .replace(`{${"attachmentId"}}`, encodeURIComponent(String(attachmentId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Retrieve a list of all cases.
          * @summary Retrieve all cases
          * @param {*} [options] Override http request option.
@@ -448,18 +516,18 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * Delete an attachment associated with a case.
          * @summary Delete an attachment
          * @param {number} id ID of the case.
-         * @param {number} fileId ID of the attachment file.
+         * @param {number} attachmentId ID of the attachment.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        casesIdAttachmentsFileIdDelete: async (id: number, fileId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        casesIdAttachmentsAttachmentIdDelete: async (id: number, attachmentId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
-            assertParamExists('casesIdAttachmentsFileIdDelete', 'id', id)
-            // verify required parameter 'fileId' is not null or undefined
-            assertParamExists('casesIdAttachmentsFileIdDelete', 'fileId', fileId)
-            const localVarPath = `/cases/{id}/attachments/{fileId}`
+            assertParamExists('casesIdAttachmentsAttachmentIdDelete', 'id', id)
+            // verify required parameter 'attachmentId' is not null or undefined
+            assertParamExists('casesIdAttachmentsAttachmentIdDelete', 'attachmentId', attachmentId)
+            const localVarPath = `/cases/{id}/attachments/{attachmentId}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)))
-                .replace(`{${"fileId"}}`, encodeURIComponent(String(fileId)));
+                .replace(`{${"attachmentId"}}`, encodeURIComponent(String(attachmentId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -486,18 +554,56 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * Download an attachment associated with a case.
          * @summary Download an attachment
          * @param {number} id ID of the case.
-         * @param {number} fileId ID of the attachment file.
+         * @param {number} attachmentId ID of the attachment.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        casesIdAttachmentsFileIdGet: async (id: number, fileId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        casesIdAttachmentsAttachmentIdDownloadGet: async (id: number, attachmentId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
-            assertParamExists('casesIdAttachmentsFileIdGet', 'id', id)
-            // verify required parameter 'fileId' is not null or undefined
-            assertParamExists('casesIdAttachmentsFileIdGet', 'fileId', fileId)
-            const localVarPath = `/cases/{id}/attachments/{fileId}`
+            assertParamExists('casesIdAttachmentsAttachmentIdDownloadGet', 'id', id)
+            // verify required parameter 'attachmentId' is not null or undefined
+            assertParamExists('casesIdAttachmentsAttachmentIdDownloadGet', 'attachmentId', attachmentId)
+            const localVarPath = `/cases/{id}/attachments/{attachmentId}/download`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)))
-                .replace(`{${"fileId"}}`, encodeURIComponent(String(fileId)));
+                .replace(`{${"attachmentId"}}`, encodeURIComponent(String(attachmentId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Retrieve an attachment associated with a case.
+         * @summary Retrieve an attachment
+         * @param {number} id ID of the case.
+         * @param {number} attachmentId ID of the attachment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        casesIdAttachmentsAttachmentIdGet: async (id: number, attachmentId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('casesIdAttachmentsAttachmentIdGet', 'id', id)
+            // verify required parameter 'attachmentId' is not null or undefined
+            assertParamExists('casesIdAttachmentsAttachmentIdGet', 'attachmentId', attachmentId)
+            const localVarPath = `/cases/{id}/attachments/{attachmentId}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)))
+                .replace(`{${"attachmentId"}}`, encodeURIComponent(String(attachmentId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -1296,6 +1402,32 @@ export const DefaultApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = DefaultApiAxiosParamCreator(configuration)
     return {
         /**
+         * Download an attachment by its ID.
+         * @summary Download an attachment
+         * @param {number} attachmentId ID of the attachment to download.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async casesAttachmentsAttachmentIdDownloadGet(attachmentId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<File>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.casesAttachmentsAttachmentIdDownloadGet(attachmentId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.casesAttachmentsAttachmentIdDownloadGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Retrieve an attachment by its ID.
+         * @summary Retrieve an attachment
+         * @param {number} attachmentId ID of the attachment to retrieve.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async casesAttachmentsAttachmentIdGet(attachmentId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Attachment>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.casesAttachmentsAttachmentIdGet(attachmentId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.casesAttachmentsAttachmentIdGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Retrieve a list of all cases.
          * @summary Retrieve all cases
          * @param {*} [options] Override http request option.
@@ -1311,28 +1443,42 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * Delete an attachment associated with a case.
          * @summary Delete an attachment
          * @param {number} id ID of the case.
-         * @param {number} fileId ID of the attachment file.
+         * @param {number} attachmentId ID of the attachment.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async casesIdAttachmentsFileIdDelete(id: number, fileId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.casesIdAttachmentsFileIdDelete(id, fileId, options);
+        async casesIdAttachmentsAttachmentIdDelete(id: number, attachmentId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.casesIdAttachmentsAttachmentIdDelete(id, attachmentId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['DefaultApi.casesIdAttachmentsFileIdDelete']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.casesIdAttachmentsAttachmentIdDelete']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * Download an attachment associated with a case.
          * @summary Download an attachment
          * @param {number} id ID of the case.
-         * @param {number} fileId ID of the attachment file.
+         * @param {number} attachmentId ID of the attachment.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async casesIdAttachmentsFileIdGet(id: number, fileId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<File>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.casesIdAttachmentsFileIdGet(id, fileId, options);
+        async casesIdAttachmentsAttachmentIdDownloadGet(id: number, attachmentId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<File>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.casesIdAttachmentsAttachmentIdDownloadGet(id, attachmentId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['DefaultApi.casesIdAttachmentsFileIdGet']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.casesIdAttachmentsAttachmentIdDownloadGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Retrieve an attachment associated with a case.
+         * @summary Retrieve an attachment
+         * @param {number} id ID of the case.
+         * @param {number} attachmentId ID of the attachment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async casesIdAttachmentsAttachmentIdGet(id: number, attachmentId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Attachment>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.casesIdAttachmentsAttachmentIdGet(id, attachmentId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.casesIdAttachmentsAttachmentIdGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -1585,6 +1731,26 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
     const localVarFp = DefaultApiFp(configuration)
     return {
         /**
+         * Download an attachment by its ID.
+         * @summary Download an attachment
+         * @param {DefaultApiCasesAttachmentsAttachmentIdDownloadGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        casesAttachmentsAttachmentIdDownloadGet(requestParameters: DefaultApiCasesAttachmentsAttachmentIdDownloadGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<File> {
+            return localVarFp.casesAttachmentsAttachmentIdDownloadGet(requestParameters.attachmentId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Retrieve an attachment by its ID.
+         * @summary Retrieve an attachment
+         * @param {DefaultApiCasesAttachmentsAttachmentIdGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        casesAttachmentsAttachmentIdGet(requestParameters: DefaultApiCasesAttachmentsAttachmentIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Attachment> {
+            return localVarFp.casesAttachmentsAttachmentIdGet(requestParameters.attachmentId, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Retrieve a list of all cases.
          * @summary Retrieve all cases
          * @param {*} [options] Override http request option.
@@ -1596,22 +1762,32 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
         /**
          * Delete an attachment associated with a case.
          * @summary Delete an attachment
-         * @param {DefaultApiCasesIdAttachmentsFileIdDeleteRequest} requestParameters Request parameters.
+         * @param {DefaultApiCasesIdAttachmentsAttachmentIdDeleteRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        casesIdAttachmentsFileIdDelete(requestParameters: DefaultApiCasesIdAttachmentsFileIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.casesIdAttachmentsFileIdDelete(requestParameters.id, requestParameters.fileId, options).then((request) => request(axios, basePath));
+        casesIdAttachmentsAttachmentIdDelete(requestParameters: DefaultApiCasesIdAttachmentsAttachmentIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.casesIdAttachmentsAttachmentIdDelete(requestParameters.id, requestParameters.attachmentId, options).then((request) => request(axios, basePath));
         },
         /**
          * Download an attachment associated with a case.
          * @summary Download an attachment
-         * @param {DefaultApiCasesIdAttachmentsFileIdGetRequest} requestParameters Request parameters.
+         * @param {DefaultApiCasesIdAttachmentsAttachmentIdDownloadGetRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        casesIdAttachmentsFileIdGet(requestParameters: DefaultApiCasesIdAttachmentsFileIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<File> {
-            return localVarFp.casesIdAttachmentsFileIdGet(requestParameters.id, requestParameters.fileId, options).then((request) => request(axios, basePath));
+        casesIdAttachmentsAttachmentIdDownloadGet(requestParameters: DefaultApiCasesIdAttachmentsAttachmentIdDownloadGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<File> {
+            return localVarFp.casesIdAttachmentsAttachmentIdDownloadGet(requestParameters.id, requestParameters.attachmentId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Retrieve an attachment associated with a case.
+         * @summary Retrieve an attachment
+         * @param {DefaultApiCasesIdAttachmentsAttachmentIdGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        casesIdAttachmentsAttachmentIdGet(requestParameters: DefaultApiCasesIdAttachmentsAttachmentIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Attachment> {
+            return localVarFp.casesIdAttachmentsAttachmentIdGet(requestParameters.id, requestParameters.attachmentId, options).then((request) => request(axios, basePath));
         },
         /**
          * Upload one or more files as attachments for a specific case.
@@ -1776,45 +1952,94 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
 };
 
 /**
- * Request parameters for casesIdAttachmentsFileIdDelete operation in DefaultApi.
+ * Request parameters for casesAttachmentsAttachmentIdDownloadGet operation in DefaultApi.
  * @export
- * @interface DefaultApiCasesIdAttachmentsFileIdDeleteRequest
+ * @interface DefaultApiCasesAttachmentsAttachmentIdDownloadGetRequest
  */
-export interface DefaultApiCasesIdAttachmentsFileIdDeleteRequest {
+export interface DefaultApiCasesAttachmentsAttachmentIdDownloadGetRequest {
     /**
-     * ID of the case.
+     * ID of the attachment to download.
      * @type {number}
-     * @memberof DefaultApiCasesIdAttachmentsFileIdDelete
+     * @memberof DefaultApiCasesAttachmentsAttachmentIdDownloadGet
      */
-    readonly id: number
-
-    /**
-     * ID of the attachment file.
-     * @type {number}
-     * @memberof DefaultApiCasesIdAttachmentsFileIdDelete
-     */
-    readonly fileId: number
+    readonly attachmentId: number
 }
 
 /**
- * Request parameters for casesIdAttachmentsFileIdGet operation in DefaultApi.
+ * Request parameters for casesAttachmentsAttachmentIdGet operation in DefaultApi.
  * @export
- * @interface DefaultApiCasesIdAttachmentsFileIdGetRequest
+ * @interface DefaultApiCasesAttachmentsAttachmentIdGetRequest
  */
-export interface DefaultApiCasesIdAttachmentsFileIdGetRequest {
+export interface DefaultApiCasesAttachmentsAttachmentIdGetRequest {
+    /**
+     * ID of the attachment to retrieve.
+     * @type {number}
+     * @memberof DefaultApiCasesAttachmentsAttachmentIdGet
+     */
+    readonly attachmentId: number
+}
+
+/**
+ * Request parameters for casesIdAttachmentsAttachmentIdDelete operation in DefaultApi.
+ * @export
+ * @interface DefaultApiCasesIdAttachmentsAttachmentIdDeleteRequest
+ */
+export interface DefaultApiCasesIdAttachmentsAttachmentIdDeleteRequest {
     /**
      * ID of the case.
      * @type {number}
-     * @memberof DefaultApiCasesIdAttachmentsFileIdGet
+     * @memberof DefaultApiCasesIdAttachmentsAttachmentIdDelete
      */
     readonly id: number
 
     /**
-     * ID of the attachment file.
+     * ID of the attachment.
      * @type {number}
-     * @memberof DefaultApiCasesIdAttachmentsFileIdGet
+     * @memberof DefaultApiCasesIdAttachmentsAttachmentIdDelete
      */
-    readonly fileId: number
+    readonly attachmentId: number
+}
+
+/**
+ * Request parameters for casesIdAttachmentsAttachmentIdDownloadGet operation in DefaultApi.
+ * @export
+ * @interface DefaultApiCasesIdAttachmentsAttachmentIdDownloadGetRequest
+ */
+export interface DefaultApiCasesIdAttachmentsAttachmentIdDownloadGetRequest {
+    /**
+     * ID of the case.
+     * @type {number}
+     * @memberof DefaultApiCasesIdAttachmentsAttachmentIdDownloadGet
+     */
+    readonly id: number
+
+    /**
+     * ID of the attachment.
+     * @type {number}
+     * @memberof DefaultApiCasesIdAttachmentsAttachmentIdDownloadGet
+     */
+    readonly attachmentId: number
+}
+
+/**
+ * Request parameters for casesIdAttachmentsAttachmentIdGet operation in DefaultApi.
+ * @export
+ * @interface DefaultApiCasesIdAttachmentsAttachmentIdGetRequest
+ */
+export interface DefaultApiCasesIdAttachmentsAttachmentIdGetRequest {
+    /**
+     * ID of the case.
+     * @type {number}
+     * @memberof DefaultApiCasesIdAttachmentsAttachmentIdGet
+     */
+    readonly id: number
+
+    /**
+     * ID of the attachment.
+     * @type {number}
+     * @memberof DefaultApiCasesIdAttachmentsAttachmentIdGet
+     */
+    readonly attachmentId: number
 }
 
 /**
@@ -2259,6 +2484,30 @@ export interface DefaultApiCreateCaseFromFilesPostRequest {
  */
 export class DefaultApi extends BaseAPI {
     /**
+     * Download an attachment by its ID.
+     * @summary Download an attachment
+     * @param {DefaultApiCasesAttachmentsAttachmentIdDownloadGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public casesAttachmentsAttachmentIdDownloadGet(requestParameters: DefaultApiCasesAttachmentsAttachmentIdDownloadGetRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).casesAttachmentsAttachmentIdDownloadGet(requestParameters.attachmentId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Retrieve an attachment by its ID.
+     * @summary Retrieve an attachment
+     * @param {DefaultApiCasesAttachmentsAttachmentIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public casesAttachmentsAttachmentIdGet(requestParameters: DefaultApiCasesAttachmentsAttachmentIdGetRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).casesAttachmentsAttachmentIdGet(requestParameters.attachmentId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
      * Retrieve a list of all cases.
      * @summary Retrieve all cases
      * @param {*} [options] Override http request option.
@@ -2272,25 +2521,37 @@ export class DefaultApi extends BaseAPI {
     /**
      * Delete an attachment associated with a case.
      * @summary Delete an attachment
-     * @param {DefaultApiCasesIdAttachmentsFileIdDeleteRequest} requestParameters Request parameters.
+     * @param {DefaultApiCasesIdAttachmentsAttachmentIdDeleteRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof DefaultApi
      */
-    public casesIdAttachmentsFileIdDelete(requestParameters: DefaultApiCasesIdAttachmentsFileIdDeleteRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).casesIdAttachmentsFileIdDelete(requestParameters.id, requestParameters.fileId, options).then((request) => request(this.axios, this.basePath));
+    public casesIdAttachmentsAttachmentIdDelete(requestParameters: DefaultApiCasesIdAttachmentsAttachmentIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).casesIdAttachmentsAttachmentIdDelete(requestParameters.id, requestParameters.attachmentId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
      * Download an attachment associated with a case.
      * @summary Download an attachment
-     * @param {DefaultApiCasesIdAttachmentsFileIdGetRequest} requestParameters Request parameters.
+     * @param {DefaultApiCasesIdAttachmentsAttachmentIdDownloadGetRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof DefaultApi
      */
-    public casesIdAttachmentsFileIdGet(requestParameters: DefaultApiCasesIdAttachmentsFileIdGetRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).casesIdAttachmentsFileIdGet(requestParameters.id, requestParameters.fileId, options).then((request) => request(this.axios, this.basePath));
+    public casesIdAttachmentsAttachmentIdDownloadGet(requestParameters: DefaultApiCasesIdAttachmentsAttachmentIdDownloadGetRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).casesIdAttachmentsAttachmentIdDownloadGet(requestParameters.id, requestParameters.attachmentId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Retrieve an attachment associated with a case.
+     * @summary Retrieve an attachment
+     * @param {DefaultApiCasesIdAttachmentsAttachmentIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public casesIdAttachmentsAttachmentIdGet(requestParameters: DefaultApiCasesIdAttachmentsAttachmentIdGetRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).casesIdAttachmentsAttachmentIdGet(requestParameters.id, requestParameters.attachmentId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

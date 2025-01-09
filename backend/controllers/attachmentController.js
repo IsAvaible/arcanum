@@ -55,13 +55,13 @@ exports.addAttachmentsToCase = [
  *
  * - Purpose: Removes the link between a case and an attachment, and deletes the attachment if it is no longer linked to any cases.
  * - Parameters:
- *   - `req`: The request object containing `params.id` (case ID) and `params.fileId` (attachment ID).
+ *   - `req`: The request object containing `params.id` (case ID) and `params.attachmentId` (attachment ID).
  *   - `res`: The response object to send the status or error messages.
  * - Returns: Sends a 204 No Content status if successful or an error message if it fails.
  */
 exports.deleteAttachmentFromCase = async (req, res) => {
   const caseId = parseInt(req.params.id, 10);
-  const fileId = parseInt(req.params.fileId, 10);
+  const attachmentId = parseInt(req.params.attachmentId, 10);
   try {
     // Find the case by ID, including its attachments
     const caseItem = await Cases.findByPk(caseId, {
@@ -80,7 +80,7 @@ exports.deleteAttachmentFromCase = async (req, res) => {
 
     // Find the attachment linked to the case
     const attachment = await Attachments.findOne({
-      where: { id: fileId },
+      where: { id: attachmentId },
       include: [
         {
           model: Cases,
@@ -109,44 +109,83 @@ exports.deleteAttachmentFromCase = async (req, res) => {
 };
 
 /**
- * Downloads an attachment from a specific case.
+ * Retrieves an attachment from a specific case.
  *
- * - Purpose: Retrieves and streams an attachment file to the client.
+ * - Purpose: Retrieves a specific attachment linked to a case.
  * - Parameters:
- *   - `req`: The request object containing `params.id` (case ID) and `params.fileId` (attachment ID).
- *   - `res`: The response object to send the file or an error message.
- * - Returns: Sends the file as an attachment to the client or an error message if it fails.
+ *  - `req`: The request object containing `params.id` (case ID) and `params.attachmentId` (attachment ID).
+ *  - `res`: The response object to send the attachment or an error message.
+ *  - Returns: Sends the attachment as JSON or an error message if it fails.
  */
-exports.downloadAttachment = async (req, res) => {
-  const { id, fileId } = req.params;
+exports.getAttachment = async (req, res) => {
+  const { id, attachmentId } = req.params;
 
   try {
-    // Find the case by ID, including its attachments
-    const caseItem = await Cases.findByPk(id, {
-      include: [
-        {
-          model: Attachments,
-          as: "attachments",
-          through: { attributes: [] },
-        },
-      ],
-    });
+    if (id !== undefined) {
+      const caseItem = await Cases.findByPk(id, {
+        include: [
+          {
+            model: Attachments,
+            as: "attachments",
+            through: { attributes: [] },
+          },
+        ],
+      });
 
-    if (!caseItem) {
-      return res.status(404).json({ message: "Case not found" });
+      if (!caseItem) {
+        return res.status(404).json({ message: "Case not found" });
+      }
     }
 
     // Find the attachment linked to the case
     const attachment = await Attachments.findOne({
-      where: { id: fileId },
-      include: [
-        {
-          model: Cases,
-          as: "cases",
-          where: { id: id },
-          through: { attributes: [] },
-        },
-      ],
+      where: { id: attachmentId },
+    });
+
+    if (!attachment) {
+      return res.status(404).json({ message: "Attachment not found" });
+    }
+
+    res.json(attachment);
+  } catch (error) {
+    console.error("Error retrieving attachment:", error);
+    res.status(500).json({ message: error });
+  }
+};
+
+/**
+ * Downloads an attachment from a specific case.
+ *
+ * - Purpose: Retrieves and streams an attachment file to the client.
+ * - Parameters:
+ *   - `req`: The request object containing `params.id` (case ID) and `params.attachmentId` (attachment ID).
+ *   - `res`: The response object to send the file or an error message.
+ * - Returns: Sends the file as an attachment to the client or an error message if it fails.
+ */
+exports.downloadAttachment = async (req, res) => {
+  const { id, attachmentId } = req.params;
+
+  try {
+    if (id !== undefined) {
+      // Find the case by ID, including its attachments
+      const caseItem = await Cases.findByPk(id, {
+        include: [
+          {
+            model: Attachments,
+            as: "attachments",
+            through: { attributes: [] },
+          },
+        ],
+      });
+
+      if (!caseItem) {
+        return res.status(404).json({ message: "Case not found" });
+      }
+    }
+
+    // Find the attachment linked to the case
+    const attachment = await Attachments.findOne({
+      where: { id: attachmentId },
     });
 
     if (!attachment) {

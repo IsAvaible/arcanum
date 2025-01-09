@@ -32,7 +32,7 @@ import CasePrioritySelect from '@/components/case-form-fields/CaseStatusSelect/C
 
 // Types
 import type { AxiosError } from 'axios'
-import type { Case, CaseAllOfAttachments } from '@/api'
+import type { Case, Attachment } from '@/api'
 import { CaseCaseTypeEnum } from '@/api'
 
 // Functions
@@ -342,13 +342,13 @@ const uploadFiles = async () => {
   }
 }
 
-const deleteAttachment = async (attachment: CaseAllOfAttachments) => {
+const deleteAttachment = async (attachment: Attachment) => {
   deletingFileId.value = attachment.id
 
   try {
-    await api.casesIdAttachmentsFileIdDelete({
+    await api.casesIdAttachmentsAttachmentIdDelete({
       id: Number(caseId.value),
-      fileId: attachment.id,
+      attachmentId: attachment.id,
     })
 
     files.value = files.value.filter((f) => f.name !== attachment.filename)
@@ -383,7 +383,7 @@ const selectedFileProperties = ref<FileProperties | null>(null)
 const loadingFileId = ref<number | null>(null)
 const deletingFileId = ref<number | null>(null)
 
-const openAttachmentInDrawer = async (attachment: CaseAllOfAttachments) => {
+const openAttachmentInDrawer = async (attachment: Attachment) => {
   // Check if the attachment is already in the files array
   let file = files.value.find((f) => f.name === attachment.filename)
   if (!file) {
@@ -391,10 +391,10 @@ const openAttachmentInDrawer = async (attachment: CaseAllOfAttachments) => {
     // If not, download the file from the server
     try {
       file = await apiBlobToFile(
-        await api.casesIdAttachmentsFileIdGet(
+        await api.casesIdAttachmentsAttachmentIdDownloadGet(
           {
             id: Number(caseId.value),
-            fileId: attachment.id,
+            attachmentId: attachment.id,
           },
           { responseType: 'blob' },
         ),

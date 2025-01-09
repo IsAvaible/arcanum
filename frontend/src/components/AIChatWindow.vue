@@ -15,8 +15,16 @@ import {
   useToast,
 } from 'primevue'
 import { useApi } from '@/composables/useApi'
-import { type Case, type Chat, type ChatWithMessages, type Message, MessageRoleEnum } from '@/api'
-import CaseReference from '@/components/chat-view/CaseReference.vue'
+import {
+  type Attachment,
+  type Case,
+  type Chat,
+  type ChatWithMessages,
+  type Message,
+  MessageRoleEnum,
+} from '@/api'
+import CaseReferenceComponent from '@/components/chat-view/CaseReference.vue'
+import FileReferenceComponent from '@/components/chat-view/FileReference.vue'
 import DynamicRouterLinkText from '@/components/misc/DynamicRouterLinkText.vue'
 import { useDebounceFn } from '@vueuse/core'
 import type { AxiosError } from 'axios'
@@ -27,6 +35,8 @@ import { useRoute, useRouter } from 'vue-router'
 import type { MenuItem } from 'primevue/menuitem'
 import { io, Socket } from 'socket.io-client'
 import { BASE_PATH as BACKEND_API_BASE_PATH } from '@/api/base'
+import { apiBlobToFile } from '@/functions/apiBlobToFile'
+import FilePreview from '@/components/file-handling/FilePreview.vue'
 
 /// Reactive State Variables
 const route = useRoute()
@@ -53,8 +63,12 @@ const api = useApi()
 const socket = ref<Socket | null>(null)
 
 /// Regex Constants
-/** Regular expression to match case references like #10 in messages. */
+/** Regular expression to match case references like [case:10] in messages. */
 const caseReferenceRegex = /\[case:(\d+)]/g
+type CaseReference = { id: number; case: Promise<Case> }
+/** Regular expression to match file references like [file:10] in messages. */
+const fileReferenceRegex = /\[file:(\d+)]/g
+type FileReference = { id: number; attachment: Promise<Attachment> }
 
 /// Chat Data Management
 /** State variables for chat data. */
@@ -114,12 +128,12 @@ const setActiveChat = async (chatId: Chat['id'] | null) => {
     if (route.params.chatId) {
       await router.push('/ai')
     }
-    pendingMessage.value = pendingLLMMessage.value = null
+    selectedFile.value = pendingMessage.value = pendingLLMMessage.value = null
   } else {
     chatLoading.value = true
     try {
       activeChat.value = (await api.chatsIdGet({ id: chatId })).data
-      pendingMessage.value = pendingLLMMessage.value = null
+      selectedFile.value = pendingMessage.value = pendingLLMMessage.value = null
       registerSocket()
       if (!route.params.chatId || Number(route.params.chatId) !== chatId) {
         await router.push(`/ai/${chatId}`)
@@ -513,7 +527,7 @@ const hasInvalidCaseReferences = computed(() => invalidCaseReferences.value.leng
  * @param message - The message containing case references.
  * @returns Array of case reference objects.
  */
-const getCaseReferences = (message: string): { id: number; case: Promise<Case> }[] => {
+const getCaseReferences = (message: string): CaseReference[] => {
   const caseReferences = message.matchAll(caseReferenceRegex)
 
   const caseIds = [...new Set([...caseReferences].map((match) => Number(match[1])))]
@@ -526,15 +540,73 @@ const getCaseReferences = (message: string): { id: number; case: Promise<Case> }
 /**
  * Computed property to aggregate case references from all messages in the active chat.
  */
-const caseReferences = computed(() => {
-  return displayedMessages.value.reduce(
-    (acc, message) => {
-      acc[message.id] = getCaseReferences(message.content)
-      return acc
-    },
-    {} as Record<number, { id: number; case: Promise<Case> }[]>,
-  )
+const caseReferences = computed<Record<number, CaseReference[]>>(() => {
+  return displayedMessages.value.reduce((acc: Record<number, CaseReference[]>, message) => {
+    acc[message.id] = getCaseReferences(message.content)
+    return acc
+  }, {})
 })
+
+/** Extracts and resolves file references from a given message. */
+const getFileReferences = (message: string): FileReference[] => {
+  const fileRefs = message.matchAll(fileReferenceRegex)
+  const fileIds = [...new Set([...fileRefs].map((match) => Number(match[1])))]
+  return fileIds.map((id) => ({
+    id,
+    attachment: api
+      .casesAttachmentsAttachmentIdGet({ attachmentId: id })
+      .then((response) => response.data),
+  }))
+}
+
+/** Computed property to aggregate file references from all messages in the active chat. */
+const fileReferences = computed<Record<number, FileReference[]>>(() => {
+  return displayedMessages.value.reduce((acc: Record<number, FileReference[]>, message) => {
+    acc[message.id] = getFileReferences(message.content)
+    return acc
+  }, {})
+})
+
+/// File Preview Drawer Logic
+const files = ref<File[]>([])
+const selectedFile = ref<File | null>(null)
+const filePreviewVisible = ref(false)
+const loadingFileId = ref<number | null>(null)
+
+const openFileInDrawer = async (attachment: Attachment) => {
+  // Check if the attachment is already in the files array
+  let file = files.value.find((f) => f.name === attachment.filename)
+  if (!file) {
+    loadingFileId.value = attachment.id
+    // If not, download the file from the server
+    try {
+      file = await apiBlobToFile(
+        await api.casesAttachmentsAttachmentIdDownloadGet(
+          {
+            attachmentId: attachment.id,
+          },
+          { responseType: 'blob' },
+        ),
+      )
+
+      files.value.push(file)
+    } catch (error) {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'An error occurred while downloading the file\n' + (error as AxiosError).message,
+        life: 3000,
+      })
+      console.error(error)
+      return
+    } finally {
+      loadingFileId.value = null
+    }
+  }
+
+  selectedFile.value = file!
+  filePreviewVisible.value = true
+}
 
 /// Lifecycle Hooks
 onMounted(async () => {
@@ -658,10 +730,22 @@ onMounted(async () => {
                 to="/cases/"
               />
             </p>
-            <CaseReference
+            <CaseReferenceComponent
               v-for="caseReference in caseReferences[message.id] || []"
               :key="caseReference.id"
               :reference="caseReference"
+              class="min-w-40"
+              :class="{
+                'bg-gray-100': message.role === MessageRoleEnum.Assistant,
+                'bg-white': message.role === MessageRoleEnum.User,
+              }"
+            />
+            <FileReferenceComponent
+              v-for="fileReference in fileReferences[message.id] || []"
+              :key="fileReference.id"
+              :reference="fileReference"
+              :fileLoading="loadingFileId === fileReference.id"
+              @click="openFileInDrawer"
               class="min-w-40"
               :class="{
                 'bg-gray-100': message.role === MessageRoleEnum.Assistant,
@@ -776,7 +860,7 @@ onMounted(async () => {
 
     <!-- User Details -->
     <div
-      class="w-3/12 min-w-[300px] border-l border-gray-300 bg-white px-4 py-6 hidden xl:flex flex-col"
+      class="w-3/12 min-w-[300px] border-l border-gray-300 bg-white px-4 py-6 hidden xl:flex flex-col h-full"
     >
       <div class="flex flex-col items-center">
         <!-- Avatar -->
@@ -838,6 +922,7 @@ onMounted(async () => {
       <div class="mt-4">
         <SelectButton v-model="media" class="w-full flex [&>*]:w-full" :options="mediaOptions" />
       </div>
+      <FilePreview class="flex-1 mt-4" :file="selectedFile" v-if="filePreviewVisible" />
     </div>
   </div>
 </template>

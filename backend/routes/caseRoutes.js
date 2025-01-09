@@ -88,16 +88,56 @@ router.put("/cases/:id", multerMiddleware, caseController.updateCase);
 router.delete("/cases/:id", caseController.deleteCase);
 
 /**
- * @route GET /cases/:id/attachments/:fileId
+ * @route GET /cases/attachments/:attachmentId
+ * @description Retrieves a specific attachment by its ID.
+ * @param {number} attachmentId.path.required - The ID of the attachment to retrieve.
+ * @returns {Object} 200 - The requested attachment object.
+ * @returns {Error} 404 - Attachment not found.
+ * @returns {Error} 500 - Internal server error.
+ */
+router.get(
+  "/cases/attachments/:attachmentId",
+  attachmentController.getAttachment,
+);
+
+/**
+ * @route GET /cases/:id/attachments/:attachmentId
+ * @description Retrieves a specific attachment of a case.
+ * @param {number} id.path.required - The ID of the case.
+ * @param {number} attachmentId.path.required - The ID of the attachment to retrieve.
+ * @returns {Object} 200 - The requested attachment object.
+ * @returns {Error} 404 - Case or attachment not found.
+ * @returns {Error} 500 - Internal server error.
+ */
+router.get(
+  "/cases/:id/attachments/:attachmentId",
+  attachmentController.getAttachment,
+);
+
+/**
+ * @route GET /cases/attachments/:attachmentId/download
+ * @description Downloads an attachment by its ID.
+ * @param {number} attachmentId.path.required - The ID of the attachment to download.
+ * @returns {file} 200 - The requested file.
+ * @returns {Error} 404 - Attachment not found.
+ * @returns {Error} 500 - Internal server error.
+ */
+router.get(
+  "/cases/attachments/:attachmentId/download",
+  attachmentController.downloadAttachment,
+);
+
+/**
+ * @route GET /cases/:id/attachments/:attachmentId/download
  * @description Downloads an attachment of a specific case.
  * @param {number} id.path.required - The ID of the case.
- * @param {number} fileId.path.required - The ID of the attachment to download.
+ * @param {number} attachmentId.path.required - The ID of the attachment to download.
  * @returns {file} 200 - The requested file.
  * @returns {Error} 404 - Case or attachment not found.
  * @returns {Error} 500 - Internal server error.
  */
 router.get(
-  "/cases/:id/attachments/:fileId",
+  "/cases/:id/attachments/:attachmentId/download",
   attachmentController.downloadAttachment,
 );
 
@@ -116,16 +156,16 @@ router.post(
 );
 
 /**
- * @route DELETE /cases/:id/attachments/:fileId
+ * @route DELETE /cases/:id/attachments/:attachmentId
  * @description Deletes an attachment from a specified case.
  * @param {number} id.path.required - The ID of the case.
- * @param {number} fileId.path.required - The ID of the attachment to delete.
+ * @param {number} attachmentId.path.required - The ID of the attachment to delete.
  * @returns {String} 200 - Confirmation message.
  * @returns {Error} 404 - Case or attachment not found.
  * @returns {Error} 500 - Internal server error.
  */
 router.delete(
-  "/cases/:id/attachments/:fileId",
+  "/cases/:id/attachments/:attachmentId",
   attachmentController.deleteAttachmentFromCase,
 );
 

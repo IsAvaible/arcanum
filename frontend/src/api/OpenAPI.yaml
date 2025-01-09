@@ -204,7 +204,104 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /cases/{id}/attachments/{fileId}:
+  /cases/{id}/attachments/{attachmentId}:
+    get:
+      summary: Retrieve an attachment
+      description: Retrieve an attachment associated with a case.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case.
+          schema:
+            type: integer
+        - name: attachmentId
+          in: path
+          required: true
+          description: ID of the attachment.
+          schema:
+            type: number
+      responses:
+        200:
+          description: Attachment successfully retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attachment'
+        404:
+          description: Case or attachment not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error retrieving the attachment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete an attachment
+      description: Delete an attachment associated with a case.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case.
+          schema:
+            type: integer
+        - name: attachmentId
+          in: path
+          required: true
+          description: ID of the attachment.
+          schema:
+            type: number
+      responses:
+        204:
+          description: Attachment successfully deleted.
+        404:
+          description: Case or attachment not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error deleting the attachment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cases/attachments/{attachmentId}:
+    get:
+      summary: Retrieve an attachment
+      description: Retrieve an attachment by its ID.
+      parameters:
+        - name: attachmentId
+          in: path
+          required: true
+          description: ID of the attachment to retrieve.
+          schema:
+            type: number
+      responses:
+        200:
+          description: Attachment successfully retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attachment'
+        404:
+          description: Attachment not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error retrieving the attachment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cases/{id}/attachments/{attachmentId}/download:
     get:
       summary: Download an attachment
       description: Download an attachment associated with a case.
@@ -215,15 +312,15 @@ paths:
           description: ID of the case.
           schema:
             type: integer
-        - name: fileId
+        - name: attachmentId
           in: path
           required: true
-          description: ID of the attachment file.
+          description: ID of the attachment.
           schema:
             type: number
       responses:
         200:
-          description: File successfully downloaded.
+          description: Attachment file successfully downloaded.
           content:
             application/octet-stream:
               schema:
@@ -241,33 +338,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-    delete:
-      summary: Delete an attachment
-      description: Delete an attachment associated with a case.
+  /cases/attachments/{attachmentId}/download:
+    get:
+      summary: Download an attachment
+      description: Download an attachment by its ID.
       parameters:
-        - name: id
+        - name: attachmentId
           in: path
           required: true
-          description: ID of the case.
-          schema:
-            type: integer
-        - name: fileId
-          in: path
-          required: true
-          description: ID of the attachment file.
+          description: ID of the attachment to download.
           schema:
             type: number
       responses:
-        204:
-          description: File successfully deleted.
+        200:
+          description: Attachment file successfully downloaded.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
         404:
-          description: Case or attachment not found.
+          description: Attachment not found.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         500:
-          description: Error deleting the attachment.
+          description: Error downloading the attachment.
           content:
             application/json:
               schema:
@@ -615,32 +712,8 @@ components:
             attachments:
               type: array
               items:
-                type: object
-                required: [id, filename, filepath, filehash, mimetype, size, createdAt, updatedAt]
-                properties:
-                  id:
-                    type: integer
-                    description: ID of the attachment.
-                  filename:
-                    type: string
-                  filepath:
-                    type: string
-                    description: Path to the attachment file.
-                  filehash:
-                    type: string
-                    description: Hash of the attachment file.
-                  mimetype:
-                    type: string
-                    description: MIME type of the attachment file.
-                  size:
-                    type: integer
-                    description: Size of the attachment file in bytes.
-                  createdAt:
-                    type: string
-                    format: date-time
-                  updatedAt:
-                    type: string
-              description: List of file names attached to the case.
+                $ref: '#/components/schemas/Attachment'
+              description: List of attachments attached to the case.
 
     CasePost:
       allOf:
@@ -688,6 +761,35 @@ components:
           type: string
           description: Priority level of the case.
           enum: [Low, Medium, High]
+
+    Attachment:
+      type: object
+      required: [id, filename, filepath, filehash, mimetype, size, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+          description: ID of the attachment.
+        filename:
+          type: string
+        filepath:
+          type: string
+          description: Path to the attachment file.
+        filehash:
+          type: string
+          description: Hash of the attachment file.
+        mimetype:
+          type: string
+          description: MIME type of the attachment file.
+        size:
+          type: integer
+          description: Size of the attachment file in bytes.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
     Chat:
       type: object
       required: [id]
