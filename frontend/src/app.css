@@ -16,7 +16,8 @@ svg.md-editor-icon {
 }
 
 .md-editor-preview {
-  ol, li {
+  ol,
+  li {
     list-style: revert;
   }
 

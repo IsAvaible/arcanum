@@ -4,6 +4,8 @@ from app import app, sio
 from chat import chat
 from generate import (
     generate,
+    vector_db_save_cases,
+    ask_question,
 )
 
 routes = Blueprint("routes", __name__)
@@ -33,3 +35,14 @@ def generate_case():
 def chat_langchain():
     if request.method == "POST":
         return chat(request)
+
+
+@app.route("/save_to_vector_db", methods=["POST"])
+def save_to_vector_db():
+    if request.method == "POST":
+        return vector_db_save_cases(request)
+    
+@app.route("/generate", methods=["POST"])
+def ask_question_():
+    if request.method == "POST":
+        return ask_question(request)
