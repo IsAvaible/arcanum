@@ -1,5 +1,5 @@
 /* tslint:disable */
-/* eslint-disable */
+ 
 /**
  * Oculavis Arcanum API
  * The Oculavis Arcanum API allows you to manage cases by creating, retrieving, updating, and deleting them. It also supports file attachments associated with cases. The API also includes endpoints for managing chat functionality, including creating, retrieving, updating, and exporting chat sessions and messages. 

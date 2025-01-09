@@ -30,11 +30,15 @@ const upload = multer({
    * @param {Function} cb - The callback to indicate success or failure.
    */
   fileFilter: function (req, file, cb) {
-    // Validate the file name
+    // Convert filename to correct encoding to handle special characters.
+    // See: https://github.com/expressjs/multer/issues/962#issuecomment-1283500468
     file.originalname = Buffer.from(file.originalname, "latin1").toString(
       "utf-8",
     );
+
+    // Validate the file name.
     fileUploadController.checkFileName(file);
+
     // Validate the file type.
     fileUploadController.checkFileType(file, cb);
 

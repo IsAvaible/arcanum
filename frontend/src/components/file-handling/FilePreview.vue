@@ -1,13 +1,29 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 
-const _props = defineProps<{
+const props = defineProps<{
   file: File
 }>()
 
-const objectURL = computed(() => {
-  return URL.createObjectURL(_props.file)
-})
+const objectURL = computed(() => URL.createObjectURL(props.file))
+const mediaComponent = useTemplateRef('media')
+
+/**
+ * Jump to a specific timestamp in the media file.
+ * @param timestamp The timestamp to jump to.
+ * @throws Error if the file type is not supported.
+ */
+const jumpToTimestamp = (timestamp: number) => {
+  if (props.file.type.startsWith('video') || props.file.type.startsWith('audio')) {
+    const media = mediaComponent.value as HTMLMediaElement
+    media.currentTime = timestamp
+    media.play()
+  } else {
+    throw new Error('Cannot jump to timestamp on ' + props.file.type + ' files.')
+  }
+}
+
+defineExpose({ jumpToTimestamp: jumpToTimestamp })
 </script>
 
 <template>
@@ -27,14 +43,14 @@ const objectURL = computed(() => {
   />
 
   <!-- Video Preview -->
-  <video v-else-if="file.type.startsWith('video')" controls class="w-full">
+  <video v-else-if="file.type.startsWith('video')" controls class="w-full" ref="media">
     <source :src="objectURL" />
     Your browser does not support the video tag.
   </video>
 
   <!-- Audio Preview -->
   <div v-else-if="file.type.startsWith('audio')" class="w-full !h-14">
-    <audio controls class="w-full">
+    <audio controls class="w-full" ref="media">
       <source :src="objectURL" />
       Your browser does not support the audio tag.
     </audio>

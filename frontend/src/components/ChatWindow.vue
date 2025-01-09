@@ -13,7 +13,7 @@ import arcanumLogo from '@/assets/logo/LogoGradient.png'
 import { useApi } from '@/composables/useApi'
 import type { Case } from '@/api'
 import CaseReference from '@/components/chat-view/CaseReference.vue'
-import DynamicRouterLinkText from '@/components/misc/DynamicRouterLinkText.vue'
+import DynamicInteractiveText from '@/components/misc/DynamicInteractiveText.vue'
 import { useDebounceFn } from '@vueuse/core'
 
 /**
@@ -211,10 +211,9 @@ const validateCaseReferences = async () => {
       continue
     }
 
-    try {
-      await api.casesIdGet({ id })
+    if (await validateCaseReference(id)) {
       validatedCaseReferences.value.set(id, true)
-    } catch {
+    } else {
       invalidRefs.push(id)
       validatedCaseReferences.value.set(id, false)
     }
@@ -222,6 +221,20 @@ const validateCaseReferences = async () => {
 
   invalidCaseReferences.value = invalidRefs
   isValidationInProgress.value = false
+}
+
+/**
+ * Validates a single case reference against the API.
+ * @param id - The case reference to validate.
+ * @returns True if the case reference is valid, false otherwise.
+ */
+const validateCaseReference = async (id: string | number) => {
+  try {
+    await api.casesIdGet({ id: Number(id) })
+    return true
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -305,9 +318,10 @@ const caseReferences = computed(() => {
         <div
           v-for="chat in filteredChats"
           :key="chat.name"
-          class="flex items-center gap-4 p-3 cursor-pointer hover:bg-gray-100 transition-all"
+          class="flex items-center gap-4 p-3 cursor-pointer transition-all"
           :class="{
             'bg-gray-200': chat.name === activeChat?.name,
+            'hover:bg-gray-100': chat.name !== activeChat?.name,
           }"
           @click="setActiveChat(chat)"
         >
@@ -386,10 +400,12 @@ const caseReferences = computed(() => {
             class="px-4 py-2 rounded-lg shadow-sm w-fit max-w-xs flex flex-col gap-y-2"
           >
             <p>
-              <DynamicRouterLinkText
+              <DynamicInteractiveText
                 :text="message.message"
                 :regex="caseReferenceRegex"
                 to="/cases/"
+                target="_blank"
+                :validate="validateCaseReference"
               />
             </p>
             <CaseReference

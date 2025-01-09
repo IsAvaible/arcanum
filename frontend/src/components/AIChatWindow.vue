@@ -25,7 +25,7 @@ import {
 } from '@/api'
 import CaseReferenceComponent from '@/components/chat-view/CaseReference.vue'
 import FileReferenceComponent from '@/components/chat-view/FileReference.vue'
-import DynamicRouterLinkText from '@/components/misc/DynamicRouterLinkText.vue'
+import DynamicInteractiveText from '@/components/misc/DynamicInteractiveText.vue'
 import { useDebounceFn } from '@vueuse/core'
 import type { AxiosError } from 'axios'
 import { useConfirm } from 'primevue/useconfirm'
@@ -731,7 +731,7 @@ onMounted(async () => {
             "
           >
             <p>
-              <DynamicRouterLinkText
+              <DynamicInteractiveText
                 class="whitespace-pre-wrap"
                 :text="message.content"
                 :regex="caseReferenceRegex"

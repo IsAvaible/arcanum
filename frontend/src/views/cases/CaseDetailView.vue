@@ -43,6 +43,7 @@ import { apiBlobToFile } from '@/functions/apiBlobToFile'
 // Validation
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
+import { until } from '@vueuse/core'
 
 import { userOptions } from '@/api/mockdata'
 
@@ -302,6 +303,39 @@ watch(
         },
         { immediate: true },
       )
+      watch(
+        [
+          () => fields.solution.value.value,
+          () => fields.description.value.value,
+          () => inEditMode.value,
+        ],
+        (value) => {
+          if (value) {
+            // Inject media references into the solution and description editors
+            const solutionElement = document.getElementById('solution-preview')
+            const descriptionElement = document.getElementById('description-preview')
+
+            for (const element of [solutionElement, descriptionElement]) {
+              if (element) {
+                // Replace timestamps with play buttons
+                element.innerHTML = element.innerHTML.replace(
+                  timeStampRegex,
+                  `<button data-injected-play-button="$1" class="inline-flex items-center gap-1.5 px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 rounded-md transition-all pointer-events-auto cursor-pointer">
+                    <i class="pi pi-play-circle mr-0.5 text-sm"></i><span>Play</span></button>`,
+                )
+                // Get all the play buttons and add an event listener to them
+                const playButtons = element.querySelectorAll('[data-injected-play-button]')
+                for (const button of playButtons) {
+                  button.addEventListener('click', async () => {
+                    await openTimestampInDrawer(button.getAttribute('data-injected-play-button')!)
+                  })
+                }
+              }
+            }
+          }
+        },
+        { immediate: true },
+      )
     }
   },
   { immediate: true },
@@ -385,12 +419,16 @@ const deleteAttachment = async (attachment: Attachment) => {
 }
 
 /// File Preview Drawer Logic
-
+const previewDrawer = useTemplateRef('filePreviewDrawer')
 const selectedFile = ref<File | null>(null)
 const previewDrawerVisible = ref(false)
 const selectedFileProperties = ref<FileProperties | null>(null)
 const loadingFileId = ref<number | null>(null)
 const deletingFileId = ref<number | null>(null)
+// Matches timestamps in the format [filename.ext: HH:MM:SS - ...]
+// Extensions are based on OpenAI Whisper allowed file types
+const timeStampRegex =
+  /\[(.*?\.(?:wav|flac|m4a|mp3|mp4|mpeg|mpga|oga|ogg|webm): \d{2}:\d{2}:\d{2}) - .*?]/g
 
 const openAttachmentInDrawer = async (attachment: Attachment) => {
   // Check if the attachment is already in the files array
@@ -428,6 +466,31 @@ const openAttachmentInDrawer = async (attachment: Attachment) => {
   // TODO: Get file properties from the server
   selectedFileProperties.value = { name: file!.name, description: '', sharedWith: '' }
   previewDrawerVisible.value = true
+}
+
+const openTimestampInDrawer = async (match: string) => {
+  const [filename, timestamp] = match.replace(/\[(.*)]/g, '$1').split(': ')
+  const attachment = caseDetails.value?.attachments.find((a) => a.filename === filename)
+
+  if (!attachment) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Attachment not found',
+      life: 3000,
+    })
+    return
+  }
+
+  await openAttachmentInDrawer(attachment!)
+
+  // Make sure the function is available before calling it
+  await until(() => previewDrawer.value?.jumpToTimestamp == null).toBe(false)
+  const timestampInSeconds = timestamp
+    .split(' ')[0]
+    .split(':')
+    .reduce((acc, time) => acc * 60 + +time, 0)
+  previewDrawer.value!.jumpToTimestamp!(timestampInSeconds)
 }
 
 /// Menu
@@ -472,7 +535,7 @@ const formatDate = (date: string | Date) => {
 }
 
 const changeHistoryEvents = computed(() => {
-  return caseDetails.value
+  return caseDetails.value?.changeHistory
     ? caseDetails.value.changeHistory.map((entry) => ({
         status: 'Updated',
         date: formatDate(entry.updatedAt),
@@ -888,9 +951,10 @@ const changeHistoryEvents = computed(() => {
 
     <!-- Drawer for File Preview -->
     <FilePreviewDrawer
+      ref="filePreviewDrawer"
       v-if="previewDrawerVisible"
       v-model:visible="previewDrawerVisible"
-      :selected-file="selectedFile"
+      :file="selectedFile"
       :file-properties="selectedFileProperties"
     />
   </div>
