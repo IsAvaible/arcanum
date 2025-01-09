@@ -17,7 +17,6 @@ import Menu from 'primevue/menu'
 import Dialog from 'primevue/dialog'
 import Skeleton from 'primevue/skeleton'
 import Divider from 'primevue/divider'
-import ConfirmDialog from 'primevue/confirmdialog'
 
 import { MdEditor } from 'md-editor-v3'
 
@@ -453,7 +452,6 @@ const toggleMenu = (event: Event) => {
 
 <template>
   <div class="max-w-7xl w-[80vw] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <ConfirmDialog />
     <!-- Unsaved changes banner -->
     <div v-if="inEditMode && form.dirty" class="unsaved-banner">
       <div class="banner-content">
