@@ -35,12 +35,12 @@ module.exports = {
         include: [
           {
             model: Attachments,
-            as: "attachments",
+            as: "relatedAttachments",
             through: { attributes: [] },
           },
           {
             model: Cases,
-            as: "cases",
+            as: "relatedCases",
             through: { attributes: [] },
           }
         ],
@@ -236,7 +236,6 @@ module.exports = {
       }
 
       await glossaryEntry.addCases(theCase);
-      // Or addCase(theCase) if your association auto-generates that method name
 
       // Reload to get the updated list of cases
       await glossaryEntry.reload({

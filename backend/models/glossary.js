@@ -35,7 +35,18 @@ module.exports = (sequelize, DataTypes) => {
     term: {
       type: DataTypes.STRING,
       allowNull: false,
-    }
+    },
+    usageCount: {
+      type: DataTypes.INTEGER,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
   }, {
     sequelize,
     modelName: 'Glossary',
