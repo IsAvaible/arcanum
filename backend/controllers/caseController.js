@@ -92,6 +92,21 @@ exports.deleteCase = async (req, res) => {
       return res.status(404).json({ message: "Case not found" });
     }
 
+    console.log(
+      "Sending to LLM: ",
+      JSON.stringify(updatedCaseWithAttachments),
+    );
+
+    // Send data to the LLM endpoint.
+    const llmResponse = axios.post(
+      `${process.env.LLM_API_URL}/delete_from_vector_db`,
+      caseId,
+    );
+
+    //const responseData = llmResponse.data;
+    console.log("Received from LLM: ", JSON.stringify(llmResponse.data));
+
+
     const attachments = caseItemToDelete.attachments;
 
     if (attachments && attachments.length > 0) {
