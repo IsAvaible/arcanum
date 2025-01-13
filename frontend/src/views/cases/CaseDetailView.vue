@@ -1069,17 +1069,29 @@ const changeHistoryEvents = computed(() => {
         </template>
         <template #content>
           <ScrollFadeOverlay axis="vertical" content-class="max-h-[190px]">
-            <Timeline :value="changeHistoryEvents" align="left">
+            <div
+              v-if="!changeHistoryEvents.length"
+              class="text-emerald-600 text-center py-4 flex flex-col items-center"
+            >
+              <!-- Dynamisches Icon -->
+              <i class="pi pi-info-circle text-3xl mb-2 animate-bounce"></i>
+              <p class="font-semibold">Empty Change History</p>
+              <p class="text-sm text-gray-600 mt-2">
+                There is currently no change history for this case. Start editing the case to
+                populate this section.
+              </p>
+            </div>
+            <Timeline v-else :value="changeHistoryEvents" align="left">
               <template #marker="slotProps">
-                <span
-                  class="flex w-10 h-10 items-center justify-center text-white rounded-full z-10 shadow-sm bg-gray-800"
-                >
-                  <i class="pi pi-file-edit -mr-0.5"></i>
-                </span>
+                <!-- Glossar-Design für Marker -->
+                <div class="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center">
+                  <i class="pi pi-file-edit text-emerald-500"></i>
+                </div>
               </template>
               <template #content="slotProps">
                 <div class="flex items-center justify-between pt-2">
-                  <p class="font-semibold text-gray-800">
+                  <!-- Inhalte der Timeline in sanftem Grün -->
+                  <p class="font-semibold text-gray-900">
                     Case Updated -
                     <span class="text-sm text-gray-600">{{ slotProps.item.date }}</span>
                   </p>
@@ -1257,5 +1269,10 @@ const changeHistoryEvents = computed(() => {
 
 :deep(.p-timeline-event-opposite) {
   @apply flex-initial;
+}
+
+/* Verbindungslinien in grün ändern */
+:deep(.p-timeline .p-timeline-event-connector) {
+  @apply bg-emerald-200;
 }
 </style>
