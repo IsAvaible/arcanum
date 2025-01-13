@@ -884,7 +884,7 @@ onMounted(async () => {
         <Avatar label="AI" class="w-24 h-24 mb-4" shape="circle" />
 
         <div v-if="activeChat" class="text-gray-800 font-medium text-xl">
-          {{ activeChat.title }}
+          {{ activeChat.title || 'Untitled Chat' }}
         </div>
         <div v-else class="text-gray-500 text-center">No chat selected.</div>
       </div>
