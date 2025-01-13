@@ -6,23 +6,31 @@ import cv2
 
 from app import app, sio
 from image import encode_image, image_to_openai
+from app import temp_folder
 
 split_secs = 100
 
 """
-OpenAI has a limit of 50 pictures each request. If we have a 10 min video that would be too less information.
-Because of that we need to split longer videos into multiple segments.
-If a video is over 100 seconds we are splitting it into multiple segments. Each segment will be approxametly 100 seconds long.
-From these segments we are getting 50 frames (1 Frame every 2 Seconds)
-
-For cutting the videos we are using ffmpeg which is the most used software for video processing.
+    OpenAI has a limit of 50 pictures each request. If we would get 50 frames of a 10 minute video that would be around 
+    Because of that we need to split longer videos into multiple segments.
+    If a video is over 100 seconds we are splitting it into multiple segments. 
+    Each segment will be approximately {split_secs} seconds long.
+    From these segments we are getting 50 frames (1 Frame every 2 Seconds)
 """
 
 
 def cut_video_segments(input_file, filehash, segment_duration=split_secs):
+    """
+    cuts video into multiple segments
+    :param input_file: video file
+    :param filehash: file hash of the file
+    :param segment_duration: how long should one segment be
+    :return: segmented video files
+
+    """
     # define ouput
     output_path = os.path.join(
-        app.root_path, os.path.join(f"temp/{filehash}/", "video_segments")
+        app.root_path, os.path.join(f"{temp_folder}/{filehash}/", "video_segments")
     )
     if not os.path.exists(output_path):
         os.makedirs(output_path)
@@ -49,10 +57,15 @@ def cut_video_segments(input_file, filehash, segment_duration=split_secs):
 
 
 def extract_data_from_video(video_path, filehash):
+    """
+    :param video_path: path to the video
+    :param filehash: hash of the video
+    :return: path to frames, path to the extracted audio and the duration of the video
+    """
     # define ouput
     single_video = video_path
     frames_path = os.path.join(
-        app.root_path, os.path.join(f"temp/{filehash}/", "frames")
+        app.root_path, os.path.join(f"{temp_folder}/{filehash}/", "frames")
     )
     if not os.path.exists(frames_path):
         os.makedirs(frames_path)
@@ -119,23 +132,23 @@ def extract_data_from_video(video_path, filehash):
 
 
 def process_segments(frames, transcription, duration, socket_id):
+    """
+    :param frames: all the frames of the video
+    :param transcription: transcription of the video
+    :param duration: duration of the video
+    :param socket_id: socket_id of the socket to send messages
+    :return: dict that contains the video summary
+    """
     seconds = round(duration / len(frames))
-
-    print("SECONDS " + str(seconds))
-
-    print(f"Frame Count:{str(len(frames))}")
     # calculate how many rounds we need to analyze the frames
     # here we are dividing by 49 and rounding that value up
     frame_segments = math.floor(len(frames) / 25)
-    print(f"Segment Count: {frame_segments}")
-
     data = {
         "video_summary": {
             "segments": []
         }
     }
 
-    print(transcription)
 
     if transcription is None:
         trans = "No transcription provided!"
@@ -166,7 +179,8 @@ def process_segments(frames, transcription, duration, socket_id):
         start = 0
         step = 0
         for group in groups:
-            sio.emit('llm_message', {'message': f'Analyzing Video Chunk {step+1}/{str(len(groups))}', 'socket_id': socket_id})
+            sio.emit('llm_message',
+                     {'message': f'Analyzing Video Chunk {step + 1}/{str(len(groups))}', 'socket_id': socket_id})
             prompt_dict.clear()
             if len(data["video_summary"]["segments"]) == 0:
                 prompt_dict.append(transcription)
@@ -259,9 +273,9 @@ def dict_to_text(data):
     print(data)
     text = []
     for segment in data["transcription"]["segments"]:
-        start = segment.get("start_timestamp", "Unbekannt")
-        end = segment.get("end_timestamp", "Unbekannt")
-        transcription = segment.get("transcription_text", "Kein Text vorhanden.")
+        start = segment.get("start_timestamp", "Unknown")
+        end = segment.get("end_timestamp", "Unknown")
+        transcription = segment.get("transcription_text", "No text available.")
         text.append(f"From {start} to {end}:\n{transcription}\n\n")
 
     return "\n\n".join(text)
