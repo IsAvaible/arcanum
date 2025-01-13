@@ -13,6 +13,7 @@ import {
   ContextMenu,
   Skeleton,
   useToast,
+  type ToastMessageOptions,
 } from 'primevue'
 import { useApi } from '@/composables/useApi'
 import {
@@ -586,6 +587,14 @@ const openFileInDrawer = async (attachment: Attachment) => {
   let file = files.value.find((f) => f.name === attachment.filename)
   if (!file) {
     loadingFileId.value = attachment.id
+
+    const loadingToast: ToastMessageOptions = {
+      severity: 'info',
+      summary: 'Loading',
+      detail: `Downloading ${attachment.filename}...`,
+    }
+    toast.add(loadingToast)
+
     // If not, download the file from the server
     try {
       file = await apiBlobToFile(

@@ -47,6 +47,7 @@ import { useCaseFields } from '@/validation/fields'
 import { until } from '@vueuse/core'
 
 import { userOptions } from '@/api/mockdata'
+import type { ToastMessageOptions } from 'primevue'
 
 // Glossary Types
 interface GlossaryTerm {
@@ -565,6 +566,14 @@ const openAttachmentInDrawer = async (attachment: Attachment) => {
   let file = files.value.find((f) => f.name === attachment.filename)
   if (!file) {
     loadingFileId.value = attachment.id
+
+    const loadingToast: ToastMessageOptions = {
+      severity: 'info',
+      summary: 'Loading Preview',
+      detail: `Downloading ${attachment.filename}...`,
+    }
+    toast.add(loadingToast)
+
     // If not, download the file from the server
     try {
       file = await apiBlobToFile(
@@ -588,6 +597,7 @@ const openAttachmentInDrawer = async (attachment: Attachment) => {
       console.error(error)
       return
     } finally {
+      toast.remove(loadingToast)
       loadingFileId.value = null
     }
   }
