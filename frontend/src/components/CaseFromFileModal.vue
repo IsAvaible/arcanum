@@ -339,6 +339,7 @@ const openAICaseCreation = async () => {
           class="w-full bg-gradient-to-tr from-green-500 via-blue-600 to-purple-700 border-none opacity-85 transition-opacity"
           :class="{
             'hover:opacity-100': !loading,
+            '!cursor-wait': loading,
           }"
           @click="openAICaseCreation"
         />
