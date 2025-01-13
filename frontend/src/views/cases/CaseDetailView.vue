@@ -1074,7 +1074,7 @@ const changeHistoryEvents = computed(() => {
               class="text-emerald-600 text-center py-4 flex flex-col items-center"
             >
               <!-- Dynamisches Icon -->
-              <i class="pi pi-info-circle text-3xl mb-2 animate-bounce"></i>
+              <i class="pi pi-info-circle text-3xl mb-2"></i>
               <p class="font-semibold">Empty Change History</p>
               <p class="text-sm text-gray-600 mt-2">
                 There is currently no change history for this case. Start editing the case to
@@ -1083,14 +1083,12 @@ const changeHistoryEvents = computed(() => {
             </div>
             <Timeline v-else :value="changeHistoryEvents" align="left">
               <template #marker="slotProps">
-                <!-- Glossar-Design für Marker -->
-                <div class="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center">
-                  <i class="pi pi-file-edit text-emerald-500"></i>
+                <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
+                  <i class="pi pi-file-edit text-emerald-500 -mr-0.5"></i>
                 </div>
               </template>
               <template #content="slotProps">
                 <div class="flex items-center justify-between pt-2">
-                  <!-- Inhalte der Timeline in sanftem Grün -->
                   <p class="font-semibold text-gray-900">
                     Case Updated -
                     <span class="text-sm text-gray-600">{{ slotProps.item.date }}</span>

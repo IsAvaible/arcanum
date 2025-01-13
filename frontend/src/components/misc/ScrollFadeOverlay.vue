@@ -12,7 +12,7 @@
  * ```
  */
 
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useScroll } from '@vueuse/core'
 
 const props = withDefaults(
@@ -32,11 +32,13 @@ const axis = props.axis
 const containerRef = ref<HTMLElement | null>(null)
 const { arrivedState } = useScroll(containerRef)
 
-// Dispatch an initial scroll event to update the scroll state
-setTimeout(() => containerRef.value?.dispatchEvent(new Event('scroll')), 0)
+onMounted(() => {
+  // Update scroll state on window resize
+  window.addEventListener('resize', () => containerRef.value?.dispatchEvent(new Event('scroll')))
 
-// Update scroll state on window resize
-window.addEventListener('resize', () => containerRef.value?.dispatchEvent(new Event('scroll')))
+  // Dispatch an initial scroll event to update the scroll state
+  setTimeout(() => containerRef.value?.dispatchEvent(new Event('scroll')), 100)
+})
 </script>
 
 <template>
