@@ -6,10 +6,14 @@ from pdf2image import convert_from_path
 
 pytesseract.pytesseract.tesseract_cmd = os.getenv("TESSERACT_BIN")
 
-# read pdf file with pdf plumber and convert to text
 def create_text_chunks_pdfplumber(pdf_path):
-    content = ""
+    """
+    Convert a PDF File into a text
+    :param pdf_path: path to the pdf file
+    :return: content as a string
+    """
 
+    content = ""
     # read pages of pdf file
     with pdfplumber.open(pdf_path) as pdf:
         # iterate over pdf pages
@@ -30,6 +34,7 @@ def create_text_chunks_pdfplumber(pdf_path):
                     content += row_text + "\n"
 
     return content
+
 
 # ocr method (unused)
 def create_text_chunks_ocr(pdf_path):
