@@ -1,15 +1,12 @@
 import json
 import mimetypes
-import os
 import time
 
 from bs4 import BeautifulSoup
-from dotenv import load_dotenv
-from langchain_openai import AzureChatOpenAI
 
 from app import sio
-from image import encode_image, image_to_openai
 from glossary import generate_glossary_terms
+from image import encode_image, image_to_openai
 from pdf import create_text_chunks_pdfplumber
 from readwrite import write_to_file, read_from_file, text_to_dict, delete_temp_folder
 from video import process_segments, extract_data_from_video, get_all_frames_in_dir
@@ -18,14 +15,6 @@ from whisper import transcribe
 
 # All Allowed Extensions
 ALLOWED_EXTENSIONS = {"txt", "pdf", "html", "mp3", "wav", "png", "jpg", "jpeg", "gif", "bmp", "mp4"}
-
-# Load all needed Environment variables
-load_dotenv()
-AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
-AZURE_DEPLOYMENT_GPT = os.getenv("AZURE_DEPLOYMENT_GPT")
-AZURE_DEPLOYMENT_EMBEDDING = os.getenv("AZURE_DEPLOYMENT_EMBEDDING")
-AZURE_DEPLOYMENT = os.getenv("AZURE_DEPLOYMENT_WHISPER")
-OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
 
 
 # simple checker if filename is allowed
@@ -48,21 +37,8 @@ def sort_attachments(item):
     return 1
 
 
-# Instantiate LLM
-llm = AzureChatOpenAI(
-    azure_endpoint=AZURE_ENDPOINT,
-    azure_deployment=AZURE_DEPLOYMENT_GPT,
-    openai_api_version=OPENAI_API_VERSION,
-    temperature=0,
-    max_tokens=None,
-    timeout=None,
-    max_retries=2,
-    streaming=False,
-)
-
-
 # main upload method
-def upload_file_method_production(files, socket_id):
+def upload_file(files, socket_id):
     files_as_dicts = []
     single_dict = {}
     files_as_dicts_json = ""
@@ -112,7 +88,7 @@ def upload_file_method_production(files, socket_id):
                 glossary_terms = generate_glossary_terms(single_text)
                 single_dict = {
                     "text": single_text,
-                    "glossary" : glossary_terms
+                    "glossary": glossary_terms
                 }
                 texts += " " + single_text
             # upload html file
@@ -126,8 +102,8 @@ def upload_file_method_production(files, socket_id):
                     single_text = soup.get_text()
                     glossary_terms = generate_glossary_terms(single_text)
                 single_dict = {
-                    "text":  single_text,
-                    "glossary" : glossary_terms
+                    "text": single_text,
+                    "glossary": glossary_terms
                 }
             # upload text file
             elif mimetype == "text/plain":
@@ -140,7 +116,7 @@ def upload_file_method_production(files, socket_id):
                     glossary_terms = generate_glossary_terms(single_text)
                 single_dict = {
                     "text": single_text,
-                    "glossary" : glossary_terms
+                    "glossary": glossary_terms
                 }
             # upload image file
             elif "image" in mimetype:
@@ -176,12 +152,11 @@ def upload_file_method_production(files, socket_id):
                 transcription = transcribe(file, texts, audio_path, filehash, files_as_dicts, socket_id)
                 video_summary = process_segments(frames, transcription, duration, socket_id)
                 single_dict = {
-                    "transcription" : transcription["transcription"],
-                    "video_summary" : video_summary["video_summary"]
+                    "transcription": transcription["transcription"],
+                    "video_summary": video_summary["video_summary"]
                 }
             else:
                 sio.emit('llm_message', {'message': f'File "{filename}" cannot be processed', 'socket_id': socket_id})
-
 
         # define a dictionary for a file
         file_as_dict = {
@@ -196,15 +171,14 @@ def upload_file_method_production(files, socket_id):
         if is_cached and USE_CACHE:
             sio.emit('llm_message', {'message': f'Getting "{filename}" from Cache', 'socket_id': socket_id})
             print("USING CACHE")
-            cache_path = download_cache(filehash) # download cache file
-            txt = read_from_file(cache_path) # read cache file
-            file_as_dict = text_to_dict(txt) # file to dict
+            cache_path = download_cache(filehash)  # download cache file
+            txt = read_from_file(cache_path)  # read cache file
+            file_as_dict = text_to_dict(txt)  # file to dict
         else:
             sio.emit('llm_message', {'message': f'Saving file "{filename}" to Cache', 'socket_id': socket_id})
             print("NOT USING CACHE")
             file_path = write_to_file(filehash, json.dumps(file_as_dict, ensure_ascii=False, indent=2))
             upload_cache_file(file_path, filehash)
-
 
         files_as_dicts.append(file_as_dict)
         files_as_dicts_json = json.dumps(files_as_dicts, ensure_ascii=False, indent=2)
