@@ -4,12 +4,9 @@ from dotenv import load_dotenv
 
 from app import app, temp_folder, upload_folder
 
-load_dotenv()
-
-client = easywebdav2.connect("fh-aachen.sciebo.de",path="remote.php/webdav/",port=443, protocol="https", username=os.getenv("NEXTCLOUD_USERNAME"), password=os.getenv("NEXTCLOUD_PASSWORD"))
+client = easywebdav2.connect("fh-aachen.sciebo.de", path="remote.php/webdav/",port=443, protocol="https", username=os.getenv("NEXTCLOUD_USERNAME"), password=os.getenv("NEXTCLOUD_PASSWORD"))
 
 llm_cache = "/IP_WKS/LLM_CACHE/"
-
 
 # download file from webday
 def download_file_webdav(filepath, filename):

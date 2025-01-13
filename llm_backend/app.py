@@ -2,8 +2,8 @@ import os
 import time
 
 import socketio
+from dotenv import load_dotenv
 from flask import Flask
-from flask.cli import load_dotenv
 from flask_cors import CORS
 
 load_dotenv()
