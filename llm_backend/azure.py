@@ -31,9 +31,17 @@ client = AzureOpenAI(azure_endpoint=AZURE_ENDPOINT,
                      api_version=OPENAI_API_VERSION,
                      api_key=AZURE_OPENAI_API_KEY)
 
+embeddings = AzureOpenAI(
+    azure_endpoint=AZURE_ENDPOINT,
+    azure_deployment=AZURE_DEPLOYMENT_EMBEDDING,
+    api_version=OPENAI_API_VERSION,
+)
 
 def get_llm():
     return llm
+
+def get_embeddings():
+    return embeddings
 
 
 def get_whisper(audio_file, whisper_prompt):
