@@ -26,7 +26,7 @@ class Segment:
         return f"({self.start}, {self.end}, {self.text})"
 
 
-def transcribe(file, texts, path, filehash, file_as_dicts, socket_id):
+def transcribe(path, filehash, file_as_dicts, socket_id):
     """
     Transcribe a file using Azure Whisper
     :param file: audio file to transcribe
@@ -51,7 +51,6 @@ def transcribe(file, texts, path, filehash, file_as_dicts, socket_id):
 
         # check file size because only 25Mb/request are allowed for Whisper transcription
         file_size_mb = os.stat(path).st_size / (1024 * 1024)
-        texts += f" NEW AUDIO FILE {json.dumps(file)} - CONTENT: "
 
         # define new dict for transcription
         data = {
