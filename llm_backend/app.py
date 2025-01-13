@@ -28,7 +28,7 @@ if not os.path.exists(qdrant_folder):
 
 
 # init socket connection
-sio = socketio.Client(engineio_logger=True, logger=True, ssl_verify=False)
+sio = socketio.Client(engineio_logger=False, logger=False, ssl_verify=False)
 
 connected = False
 while not connected:
