@@ -1,6 +1,5 @@
 import os
 import easywebdav2
-from dotenv import load_dotenv
 
 from app import app, temp_folder, upload_folder
 
