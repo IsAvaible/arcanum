@@ -1,19 +1,9 @@
 import base64
-import os
 
-from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import AzureChatOpenAI
-from prompts import get_system_prompt
 
-
-# Load Environment Variables
-load_dotenv()
-
-AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
-AZURE_DEPLOYMENT_GPT = os.getenv("AZURE_DEPLOYMENT_GPT")
-AZURE_DEPLOYMENT_EMBEDDING = os.getenv("AZURE_DEPLOYMENT_EMBEDDING")
-OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
+from azure import get_llm
+from prompts import system_prompt_video, system_prompt_image
 
 
 # Encode Image to Base64
@@ -24,20 +14,8 @@ def encode_image(image_path: str) -> str:
 
 # Prompt images to Azure OpenAI
 def image_to_openai(dict):
-    # Instantiate LLM
-    llm = AzureChatOpenAI(
-        azure_endpoint=AZURE_ENDPOINT,
-        azure_deployment=AZURE_DEPLOYMENT_GPT,
-        openai_api_version=OPENAI_API_VERSION,
-        temperature=0,
-        max_tokens=None,
-        timeout=None,
-        max_retries=2,
-        streaming=False,
-    )
-
-    # get system prompt
-    system_prompt = get_system_prompt("images")
+    # get LLM
+    llm = get_llm()
 
     # define messages
     messages = [
@@ -47,7 +25,7 @@ def image_to_openai(dict):
 
     # define prompt
     promptLangchain = ChatPromptTemplate.from_messages(messages).partial(
-        system_prompt=system_prompt
+        system_prompt=system_prompt_image
     )
 
     # replace vars with values
@@ -63,34 +41,33 @@ def image_to_openai(dict):
     vision_prompt = response.content
     return vision_prompt
 
-# Video to OpenAI
+
+# Video to OpenAI (UNUSED)
 def video_openai(video_summary, transcription_dict):
-    llm = AzureChatOpenAI(
-        azure_endpoint=AZURE_ENDPOINT,
-        azure_deployment=AZURE_DEPLOYMENT_GPT,
-        openai_api_version=OPENAI_API_VERSION,
-        temperature=0,
-        max_tokens=None,
-        timeout=None,
-        max_retries=2,
-        streaming=False,
-    )
-    system_prompt = get_system_prompt("video")
+    """
+    :param video_summary:
+    :param transcription_dict:
+    :return:
+    """
+
+    llm = get_llm()
 
     # define messages
     messages = [
         ("system", "{system_prompt}"),
-        ("human", "Please take the input data and explain the content as detailed as possible. Include all information:\nThis is the video data: {video_summary}\n"),
+        ("human",
+         "Please take the input data and explain the content as detailed as possible. Include all information:\nThis is the video data: {video_summary}\n"),
     ]
 
     # define prompt
     promptLangchain = ChatPromptTemplate.from_messages(messages).partial(
-        system_prompt=system_prompt, video_summary=video_summary
+        system_prompt=system_prompt_video, video_summary=video_summary
     )
 
     # replace vars with values
     promptLangchainInvoked = promptLangchain.invoke(
-         {"system_prompt":system_prompt,"video_summary": video_summary, "query": "Please write all information you can find as detailed as possible!"}
+        {"system_prompt": system_prompt_video, "video_summary": video_summary,
+         "query": "Please write all information you can find as detailed as possible!"}
     )
 
     # define chain
