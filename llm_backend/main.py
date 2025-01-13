@@ -1,4 +1,3 @@
-from dotenv import load_dotenv
 
 from app import app
 from routes import routes
