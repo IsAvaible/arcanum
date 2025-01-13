@@ -2,33 +2,21 @@ import json
 import os
 from itertools import islice
 
-from dotenv import load_dotenv
-
 from app import app, sio
 from audio import split_audio_with_overlap
+from azure import get_whisper
 from glossary import list_to_comma
-from openai import AzureOpenAI
-
-# load Env Variables
-load_dotenv()
-
-AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
-AZURE_DEPLOYMENT_GPT = os.getenv("AZURE_DEPLOYMENT_GPT")
-AZURE_DEPLOYMENT_EMBEDDING = os.getenv("AZURE_DEPLOYMENT_EMBEDDING")
-AZURE_DEPLOYMENT_WHISPER = os.getenv("AZURE_DEPLOYMENT_WHISPER")
-OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
-AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
-
-# instantiate Azure
-client = AzureOpenAI(azure_endpoint=AZURE_ENDPOINT,
-                     api_version=OPENAI_API_VERSION,
-                     api_key=AZURE_OPENAI_API_KEY)
+from app import temp_folder
 
 split_length_ms = 300000
 split_length_s = split_length_ms / 1000
 
 
 class Segment:
+    """
+    A segment is used for the transcription of the audio file.
+    It contains a start and end timestamp and the transcription text.
+    """
     def __init__(self, start, end, text):
         self.start = start
         self.end = end
@@ -39,7 +27,18 @@ class Segment:
 
 
 def transcribe(file, texts, path, filehash, file_as_dicts, socket_id):
+    """
+    Transcribe a file using Azure Whisper
+    :param file: audio file to transcribe
+    :param texts: all content already analyzed
+    :param path: path to file
+    :param filehash: sha256 hash of file
+    :param file_as_dicts: all attachments that already have been analyzed
+    :param socket_id: to send socket messages to the frontend
+    :return: dictionary that contains the transcription
+    """
     if os.path.isfile(path) is True:
+
         glossary_terms = []
         for dict in file_as_dicts:
             if "content" in dict:
@@ -50,7 +49,6 @@ def transcribe(file, texts, path, filehash, file_as_dicts, socket_id):
 
         whisper_prompt = list_to_comma(glossary_terms)
 
-
         # check file size because only 25Mb/request are allowed for Whisper transcription
         file_size_mb = os.stat(path).st_size / (1024 * 1024)
         texts += f" NEW AUDIO FILE {json.dumps(file)} - CONTENT: "
@@ -58,7 +56,7 @@ def transcribe(file, texts, path, filehash, file_as_dicts, socket_id):
         # define new dict for transcription
         data = {
             "transcription": {
-                "segments":[]
+                "segments": []
             }
         }
 
@@ -68,27 +66,18 @@ def transcribe(file, texts, path, filehash, file_as_dicts, socket_id):
             sio.emit('llm_message', {'message': 'Splitting Audio in multiple chunks...', 'socket_id': socket_id})
             chunks = split_audio_with_overlap(path, segment_length_ms=split_length_ms, overlap_ms=500)
             for idx, segment in enumerate(chunks):
-                sio.emit('llm_message', {'message': f'Transcribing Audio Chunk {idx+1}/{len(chunks)}', 'socket_id': socket_id})
-                dir = os.path.join(
-                    app.root_path, os.path.join(f"temp/{filehash}/audio")
-                )
+                sio.emit('llm_message',
+                         {'message': f'Transcribing Audio Chunk {idx + 1}/{len(chunks)}', 'socket_id': socket_id})
+                dir = os.path.join(app.root_path, os.path.join(f"{temp_folder}/{filehash}/audio"))
                 if not os.path.exists(dir):
                     os.makedirs(dir)
-                path = os.path.join(
-                    app.root_path, os.path.join(f"temp/{filehash}/audio", f"audio_{idx}.mp3")
-                )
+                path = os.path.join(app.root_path, os.path.join(f"{temp_folder}/{filehash}/audio", f"audio_{idx}.mp3"))
                 # save to mp3 format in temp folder
                 segment.export(path, format="mp3")
 
                 # Set up AzureChatOpenAI with the required configurations
                 audio_file = open(path, "rb")
-                response = client.audio.transcriptions.create(
-                    file=audio_file,
-                    model=AZURE_DEPLOYMENT_WHISPER,
-                    response_format="verbose_json",
-                    prompt=whisper_prompt,
-                    timestamp_granularities=["segment"]
-                )
+                response = get_whisper(audio_file, whisper_prompt)
 
                 segments = response.segments
                 combined_segments = []
@@ -107,13 +96,7 @@ def transcribe(file, texts, path, filehash, file_as_dicts, socket_id):
             sio.emit('llm_message', {'message': 'Transcribing audio...', 'socket_id': socket_id})
             # if audio file is lower than 24mb
             audio_file = open(path, "rb")
-            response = client.audio.transcriptions.create(
-                file=audio_file,
-                model=AZURE_DEPLOYMENT_WHISPER,
-                response_format="verbose_json",
-                prompt=whisper_prompt,
-                timestamp_granularities=["segment"]
-            )
+            response = get_whisper(audio_file, whisper_prompt)
 
             segments = response.segments
             combined_segments = []
@@ -131,32 +114,28 @@ def transcribe(file, texts, path, filehash, file_as_dicts, socket_id):
         print("no audio file")
         return data
 
-# this will generate a better reading timestamp (XX:YY:ZZ)
-def convert_timestamp_to_str(ts):
-    ts = int(ts)
-    return "{:02d}:{:02d}:{:02d}".format(
-        ts // 3600,  # Stunden
-        (ts % 3600) // 60,  # Minuten
-        ts % 60  # Sekunden
-    )
 
-
-# Method to merge multiple segments into one bigger segments to reduce the size of the transcription array
 def combine_segments(group_segments):
+    """
+    # Method to merge multiple segments into one bigger segments to reduce the size of the transcription array
+    :param group_segments: multiple Segments
+    :return: one combined Segment
+    """
     start = group_segments[0].start
     end = group_segments[-1].end
     text = ''.join([seg.text for seg in group_segments])
     return Segment(start, end, text)
 
 
-"""
-This method will generate a dictionary over the combined segments
-If there are splitted segments we need to adjust the start and end timestamp of the segments because Open AI Whisper will always start at 0 seconds for each segment uplaoded
-"""
-
-
 def generate_segment_dict(combined_segments, idx=0):
-    new_segments = []
+    """
+    This method will generate a dictionary over the combined segments
+    If there are splitted segments we need to adjust the start and end timestamp of the segments because Open AI Whisper will always start at 0 seconds for each segment uploaded
+    :param combined_segments: all combined segments
+    :param idx: index of the chunk
+    :return: dictionary of segments
+    """
+    segments = []
     for seg in combined_segments:
         start = seg.start
         end = seg.end
@@ -168,9 +147,23 @@ def generate_segment_dict(combined_segments, idx=0):
 
         start_str = convert_timestamp_to_str(start)
         end_str = convert_timestamp_to_str(end)
-        new_segments.append({
+        segments.append({
             "start_timestamp": start_str,
             "end_timestamp": end_str,
             "transcription_text": text
         })
-    return new_segments
+    return segments
+
+
+def convert_timestamp_to_str(ts):
+    """
+    this will generate a better reading timestamp (XX:YY:ZZ)
+    :param ts: timestamp
+    :return: timestamp as string (XX:YY:ZZ)
+    """
+    ts = int(ts)
+    return "{:02d}:{:02d}:{:02d}".format(
+        ts // 3600,  # Stunden
+        (ts % 3600) // 60,  # Minuten
+        ts % 60  # Sekunden
+    )
