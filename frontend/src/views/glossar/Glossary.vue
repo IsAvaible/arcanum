@@ -109,12 +109,12 @@
       </div>
 
       <!-- Terms List -->
-      <div v-if="filteredAndSortedTerms.length" class="space-y-2">
+      <div v-if="filteredAndSortedTerms.length" class="space-y-2 relative">
         <TransitionGroup name="list">
           <div
             v-for="term in filteredAndSortedTerms"
             :key="term.term"
-            class="bg-white rounded-xl border border-gray-200 hover:border-emerald-200 hover:shadow-md transition-all cursor-pointer overflow-hidden"
+            class="bg-white rounded-xl border border-gray-200 hover:border-emerald-200 hover:shadow-md transition-all cursor-pointer overflow-hidden w-full"
             :class="{ 'border-emerald-500 shadow-md': selectedTerm?.term === term.term }"
             @click="selectTerm(term)"
           >
@@ -426,15 +426,20 @@ const selectTerm = (term: GlossaryTerm) => {
 }
 
 /* List Transitions */
+.list-move,
 .list-enter-active,
 .list-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.5s ease;
 }
 
 .list-enter-from,
 .list-leave-to {
   opacity: 0;
-  transform: translateX(30px);
+}
+
+.list-leave-active {
+  position: absolute;
+  width: 100%;
 }
 </style>
 
