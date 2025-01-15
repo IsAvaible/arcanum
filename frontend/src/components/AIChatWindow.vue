@@ -114,7 +114,7 @@ const registerSocket = async () => {
       })
 
       socket.value!.on('llm_end', (_data: { message: string }) => {
-        pendingLLMMessage.value = null
+        // pendingLLMMessage.value = null
       })
 
       resolve()
@@ -707,7 +707,7 @@ onMounted(async () => {
               v-for="caseReference in caseReferences[message.id] || []"
               :key="caseReference.id"
               :reference="caseReference"
-              class="min-w-40"
+              class="min-w-60"
               :class="{
                 'bg-gray-100': message.role === MessageRoleEnum.Assistant,
                 'bg-white': message.role === MessageRoleEnum.User,
@@ -719,7 +719,7 @@ onMounted(async () => {
               :reference="fileReference"
               :fileLoading="loadingFileId === fileReference.id"
               @click="openAttachmentPreview"
-              class="min-w-40"
+              class="min-w-60"
               :class="{
                 'bg-gray-100': message.role === MessageRoleEnum.Assistant,
                 'bg-white': message.role === MessageRoleEnum.User,
@@ -936,8 +936,7 @@ onMounted(async () => {
   animation: shake 0.5s ease-in-out;
 }
 
-.pop-in-enter-active,
-.pop-in-leave-active {
+.pop-in-enter-active {
   transition: all 0.3s ease;
 }
 
@@ -946,14 +945,8 @@ onMounted(async () => {
   transform: scale(0.8);
 }
 
-.pop-in-enter-to,
-.pop-in-leave-from {
+.pop-in-enter-to {
   opacity: 1;
   transform: scale(1);
-}
-
-.pop-in-leave-to {
-  opacity: 0;
-  transform: scale(0);
 }
 </style>
