@@ -430,6 +430,216 @@ paths:
           description: Case not found.
         '500':
           description: Server error during case update.
+
+  /glossary:
+    get:
+      summary: Retrieves all glossary entries.
+      responses:
+        '200':
+          description: An array of all glossary entries.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GlossaryEntry'
+        '500':
+          description: Internal server error.
+    post:
+      summary: Creates a new glossary entry.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - term
+              properties:
+                term:
+                  type: string
+      responses:
+        '201':
+          description: The newly created glossary entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlossaryEntry'
+        '400':
+          description: Field "term" is required.
+        '500':
+          description: Internal server error.
+  /glossary/{id}:
+    get:
+      summary: Retrieves a single glossary entry by ID, including linked attachments and cases.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: The glossary entry with associated attachments and cases.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlossaryEntryDetail'
+        '404':
+          description: Glossary entry not found.
+        '500':
+          description: Internal server error.
+    put:
+      summary: Updates an existing glossary entry by ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                term:
+                  type: string
+      responses:
+        '204':
+          description: The update was successful.
+        '404':
+          description: Glossary entry not found.
+        '500':
+          description: Internal server error.
+    delete:
+      summary: Deletes a glossary entry by ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: The entry was deleted successfully.
+        '404':
+          description: Glossary entry not found.
+        '500':
+          description: Internal server error.
+  /glossary/find:
+    get:
+      summary: Finds glossary entries by the given term substring.
+      parameters:
+        - name: term
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Matching glossary entries.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GlossaryEntry'
+        '400':
+          description: Missing "term" query parameter.
+        '500':
+          description: Internal server error.
+  /glossary/{id}/attachments/{attachmentId}:
+    post:
+      summary: Adds an attachment to a glossary entry.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: attachmentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: The updated glossary entry with its associated attachments.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlossaryEntryDetail'
+        '404':
+          description: Glossary entry or attachment not found.
+        '500':
+          description: Internal server error.
+    delete:
+      summary: Removes an attachment from a glossary entry.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: attachmentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Attachment was removed successfully.
+        '404':
+          description: Glossary entry or attachment not found.
+        '500':
+          description: Internal server error.
+  /glossary/{id}/cases/{caseId}:
+    post:
+      summary: Adds a case to a glossary entry.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: The updated glossary entry with its associated cases.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlossaryEntryDetail'
+        '404':
+          description: Glossary entry or case not found.
+        '500':
+          description: Internal server error.
+    delete:
+      summary: Removes a case from a glossary entry.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Case was removed successfully.
+        '404':
+          description: Glossary entry or case not found.
+        '500':
+          description: Internal server error.
+
   /chats:
     post:
       summary: Create a new chat
@@ -693,13 +903,10 @@ components:
   schemas:
     Case:
       allOf:
-        - $ref: '#/components/schemas/CaseBase'
+        - $ref: '#/components/schemas/CaseWithId'
         - type: object
-          required: [id, draft, createdAt, updatedAt, attachments, changeHistory]
+          required: [draft, createdAt, updatedAt, attachments, changeHistory]
           properties:
-            id:
-              type: integer
-              description: ID of the case.
             draft:
               type: boolean
               description: Indicates whether the case is a draft.
@@ -721,6 +928,16 @@ components:
               items:
                 $ref: '#/components/schemas/CaseChangeHistoryEntry'
               description: List of changes made to the case.
+
+    CaseWithId:
+      allOf:
+        - $ref: '#/components/schemas/CaseBase'
+        - type: object
+          required: [id]
+          properties:
+            id:
+              type: integer
+              description: ID of the case.
 
     CasePost:
       allOf:
@@ -811,6 +1028,39 @@ components:
           type: string
           format: date-time
           description: Timestamp the change was made at.
+
+    GlossaryEntry:
+      type: object
+      required: [id, term, usageCount, createdAt]
+      properties:
+        id:
+          type: integer
+        term:
+          type: string
+        usageCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp the entry was created at.
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp the entry was last updated at.
+    GlossaryEntryDetail:
+      required: [relatedAttachments, relatedCases]
+      allOf:
+        - $ref: '#/components/schemas/GlossaryEntry'
+        - type: object
+          properties:
+            relatedAttachments:
+              type: array
+              items:
+                $ref: '#/components/schemas/Attachment'
+            relatedCases:
+              type: array
+              items:
+                $ref: '#/components/schemas/CaseWithId'
 
     Chat:
       type: object

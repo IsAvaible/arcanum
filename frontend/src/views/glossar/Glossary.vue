@@ -2,12 +2,12 @@
   <div class="min-h-screen bg-gray-50 flex">
     <!-- Left Sidebar with Alphabet -->
     <div
-      class="w-16 min-h-screen bg-white border-r border-gray-100 flex flex-col items-center py-8 sticky top-0"
+      class="min-w-16 min-h-screen bg-white border-r border-gray-100 flex flex-col items-center py-4 sticky top-0 gap-y-0.5"
     >
-      <div
+      <button
         v-for="letter in alphabet"
         :key="letter"
-        class="w-10 h-10 mb-1 rounded-lg flex items-center justify-center cursor-pointer transition-all text-sm font-medium"
+        class="w-10 h-10 rounded-lg flex items-center justify-center cursor-pointer transition-all text-sm font-medium first:mt-auto last:mb-auto"
         :class="[
           activeLetters.includes(letter)
             ? selectedLetter === letter
@@ -16,16 +16,19 @@
             : 'text-gray-300 cursor-not-allowed',
         ]"
         @click="activeLetters.includes(letter) && filterByLetter(letter)"
-        v-tooltip.right="
-          activeLetters.includes(letter) ? `Show terms with ${letter}` : 'No terms available'
-        "
+        v-tooltip.right="{
+          value: activeLetters.includes(letter)
+            ? `Show terms with ${letter}`
+            : 'No terms available',
+          showDelay: 1000,
+        }"
       >
         {{ letter }}
-      </div>
+      </button>
     </div>
 
     <!-- Main Content -->
-    <div class="flex-1 px-8 py-8 max-w-5xl">
+    <div class="flex-1 overflow-auto px-8 py-8 max-w-5xl">
       <!-- Header -->
       <div class="mb-8">
         <h1 class="text-2xl font-semibold text-gray-900">Glossary</h1>
@@ -33,28 +36,30 @@
       </div>
 
       <!-- Search and Filters -->
-      <div class="flex gap-4 mb-8">
-        <span class="p-input-icon-left flex flex-row gap-x-2 items-center flex-1">
-          <i class="pi pi-search" />
+      <div class="flex gap-2 sm:gap-4 mb-8">
+        <IconField class="flex-1">
+          <InputIcon>
+            <i class="pi pi-search" />
+          </InputIcon>
           <InputText v-model="searchTerm" placeholder="Search terms..." class="w-full" />
-        </span>
+        </IconField>
         <div class="flex gap-3">
           <!-- Filter Button with Overlay Panel -->
-          <Button
-            class="filter-button"
-            v-tooltip.bottom="'Filter terms'"
-            @click="toggleFilterOverlay"
-            aria-haspopup="true"
-            aria-controls="filter-overlay"
-          >
-            <i class="pi pi-filter mr-2"></i>
-            Filter
-            <Badge
-              v-if="selectedCategories.length"
-              :value="selectedCategories.length"
-              severity="success"
-            />
-          </Button>
+          <!--          <Button-->
+          <!--            class="filter-button"-->
+          <!--            v-tooltip.bottom="'Filter terms'"-->
+          <!--            @click="toggleFilterOverlay"-->
+          <!--            aria-haspopup="true"-->
+          <!--            aria-controls="filter-overlay"-->
+          <!--          >-->
+          <!--            <i class="pi pi-filter mr-2"></i>-->
+          <!--            Filter-->
+          <!--            <Badge-->
+          <!--              v-if="selectedCategories.length"-->
+          <!--              :value="selectedCategories.length"-->
+          <!--              severity="success"-->
+          <!--            />-->
+          <!--          </Button>-->
 
           <!-- Sort Button with Overlay Panel -->
           <Button
@@ -64,14 +69,14 @@
             aria-haspopup="true"
             aria-controls="sort-overlay"
           >
-            <i class="pi pi-sort-alt mr-2"></i>
-            Sort
+            <i class="pi pi-sort-alt"></i>
+            <span class="hidden sm:visible ml-2">Sort</span>
           </Button>
         </div>
       </div>
 
       <!-- Sort Overlay -->
-      <OverlayPanel ref="sortOverlay" class="w-72">
+      <Popover ref="sortOverlay" class="w-72">
         <div class="p-4">
           <h3 class="text-sm font-medium text-gray-700 mb-3">Sorting</h3>
           <div class="space-y-2">
@@ -87,7 +92,7 @@
             </div>
           </div>
         </div>
-      </OverlayPanel>
+      </Popover>
 
       <!-- Active Filters -->
       <div v-if="selectedCategories.length" class="mb-4 flex flex-wrap gap-2">
@@ -109,39 +114,42 @@
       </div>
 
       <!-- Terms List -->
-      <div v-if="filteredAndSortedTerms.length" class="space-y-2 relative">
+      <div v-if="filteredAndSortedEntries.length" class="space-y-2 relative">
         <TransitionGroup name="list">
           <div
-            v-for="term in filteredAndSortedTerms"
-            :key="term.term"
+            v-for="entry in filteredAndSortedEntries"
+            :key="entry.term"
             class="bg-white rounded-xl border border-gray-200 hover:border-emerald-200 hover:shadow-md transition-all cursor-pointer overflow-hidden w-full"
-            :class="{ 'border-emerald-500 shadow-md': selectedTerm?.term === term.term }"
-            @click="selectTerm(term)"
+            :class="{ 'border-emerald-500 shadow-md': selectedEntry?.term === entry.term }"
+            @click="selectEntry(entry)"
           >
             <div class="p-4">
               <div class="flex items-center justify-between">
-                <div class="flex-1">
+                <div class="flex-1 truncate">
                   <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
                       <i class="pi pi-book text-emerald-500"></i>
                     </div>
                     <div>
-                      <h3 class="text-lg font-medium text-gray-900">{{ term.term }}</h3>
+                      <h3 class="text-lg font-medium text-gray-900">{{ entry.term }}</h3>
                       <div class="flex items-center gap-2 mt-1 text-sm text-gray-500">
-                        <span v-if="term.usageCount" class="flex items-center">
+                        <span v-if="entry.usageCount" class="flex items-center">
                           <i class="pi pi-chart-bar mr-1"></i>
-                          {{ term.usageCount }} Usages
+                          {{ entry.usageCount }} Usages
                         </span>
-                        <span v-if="term.lastUsed" class="flex items-center">
+                        <span
+                          class="flex items-center"
+                          v-tooltip.bottom="{ value: 'Last Used At', showDelay: 500 }"
+                        >
                           <i class="pi pi-clock mr-1"></i>
-                          {{ formatDate(term.lastUsed) }}
+                          {{ formatDate(entry.updatedAt ?? entry.createdAt) }}
                         </span>
                       </div>
                     </div>
                   </div>
                   <div class="mt-2 flex items-center gap-3">
                     <span class="text-sm text-gray-500">
-                      {{ term.relatedCases?.length || 0 }} References
+                      {{ entry.usageCount || 0 }} References
                     </span>
                   </div>
                 </div>
@@ -150,6 +158,21 @@
             </div>
           </div>
         </TransitionGroup>
+      </div>
+
+      <!-- Loading State -->
+      <div v-else-if="loading" class="space-y-2">
+        <Skeleton v-for="_ in 10" height="7rem" class="w-full" />
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="error" class="text-center py-12 bg-white rounded-xl border border-gray-200">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-50 flex items-center justify-center">
+          <i class="pi pi-exclamation-circle text-red-500 text-xl"></i>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900">An error occurred</h3>
+        <p class="text-gray-500 mt-2">{{ error }}</p>
+        <Button text severity="danger" class="mt-4" @click="fetchGlossary"> Retry </Button>
       </div>
 
       <!-- Empty State -->
@@ -161,21 +184,19 @@
         </div>
         <h3 class="text-lg font-medium text-gray-900">No terms found</h3>
         <p class="text-gray-500 mt-2">Try adjusting your search criteria</p>
-        <Button link class="mt-4 text-emerald-600 hover:text-emerald-700" @click="resetFilters">
-          Reset filters
-        </Button>
+        <Button text severity="success" class="mt-4" @click="resetFilters"> Reset filters </Button>
       </div>
     </div>
 
     <!-- Detail Sidebar -->
-    <Sidebar
+    <Drawer
       v-model:visible="sidebarVisible"
       position="right"
-      :style="{ width: '35rem' }"
+      :style="{ width: 'min(100%,35rem)' }"
       class="p-sidebar-lg"
     >
-      <template v-if="selectedTerm">
-        <div class="px-2">
+      <template v-if="selectedEntry">
+        <div class="px-2 h-full max-h-full overflow-auto relative">
           <!-- Term Header -->
           <div class="mb-8">
             <div class="flex items-center gap-3 mb-4">
@@ -183,7 +204,7 @@
                 <i class="pi pi-book text-emerald-500 text-lg"></i>
               </div>
               <div>
-                <h2 class="text-xl font-semibold text-gray-900">{{ selectedTerm.term }}</h2>
+                <h2 class="text-xl font-semibold text-gray-900">{{ selectedEntry.term }}</h2>
               </div>
             </div>
 
@@ -192,13 +213,13 @@
               <div class="bg-gray-50 rounded-lg p-3 flex-1">
                 <div class="text-sm text-gray-500">Usages</div>
                 <div class="text-lg font-semibold text-gray-900">
-                  {{ selectedTerm.usageCount || 0 }}
+                  {{ selectedEntry.usageCount || 0 }}
                 </div>
               </div>
               <div class="bg-gray-50 rounded-lg p-3 flex-1">
                 <div class="text-sm text-gray-500">Last used</div>
                 <div class="text-lg font-semibold text-gray-900">
-                  {{ formatDate(selectedTerm.lastUsed) || 'Never' }}
+                  {{ formatDate(selectedEntry.updatedAt ?? selectedEntry.createdAt) || 'Never' }}
                 </div>
               </div>
             </div>
@@ -206,91 +227,165 @@
 
           <!-- Term Content -->
           <div class="space-y-8">
-            <!-- Related Cases -->
-            <div v-if="selectedTerm.relatedCases?.length">
+            <!-- Loading State -->
+            <div v-if="selectedEntryDetailLoading">
               <h3 class="text-sm font-medium text-gray-700 mb-3">Related Cases</h3>
               <div class="space-y-2">
+                <Skeleton v-for="_ in 3" height="3rem" class="w-full" />
+              </div>
+              <h3 class="text-sm font-medium text-gray-700 mb-3 mt-5">Related Cases</h3>
+              <div class="space-y-2">
+                <Skeleton v-for="_ in 4" height="3rem" class="w-full" />
+              </div>
+            </div>
+            <!-- Error State -->
+            <div v-else-if="selectedEntryDetailError">
+              <div class="text-center py-12 bg-white rounded-xl border border-gray-200">
                 <div
-                  v-for="caseRef in selectedTerm.relatedCases"
-                  :key="caseRef"
-                  class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-emerald-200 hover:shadow-sm transition-all cursor-pointer"
+                  class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-50 flex items-center justify-center"
+                >
+                  <i class="pi pi-exclamation-circle text-red-500 text-xl"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900">An error occurred</h3>
+                <p class="text-gray-500 mt-2">{{ selectedEntryDetailError }}</p>
+                <Button
+                  text
+                  severity="danger"
+                  class="mt-4"
+                  @click="fetchEntryDetail(selectedEntry.id)"
+                >
+                  Retry
+                </Button>
+              </div>
+            </div>
+            <!-- Content -->
+            <div v-else>
+              <h3 class="text-sm font-medium text-gray-700 mb-3">Related Cases</h3>
+              <div class="space-y-2">
+                <router-link
+                  v-if="selectedEntryDetail?.relatedCases.length"
+                  v-for="caseRef in selectedEntryDetail.relatedCases"
+                  :key="caseRef.id"
+                  :to="{ name: 'case-detail', params: { id: caseRef.id } }"
+                  target="_blank"
+                  v-tooltip.bottom="{ value: 'Open Case', showDelay: 500 }"
+                  class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-emerald-200 hover:shadow-sm transition-all cursor-pointer w-full"
                 >
                   <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
                     <i class="pi pi-file text-emerald-500"></i>
                   </div>
-                  <span class="text-sm text-gray-600">{{ caseRef }}</span>
-                </div>
+                  <span class="text-sm text-start text-nowrap truncate text-gray-600">{{
+                    caseRef.title
+                  }}</span>
+                </router-link>
+                <div v-else class="text-gray-500 text-center">No related cases found</div>
               </div>
+              <h3 class="text-sm font-medium text-gray-700 mb-3 mt-5">Related Attachments</h3>
+              <div class="space-y-2">
+                <button
+                  v-if="selectedEntryDetail?.relatedAttachments.length"
+                  v-for="attachmentRef in selectedEntryDetail.relatedAttachments"
+                  :key="attachmentRef.id"
+                  @click="openAttachmentPreview(attachmentRef)"
+                  v-tooltip.bottom="{ value: 'Preview Attachment', showDelay: 500 }"
+                  class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-emerald-200 hover:shadow-sm transition-all cursor-pointer w-full"
+                >
+                  <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                    <i class="pi text-emerald-500" :class="getFileIcon(attachmentRef.mimetype)"></i>
+                  </div>
+                  <span class="text-sm text-start text-nowrap truncate text-gray-600">{{
+                    attachmentRef.filename
+                  }}</span>
+                </button>
+                <div v-else class="text-gray-500 text-center">No related attachments found</div>
+              </div>
+            </div>
+          </div>
+          <!-- File Preview -->
+          <div
+            :class="{
+              'h-[min(80%,max(25rem,40%))]': filePreviewVisible || loadingFileId,
+              'h-0': !filePreviewVisible && !loadingFileId,
+            }"
+            class="absolute bottom-0 left-0 bg-white rounded-t-md ring-1 ring-gray-50 shadow-md w-full rounded-lg flex flex-col resize-y transition-[height] transition-duration-300 overflow-clip"
+          >
+            <div class="w-full flex items-center">
+              <h3 class="text-sm font-medium text-gray-700 flex-1 truncate">
+                Attachment Preview -
+                <span class="font-normal">{{ selectedFile?.name ?? 'Loading' }}</span>
+              </h3>
+              <Button
+                v-if="selectedFile"
+                icon="pi pi-download"
+                text
+                severity="secondary"
+                size="small"
+                v-tooltip.top="{ value: 'Download', showDelay: 500 }"
+                rounded
+                @click="triggerFileDownload(selectedFile!)"
+              />
+              <Button
+                icon="pi pi-times"
+                text
+                severity="secondary"
+                rounded
+                @click="filePreviewVisible = false"
+              />
+            </div>
+            <FilePreview :file="selectedFile" v-if="selectedFile" class="flex-1" />
+            <div v-else-if="loadingFileId" class="w-full flex-1 flex items-center justify-center">
+              <i class="pi pi-spin pi-spinner text-gray-400 text-2xl"></i>
+              <span class="text-gray-400 ml-2">Loading...</span>
             </div>
           </div>
         </div>
       </template>
-    </Sidebar>
+    </Drawer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
+
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
-import Sidebar from 'primevue/sidebar'
+import Drawer from 'primevue/drawer'
 import Chip from 'primevue/chip'
-import Badge from 'primevue/badge'
-import OverlayPanel from 'primevue/overlaypanel'
+import Popover from 'primevue/popover'
+import Skeleton from 'primevue/skeleton'
+import IconField from 'primevue/iconfield'
+import InputIcon from 'primevue/inputicon'
 
-interface GlossaryTerm {
-  term: string
-  relatedCases?: string[]
-  usageCount?: number
-  lastUsed?: Date
-  dateAdded?: Date
-}
+import FilePreview from '@/components/file-handling/FilePreview.vue'
+
+import type { GlossaryEntry, GlossaryEntryDetail } from '@/api'
+import type { AxiosError } from 'axios'
+
+import { normalize as removeDiacritics } from 'normalize-diacritics'
+import { useApi } from '@/composables/useApi'
+import { asyncComputed, computedAsync } from '@vueuse/core'
+import { getFileIcon } from '@/functions/getFileIcon'
+import { useAttachmentLoading } from '@/composables/useAttachmentLoading'
+
+const api = useApi()
 
 // Glossar data
-const glossaryData = ref<GlossaryTerm[]>([
-  {
-    term: 'Schweißgerät MIG4300Pro',
-    relatedCases: ['Case #2', 'Case #4'],
-    usageCount: 245,
-    lastUsed: new Date('2024-01-20'),
-    dateAdded: new Date('2023-06-15'),
-  },
-  {
-    term: 'Motor',
-    relatedCases: ['Case #7'],
-    usageCount: 189,
-    lastUsed: new Date('2024-01-22'),
-    dateAdded: new Date('2023-08-01'),
-  },
-  {
-    term: 'Stromversorgung',
-    relatedCases: ['Case #3', 'Case #12'],
-    usageCount: 150,
-    lastUsed: new Date('2024-01-15'),
-    dateAdded: new Date('2023-07-10'),
-  },
-  {
-    term: 'Lüftungsschlitze',
-    relatedCases: ['Case #9'],
-    usageCount: 85,
-    lastUsed: new Date('2024-01-05'),
-    dateAdded: new Date('2023-09-20'),
-  },
-  {
-    term: 'Drahtzuführung',
-    relatedCases: ['Case #10', 'Case #12'],
-    usageCount: 200,
-    lastUsed: new Date('2024-01-18'),
-    dateAdded: new Date('2023-07-25'),
-  },
-  {
-    term: 'Drahtrolle',
-    relatedCases: ['Case #9', 'Case #14'],
-    usageCount: 120,
-    lastUsed: new Date('2024-01-10'),
-    dateAdded: new Date('2023-10-10'),
-  },
-])
+const glossaryData = ref<GlossaryEntry[]>([])
+
+// Fetch glossary data
+const loading = ref(true)
+const error = ref<string | null>(null)
+const fetchGlossary = async () => {
+  loading.value = true
+  try {
+    const response = await api.glossaryGet()
+    glossaryData.value = response.data
+  } catch (e) {
+    error.value = (e as AxiosError).message
+  } finally {
+    loading.value = false
+  }
+}
 
 // Sort options
 const sortOptions = [
@@ -304,7 +399,10 @@ const sortOptions = [
 // UI state
 const searchTerm = ref('')
 const selectedLetter = ref('')
-const selectedTerm = ref<GlossaryTerm | null>(null)
+const selectedEntry = ref<GlossaryEntry | null>(null)
+const selectedEntryDetail = ref<GlossaryEntryDetail | null>()
+const selectedEntryDetailLoading = ref(false)
+const selectedEntryDetailError = ref<string | null>(null)
 const sidebarVisible = ref(false)
 const currentSort = ref('most-used')
 const filterOverlay = ref()
@@ -313,10 +411,10 @@ const sortOverlay = ref()
 // Categories and filters
 const selectedCategories = ref<string[]>([])
 
-const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('')
 
 // Methods
-const toggleFilterOverlay = (event: Event) => {
+const _toggleFilterOverlay = (event: Event) => {
   filterOverlay.value?.toggle(event)
 }
 
@@ -324,11 +422,26 @@ const toggleSortOverlay = (event: Event) => {
   sortOverlay.value?.toggle(event)
 }
 
-const activeLetters = computed(() => {
-  return alphabet.filter((letter) =>
-    glossaryData.value.some((term) => term.term.toUpperCase().startsWith(letter)),
+const activeLetters = computedAsync(async () => {
+  // Create a set to store active letters
+  const activeLettersSet = new Set<string>()
+
+  // Process all terms once and check their first letter
+  await Promise.all(
+    glossaryData.value.map(async (entry) => {
+      const normalizedTerm = await removeDiacritics(entry.term)
+      const firstLetter = normalizedTerm.charAt(0).toUpperCase()
+      if (alphabet.includes(firstLetter)) {
+        activeLettersSet.add(firstLetter)
+      } else {
+        activeLettersSet.add('#')
+      }
+    }),
   )
-})
+
+  // Convert the set to an array and return only the letters that are in the alphabet
+  return Array.from(activeLettersSet).filter((letter) => alphabet.includes(letter))
+}, [])
 
 const filterByLetter = (letter: string) => {
   selectedLetter.value = selectedLetter.value === letter ? '' : letter
@@ -355,7 +468,7 @@ const resetFilters = () => {
   currentSort.value = 'most-used'
 }
 
-const formatDate = (date?: Date) => {
+const formatDate = (date?: Date | string | number) => {
   if (!date) return ''
   return new Intl.DateTimeFormat('de-DE', {
     day: '2-digit',
@@ -365,28 +478,42 @@ const formatDate = (date?: Date) => {
 }
 
 // Computed properties
-const filteredAndSortedTerms = computed(() => {
-  let terms = glossaryData.value
+const filteredAndSortedEntries = asyncComputed(async () => {
+  // Register dependencies
+  const _ = searchTerm.value + selectedLetter.value + currentSort.value
 
-  // Apply search filter
-  if (searchTerm.value) {
-    terms = terms.filter((term) => term.term.toLowerCase().includes(searchTerm.value.toLowerCase()))
-  }
+  let entries = glossaryData.value
+  const normalizedSearchTerm = (await removeDiacritics(searchTerm.value)).toUpperCase()
 
-  // Apply letter filter
-  if (selectedLetter.value) {
-    terms = terms.filter((term) => term.term.toUpperCase().startsWith(selectedLetter.value))
-  }
+  const results = await Promise.all(
+    entries.map(async (entry) => {
+      const normalizedTerm = (await removeDiacritics(entry.term)).toUpperCase()
+
+      const termStartsWithLetter =
+        !selectedLetter.value ||
+        normalizedTerm.startsWith(selectedLetter.value) ||
+        (alphabet.includes(normalizedTerm.charAt(0)) && selectedLetter.value === '#')
+      const termContainsSearch = !searchTerm.value || normalizedTerm.includes(normalizedSearchTerm)
+
+      return termStartsWithLetter && termContainsSearch
+    }),
+  )
+
+  // Apply filters
+  entries = entries.filter((_, index) => results[index])
 
   // Apply sorting
-  return [...terms].sort((a, b) => {
+  return [...entries].sort((a, b) => {
     switch (currentSort.value) {
       case 'most-used':
         return (b.usageCount || 0) - (a.usageCount || 0)
       case 'last-used':
-        return new Date(b.lastUsed || 0).getTime() - new Date(a.lastUsed || 0).getTime()
+        return (
+          new Date(b.updatedAt ?? b.createdAt).getTime() -
+          new Date(a.updatedAt ?? a.createdAt).getTime()
+        )
       case 'recently-added':
-        return new Date(b.dateAdded || 0).getTime() - new Date(a.dateAdded || 0).getTime()
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       case 'alpha-asc':
         return a.term.localeCompare(b.term)
       case 'alpha-desc':
@@ -395,12 +522,42 @@ const filteredAndSortedTerms = computed(() => {
         return 0
     }
   })
-})
+}, [])
 
-const selectTerm = (term: GlossaryTerm) => {
-  selectedTerm.value = term
+const selectEntry = (entry: GlossaryEntry) => {
+  filePreviewVisible.value = false
+  selectedEntry.value = entry
+  fetchEntryDetail(entry.id)
   sidebarVisible.value = true
 }
+
+const fetchEntryDetail = async (id: GlossaryEntry['id']) => {
+  selectedEntryDetailLoading.value = true
+  selectedEntryDetailError.value = null
+  try {
+    const response = await api.glossaryIdGet({ id })
+    selectedEntryDetail.value = response.data
+  } catch (e) {
+    console.error(e)
+    selectedEntryDetailError.value = (e as AxiosError).message
+  } finally {
+    selectedEntryDetailLoading.value = false
+  }
+}
+
+/// File Preview Drawer Logic
+const {
+  selectedFile,
+  filePreviewVisible,
+  loadingFileId,
+  openAttachmentPreview,
+  triggerFileDownload,
+} = useAttachmentLoading()
+
+// Fetch glossary data on component mount
+onMounted(() => {
+  fetchGlossary()
+})
 </script>
 
 <style scoped>
