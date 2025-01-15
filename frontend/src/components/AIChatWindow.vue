@@ -25,7 +25,6 @@ import {
 } from '@/api'
 import CaseReferenceComponent from '@/components/chat-view/CaseReference.vue'
 import FileReferenceComponent from '@/components/chat-view/FileReference.vue'
-import DynamicInteractiveText from '@/components/misc/DynamicInteractiveText.vue'
 import { useDebounceFn } from '@vueuse/core'
 import type { AxiosError } from 'axios'
 import { useConfirm } from 'primevue/useconfirm'
@@ -35,6 +34,7 @@ import { useRoute, useRouter } from 'vue-router'
 import type { MenuItem } from 'primevue/menuitem'
 import { io, Socket } from 'socket.io-client'
 import { BASE_PATH as BACKEND_API_BASE_PATH } from '@/api/base'
+import { MdPreview } from 'md-editor-v3'
 import FilePreview from '@/components/file-handling/FilePreview.vue'
 import { useAttachmentLoading } from '@/composables/useAttachmentLoading'
 
@@ -693,14 +693,16 @@ onMounted(async () => {
               }
             "
           >
-            <p>
-              <DynamicInteractiveText
-                class="whitespace-pre-wrap"
-                :text="message.content"
-                :regex="caseReferenceRegex"
-                to="/cases/"
-              />
-            </p>
+            <!-- @vue-ignore class recognized as prop instead of html attribute -->
+            <MdPreview
+              :model-value="message.content"
+              language="en-US"
+              class="!bg-transparent [&>*]:!p-0 text-pretty [&_p]:!break-normal"
+              :class="{
+                '[&_*]:!text-gray-800': message.role === MessageRoleEnum.Assistant,
+                '[&_*]:!text-white': message.role === MessageRoleEnum.User,
+              }"
+            />
             <CaseReferenceComponent
               v-for="caseReference in caseReferences[message.id] || []"
               :key="caseReference.id"
