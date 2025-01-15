@@ -616,7 +616,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex h-screen bg-white neutral-primary">
+  <div class="flex h-screen bg-white">
     <!-- Sidebar -->
     <AIChatSidebar
       :active-chat="activeChat"
