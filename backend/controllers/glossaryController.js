@@ -1,6 +1,7 @@
 const { Op } = require('sequelize');
 const { Glossary, Attachments, Cases } = require('../models'); 
 const { StatusCodes } = require('http-status-codes');
+const attachmentService = require("../services/attachmentService");
 
 
 module.exports = {
@@ -183,7 +184,7 @@ module.exports = {
     const { id, attachmentId } = req.params;
     try {
       const glossaryEntry = await Glossary.findByPk(id, {
-        include: [{ model: Attachments, as: 'attachments' }]
+        include: [{ model: Attachments, as: 'relatedAttachments' }]
       });
       if (!glossaryEntry) {
         return res.status(404).json({ message: 'Glossary entry not found.' });
@@ -194,12 +195,11 @@ module.exports = {
         return res.status(404).json({ message: 'Attachment not found.' });
       }
 
-      await glossaryEntry.addAttachments(attachment); 
-      // Or addAttachment(attachment) if your association auto-generates that method name
+      await glossaryEntry.addRelatedAttachments(attachment); 
 
       // Reload to get the updated list of attachments
       await glossaryEntry.reload({
-        include: [{ model: Attachments, as: 'attachments' }]
+        include: [{ model: Attachments, as: 'relatedAttachments' }]
       });
 
       return res.json(glossaryEntry);
@@ -224,7 +224,7 @@ module.exports = {
     const { id, caseId } = req.params;
     try {
       const glossaryEntry = await Glossary.findByPk(id, {
-        include: [{ model: Cases, as: 'cases' }]
+        include: [{ model: Cases, as: 'relatedCases' }]
       });
       if (!glossaryEntry) {
         return res.status(404).json({ message: 'Glossary entry not found.' });
@@ -235,11 +235,11 @@ module.exports = {
         return res.status(404).json({ message: 'Case not found.' });
       }
 
-      await glossaryEntry.addCases(theCase);
+      await glossaryEntry.addRelatedCases(theCase);
 
       // Reload to get the updated list of cases
       await glossaryEntry.reload({
-        include: [{ model: Cases, as: 'cases' }]
+        include: [{ model: Cases, as: 'relatedCases' }]
       });
 
       return res.json(glossaryEntry);
@@ -264,7 +264,7 @@ module.exports = {
     const { id, attachmentId } = req.params;
     try {
       const glossaryEntry = await Glossary.findByPk(id, {
-        include: [{ model: Attachments, as: 'attachments' }]
+        include: [{ model: Attachments, as: 'relatedAttachments' }]
       });
       if (!glossaryEntry) {
         return res.status(404).json({ message: 'Glossary entry not found.' });
@@ -276,8 +276,6 @@ module.exports = {
       }
 
       await glossaryEntry.removeAttachment(attachment);
-
-
 
 
       return res.status(204).send();
@@ -302,7 +300,7 @@ module.exports = {
     const { id, caseId } = req.params;
     try {
       const glossaryEntry = await Glossary.findByPk(id, {
-        include: [{ model: Cases, as: 'cases' }]
+        include: [{ model: Cases, as: 'relatedCases' }]
       });
       if (!glossaryEntry) {
         return res.status(404).json({ message: 'Glossary entry not found.' });
@@ -322,6 +320,35 @@ module.exports = {
       return res
         .status(500)
         .json({ message: error.message || 'Failed to remove case.' });
+    }
+  },
+
+
+  uploadAttachmentToGossary: async (req, res) => {
+    const { id } = req.params;
+    try {
+    
+      const glossaryEntry = await Glossary.findByPk(id);
+      if (!glossaryEntry) {
+        return res.status(404).json({ message: 'Glossary entry not found.' });
+      }
+    
+      // Process uploaded files and create attachments.  
+      const attachmentInstances = await attachmentService.uploadFilesAndCreateAttachments(req.files);
+      if (attachmentInstances.length > 0) {
+        await glossaryEntry.addRelatedAttachments(attachmentInstances);
+      }
+
+      await glossaryEntry.reload({
+        include: [{ model: Attachments, as: 'relatedAttachments' }]
+      });
+
+      return res.json(glossaryEntry);
+    } catch (error) {
+      console.error('Error in uploadAttachmentToGossary:', error);
+      return res
+        .status(500)
+        .json({ message: error.message || 'Failed to add Attachmets.' });
     }
   },
 };

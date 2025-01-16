@@ -6,6 +6,7 @@ const {
     escapeData,
   } = require("../middlewares/validationMiddleware");
   const { glossarySchema } = require("../schemas/glossarySchemas");
+const multerMiddleware = require('../middlewares/multerMiddleware');
 
 
 // --- Glossary-Routen ---
@@ -19,6 +20,7 @@ router.get('/glossary/:id', glossaryController.getGlossaryEntryById);
 router.post('/glossary', escapeData(["term",]), validateData(glossarySchema), glossaryController.createGlossaryEntry);
 router.put('/glossary/:id',escapeData(["term",]), validateData(glossarySchema), glossaryController.updateGlossaryEntry);
 router.delete('/glossary/:id', glossaryController.deleteGlossaryEntry);
+router.post('/glossary/:id/upload', multerMiddleware,  glossaryController.uploadAttachmentToGossary)
 
 // Add attachments/cases to a glossary
 router.post('/glossary/:id/attachments/:attachmentId', glossaryController.addAttachmentToGlossary);
