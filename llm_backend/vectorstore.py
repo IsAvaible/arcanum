@@ -164,7 +164,7 @@ class QdrantVectorstore:
 
         return self.search_vectors(embedding, limit, filter_condition)
 
-    def search_by_metadata(self, key, value, limit=1):
+    def search_by_metadata(self, key, value, limit=10000):
         """
         Search for an entry in the collection with a specific key-value pair in the metadata.
         
@@ -262,9 +262,12 @@ def delete_entries_from_vector_db(request, vectorstore):
     if request_json_str.get("attachmentIds"):
         attachment_ids = request_json_str["attachmentIds"]
         for attachment_id in attachment_ids:
-            entry = vectorstore.search_by_metadata("file_id", attachment_id)
-            if entry:
-                vectorstore.delete_entry(entry[0].id)
+            entries = vectorstore.search_by_metadata("file_id", attachment_id)
+            print(entries)
+            print(type(entries))
+            if entries:
+                for entry in entries:
+                    vectorstore.delete_entry(entry.id)
                 returnString += f"Attachment:{attachment_id} DELETED. "
             else: 
                 returnString += f"Attachment:{attachment_id} NOT FOUND. "
