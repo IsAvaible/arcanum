@@ -275,8 +275,8 @@ module.exports = {
         return res.status(404).json({ message: 'Attachment not found.' });
       }
 
-      await glossaryEntry.removeAttachment(attachment);
-
+      await glossaryEntry.removeRelatedAttachments(attachment);
+      await attachmentService.deleteAttachmentIfOrphaned(attachment);
 
       return res.status(204).send();
     } catch (error) {
@@ -311,7 +311,7 @@ module.exports = {
         return res.status(404).json({ message: 'Case not found.' });
       }
 
-      await glossaryEntry.removeCases(theCase);
+      await glossaryEntry.removeRelatedCases(theCase);
 
 
       return res.status(204).send();

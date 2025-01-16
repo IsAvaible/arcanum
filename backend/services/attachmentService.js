@@ -84,8 +84,9 @@ exports.uploadFilesAndCreateAttachments = async (files) => {
 exports.deleteAttachmentIfOrphaned = async (attachment) => {
   // Check if the attachment is associated with any other cases
   const otherCases = await attachment.getCases();
+  const otherGlossary = await attachment.getGlossary();
 
-  if (otherCases.length === 0) {
+  if (otherCases.length === 0 && otherGlossary.length === 0) {
     // Delete the file from NextCloud
     await nextCloud.deleteFile(attachment.filepath);
 
