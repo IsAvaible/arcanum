@@ -273,6 +273,6 @@ def delete_entries_from_vector_db(request, vectorstore):
                 returnString += f"Attachment:{attachment_id} NOT FOUND. "
 
     if not request_json_str.get("attachmentIds") and not request_json_str.get("caseId"):
-        returnString = "No caseId or attachmentIds provided."
+        return "No caseId or attachmentIds provided.", 400
 
     return returnString, 200
