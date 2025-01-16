@@ -13,7 +13,7 @@ import type { AxiosError } from 'axios'
 import { useAttachmentLoading } from '@/composables/useAttachmentLoading'
 import { useApi } from '@/composables/useApi'
 import { useToast } from 'primevue'
-import { formatDate } from '../functions/formatDate'
+import { formatDate } from '@/functions/formatDate'
 
 interface Props {
   entry?: GlossaryEntry | null

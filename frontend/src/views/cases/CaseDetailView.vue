@@ -6,6 +6,7 @@ import { useToast } from 'primevue/usetoast' // Import useToast only once
 import { useConfirm } from 'primevue/useconfirm'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
+import { formatDate } from '@/functions/formatDate'
 
 // PrimeVue components
 import Button from 'primevue/button'
@@ -18,7 +19,7 @@ import Dialog from 'primevue/dialog'
 import Skeleton from 'primevue/skeleton'
 import Divider from 'primevue/divider'
 import Timeline from 'primevue/timeline'
-import Sidebar from 'primevue/sidebar'
+import Drawer from 'primevue/drawer'
 
 import { MdEditor } from 'md-editor-v3'
 
@@ -45,7 +46,6 @@ import { apiBlobToFile } from '@/functions/apiBlobToFile'
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
 import { until } from '@vueuse/core'
-
 import { userOptions } from '@/api/mockdata'
 
 // Glossary Types
@@ -210,19 +210,6 @@ const _processContent = (content: string | undefined): string => {
 
   console.log('Processed content:', processedContent)
   return processedContent
-}
-
-/**
- * Format the date to a human-readable format
- * @param date The date to format
- */
-const formatDate = (date?: Date | string) => {
-  if (!date) return ''
-  return new Intl.DateTimeFormat('de-DE', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(new Date(date))
 }
 
 // Lifecycle Hooks
@@ -1129,7 +1116,7 @@ const changeHistoryEvents = computed(() => {
     />
 
     <!-- Glossary Sidebar -->
-    <Sidebar
+    <Drawer
       v-model:visible="sidebarVisible"
       position="right"
       :style="{ width: '35rem' }"
@@ -1186,7 +1173,7 @@ const changeHistoryEvents = computed(() => {
           </div>
         </div>
       </template>
-    </Sidebar>
+    </Drawer>
   </div>
 </template>
 

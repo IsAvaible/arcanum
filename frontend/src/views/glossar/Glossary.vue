@@ -210,7 +210,7 @@ import type { AxiosError } from 'axios'
 import { normalize as removeDiacritics } from 'normalize-diacritics'
 import { useApi } from '@/composables/useApi'
 import { asyncComputed, computedAsync } from '@vueuse/core'
-import { formatDate } from '../../functions/formatDate'
+import { formatDate } from '@/functions/formatDate'
 import GlossaryEntryDrawer from '@/components/GlossaryEntryDrawer.vue'
 
 const api = useApi()
