@@ -189,7 +189,7 @@
     </div>
 
     <!-- Detail Sidebar -->
-    <GlossaryEntryDrawer :entry="selectedEntry" />
+    <GlossaryEntryDrawer v-model:entry="selectedEntry" />
   </div>
 </template>
 

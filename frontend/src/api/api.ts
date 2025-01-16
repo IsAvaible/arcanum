@@ -157,6 +157,12 @@ export interface Case {
      */
     'attachments': Array<Attachment>;
     /**
+     * List of glossary entries linked to the case.
+     * @type {Array<GlossaryEntry>}
+     * @memberof Case
+     */
+    'glossary': Array<GlossaryEntry>;
+    /**
      * List of changes made to the case.
      * @type {Array<CaseChangeHistoryEntry>}
      * @memberof Case

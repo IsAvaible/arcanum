@@ -46,6 +46,16 @@ const selectEntry = (entry: GlossaryEntry) => {
 }
 
 /**
+ * Handle the visibility change of the drawer.
+ * @param visible The new visibility state.
+ */
+const onVisibleChange = (visible: boolean) => {
+  if (!visible) {
+    selectedEntry.value = null
+  }
+}
+
+/**
  * Fetch the detailed information for a glossary entry.
  * @param id The ID of the glossary entry to fetch.
  */
@@ -135,6 +145,7 @@ onMounted(() => {
 <template>
   <Drawer
     v-model:visible="visible"
+    @update:visible="onVisibleChange"
     position="right"
     :style="{ width: 'min(100%,35rem)' }"
     class="p-sidebar-lg"

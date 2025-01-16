@@ -938,7 +938,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/CaseWithId'
         - type: object
-          required: [draft, createdAt, updatedAt, attachments, changeHistory]
+          required: [draft, createdAt, updatedAt, attachments, glossary, changeHistory]
           properties:
             draft:
               type: boolean
@@ -956,6 +956,11 @@ components:
               items:
                 $ref: '#/components/schemas/Attachment'
               description: List of attachments attached to the case.
+            glossary:
+              type: array
+              items:
+                $ref: '#/components/schemas/GlossaryEntry'
+              description: List of glossary entries linked to the case.
             changeHistory:
               type: array
               items:
