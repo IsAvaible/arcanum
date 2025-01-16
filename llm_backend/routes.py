@@ -1,9 +1,9 @@
-from flask import request, Blueprint
+from flask import request, Blueprint, jsonify
 
 from app import app, sio
 from generate import generate
 from chat import ask_question
-from vectorstore import QdrantVectorstore, vector_db_save_cases
+from vectorstore import QdrantVectorstore, vector_db_save_cases, delete_entries_from_vector_db
 
 routes = Blueprint("routes", __name__)
 
@@ -43,3 +43,17 @@ def save_to_vector_db():
     if request.method == "POST":
         with QdrantVectorstore() as vectorstore:
             return vector_db_save_cases(request, vectorstore)
+
+@app.route("/delete_from_vector_db", methods=["POST"])
+def delete_from_vector_db():
+    if request.method == "POST":
+        with QdrantVectorstore() as vectorstore:
+            return delete_entries_from_vector_db(request, vectorstore)
+      
+@app.route("/show_all_entries", methods=["GET"])
+def show_all_entries():
+    with QdrantVectorstore() as vectorstore:
+        entries = vectorstore.show_all_entries()
+        # Convert each entry to a string
+        data = [str(entry) for entry in entries]
+        return jsonify(data), 200

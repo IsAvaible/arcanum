@@ -233,7 +233,6 @@ class QdrantVectorstore:
         self.delete_entries(point_ids)
 
 
-
 def vector_db_save_cases(request, vectorstore):
     case = request.get_json(force=True)
     attachments = case["attachments"]
@@ -245,3 +244,32 @@ def vector_db_save_cases(request, vectorstore):
         vectorstore.insert_attachment(attachment)
 
     return "Case and Attachments Saved Successfully", 200
+
+def delete_entries_from_vector_db(request, vectorstore):
+    request_json_str = request.get_json(force=True)
+
+    returnString = ""
+
+    if request_json_str.get("caseId"):
+        case_id = request_json_str["caseId"]
+        entry = vectorstore.search_by_metadata("case_id", case_id)
+        if entry:
+            vectorstore.delete_entry(entry[0].id)
+            returnString += f"Case:{case_id} DELETED. "
+        else: 
+            returnString += f"Case:{case_id} NOT FOUND. "
+
+    if request_json_str.get("attachmentIds"):
+        attachment_ids = request_json_str["attachmentIds"]
+        for attachment_id in attachment_ids:
+            entry = vectorstore.search_by_metadata("file_id", attachment_id)
+            if entry:
+                vectorstore.delete_entry(entry[0].id)
+                returnString += f"Attachment:{attachment_id} DELETED. "
+            else: 
+                returnString += f"Attachment:{attachment_id} NOT FOUND. "
+
+    if not request_json_str.get("attachmentIds") and not request_json_str.get("caseId"):
+        returnString = "No caseId or attachmentIds provided."
+
+    return returnString, 200
