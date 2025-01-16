@@ -70,7 +70,7 @@
             aria-controls="sort-overlay"
           >
             <i class="pi pi-sort-alt"></i>
-            <span class="hidden sm:visible ml-2">Sort</span>
+            <span class="hidden sm:inline ml-2">Sort</span>
           </Button>
         </div>
       </div>
@@ -297,7 +297,14 @@
                     attachmentRef.filename
                   }}</span>
                 </button>
-                <div v-else class="text-gray-500 text-center">No related attachments found</div>
+                <Button
+                  icon="pi pi-cloud-upload"
+                  :label="`Upload${selectedEntryDetail?.relatedAttachments.length ? ' Additional' : ''} Files`"
+                  class="w-full"
+                  outlined
+                  @click="fileUploadDialogVisible = true"
+                  v-tooltip.top="{ value: 'Upload Additional Files', showDelay: 1000 }"
+                />
               </div>
             </div>
           </div>
@@ -340,6 +347,23 @@
           </div>
         </div>
       </template>
+
+      <!-- File Upload Popover -->
+      <Dialog v-model:visible="fileUploadDialogVisible" modal class="lg:min-w-[50rem]">
+        <template #header>
+          <h2 class="text-xl font-semibold mb-4">Upload Additional Files</h2>
+        </template>
+        <FileDropzoneUpload v-model:files="filesToUpload">
+          <template #file-list-footer>
+            <Button
+              icon="pi pi-cloud-upload"
+              label="Upload Files"
+              @click="uploadFiles"
+              :loading="uploading"
+            />
+          </template>
+        </FileDropzoneUpload>
+      </Dialog>
     </Drawer>
   </div>
 </template>
@@ -366,8 +390,12 @@ import { useApi } from '@/composables/useApi'
 import { asyncComputed, computedAsync } from '@vueuse/core'
 import { getFileIcon } from '@/functions/getFileIcon'
 import { useAttachmentLoading } from '@/composables/useAttachmentLoading'
+import FileDropzoneUpload from '@/components/file-handling/FileDropzoneUpload.vue'
+import Dialog from 'primevue/dialog'
+import { useToast } from 'primevue'
 
 const api = useApi()
+const toast = useToast()
 
 // Glossar data
 const glossaryData = ref<GlossaryEntry[]>([])
@@ -477,7 +505,9 @@ const formatDate = (date?: Date | string | number) => {
   }).format(new Date(date))
 }
 
-// Computed properties
+/**
+ * Filter and sort the glossary entries based on the current search term, selected letter, and sorting option.
+ */
 const filteredAndSortedEntries = asyncComputed(async () => {
   // Register dependencies
   const _ = searchTerm.value + selectedLetter.value + currentSort.value
@@ -524,6 +554,10 @@ const filteredAndSortedEntries = asyncComputed(async () => {
   })
 }, [])
 
+/**
+ * Select a glossary entry and fetch its detailed information.
+ * @param entry The glossary entry to select.
+ */
 const selectEntry = (entry: GlossaryEntry) => {
   filePreviewVisible.value = false
   selectedEntry.value = entry
@@ -531,6 +565,10 @@ const selectEntry = (entry: GlossaryEntry) => {
   sidebarVisible.value = true
 }
 
+/**
+ * Fetch the detailed information for a glossary entry.
+ * @param id The ID of the glossary entry to fetch.
+ */
 const fetchEntryDetail = async (id: GlossaryEntry['id']) => {
   selectedEntryDetailLoading.value = true
   selectedEntryDetailError.value = null
@@ -545,8 +583,53 @@ const fetchEntryDetail = async (id: GlossaryEntry['id']) => {
   }
 }
 
+const filesToUpload = ref<File[]>([])
+const fileUploadDialogVisible = ref(false)
+const uploading = ref(false)
+
+/**
+ * Upload the selected files to the case.
+ */
+const uploadFiles = async () => {
+  if (filesToUpload.value.length > 0) {
+    uploading.value = true
+    try {
+      const result = await api.glossaryIdUploadPost({
+        id: selectedEntryDetail.value!.id,
+        files: filesToUpload.value,
+      })
+
+      files.value.push(...filesToUpload.value)
+      filesToUpload.value = []
+
+      selectedEntryDetail.value!.relatedAttachments = result.data.relatedAttachments
+
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: `File${filesToUpload.value.length > 1 ? 's' : ''} uploaded successfully`,
+        life: 3000,
+      })
+
+      fileUploadDialogVisible.value = false
+    } catch (error) {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'An error occurred while uploading the files\n' + (error as AxiosError).message,
+        life: 3000,
+      })
+
+      console.error(error)
+    } finally {
+      uploading.value = false
+    }
+  }
+}
+
 /// File Preview Drawer Logic
 const {
+  files,
   selectedFile,
   filePreviewVisible,
   loadingFileId,

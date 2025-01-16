@@ -1721,7 +1721,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * 
-         * @summary Adds an attachment to a glossary entry.
+         * @summary Associates an existing attachment with a glossary entry.
          * @param {number} id 
          * @param {number} attachmentId 
          * @param {*} [options] Override http request option.
@@ -1933,6 +1933,51 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             localVarRequestOptions.data = serializeDataIfNeeded(glossaryIdPutRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Adds an attachment to a glossary entry.
+         * @param {number} id 
+         * @param {Array<File>} [files] Files to be uploaded.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryIdUploadPost: async (id: number, files?: Array<File>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('glossaryIdUploadPost', 'id', id)
+            const localVarPath = `/glossary/{id}/upload`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
+
+            if (files) {
+                files.forEach((element) => {
+                    localVarFormParams.append('files', element as any);
+                })
+            }
+
+    
+    
+            localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = localVarFormParams;
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2345,7 +2390,7 @@ export const DefaultApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Adds an attachment to a glossary entry.
+         * @summary Associates an existing attachment with a glossary entry.
          * @param {number} id 
          * @param {number} attachmentId 
          * @param {*} [options] Override http request option.
@@ -2423,6 +2468,20 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.glossaryIdPut(id, glossaryIdPutRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.glossaryIdPut']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Adds an attachment to a glossary entry.
+         * @param {number} id 
+         * @param {Array<File>} [files] Files to be uploaded.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async glossaryIdUploadPost(id: number, files?: Array<File>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GlossaryEntryDetail>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.glossaryIdUploadPost(id, files, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.glossaryIdUploadPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -2697,7 +2756,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
         },
         /**
          * 
-         * @summary Adds an attachment to a glossary entry.
+         * @summary Associates an existing attachment with a glossary entry.
          * @param {DefaultApiGlossaryIdAttachmentsAttachmentIdPostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -2754,6 +2813,16 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          */
         glossaryIdPut(requestParameters: DefaultApiGlossaryIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.glossaryIdPut(requestParameters.id, requestParameters.glossaryIdPutRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Adds an attachment to a glossary entry.
+         * @param {DefaultApiGlossaryIdUploadPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryIdUploadPost(requestParameters: DefaultApiGlossaryIdUploadPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<GlossaryEntryDetail> {
+            return localVarFp.glossaryIdUploadPost(requestParameters.id, requestParameters.files, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -3441,6 +3510,27 @@ export interface DefaultApiGlossaryIdPutRequest {
 }
 
 /**
+ * Request parameters for glossaryIdUploadPost operation in DefaultApi.
+ * @export
+ * @interface DefaultApiGlossaryIdUploadPostRequest
+ */
+export interface DefaultApiGlossaryIdUploadPostRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof DefaultApiGlossaryIdUploadPost
+     */
+    readonly id: number
+
+    /**
+     * Files to be uploaded.
+     * @type {Array<File>}
+     * @memberof DefaultApiGlossaryIdUploadPost
+     */
+    readonly files?: Array<File>
+}
+
+/**
  * Request parameters for glossaryPost operation in DefaultApi.
  * @export
  * @interface DefaultApiGlossaryPostRequest
@@ -3760,7 +3850,7 @@ export class DefaultApi extends BaseAPI {
 
     /**
      * 
-     * @summary Adds an attachment to a glossary entry.
+     * @summary Associates an existing attachment with a glossary entry.
      * @param {DefaultApiGlossaryIdAttachmentsAttachmentIdPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -3828,6 +3918,18 @@ export class DefaultApi extends BaseAPI {
      */
     public glossaryIdPut(requestParameters: DefaultApiGlossaryIdPutRequest, options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).glossaryIdPut(requestParameters.id, requestParameters.glossaryIdPutRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Adds an attachment to a glossary entry.
+     * @param {DefaultApiGlossaryIdUploadPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public glossaryIdUploadPost(requestParameters: DefaultApiGlossaryIdUploadPostRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).glossaryIdUploadPost(requestParameters.id, requestParameters.files, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

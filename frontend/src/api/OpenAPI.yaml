@@ -549,9 +549,42 @@ paths:
           description: Missing "term" query parameter.
         '500':
           description: Internal server error.
-  /glossary/{id}/attachments/{attachmentId}:
+  /glossary/{id}/upload:
     post:
       summary: Adds an attachment to a glossary entry.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Files to be uploaded.
+      responses:
+        '200':
+          description: The updated glossary entry with its associated attachments.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlossaryEntryDetail'
+        '404':
+          description: Glossary entry not found.
+        '500':
+          description: Internal server error.
+  /glossary/{id}/attachments/{attachmentId}:
+    post:
+      summary: Associates an existing attachment with a glossary entry.
       parameters:
         - name: id
           in: path
