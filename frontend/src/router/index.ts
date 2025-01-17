@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+
 import HomeView from '@/views/HomeView.vue'
 import CaseListView from '@/views/cases/CaseListView.vue'
 import CaseDetail from '@/views/cases/CaseDetailView.vue'
@@ -6,7 +7,9 @@ import NotFoundView from '@/views/NotFoundView.vue'
 import ChatWindow from '@/components/ChatWindow.vue'
 import AIChatWindow from '@/components/AIChatWindow.vue'
 import Glossary from '@/views/glossar/Glossary.vue'
+
 import Cookies from 'js-cookie'
+import { generateJWT } from './../functions/generateJWT.ts'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -69,7 +72,7 @@ const router = createRouter({
 // Router-Guard, which sets a cookie when route '/' is accessed
 router.beforeEach((to, _from, next) => {
   if (to.path === '/') {
-    Cookies.set('x-auth-token', 'eyJhbGciOiJIUzI1NiJ9.cGF5bG9hZA.XK0gmmDjJflVPqA3mKHWl009tcZ60pXvP9mqNV5FLc0', { expires: 7 })
+    Cookies.set('x-auth-token', 'eyJhbGciOiJIUzI1NiJ9.cGF5bG9hZA.XK0gmmDjJflVPqA3mKHWl009tcZ60pXvP9mqNV5FLc0', { expires: 7 }) // Setzt ein Cookie mit einer Gültigkeit von 7 Tagen
   }
   next()
 })
