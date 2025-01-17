@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: oculavisfhip2024.azurecr.io/ip-oculavis-ws2425-frontend:150125
+    image: oculavisfhip2024.azurecr.io/ip-oculavis-ws2425-frontend:170125
     container_name: frontend
     environment:
       - HUSKY=0
@@ -16,7 +16,7 @@ services:
       "
 
   node_backend:
-    image: oculavisfhip2024.azurecr.io/ip-oculavis-ws2425-node_backend:150125
+    image: oculavisfhip2024.azurecr.io/ip-oculavis-ws2425-node_backend:170125
     container_name: node_backend
     ports:
       - "3000:3000"
@@ -30,7 +30,7 @@ services:
     networks:
       - shared_network
   llm-backend:
-    image: oculavisfhip2024.azurecr.io/python:150125
+    image: oculavisfhip2024.azurecr.io/python:170125
     ports:
       - "5001:5001"
     env_file:
@@ -45,7 +45,7 @@ services:
     networks:
       - shared_network
   db:
-    image: oculavisfhip2024.azurecr.io/ip-oculavis-ws2425-db:150125
+    image: oculavisfhip2024.azurecr.io/ip-oculavis-ws2425-db:170125
     container_name: postgres_db
     env_file: "../backend/.env"
     ports:
