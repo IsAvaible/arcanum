@@ -92,34 +92,47 @@ exports.deleteCase = async (req, res) => {
       return res.status(404).json({ message: "Case not found" });
     }
 
-    console.log(
-      "Sending to LLM: ",
-      JSON.stringify(updatedCaseWithAttachments),
-    );
-
-    // Send data to the LLM endpoint.
-    const llmResponse = axios.post(
-      `${process.env.LLM_API_URL}/delete_from_vector_db`,
-      caseId,
-    );
-
-    //const responseData = llmResponse.data;
-    console.log("Received from LLM: ", JSON.stringify(llmResponse.data));
-
 
     const attachments = caseItemToDelete.attachments;
+
+    const deletedAttachmentIds = [];
 
     if (attachments && attachments.length > 0) {
       for (const attachment of attachments) {
         // Remove attachment links and delete orphaned attachments.
         await caseItemToDelete.removeAttachment(attachment);
-        await attachmentService.deleteAttachmentIfOrphaned(attachment);
+        const deletedId = await attachmentService.deleteAttachmentIfOrphaned(attachment);
+
+        if(deletedId){
+          deletedAttachmentIds.push(deletedId);
+        }
       }
     }
 
     await ChangeHistory.destroy({ where: { caseId: caseId } });
 
     await caseItemToDelete.destroy();
+
+    const llmRequestData = {
+      caseId: caseId,
+      attachmentIds: deletedAttachmentIds,
+    };
+
+  
+    console.log(
+      "Sending to LLM: ",
+      JSON.stringify(llmRequestData),
+    );
+
+    // Send data to the LLM endpoint.
+    const llmResponse = axios.post(
+      `${process.env.LLM_API_URL}/delete_from_vector_db`,
+      llmRequestData,
+    );
+
+    //const responseData = llmResponse.data;
+    console.log("Received from LLM: ", JSON.stringify(llmResponse.data));
+
     res.status(204).send();
   } catch (error) {
     console.error("Error deleting case:", error);
