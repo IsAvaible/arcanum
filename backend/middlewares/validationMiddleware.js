@@ -93,6 +93,7 @@ const authenticateJWT = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('Verified jwtToken');
     req.user = decoded;
 
     next();

@@ -9,7 +9,7 @@ import AIChatWindow from '@/components/AIChatWindow.vue'
 import Glossary from '@/views/glossar/Glossary.vue'
 
 import Cookies from 'js-cookie'
-import { generateJWT } from './../functions/generateJWT.ts'
+import axios from 'axios'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -72,7 +72,18 @@ const router = createRouter({
 // Router-Guard, which sets a cookie when route '/' is accessed
 router.beforeEach((to, _from, next) => {
   if (to.path === '/') {
-    Cookies.set('x-auth-token', 'eyJhbGciOiJIUzI1NiJ9.cGF5bG9hZA.XK0gmmDjJflVPqA3mKHWl009tcZ60pXvP9mqNV5FLc0', { expires: 7 }) // Setzt ein Cookie mit einer Gültigkeit von 7 Tagen
+    console.log('Generating JWT')
+    const jwtSecret =  await axios.get('https://localhost:3000/api/generateJWT'.toString());
+    if (true) {
+      try {
+        console.log('Setting JWT cookie');
+        Cookies.set('x-auth-token', jwtSecret.data.token, { expires: 1 }) // Setzt ein Cookie mit einer Gültigkeit von 7 Tagen
+      } catch (error) {
+        console.log(error)
+      }
+    } else {
+      console.error('JWT_SECRET is not defined')
+    }
   }
   next()
 })
