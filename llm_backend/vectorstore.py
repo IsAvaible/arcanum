@@ -1,21 +1,13 @@
 import os
 import uuid
-from dotenv import load_dotenv
-from qdrant_client.models import VectorParams, Distance, PointStruct, Filter, FieldCondition
+
 from qdrant_client import QdrantClient
-from openai import AzureOpenAI
+from qdrant_client.models import VectorParams, Distance, PointStruct, Filter, FieldCondition
 
-from preprocess_files import process_attachment
 from app import app
+from azure import get_embeddings
+from preprocess_files import process_attachment
 
-load_dotenv()
-
-AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
-AZURE_DEPLOYMENT_GPT = os.getenv("AZURE_DEPLOYMENT_GPT")
-AZURE_DEPLOYMENT_EMBEDDING = os.getenv("AZURE_DEPLOYMENT_EMBEDDING")
-AZURE_DEPLOYMENT_WHISPER = os.getenv("AZURE_DEPLOYMENT_WHISPER")
-OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
-AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 
 class QdrantVectorstore:
     def __init__(self, colletion_name="main_collection"):
@@ -27,13 +19,9 @@ class QdrantVectorstore:
         """
         self.client = QdrantClient(path=os.path.join(app.root_path, "qdrantdb"))
         self.collection_name = colletion_name
-        self.llm_embeddings = AzureOpenAI(
-            azure_endpoint=AZURE_ENDPOINT,
-            azure_deployment=AZURE_DEPLOYMENT_EMBEDDING,
-            api_version=OPENAI_API_VERSION,
-        )
-        self.setup_collection(1536) # 1536 is the default vector size for text-embedding-ada-002 embeddings
-    
+        self.llm_embeddings = get_embeddings()
+        self.setup_collection(1536)  # 1536 is the default vector size for text-embedding-ada-002 embeddings
+
     def __enter__(self):
         # Initialize or open resources
         return self
@@ -65,11 +53,11 @@ class QdrantVectorstore:
         Returns:
             list: The embedding vector for the input string.
         """
-        response = self.llm_embeddings.embeddings.create(input=string_to_embed,model="text-embedding-ada-002")
+        response = self.llm_embeddings.embeddings.create(input=string_to_embed, model="text-embedding-ada-002")
         embedding = response.data[0].embedding
 
         return embedding
-    
+
     def insert_embedding(self, embedding, text, id=None, metadata={}):
         vector_size = len(embedding)
         self.setup_collection(vector_size)
@@ -99,17 +87,17 @@ class QdrantVectorstore:
             case (dict): The case dictionary to insert.
         """
         case_string = self.case_to_string(case)
-        
+
         # Generate Embedding
-        case_embedding = self.llm_embeddings.embeddings.create(input=case_string,model="text-embedding-ada-002")
+        case_embedding = self.llm_embeddings.embeddings.create(input=case_string, model="text-embedding-ada-002")
         case_embedding = case_embedding.data[0].embedding
 
-        metadata =  {"case_id": id,
-                     "inserttype": "case",}
+        metadata = {"case_id": id,
+                    "inserttype": "case", }
 
         self.insert_embedding(embedding=case_embedding, id=id, text=case_string, metadata=metadata)
         print("Case added to Qdrant collection.")
-    
+
     def insert_attachment(self, attachment):
         """
         Insert an attachment into the Qdrant collection.
@@ -122,7 +110,7 @@ class QdrantVectorstore:
 
         file_dict = process_attachment(attachment)
 
-        metadata =  {
+        metadata = {
             "file_id": attachment["id"],
             "filename": attachment["filename"],
             "filepath": attachment["filepath"],
@@ -135,12 +123,12 @@ class QdrantVectorstore:
         for chunk_index, chunk in enumerate(file_dict["chunks"]):
             attachment_string = chunk
 
-            response = self.llm_embeddings.embeddings.create(input=attachment_string,model="text-embedding-ada-002")
+            response = self.llm_embeddings.embeddings.create(input=attachment_string, model="text-embedding-ada-002")
             attachment_embedding = response.data[0].embedding
 
             metadata["chunk_number"] = chunk_index + 1
 
-            self.insert_embedding(embedding=attachment_embedding, text=attachment_string, metadata=metadata) 
+            self.insert_embedding(embedding=attachment_embedding, text=attachment_string, metadata=metadata)
 
         print("Attachment added to Qdrant collection.")
 
@@ -164,19 +152,19 @@ class QdrantVectorstore:
             limit=limit
         )
         return hits
-    
+
     def search_similar_cases(self, case, limit=5, filter_condition=None):
         case_string = self.case_to_string(case)
         case_embedding = self.create_embedding(case_string)
 
         return self.search_vectors(case_embedding, limit, filter_condition)
-    
+
     def search_from_query(self, query, limit=5, filter_condition=None):
         embedding = self.create_embedding(query)
 
         return self.search_vectors(embedding, limit, filter_condition)
 
-    def search_by_metadata(self, key, value, limit=1):
+    def search_by_metadata(self, key, value, limit=10000):
         """
         Search for an entry in the collection with a specific key-value pair in the metadata.
         
@@ -197,7 +185,7 @@ class QdrantVectorstore:
         vector_size = collection_info.config.params.vectors.size
         default_query_vector = [0.0] * vector_size
         return self.search_vectors(query_vector=default_query_vector, limit=limit, filter_condition=filter_condition)
-    
+
     def case_to_string(self, case_dict):
         """
         Convert a case dictionary to a string representation.
@@ -209,21 +197,22 @@ class QdrantVectorstore:
             str: The string representation of the case.
         """
         case_string = ""
-        
-        ordered_keys = ['title', 'description', 'solution', 'assignee', 'status', 'attachments']  # Order to save the keys in
-        
+
+        ordered_keys = ['title', 'description', 'solution', 'assignee', 'status',
+                        'attachments']  # Order to save the keys in
+
         # Add the ordered keys first
         for key in ordered_keys:
             if key in case_dict:
                 value = str(case_dict[key])
                 case_string += str(key.upper()) + ":\n" + str(value) + "\n\n"
-        
+
         # Add the rest of the keys (that are not in ordered_keys) at the end
         for key in case_dict:
             if key not in ordered_keys:
                 value = str(case_dict[key])
                 case_string += str(key.upper()) + ":\n" + str(value) + "\n\n"
-        
+
         return case_string
 
     def show_all_entries(self):
@@ -237,8 +226,53 @@ class QdrantVectorstore:
 
     def delete_entries(self, point_ids):
         self.client.delete(collection_name=self.collection_name, points_selector=point_ids)
-    
+
     def delete_all_entries_in_collection(self):
         entries = self.show_all_entries()
         point_ids = [entry.id for entry in entries]
         self.delete_entries(point_ids)
+
+
+def vector_db_save_cases(request, vectorstore):
+    case = request.get_json(force=True)
+    attachments = case["attachments"]
+    case["attachments"] = [attachment["id"] for attachment in attachments]
+
+    vectorstore.insert_case(case, id=case["id"])
+
+    for attachment in attachments:
+        vectorstore.insert_attachment(attachment)
+
+    return "Case and Attachments Saved Successfully", 200
+
+def delete_entries_from_vector_db(request, vectorstore):
+    request_json_str = request.get_json(force=True)
+
+    returnString = ""
+
+    if request_json_str.get("caseId"):
+        case_id = request_json_str["caseId"]
+        entry = vectorstore.search_by_metadata("case_id", case_id)
+        if entry:
+            vectorstore.delete_entry(entry[0].id)
+            returnString += f"Case:{case_id} DELETED. "
+        else: 
+            returnString += f"Case:{case_id} NOT FOUND. "
+
+    if request_json_str.get("attachmentIds"):
+        attachment_ids = request_json_str["attachmentIds"]
+        for attachment_id in attachment_ids:
+            entries = vectorstore.search_by_metadata("file_id", attachment_id)
+            print(entries)
+            print(type(entries))
+            if entries:
+                for entry in entries:
+                    vectorstore.delete_entry(entry.id)
+                returnString += f"Attachment:{attachment_id} DELETED. "
+            else: 
+                returnString += f"Attachment:{attachment_id} NOT FOUND. "
+
+    if not request_json_str.get("attachmentIds") and not request_json_str.get("caseId"):
+        return "No caseId or attachmentIds provided.", 400
+
+    return returnString, 200

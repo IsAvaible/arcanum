@@ -1,7 +1,12 @@
 import hashlib
 
-# generate SHA256 hash of a file
+
 def generate_sha256_hash(file_path):
+    """
+    generates a sha256 hash from the given file path
+    :param file_path: path to the file to hash
+    :return: sha256 hash of the file
+    """
     sha256_hash = hashlib.sha256()
     try:
         with open(file_path, "rb") as file:

@@ -1,22 +1,10 @@
-import os
 import json
-import pdfplumber
 import re
-from dotenv import load_dotenv
 
-from webdav import download_cache
+import pdfplumber
 
 from readwrite import read_from_file
-
-
-load_dotenv()
-
-AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
-AZURE_DEPLOYMENT_GPT = os.getenv("AZURE_DEPLOYMENT_GPT")
-AZURE_DEPLOYMENT_EMBEDDING = os.getenv("AZURE_DEPLOYMENT_EMBEDDING")
-AZURE_DEPLOYMENT_WHISPER = os.getenv("AZURE_DEPLOYMENT_WHISPER")
-OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
-AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
+from webdav import download_cache
 
 
 def process_attachment(file):
@@ -37,7 +25,7 @@ def process_attachment(file):
 
     elif "image" in mimetype:
         file_dict["vectorstore-text"] = file_dict["content"]["image"]
-        
+
     elif "video" in mimetype:
         text = "TRANSCRIPTION: "
         for segment in file_dict["content"]["transcription"]["segments"]:
@@ -103,7 +91,7 @@ def chunk_text(text, chunk_size=2000, overlap=700):
     chunks = []
     start = 0
     text_length = len(text)
-    
+
     while start < text_length:
         end = min(start + chunk_size, text_length)
         if end == text_length:
@@ -112,5 +100,5 @@ def chunk_text(text, chunk_size=2000, overlap=700):
         end = find_sentence_end(text, start, end)
         chunks.append(text[start:end].strip())
         start = end - overlap
-    
+
     return chunks
