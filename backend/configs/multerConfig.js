@@ -12,7 +12,7 @@ const upload = multer({
       );
     },
   }),
-  limits: { fileSize: 100000000 }, // Dateigrößenbeschränkung pro Datei
+  limits: { fileSize: 1000000000 }, // Dateigrößenbeschränkung pro Datei
   fileFilter: function (req, file, cb) {
     fileUploadController.checkFileName(file);
     fileUploadController.checkFileType(file, cb);
