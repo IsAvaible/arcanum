@@ -22,7 +22,7 @@ const files = useVModel(props, 'files', emit)
 
 // References and State
 const popover = useTemplateRef('popover')
-const maxFileSize = 1000 * 1000 * 1000 // 1GB
+const maxFileSize = 1024 * 1024 * 1024 // 1GB
 // All image types, audio types, pdf and text files
 const accept = 'image/*, audio/*, application/pdf, text/*, video/*'
 const toast = useToast()
