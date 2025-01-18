@@ -7,7 +7,7 @@
       <button
         v-for="letter in alphabet"
         :key="letter"
-        class="w-10 h-10 rounded-lg flex items-center justify-center cursor-pointer transition-all text-sm font-medium first:mt-auto last:mb-auto"
+        class="w-8 h-7 md-h:size-8 lg-h:size-9 xl-h:size-10 rounded-lg flex items-center justify-center cursor-pointer transition-all text-sm font-medium first:mt-auto last:mb-auto"
         :class="[
           activeLetters.includes(letter)
             ? selectedLetter === letter
@@ -43,36 +43,53 @@
           </InputIcon>
           <InputText v-model="searchTerm" placeholder="Search terms..." class="w-full" />
         </IconField>
-        <div class="flex gap-3">
-          <!-- Filter Button with Overlay Panel -->
-          <!--          <Button-->
-          <!--            class="filter-button"-->
-          <!--            v-tooltip.bottom="'Filter terms'"-->
-          <!--            @click="toggleFilterOverlay"-->
-          <!--            aria-haspopup="true"-->
-          <!--            aria-controls="filter-overlay"-->
-          <!--          >-->
-          <!--            <i class="pi pi-filter mr-2"></i>-->
-          <!--            Filter-->
-          <!--            <Badge-->
-          <!--              v-if="selectedCategories.length"-->
-          <!--              :value="selectedCategories.length"-->
-          <!--              severity="success"-->
-          <!--            />-->
-          <!--          </Button>-->
+        <!-- Filter Button with Overlay Panel -->
+        <!--          <Button-->
+        <!--            class="filter-button"-->
+        <!--            v-tooltip.bottom="'Filter terms'"-->
+        <!--            @click="toggleFilterOverlay"-->
+        <!--            aria-haspopup="true"-->
+        <!--            aria-controls="filter-overlay"-->
+        <!--          >-->
+        <!--            <i class="pi pi-filter mr-2"></i>-->
+        <!--            Filter-->
+        <!--            <Badge-->
+        <!--              v-if="selectedCategories.length"-->
+        <!--              :value="selectedCategories.length"-->
+        <!--              severity="success"-->
+        <!--            />-->
+        <!--          </Button>-->
 
-          <!-- Sort Button with Overlay Panel -->
-          <Button
-            class="sort-button"
-            v-tooltip.bottom="'Sort terms'"
-            @click="toggleSortOverlay"
-            aria-haspopup="true"
-            aria-controls="sort-overlay"
-          >
-            <i class="pi pi-sort-alt"></i>
-            <span class="hidden sm:inline ml-2">Sort</span>
-          </Button>
-        </div>
+        <!-- Sort Button -->
+        <Button
+          class="sort-button"
+          v-tooltip.bottom="'Sort terms'"
+          @click="toggleSortOverlay"
+          aria-haspopup="true"
+          aria-controls="sort-overlay"
+        >
+          <i class="pi pi-sort-alt"></i>
+          <span class="hidden sm:inline ml-2">Sort</span>
+        </Button>
+
+        <!-- Add Button -->
+        <Button class="sort-button" v-tooltip.bottom="'Add Term'" @click="toggleAddTermPopover">
+          <i class="pi pi-plus"></i>
+          <span class="hidden sm:inline ml-2">Add</span>
+        </Button>
+
+        <Popover ref="addTermPopover">
+          <div class="flex flex-col gap-3">
+            <span class="font-medium block">Add Term</span>
+            <div class="flex gap-x-2 justify-center">
+              <InputText id="addTermInput" v-model="newTermName" placeholder="Enter term" />
+            </div>
+            <div class="flex gap-x-3 justify-end">
+              <Button label="Cancel" severity="secondary" outlined @click="toggleAddTermPopover" />
+              <Button label="Add" :disabled="!newTermName" @click="addNewTerm" />
+            </div>
+          </div>
+        </Popover>
       </div>
 
       <!-- Sort Overlay -->
@@ -162,7 +179,7 @@
 
       <!-- Loading State -->
       <div v-else-if="loading" class="space-y-2">
-        <Skeleton v-for="_ in 10" height="7rem" class="w-full" />
+        <Skeleton v-for="_ in 5" height="7rem" class="w-full" />
       </div>
 
       <!-- Error State -->
@@ -189,12 +206,15 @@
     </div>
 
     <!-- Detail Sidebar -->
-    <GlossaryEntryDrawer v-model:entry="selectedEntry" />
+    <GlossaryEntryDrawer
+      v-model:entry="selectedEntry"
+      v-on:delete:entry="(entry) => displayDeleteEntryDialog(entry)"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -212,8 +232,12 @@ import { useApi } from '@/composables/useApi'
 import { asyncComputed, computedAsync } from '@vueuse/core'
 import { formatDate } from '@/functions/formatDate'
 import GlossaryEntryDrawer from '@/components/GlossaryEntryDrawer.vue'
+import { useConfirm } from 'primevue/useconfirm'
+import { useToast } from 'primevue'
 
 const api = useApi()
+const confirm = useConfirm()
+const toast = useToast()
 
 // Glossar data
 const glossaryData = ref<GlossaryEntry[]>([])
@@ -235,11 +259,11 @@ const fetchGlossary = async () => {
 
 // Sort options
 const sortOptions = [
-  { label: 'Meistgenutzte Begriffe', value: 'most-used', icon: 'pi pi-chart-bar' },
-  { label: 'Zuletzt verwendet', value: 'last-used', icon: 'pi pi-clock' },
-  { label: 'Zuletzt hinzugefügt', value: 'recently-added', icon: 'pi pi-plus' },
-  { label: 'Alphabetisch A-Z', value: 'alpha-asc', icon: 'pi pi-sort-alpha-down' },
-  { label: 'Alphabetisch Z-A', value: 'alpha-desc', icon: 'pi pi-sort-alpha-up' },
+  { label: 'Most used', value: 'most-used', icon: 'pi pi-chart-bar' },
+  { label: 'Last used', value: 'last-used', icon: 'pi pi-clock' },
+  { label: 'Recently added', value: 'recently-added', icon: 'pi pi-plus' },
+  { label: 'Alphabetic A-Z', value: 'alpha-asc', icon: 'pi pi-sort-alpha-down' },
+  { label: 'Alphabetic Z-A', value: 'alpha-desc', icon: 'pi pi-sort-alpha-up' },
 ]
 
 // UI state
@@ -315,7 +339,7 @@ const resetFilters = () => {
  */
 const filteredAndSortedEntries = asyncComputed(async () => {
   // Register dependencies
-  const _ = searchTerm.value + selectedLetter.value + currentSort.value
+  const _ = searchTerm.value + selectedLetter.value + currentSort.value + glossaryData.value
 
   let entries = glossaryData.value
   const normalizedSearchTerm = (await removeDiacritics(searchTerm.value)).toUpperCase()
@@ -365,6 +389,83 @@ const filteredAndSortedEntries = asyncComputed(async () => {
  */
 const selectEntry = (entry: GlossaryEntry) => {
   selectedEntry.value = entry
+}
+
+const addTermPopover = ref()
+/**
+ * Toggle the add term popover.
+ */
+const toggleAddTermPopover = (event: Event) => {
+  newTermName.value = ''
+  addTermPopover.value?.toggle(event)
+  nextTick(() => {
+    document.getElementById('addTermInput')?.focus()
+  })
+}
+
+const newTermName = ref('')
+/**
+ * Add a new term to the glossary.
+ */
+const addNewTerm = async () => {
+  if (newTermName.value) {
+    // Add the new term to the glossary
+    const entry = await api.glossaryPost({ term: newTermName.value })
+    glossaryData.value.push(entry.data)
+    // Close the popover
+    addTermPopover.value?.toggle()
+  }
+}
+
+/**
+ * Display a confirmation dialog to delete the selected entry.
+ */
+const displayDeleteEntryDialog = (entry: GlossaryEntry) => {
+  confirm.require({
+    message: `Are you sure you want to permanently delete the term "${entry.term}" from the glossary?`,
+    header: 'Confirm Deletion',
+    icon: 'pi pi-exclamation-triangle',
+    rejectLabel: 'Cancel',
+    rejectProps: {
+      label: 'Cancel',
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: 'Delete',
+      severity: 'danger',
+    },
+    accept: async () => {
+      await deleteEntry(entry)
+    },
+    reject: () => {},
+  })
+}
+
+/**
+ * Delete the selected entry from the glossary.
+ */
+const deleteEntry = async (entry: GlossaryEntry) => {
+  try {
+    await api.glossaryIdDelete({ id: entry.id })
+    selectedEntry.value = null
+    glossaryData.value = glossaryData.value.filter((e) => e.id !== entry.id)
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: 'Entry deleted successfully',
+      life: 3000,
+    })
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'An error occurred while deleting the entry\n' + (error as AxiosError).message,
+      life: 3000,
+    })
+
+    console.error(error)
+  }
 }
 
 // Fetch glossary data on component mount

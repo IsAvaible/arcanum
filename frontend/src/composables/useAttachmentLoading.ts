@@ -12,7 +12,7 @@ export const useAttachmentLoading = () => {
   const files = ref<File[]>([])
   const selectedFile = ref<File | null>(null)
   const filePreviewVisible = ref(false)
-  const loadingFileId = ref<number | null>(null)
+  const loadingAttachmentId = ref<number | null>(null)
 
   /**
    * Load the attachment from the server and open the preview
@@ -20,54 +20,36 @@ export const useAttachmentLoading = () => {
    */
   const openAttachmentPreview = async (attachment: Attachment) => {
     // Check if the attachment is already in the files array
-    let file = files.value.find((f) => f.name === attachment.filename)
+    let file: File | null = files.value.find((f) => f.name === attachment.filename) || null
     if (!file) {
-      loadingFileId.value = attachment.id
-      // If not, download the file from the server
-      try {
-        file = await apiBlobToFile(
-          await api.casesAttachmentsAttachmentIdDownloadGet(
-            {
-              attachmentId: attachment.id,
-            },
-            { responseType: 'blob' },
-          ),
-        )
-
-        files.value.push(file)
-      } catch (error) {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'An error occurred while downloading the file\n' + (error as AxiosError).message,
-          life: 3000,
-        })
-        console.error(error)
-        return
-      } finally {
-        loadingFileId.value = null
-      }
+      file = await downloadAttachment(attachment)
     }
 
-    selectedFile.value = file!
-    filePreviewVisible.value = true
+    selectedFile.value = file
+    filePreviewVisible.value = !!file
   }
 
-  const downloadAttachment = async (attachment: Attachment) => {
+  /**
+   * Download an attachment from the server
+   * @param attachment The attachment to download
+   */
+  const downloadAttachment = async (attachment: Attachment): Promise<File | null> => {
+    const file = files.value.find((f) => f.name === attachment.filename)
+    if (file) {
+      return file
+    }
     try {
-      let file = files.value.find((f) => f.name === attachment.filename)
-      if (!file) {
-        file = await apiBlobToFile(
-          await api.casesAttachmentsAttachmentIdDownloadGet(
-            {
-              attachmentId: attachment.id,
-            },
-            { responseType: 'blob' },
-          ),
-        )
-      }
-
-      triggerFileDownload(file)
+      loadingAttachmentId.value = attachment.id
+      const file = await apiBlobToFile(
+        await api.casesAttachmentsAttachmentIdDownloadGet(
+          {
+            attachmentId: attachment.id,
+          },
+          { responseType: 'blob' },
+        ),
+      )
+      files.value.push(file)
+      return file
     } catch (error) {
       toast.add({
         severity: 'error',
@@ -76,9 +58,26 @@ export const useAttachmentLoading = () => {
         life: 3000,
       })
       console.error(error)
+      return null
+    } finally {
+      loadingAttachmentId.value = null
     }
   }
 
+  /**
+   * Trigger the download of an attachment
+   * @param attachment The attachment to download
+   */
+  const triggerAttachmentDownload = async (attachment: Attachment) => {
+    const file = await downloadAttachment(attachment)
+    if (!file) return
+    triggerFileDownload(file)
+  }
+
+  /**
+   * Trigger the download of a file
+   * @param file The file to download
+   */
   const triggerFileDownload = (file: File) => {
     const url = URL.createObjectURL(file)
     const a = document.createElement('a')
@@ -93,9 +92,9 @@ export const useAttachmentLoading = () => {
     files,
     selectedFile,
     filePreviewVisible,
-    loadingFileId,
+    loadingAttachmentId,
     openAttachmentPreview,
-    downloadAttachment,
+    triggerAttachmentDownload,
     triggerFileDownload,
   }
 }

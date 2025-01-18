@@ -576,7 +576,7 @@ const fileReferences = computed<Record<number, FileReference[]>>(() => {
 })
 
 /// File Preview Drawer Logic
-const { selectedFile, filePreviewVisible, loadingFileId, openAttachmentPreview } =
+const { selectedFile, filePreviewVisible, loadingAttachmentId, openAttachmentPreview } =
   useAttachmentLoading()
 
 /// Lifecycle Hooks
@@ -717,7 +717,7 @@ onMounted(async () => {
               v-for="fileReference in fileReferences[message.id] || []"
               :key="fileReference.id"
               :reference="fileReference"
-              :fileLoading="loadingFileId === fileReference.id"
+              :fileLoading="loadingAttachmentId === fileReference.id"
               @click="openAttachmentPreview"
               class="min-w-60"
               :class="{

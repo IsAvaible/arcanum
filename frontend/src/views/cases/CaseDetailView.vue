@@ -906,7 +906,7 @@ const changeHistoryEvents = computed(() => {
                 icon="pi pi-book"
                 rounded
                 severity="secondary"
-                v-tooltip.left="{ value: 'Navigate to Glossary', showDelay: 1000 }"
+                v-tooltip.left="{ value: 'Navigate to Glossary', showDelay: 500 }"
               />
             </router-link>
           </div>
@@ -915,8 +915,12 @@ const changeHistoryEvents = computed(() => {
           <div v-if="caseDetails?.glossary.length" class="space-y-3">
             <div
               v-for="entry in caseDetails!.glossary"
-              :key="entry.term"
-              class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-emerald-200 hover:shadow-sm transition-all cursor-pointer"
+              :key="entry.id"
+              class="flex items-center gap-3 p-3 bg-white border rounded-xl hover:border-emerald-200 hover:shadow-sm transition-all cursor-pointer"
+              :class="{
+                'border-emerald-200': selectedEntry?.id === entry.id,
+                'border-gray-200': selectedEntry?.id !== entry.id,
+              }"
               @click="selectEntry(entry)"
             >
               <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">

@@ -549,32 +549,6 @@ export interface GlossaryEntryDetail {
 /**
  * 
  * @export
- * @interface GlossaryIdPutRequest
- */
-export interface GlossaryIdPutRequest {
-    /**
-     * 
-     * @type {string}
-     * @memberof GlossaryIdPutRequest
-     */
-    'term'?: string;
-}
-/**
- * 
- * @export
- * @interface GlossaryPostRequest
- */
-export interface GlossaryPostRequest {
-    /**
-     * 
-     * @type {string}
-     * @memberof GlossaryPostRequest
-     */
-    'term': string;
-}
-/**
- * 
- * @export
  * @interface Message
  */
 export interface Message {
@@ -1911,11 +1885,11 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * 
          * @summary Updates an existing glossary entry by ID.
          * @param {number} id 
-         * @param {GlossaryIdPutRequest} [glossaryIdPutRequest] 
+         * @param {string} [term] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        glossaryIdPut: async (id: number, glossaryIdPutRequest?: GlossaryIdPutRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        glossaryIdPut: async (id: number, term?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
             assertParamExists('glossaryIdPut', 'id', id)
             const localVarPath = `/glossary/{id}`
@@ -1930,15 +1904,20 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
 
 
+            if (term !== undefined) { 
+                localVarFormParams.append('term', term as any);
+            }
     
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
+    
+            localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+    
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(glossaryIdPutRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = localVarFormParams;
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -1993,13 +1972,13 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Creates a new glossary entry.
-         * @param {GlossaryPostRequest} glossaryPostRequest 
+         * @param {string} term 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        glossaryPost: async (glossaryPostRequest: GlossaryPostRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'glossaryPostRequest' is not null or undefined
-            assertParamExists('glossaryPost', 'glossaryPostRequest', glossaryPostRequest)
+        glossaryPost: async (term: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'term' is not null or undefined
+            assertParamExists('glossaryPost', 'term', term)
             const localVarPath = `/glossary`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -2011,15 +1990,20 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
 
 
+            if (term !== undefined) { 
+                localVarFormParams.append('term', term as any);
+            }
     
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
+    
+            localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+    
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(glossaryPostRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = localVarFormParams;
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2466,12 +2450,12 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * 
          * @summary Updates an existing glossary entry by ID.
          * @param {number} id 
-         * @param {GlossaryIdPutRequest} [glossaryIdPutRequest] 
+         * @param {string} [term] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async glossaryIdPut(id: number, glossaryIdPutRequest?: GlossaryIdPutRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.glossaryIdPut(id, glossaryIdPutRequest, options);
+        async glossaryIdPut(id: number, term?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.glossaryIdPut(id, term, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.glossaryIdPut']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -2493,12 +2477,12 @@ export const DefaultApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Creates a new glossary entry.
-         * @param {GlossaryPostRequest} glossaryPostRequest 
+         * @param {string} term 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async glossaryPost(glossaryPostRequest: GlossaryPostRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GlossaryEntry>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.glossaryPost(glossaryPostRequest, options);
+        async glossaryPost(term: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GlossaryEntry>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.glossaryPost(term, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.glossaryPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -2818,7 +2802,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         glossaryIdPut(requestParameters: DefaultApiGlossaryIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.glossaryIdPut(requestParameters.id, requestParameters.glossaryIdPutRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.glossaryIdPut(requestParameters.id, requestParameters.term, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -2838,7 +2822,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         glossaryPost(requestParameters: DefaultApiGlossaryPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<GlossaryEntry> {
-            return localVarFp.glossaryPost(requestParameters.glossaryPostRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.glossaryPost(requestParameters.term, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -3509,10 +3493,10 @@ export interface DefaultApiGlossaryIdPutRequest {
 
     /**
      * 
-     * @type {GlossaryIdPutRequest}
+     * @type {string}
      * @memberof DefaultApiGlossaryIdPut
      */
-    readonly glossaryIdPutRequest?: GlossaryIdPutRequest
+    readonly term?: string
 }
 
 /**
@@ -3544,10 +3528,10 @@ export interface DefaultApiGlossaryIdUploadPostRequest {
 export interface DefaultApiGlossaryPostRequest {
     /**
      * 
-     * @type {GlossaryPostRequest}
+     * @type {string}
      * @memberof DefaultApiGlossaryPost
      */
-    readonly glossaryPostRequest: GlossaryPostRequest
+    readonly term: string
 }
 
 /**
@@ -3923,7 +3907,7 @@ export class DefaultApi extends BaseAPI {
      * @memberof DefaultApi
      */
     public glossaryIdPut(requestParameters: DefaultApiGlossaryIdPutRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).glossaryIdPut(requestParameters.id, requestParameters.glossaryIdPutRequest, options).then((request) => request(this.axios, this.basePath));
+        return DefaultApiFp(this.configuration).glossaryIdPut(requestParameters.id, requestParameters.term, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -3947,7 +3931,7 @@ export class DefaultApi extends BaseAPI {
      * @memberof DefaultApi
      */
     public glossaryPost(requestParameters: DefaultApiGlossaryPostRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).glossaryPost(requestParameters.glossaryPostRequest, options).then((request) => request(this.axios, this.basePath));
+        return DefaultApiFp(this.configuration).glossaryPost(requestParameters.term, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
