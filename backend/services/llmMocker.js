@@ -190,6 +190,15 @@ app.post("/generate", async (req, res) => {
   }
 });
 
+
+app.post("/delete_from_vector_db", async (req, res) => {
+
+  console.log(
+    `Received request:`,
+    req.body,
+  );
+
+});
 // -------------------------------------------
 // Server starten
 // -------------------------------------------
