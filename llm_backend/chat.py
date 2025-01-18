@@ -4,7 +4,25 @@ import re
 from flask import jsonify
 from azure import get_llm
 from app import sio
+from sentence_transformers import CrossEncoder
 
+
+def rerank_contexts(contexts, user_query):
+    cross_encoder_model = CrossEncoder('cross-encoder/ms-marco-TinyBERT-L-2-v2', max_length=2000)
+
+    # Now, do the re-ranking with the cross-encoder
+    sentence_pairs = [[user_query, hit["text"]] for hit in contexts]
+    similarity_scores = cross_encoder_model.predict(sentence_pairs)
+    
+    for idx in range(len(hits)):
+        hits[idx]["cross-encoder_score"] = similarity_scores[idx]
+
+    # Sort list by CrossEncoder scores
+    hits = sorted(hits, key=lambda x: x["cross-encoder_score"], reverse=True)
+    print("Top 5 hits with CrossEncoder:")
+    for hit in hits:
+        print("\t{:.3f}\t{}".format(hit["cross-encoder_score"], hit["_id"]))
+    return
 
 def ask_question(request, vectorstore):
     json_str = request.get_json(force=True)
@@ -18,7 +36,9 @@ def ask_question(request, vectorstore):
         return jsonify({"error": "No user message found"}), 400
 
     standalone_question = transform_to_standalone_question(json.dumps(messages_only_role_content))
-    relevant_vectors = vectorstore.search_from_query(standalone_question)
+    relevant_vectors = vectorstore.search_from_query(standalone_question, limit=5)
+
+    rerank_contexts(relevant_vectors, latest_user_message)
 
     replacement_dict = {}
     context = ""
@@ -41,6 +61,8 @@ def ask_question(request, vectorstore):
 
         context += text
 
+    print(f"Context: {context}")
+
     user_query = f"{latest_user_message}"
 
     llm = get_llm()
@@ -53,6 +75,8 @@ def ask_question(request, vectorstore):
                     "Always respond in the same language as the user."
                     "Cite the context in your response using the format '[doc_number:number]', where 'number' is the document number provided in the context and 'doc_number' remaining constant for proper identification. "
                     "Do not combine citations from multiple documents (e.g., DO NOT write [doc_number:1:2]). Only one number per reference is allowed. Adhere to the specified citing format regardless of previous responses."
+                    "Your primary goal is to provide the user the most relevant files so they can solve their problem."
+                    "prefer to give the user relevant cases instead of attachments. But even better is to give the user both the case and the attachment."
          },
         *messages_only_role_content,
         {"role": "system", "content": f"CONTEXT for next query: {context}"},
