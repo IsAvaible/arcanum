@@ -361,24 +361,35 @@ const filteredAndSortedEntries = asyncComputed(async () => {
   // Apply filters
   entries = entries.filter((_, index) => results[index])
 
-  // Apply sorting
+  // Apply sorting based on the current sort option with fallback to last-used
   return [...entries].sort((a, b) => {
+    const compareLastUsed = () =>
+      new Date(b.updatedAt ?? b.createdAt).getTime() -
+      new Date(a.updatedAt ?? a.createdAt).getTime()
+
     switch (currentSort.value) {
-      case 'most-used':
-        return (b.usageCount || 0) - (a.usageCount || 0)
-      case 'last-used':
-        return (
-          new Date(b.updatedAt ?? b.createdAt).getTime() -
-          new Date(a.updatedAt ?? a.createdAt).getTime()
-        )
-      case 'recently-added':
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      case 'alpha-asc':
-        return a.term.localeCompare(b.term)
-      case 'alpha-desc':
-        return b.term.localeCompare(a.term)
-      default:
+      case 'most-used': {
+        const usageDiff = (b.usageCount || 0) - (a.usageCount || 0)
+        return usageDiff !== 0 ? usageDiff : compareLastUsed()
+      }
+      case 'last-used': {
+        return compareLastUsed()
+      }
+      case 'recently-added': {
+        const addedDiff = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        return addedDiff !== 0 ? addedDiff : compareLastUsed()
+      }
+      case 'alpha-asc': {
+        const alphaAscDiff = a.term.localeCompare(b.term)
+        return alphaAscDiff !== 0 ? alphaAscDiff : compareLastUsed()
+      }
+      case 'alpha-desc': {
+        const alphaDescDiff = b.term.localeCompare(a.term)
+        return alphaDescDiff !== 0 ? alphaDescDiff : compareLastUsed()
+      }
+      default: {
         return 0
+      }
     }
   })
 }, [])
