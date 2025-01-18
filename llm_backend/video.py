@@ -81,9 +81,9 @@ def extract_data_from_video(video_path, filehash):
     # get one frame each 2 seconds if video is under 10 minutes
     # get one frame each 5 seconds if video is over 10 minutes
     if duration < 600:
-        vf_filter = "fps=1/2 ,scale=320:-1"
+        vf_filter = "fps=1/12 ,scale=320:-1"
     else:
-        vf_filter = "fps=1/10 ,scale=320:-1"
+        vf_filter = "fps=1/20 ,scale=320:-1"
 
     output_pattern = os.path.join(frames_path, "frame_%04d.jpg")
 
@@ -142,7 +142,7 @@ def process_segments(frames, transcription, duration, socket_id):
     seconds = round(duration / len(frames))
     # calculate how many rounds we need to analyze the frames
     # here we are dividing by 49 and rounding that value up
-    frame_segments = math.floor(len(frames) / 25)
+    frame_segments = math.floor(len(frames) / 50)
     data = {
         "video_summary": {
             "segments": []
@@ -167,7 +167,7 @@ def process_segments(frames, transcription, duration, socket_id):
         video_summary = ""
 
         total_iterations = len(frames)
-        max_group_size = 25
+        max_group_size = 50
 
         # Berechnung der Gruppen
         groups = [max_group_size] * (total_iterations // max_group_size)
