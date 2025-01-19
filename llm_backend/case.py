@@ -71,5 +71,5 @@ def check_if_output_is_valid(chain_output):
         CaseArray.model_validate(chain_output)
 
         return True
-    except ValidationError as e:
+    except ValidationError:
         abort(500, description="Couldn't get valid case output. Please add more data before trying again.")
