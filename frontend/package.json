@@ -18,7 +18,7 @@
     "format": "prettier --write src/",
     "prepare": "node .husky/install.mjs && cd .. && husky frontend/.husky",
     "swagger-editor": "docker pull swaggerapi/swagger-editor:next-v5 && docker start swagger-editor || docker run -d --name swagger-editor -p 5174:80 swaggerapi/swagger-editor:next-v5",
-    "generate:api": "openapi-generator-cli generate -i ./src/api/OpenAPI.yaml -g typescript-axios -o ./src/api --additional-properties=useSingleRequestParameter=true"
+    "generate:api": "openapi-generator-cli generate -i ./src/api/OpenAPI.yaml -g typescript-axios -t ./src/api/templates -o ./src/api --additional-properties=useSingleRequestParameter=true"
   },
   "dependencies": {
     "@iconoir/vue": "^7.9.0",

@@ -9,7 +9,7 @@ import AIChatWindow from '@/components/AIChatWindow.vue'
 import Glossary from '@/views/glossar/Glossary.vue'
 
 import Cookies from 'js-cookie'
-import axios from 'axios'
+import { useApi } from '@/composables/useApi'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -70,22 +70,16 @@ const router = createRouter({
 })
 
 // Router-Guard, which sets a cookie when route '/' is accessed
-router.beforeEach(async (to, _from, next) => {
-  if (to.path === '/') {
-    console.log('Generating JWT')
-    const jwtSecret = await axios.get('https://localhost:3000/api/generateJWT'.toString())
-    if (true) {
-      try {
-        console.log('Setting JWT cookie')
-        Cookies.set('x-auth-token', jwtSecret.data.token, { expires: 1 }) // Setzt ein Cookie mit einer Gültigkeit von 7 Tagen
-      } catch (error) {
-        console.log(error)
-      }
-    } else {
-      console.error('JWT_SECRET is not defined')
+router.beforeEach(async (_to, _from) => {
+  // If the user is not authenticated, redirect to the login page
+  if (!Cookies.get('x-auth-token')) {
+    try {
+      // Authenticate the client (get JWT)
+      await useApi().generateJWTGet()
+    } catch (error) {
+      console.log(error)
     }
   }
-  next()
 })
 
 export default router
