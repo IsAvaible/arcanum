@@ -38,7 +38,7 @@ class Case(BaseModel):
     )
     description: str = Field(
         ...,
-        description="A detailed explanation of the case, including relevant background information, context necessary for understanding the problem but no solution. Include granular Timestamps from Audio transcriptions ONLY!",
+        description="SHOULD NEVER CONTAIN THE SOLUTION, ONLY A DETAILED EXPLANATION OF THE PROBLEM, including information necessary for understanding the problem. Include granular Timestamps from Audio transcriptions ONLY!",
     )
     solution: str = Field(
         ...,

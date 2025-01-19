@@ -62,6 +62,7 @@ IF CONTEXT CONTAINS A PDF FILE WITH TIMESTAMPS DO NOT GIVE OUT TIMESTAMPS FOR TE
 If CONTEXT contains VIDEO SUMMARIES:
 - Extract relevant information from each segment.
 - Include all information you can find in your answer!
+- Try to merge the video summary with the transcription data and the other CONTEXT to give better answers.
 
 PLEASE COMBINE ALL INFORMATION YOU HAVE AND GENERATE A ANSWER THAT COVERS ALL GIVEN DATA!
 
