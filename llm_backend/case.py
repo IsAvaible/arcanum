@@ -1,5 +1,6 @@
 from enum import Enum
 
+from flask import abort
 from pydantic import Field, BaseModel, ValidationError
 
 class CaseStatus(str, Enum):
@@ -71,6 +72,5 @@ def check_if_output_is_valid(chain_output):
 
         return True
     except ValidationError as e:
-        print("Validation error", e.json())
-
-        return False
+        #abort(500, description=f"Couldn't get valid case output. Please add more data before trying again.")
+        return None

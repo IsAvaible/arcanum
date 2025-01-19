@@ -2,6 +2,7 @@ import json
 import re
 
 import pdfplumber
+from flask import abort
 
 from readwrite import read_from_file
 from webdav import download_cache
@@ -64,8 +65,7 @@ def process_pdf(filepath):
             pages = [page.extract_text() for page in pdf.pages]
         return pages
     except Exception as e:
-        print(f"Error processing PDF file: {e}")
-        return None
+        abort(500, description=f"Error processing PDF file: {e}")
 
 
 def chunk_text(text, chunk_size=2000, overlap=700):

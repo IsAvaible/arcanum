@@ -1,4 +1,4 @@
-from flask import request, Blueprint, jsonify
+from flask import request, Blueprint, jsonify, abort
 
 from app import app, sio
 from generate import generate
@@ -57,3 +57,8 @@ def show_all_entries():
         # Convert each entry to a string
         data = [str(entry) for entry in entries]
         return jsonify(data), 200
+
+
+@app.errorhandler(500)
+def handle_bad_request(e):
+    return jsonify(message=str(e)), 500

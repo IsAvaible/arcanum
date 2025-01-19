@@ -3,6 +3,7 @@ import os
 import subprocess
 
 import cv2
+from flask import abort
 
 from app import app, sio
 from image import encode_image, image_to_openai
@@ -53,7 +54,7 @@ def cut_video_segments(input_file, filehash, segment_duration=split_secs):
         subprocess.run(command, check=True)
         return output_path
     except subprocess.CalledProcessError as e:
-        print(f"Error occurred while splitting the video: {e}")
+        abort(500, description=f"Error occurred while splitting the video: {e}")
 
 
 def extract_data_from_video(video_path, filehash):
@@ -101,7 +102,7 @@ def extract_data_from_video(video_path, filehash):
         subprocess.run(command, check=True)
         print(f"Saved frames: {output_pattern} ")
     except subprocess.CalledProcessError as e:
-        print(f"Error FFMPEG (Frame Extraction): {e}")
+        abort(500, description=f"Error FFMPEG (Frame Extraction): {e}")
 
     # we also need to transcribe the audio in the video
     audio_path = os.path.join(
@@ -125,7 +126,7 @@ def extract_data_from_video(video_path, filehash):
         subprocess.run(command, check=True)
         print(f"Saved Audio in {audio_output}")
     except subprocess.CalledProcessError as e:
-        print(f"Error FFMPEG (Audio Extraction): {e}")
+        abort(500, description=f"Error FFMPEG (Audio Extraction): {e}")
 
     # return path of frames and audio file
     return frames_path, audio_output, duration

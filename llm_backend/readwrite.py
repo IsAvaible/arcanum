@@ -2,6 +2,8 @@ import json
 import os
 import shutil
 
+from flask import abort
+
 from app import app, temp_folder
 
 
@@ -30,8 +32,7 @@ def write_to_file(hash, content):
             file.write(content)
         return file_path
     except Exception as e:
-        print(f"An error occurred: {e}")
-        return None
+        abort(500, description=f"An error occurred: {e}")
 
 
 # delete temp folder
@@ -47,8 +48,7 @@ def delete_temp_folder(hash):
             shutil.rmtree(dir_path)
             return True
         except Exception as e:
-            print(f"Error '{dir_path}': {e}")
-            return False
+            abort(500, description=f"Could not delete Temp Folder {dir_path} - {e}")
     else:
         print(f"Folder '{dir_path}' does not exist.")
         return False
@@ -66,11 +66,9 @@ def read_from_file(file_path):
             content = file.read()
         return content
     except FileNotFoundError:
-        print(f"File '{file_path}' does not exist.")
-        return None
+        abort(500, description=f"File '{file_path}' does not exist.")
     except Exception as e:
-        print(f"An error occured: {e}")
-        return None
+        abort(500, description=f"An error occured while reading a file: {e}")
 
 
 # text to dict
@@ -78,5 +76,4 @@ def text_to_dict(json_text):
     try:
         return json.loads(json_text)
     except json.JSONDecodeError as e:
-        print(f"Parsing error: {e}")
-        return None
+        abort(500, description=f"JSON Parsing error: {e}")
