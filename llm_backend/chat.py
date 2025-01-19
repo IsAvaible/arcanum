@@ -2,27 +2,103 @@ import json
 import re
 
 from flask import jsonify
-from azure import get_llm
+from azure import get_llm, get_llm_custom
 from app import sio
 from sentence_transformers import CrossEncoder
+import concurrent.futures
+import time
 
+from case import Case
+from langchain_core.output_parsers import JsonOutputParser
+
+def unique_contexts(contexts):
+    unique_contexts = []
+    unique_texts = []
+    for context in contexts:
+        if context.payload["text"] not in unique_texts:
+            unique_contexts.append(context)
+            unique_texts.append(context.payload["text"])
+    return unique_contexts
 
 def rerank_contexts(contexts, user_query):
-    cross_encoder_model = CrossEncoder('cross-encoder/ms-marco-TinyBERT-L-2-v2', max_length=2000)
+    cross_encoder_model = CrossEncoder('cross-encoder/msmarco-MiniLM-L6-en-de-v1', max_length=4096)
 
-    # Now, do the re-ranking with the cross-encoder
-    sentence_pairs = [[user_query, hit["text"]] for hit in contexts]
+    # Prepare sentence pairs for prediction
+    sentence_pairs = [[user_query, hit.payload["text"]] for hit in contexts]
+    #pprint.pprint(sentence_pairs)
+
+    # Predict similarity scores with CrossEncoder (this automatically handles truncation)
     similarity_scores = cross_encoder_model.predict(sentence_pairs)
     
-    for idx in range(len(hits)):
-        hits[idx]["cross-encoder_score"] = similarity_scores[idx]
+    
+    for idx in range(len(contexts)):
+        # Convert the similarity score to a float to avoid ambiguity during sorting
+        contexts[idx].score = float(similarity_scores[idx])
 
-    # Sort list by CrossEncoder scores
-    hits = sorted(hits, key=lambda x: x["cross-encoder_score"], reverse=True)
-    print("Top 5 hits with CrossEncoder:")
-    for hit in hits:
-        print("\t{:.3f}\t{}".format(hit["cross-encoder_score"], hit["_id"]))
-    return
+    # Sort list by CrossEncoder scores in descending order
+    contexts = sorted(contexts, key=lambda x: x.score, reverse=True)
+
+    # Print top hits with CrossEncoder scores
+    # print("Top 5 hits with CrossEncoder:")
+    # for hit in hits[:5]:  # Limit to top 5 hits
+    #     print("\t{:.3f}\t{}".format(hit["cross-encoder_score"], hit["_id"]))
+
+    return contexts
+
+def query_hyde(query, vectorstore):
+    case_parser_json = JsonOutputParser(pydantic_object=Case)
+    format_instructions = case_parser_json.get_format_instructions()
+    prompt = "Generate a hypothetical document that thoroughly addresses or explains the following query or problem. The document should include relevant details, examples, and potential solutions to provide a comprehensive response:" \
+            "If the answer is not known or clear, confidently create a plausible and logical response based on the context. The document must always provide an answer. Do not include any additional information, commentary, or explanations outside of the hypothetical document. Ensure the document is precise, well-structured, and complete." \
+            "In this case you need to create a hypothetical case. A case is a problem someone had, that already has been solved." \
+            f"{format_instructions}" \
+            "MAKE THE DOCUMENT AS SHORT AS POSSIBLE" \
+            "ANSWER IN SAME LANGUAGE AS THE QUERY"
+    
+
+    messages = [
+        {"role": "system", "content": prompt},
+        {"role": "user", "content": query}
+    ]
+
+    llm = get_llm_custom(temperature=0, max_tokens=200, timeout=4, max_retries=2, streaming=False)
+    response = llm(messages).content
+
+    relevant_vectors = vectorstore.search_from_query(response, limit=5)
+    return relevant_vectors
+
+def query_multiple(query, vectorstore):
+    prompt = "You are an AI language model assistant. Your task is to generate three different versions of the given user question to retrieve relevant documents from a vector database." \
+            "By generating multiple perspectives on the user question, your goal is to help the user overcome some of the limitations of the distance-based similarity search." \
+            "Provide these alternative questions separated by newlines." \
+            "Original question: {question}"  
+
+    messages = [
+        {"role": "system", "content": prompt},
+        {"role": "user", "content": query}
+    ]
+
+    llm = get_llm()
+    response = llm(messages).content
+
+    queries = response.split("\n")
+
+    relevant_vectors = []
+    for query in queries:
+        relevant_vectors.extend(vectorstore.search_from_query(query, limit=2))
+    return relevant_vectors
+
+def query_standard(query, vectorstore):
+    relevant_vectors = vectorstore.search_from_query(query, limit=5)
+    return relevant_vectors
+
+def timed(func):
+    def _w(*a, **k):
+        then = time.time()
+        res = func(*a, **k)
+        elapsed = time.time() - then
+        return elapsed, res
+    return _w
 
 def ask_question(request, vectorstore):
     json_str = request.get_json(force=True)
@@ -30,20 +106,48 @@ def ask_question(request, vectorstore):
     messages = json_str["context"]
     latest_user_message = json_str["message"]
 
+    messages.append({'role': 'user', 'content': latest_user_message})
+
     messages_only_role_content = transform_messages_for_llm(messages)
 
     if not latest_user_message:
         return jsonify({"error": "No user message found"}), 400
 
     standalone_question = transform_to_standalone_question(json.dumps(messages_only_role_content))
-    relevant_vectors = vectorstore.search_from_query(standalone_question, limit=5)
 
-    rerank_contexts(relevant_vectors, latest_user_message)
+    relevant_vectors = []
+    start_time_futures = time.time()
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future_standard = executor.submit(timed(query_standard), standalone_question, vectorstore)
+        future_hyde = executor.submit(timed(query_hyde), standalone_question, vectorstore)
+        future_multiple = executor.submit(timed(query_multiple), standalone_question, vectorstore)
+
+        time_standard, relevant_vectors_standard = future_standard.result()
+        time_hyde, relevant_vectors_hyde = future_hyde.result()
+        time_multiple, relevant_vectors_multiple = future_multiple.result()
+        print(f"Time for future_standard: {time_standard} seconds")
+        print(f"Time for future_hyde: {time_hyde} seconds")
+        print(f"Time for future_multiple: {time_multiple} seconds")
+
+        relevant_vectors.extend(relevant_vectors_standard)
+        relevant_vectors.extend(relevant_vectors_hyde)
+        relevant_vectors.extend(relevant_vectors_multiple)
+
+    print(f"Time for futures: {time.time() - start_time_futures} seconds")
+
+    start_time_rerank = time.time()
+    relevant_vectors = unique_contexts(relevant_vectors)
+    reranked_vectors = rerank_contexts(relevant_vectors, standalone_question)
+    end_time_rerank = time.time()
+    print(f"Time for reranking: {end_time_rerank - start_time_rerank} seconds")
+    
+    # only get the top 5 reranked vectors
+    contexts_for_llm = reranked_vectors[:5]
 
     replacement_dict = {}
     context = ""
     doc_number = 1
-    for vector in relevant_vectors:
+    for vector in contexts_for_llm:
         doc = vector.payload
         text = doc["text"]
         metadata = doc["metadata"]
@@ -61,7 +165,7 @@ def ask_question(request, vectorstore):
 
         context += text
 
-    print(f"Context: {context}")
+    #print(f"Context: {context}")
 
     user_query = f"{latest_user_message}"
 
@@ -119,7 +223,7 @@ def transform_to_standalone_question(chat_history):
     return response
 
 def transform_messages_for_llm(messages):
-    return [{'role': message['role'], 'content': message['content']} for message in messages[:-1]]
+    return [{'role': message['role'], 'content': message['content']} for message in messages]
 
 
 

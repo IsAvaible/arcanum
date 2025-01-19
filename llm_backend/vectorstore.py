@@ -164,7 +164,7 @@ class QdrantVectorstore:
 
         return self.search_vectors(embedding, limit, filter_condition)
 
-    def search_by_metadata(self, key, value, limit=None):
+    def search_by_metadata(self, key, value, limit=10000):
         """
         Search for an entry in the collection with a specific key-value pair in the metadata.
         
