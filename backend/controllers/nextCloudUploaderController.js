@@ -190,12 +190,12 @@ async function downloadFileAndReturn(remoteFilePath) {
     return fileContent;
 
     /*   try {
-      const decryptedData = decrypt(fileContent);
-      return decryptedData;
-    }
-    catch (error) {
-      console.error("Error decrypting file:", error);
-    } */
+        const decryptedData = decrypt(fileContent);
+        return decryptedData;
+      }
+      catch (error) {
+        console.error("Error decrypting file:", error);
+      } */
   } catch (error) {
     console.error("Error downloading file:", error);
   }
