@@ -70,13 +70,13 @@ const router = createRouter({
 })
 
 // Router-Guard, which sets a cookie when route '/' is accessed
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
   if (to.path === '/') {
     console.log('Generating JWT')
-    const jwtSecret =  await axios.get('https://localhost:3000/api/generateJWT'.toString());
+    const jwtSecret = await axios.get('https://localhost:3000/api/generateJWT'.toString())
     if (true) {
       try {
-        console.log('Setting JWT cookie');
+        console.log('Setting JWT cookie')
         Cookies.set('x-auth-token', jwtSecret.data.token, { expires: 1 }) // Setzt ein Cookie mit einer Gültigkeit von 7 Tagen
       } catch (error) {
         console.log(error)
