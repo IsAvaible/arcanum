@@ -8,8 +8,8 @@ import ChatWindow from '@/components/ChatWindow.vue'
 import AIChatWindow from '@/components/AIChatWindow.vue'
 import Glossary from '@/views/glossar/Glossary.vue'
 
-import Cookies from 'js-cookie'
 import { useApi } from '@/composables/useApi'
+import { ref } from 'vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -69,13 +69,16 @@ const router = createRouter({
   ],
 })
 
+const authenticatedUntil = ref<number>(-1)
 // Router-Guard, which sets a cookie when route '/' is accessed
 router.beforeEach(async (_to, _from) => {
-  // If the user is not authenticated, redirect to the login page
-  if (!Cookies.get('x-auth-token')) {
+  // If the user is not authenticated (anymore), authenticate the user
+  if (authenticatedUntil.value < Date.now()) {
     try {
       // Authenticate the client (get JWT)
       await useApi().generateJWTGet()
+      // Set the expiration date of the JWT
+      authenticatedUntil.value = Date.now() + 1000 * 60 * 60
     } catch (error) {
       console.log(error)
     }
