@@ -60,92 +60,81 @@ async function uploadFile(localFilePath, remoteFilePath, fileName) {
   const fileContent = fs.readFileSync(localFilePath);
   let hashedFileContent = "";
 
-  try {
-    hashedFileContent = crypto
-      .createHash("sha256")
-      .update(fileContent)
-      .digest("hex");
-    console.log("Hashed file content:", hashedFileContent);
+  try{
+    hashedFileContent = crypto.createHash('sha256').update(fileContent).digest('hex');
+    console.log('Hashed file content:', hashedFileContent);
   } catch (error) {
-    console.error("Error hashing file content:", error);
+    console.error('Error hashing file content:', error);
   }
 
   const folder = ["Audio/", "Bilder/", "Text/", "Videos/"];
-  const fileExtension = fileName.split(".").pop().toLowerCase();
-  let folderPath = "";
+  const fileExtension = fileName.split('.').pop().toLowerCase();
+  let folderPath = '';
 
   console.log("Fieltype: " + fileExtension);
   switch (fileExtension) {
-    case "mp3":
-    case "wav":
+    case 'mp3':
+    case 'wav':
       folderPath = folder[0]; // Audio/
       break;
-    case "jpg":
-    case "jpeg":
-    case "png":
-    case "gif":
+    case 'jpg':
+    case 'jpeg':
+    case 'png':
+    case 'gif':
       folderPath = folder[1]; // Bilder/
       break;
-    case "txt":
-    case "doc":
-    case "pdf":
+    case 'txt':
+    case 'doc':
+    case 'pdf':
       folderPath = folder[2]; // Text/
       break;
-    case "mp4":
-    case "mov":
+    case 'mp4':
+    case 'mov':
       folderPath = folder[3]; // Videos/
       break;
   }
-  if (folderPath === "") {
-    console.log("File type not found");
+  if(folderPath === ''){
+    console.log('File type not found');
     return -1;
   }
 
   try {
     const directoryItems = await listFiles(remoteFilePath + folderPath);
-    remoteFilePath =
-      remoteFilePath +
-      folderPath +
-      hashedFileContent.toString() +
-      "." +
-      fileExtension;
-    remoteEncryptedFilePath = remoteFilePath + ".enc";
-    if (directoryItems !== undefined) {
+    remoteFilePath = remoteFilePath + folderPath + hashedFileContent.toString() + '.' + fileExtension;
+    remoteEncryptedFilePath = remoteFilePath + '.enc';
+    if(directoryItems !== undefined){
       for (const item of directoryItems) {
         //console.log('Item:', item.basename + " == " + hashedFileContent.toString()+ "." + fileExtension);
-        if (
-          item.basename ===
-          hashedFileContent.toString() + "." + fileExtension
-        ) {
-          console.log("File already exists in the folder, skipping upload");
+        if (item.basename === hashedFileContent.toString() + "." + fileExtension) {
+          console.log('File already exists in the folder, skipping upload');
           return remoteFilePath;
         }
       }
     } else {
-      console.log("Can not list Folder content");
+      console.log('Can not list Folder content');
     }
 
     await nextcloudClient.putFileContents(remoteFilePath, fileContent);
-    console.log("File uploaded successfully");
+    console.log('File uploaded successfully');
 
     try {
       const encryptedData = encrypt(fileContent);
-      await nextcloudClient.putFileContents(
-        remoteEncryptedFilePath,
-        encryptedData,
-      );
-      console.log("File encrypted successfully");
-    } catch (error) {
-      console.error("Error encrypting file:", error);
+      await nextcloudClient.putFileContents(remoteEncryptedFilePath, encryptedData);
+      console.log('File encrypted successfully');
     }
+    catch (error) {
+      console.error('Error encrypting file:', error);
+    }
+
   } catch (error) {
-    console.error("Error uploading file:", error);
+    console.error('Error uploading file:', error);
   } finally {
+
     fs.unlink(localFilePath, (err) => {
       if (err) {
-        console.error("Error deleting file:", err);
+        console.error('Error deleting file:', err);
       } else {
-        console.log("File deleted successfully");
+        console.log('File deleted successfully');
       }
     });
   }
@@ -169,9 +158,11 @@ async function downloadFile(remoteFilePath, localFilePath) {
 
       fs.writeFileSync(localFilePath, fileContent);
       console.log("File downloaded successfully");
-    } catch (err) {
+    }
+    catch(err){
       console.log(err);
     }
+
   } catch (error) {
     console.error("Error downloading file:", error);
   }
@@ -196,6 +187,7 @@ async function downloadFileAndReturn(remoteFilePath) {
       catch (error) {
         console.error("Error decrypting file:", error);
       } */
+
   } catch (error) {
     console.error("Error downloading file:", error);
   }
