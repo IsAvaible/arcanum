@@ -1,12 +1,9 @@
-
 const { Request, Response, NextFunction } = require("express");
 const { z, ZodError } = require("zod");
 const { StatusCodes } = require("http-status-codes");
 const { body, validationResult } = require("express-validator");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
-
-
 
 /**
  * Middleware to validate request data using a Zod schema.
@@ -88,12 +85,12 @@ function escapeData(fields) {
 const authenticateJWT = (req, res, next) => {
   const token = req.cookies["x-auth-token"];
   console.log(token);
-  
+
   if (!token) return res.status(401).send("Access denied. No token provided.");
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('Verified jwtToken');
+    console.log("Verified jwtToken");
     req.user = decoded;
 
     next();

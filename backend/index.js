@@ -14,10 +14,10 @@ const uploadRoutes = require("./routes/exampleFileUpload");
 const chatRoutes = require("./routes/chatRoutes");
 const tokenService = require("./services/tokenService");
 
-
 // for development only
 app.set("view engine", "ejs");
-//
+
+// Use cookie-parser middleware, see: https://expressjs.com/en/resources/middleware/cookie-parser.html
 app.use(cookieParser());
 
 // Use CORS middleware, see: https://expressjs.com/en/resources/middleware/cors.html
@@ -62,7 +62,7 @@ const credentials = {
 // for https uncomment the following lines
 try {
   const server = https.createServer(credentials, app);
-  
+
   const io = new Server(server, {
     cors: {
       origin: [
