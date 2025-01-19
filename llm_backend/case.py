@@ -72,5 +72,4 @@ def check_if_output_is_valid(chain_output):
 
         return True
     except ValidationError as e:
-        #abort(500, description=f"Couldn't get valid case output. Please add more data before trying again.")
-        return None
+        abort(500, description="Couldn't get valid case output. Please add more data before trying again.")

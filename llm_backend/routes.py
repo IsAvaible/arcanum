@@ -1,4 +1,4 @@
-from flask import request, Blueprint, jsonify, abort
+from flask import request, Blueprint, jsonify
 
 from app import app, sio
 from generate import generate
