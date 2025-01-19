@@ -6,7 +6,6 @@ import AccordionPanel from 'primevue/accordionpanel'
 import AccordionContent from 'primevue/accordioncontent'
 
 import InputText from 'primevue/inputtext'
-import Message from 'primevue/message'
 import Button from 'primevue/button'
 import Divider from 'primevue/divider'
 
@@ -41,6 +40,42 @@ import 'md-editor-v3/lib/style.css'
 
 import { userOptions } from '@/api/mockdata'
 import { useRouter } from 'vue-router'
+import MultiSelect from 'primevue/multiselect'
+import Chips from 'primevue/chips'
+import Message from 'primevue/message'
+import { computed, watch } from 'vue'
+
+interface GlossaryTerm {
+  name: string
+  description: string
+  tokens: number
+}
+
+const glossaryTerms = ref<GlossaryTerm[]>([
+  { name: 'Term A', description: 'Description for Term A', tokens: 10 },
+  { name: 'Term B', description: 'Description for Term B', tokens: 20 },
+  { name: 'Term C', description: 'Description for Term C', tokens: 30 },
+])
+
+const selectedGlossaryTerms = ref<GlossaryTerm[]>([])
+
+const tokenLimit = 200
+
+const currentTokenCount = computed(() =>
+  selectedGlossaryTerms.value.reduce((sum, term) => sum + term.tokens, 0),
+)
+
+const removeGlossaryTerm = (term: GlossaryTerm) => {
+  selectedGlossaryTerms.value = selectedGlossaryTerms.value.filter(
+    (selected) => selected.name !== term.name,
+  )
+}
+
+watch(currentTokenCount, (newCount: number) => {
+  if (newCount > tokenLimit) {
+    console.warn('Token limit exceeded. Please remove some terms.')
+  }
+})
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -523,6 +558,53 @@ const dialogPT = {
                   class="absolute bottom-0 mx-auto left-[50%] -translate-x-[50%] mb-1 z-10"
                 >
                   {{ errors.solution }}
+                </Message>
+              </div>
+
+              <!-- Glossary Selection -->
+              <div class="flex flex-col relative mt-6">
+                <Label
+                  for="glossary"
+                  label="Glossary Terms"
+                  description="Select relevant glossary terms to include in the solution"
+                  icon="pi-book"
+                  class="mb-3"
+                />
+                <MultiSelect
+                  v-model="selectedGlossaryTerms"
+                  :options="glossaryTerms"
+                  :filter="true"
+                  optionLabel="name"
+                  class="w-full"
+                  placeholder="Select glossary terms"
+                  panelClass="max-h-60 overflow-auto"
+                />
+
+                <Chips
+                  v-if="selectedGlossaryTerms.length"
+                  :value="selectedGlossaryTerms"
+                  class="mt-4"
+                  separator=", "
+                  removable
+                  @remove="
+                    (event) => {
+                      const removedTerm = event.value as GlossaryTerm // Type cast to GlossaryTerm
+                      removeGlossaryTerm(removedTerm)
+                    }
+                  "
+                />
+
+                <div class="mt-2 text-sm text-gray-600">
+                  Token count: {{ currentTokenCount }} / {{ tokenLimit }}
+                </div>
+                <Message
+                  v-if="currentTokenCount > tokenLimit"
+                  severity="warn"
+                  variant="simple"
+                  size="small"
+                  class="mt-2"
+                >
+                  Token limit exceeded! Remove some terms to proceed.
                 </Message>
               </div>
             </div>
