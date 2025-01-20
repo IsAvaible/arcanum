@@ -65,8 +65,8 @@ router.delete(
   glossaryController.deleteAttachmentFromGlossary,
 );
 router.delete(
-  authenticateJWT,
   "/glossary/:id/cases/:caseId",
+  authenticateJWT,
   glossaryController.deleteCaseFromGlossary,
 );
 
