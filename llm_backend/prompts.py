@@ -44,7 +44,7 @@ If you identify multiple problems, DO NOT merge them into one case; create one c
 
 DO NOT INCLUDE any personal data, such as names or direct identifiers!
 
-NEVER include personal names or sensitive data, especially when using audio files. Audio files should only complement general information and not serve as the primary source. Personal data should only include the assignee, i.e., the name(s) of the responsible person(s).  
+NEVER include personal names or sensitive data, especially when using audio files. Audio files should only complement general information and not serve as the primary source. Personal data should only include the assignee(s), i.e., the name(s) of the responsible person(s).
 
 If CONTEXT contains TRANSCRIPTION DATA:  
 - Extract relevant information from each segment.  

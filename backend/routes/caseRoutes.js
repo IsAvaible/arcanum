@@ -33,7 +33,7 @@ router.get("/cases/:id", caseController.showCaseDetail);
  * @param {string} title.formData.required - The title of the case.
  * @param {string} description.formData.required - The description of the case.
  * @param {string} solution.formData - A possible solution for the case.
- * @param {string} assignee.formData - The assignee of the case.
+ * @param {string} assignees.formData - The assignees of the case.
  * @param {string} status.formData - The status of the case (e.g. "Open").
  * @param {string} case_type.formData - The type of the case (e.g. "Problem", "Incident", "Change", "FAQ").
  * @param {string} priority.formData - The priority of the case (e.g. "Low", "Medium", "High").
@@ -49,7 +49,7 @@ router.post(
     "title",
     "description",
     "solution",
-    "assignee",
+    "assignees",
     "status",
     "case_type",
     "priority",
@@ -65,7 +65,7 @@ router.post(
  * @param {string} [title] - Updated title (min. 3 chars).
  * @param {string} [description] - Updated description.
  * @param {string} [solution] - Updated solution text.
- * @param {string} [assignee] - Updated assignee.
+ * @param {string} [assignees] - Updated assignees.
  * @param {string} [status] - Updated status ("Open", "inProgress", "Solved", "Closed").
  * @param {string} [case_type] - Updated case type ("Problem", "Incident", "Change", "FAQ").
  * @param {string} [priority] - Updated priority ("Low", "Medium", "High").
@@ -193,7 +193,7 @@ router.post(
  * @param {string} [title] - Updated title.
  * @param {string} [description] - Updated description.
  * @param {string} [solution] - Updated solution.
- * @param {string} [assignee] - Updated assignee.
+ * @param {string} [assignees] - Updated assignees.
  * @param {string} [status] - Updated status.
  * @param {string} [case_type] - Updated case type.
  * @param {string} [priority] - Updated priority.

@@ -210,7 +210,7 @@ class QdrantVectorstore:
         """
         case_string = ""
         
-        ordered_keys = ['title', 'description', 'solution', 'assignee', 'status', 'attachments']  # Order to save the keys in
+        ordered_keys = ['title', 'description', 'solution', 'assignees', 'status', 'attachments']  # Order to save the keys in
         
         # Add the ordered keys first
         for key in ordered_keys:

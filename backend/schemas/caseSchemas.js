@@ -18,7 +18,7 @@ const caseSchema = z.object({
   title: z.string().min(3),
   description: z.string().min(1),
   solution: z.string().min(1).optional().or(z.literal("")),
-  assignee: z.string().min(1).optional(),
+  assignees: z.string().array(),
   status: z.enum(["Open", "In Progress", "Solved", "Closed"]).optional(),
   priority: z.enum(["Low", "Medium", "High"]).optional(),
   draft: z.string().optional(),

@@ -207,7 +207,7 @@ const onSubmit = handleSubmit(async (_values) => {
     const requestParameters = {
       title: fields.title.value.value,
       caseType: fields.type.value.value as CasesPostCaseTypeEnum,
-      assignee: fields.assignees.value.value,
+      assignees: fields.assignees.value.value,
       // participants: fields.selectedParticipants.value.value,
       // team: fields.selectedTeam.value.value,
       description: fields.description.value.value,

@@ -8,7 +8,6 @@ import { useApi } from '@/composables/useApi'
 import { AxiosError } from 'axios'
 import { io, Socket } from 'socket.io-client'
 import { BASE_PATH as BACKEND_API_BASE_PATH } from '@/api/base'
-import { type StatusMessage } from '@/api'
 
 const props = defineProps<{
   /** The visibility of the dialog */
@@ -26,6 +25,16 @@ const showDialog = useVModel(props, 'visible', emit)
 const fileDropzone = useTemplateRef('fileDropzone')
 
 const generateButtonLabel = ref<string | ''>('Generate Case From Files')
+
+// Types
+interface StatusMessage {
+  /**
+   * Content of the message.
+   * @type {string}
+   */
+  content: string
+}
+
 // Methods
 const openManualCaseCreation = () => {
   showDialog.value = false

@@ -88,15 +88,17 @@ const fetchCase = async () => {
       resetForm({
         values: {
           ...caseDetails.value,
-          // The API returns assignee instead of assignees
-          assignees: caseDetails.value.assignee as [string, ...string[]],
+          assignees: caseDetails.value.assignees as [string, ...string[]],
         },
       })
       nextTick(() => {
         form.value.dirty = false
       })
     } else {
-      setValues(caseDetails.value)
+      setValues({
+        ...caseDetails.value,
+        assignees: caseDetails.value.assignees as [string, ...string[]],
+      })
       inEditMode.value = true
     }
   } catch (err) {
@@ -281,13 +283,10 @@ const handleSave = handleSubmit(
           await api.confirmCaseIdPut({
             id: Number(caseId.value),
             ...values,
-            assignee: values.assignees,
           })
         ).data
       } else {
-        caseDetails.value = (
-          await api.casesIdPut({ id: Number(caseId.value), ...values, assignee: values.assignees })
-        ).data
+        caseDetails.value = (await api.casesIdPut({ id: Number(caseId.value), ...values })).data
       }
       resetForm({ values: values })
       await nextTick(() => {
