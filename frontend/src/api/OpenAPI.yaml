@@ -8,6 +8,21 @@ info:
 servers:
   - url: https://localhost:3000/api
 paths:
+  /generateJWT:
+    get:
+      summary: Logs in and returns the authentication cookie
+      security: [] # disable global for this endpoint
+      responses:
+        '204':
+          description: >
+            Successfully authenticated.
+            The session ID is returned in a cookie named `x-auth-token`. You need to include this cookie in subsequent requests.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: x-auth-token=abcde12345; Path=/; HttpOnly
+
   /cases:
     get:
       summary: Retrieve all cases
@@ -689,7 +704,16 @@ paths:
           description: Chat not found.
         500:
           description: Error exporting chat.
+
+security:
+  - cookieAuth: []
+
 components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: x-auth-token
   schemas:
     Case:
       allOf:
