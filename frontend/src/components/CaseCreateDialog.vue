@@ -8,6 +8,8 @@ import AccordionContent from 'primevue/accordioncontent'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
 import Divider from 'primevue/divider'
+import Message from 'primevue/message'
+import MultiSelect from 'primevue/multiselect'
 
 import { useToast } from 'primevue'
 
@@ -26,10 +28,10 @@ import CaseCreateStepper from '@/components/case-create-form/CaseCreateStepper.v
 import { useCaseFormStepper } from '@/composables/useCaseFormStepper'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useVModel } from '@vueuse/core'
 import { useApi } from '@/composables/useApi'
-import type { Case, CasesPostCaseTypeEnum } from '@/api'
+import type { Case, CasesPostCaseTypeEnum, GlossaryEntry } from '@/api'
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
 import { useConfirm } from 'primevue/useconfirm'
@@ -40,42 +42,6 @@ import 'md-editor-v3/lib/style.css'
 
 import { userOptions } from '@/api/mockdata'
 import { useRouter } from 'vue-router'
-import MultiSelect from 'primevue/multiselect'
-import Chips from 'primevue/chips'
-import Message from 'primevue/message'
-import { computed, watch } from 'vue'
-
-interface GlossaryTerm {
-  name: string
-  description: string
-  tokens: number
-}
-
-const glossaryTerms = ref<GlossaryTerm[]>([
-  { name: 'Term A', description: 'Description for Term A', tokens: 10 },
-  { name: 'Term B', description: 'Description for Term B', tokens: 20 },
-  { name: 'Term C', description: 'Description for Term C', tokens: 30 },
-])
-
-const selectedGlossaryTerms = ref<GlossaryTerm[]>([])
-
-const tokenLimit = 200
-
-const currentTokenCount = computed(() =>
-  selectedGlossaryTerms.value.reduce((sum, term) => sum + term.tokens, 0),
-)
-
-const removeGlossaryTerm = (term: GlossaryTerm) => {
-  selectedGlossaryTerms.value = selectedGlossaryTerms.value.filter(
-    (selected) => selected.name !== term.name,
-  )
-}
-
-watch(currentTokenCount, (newCount: number) => {
-  if (newCount > tokenLimit) {
-    console.warn('Token limit exceeded. Please remove some terms.')
-  }
-})
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -117,6 +83,48 @@ const caseTypes = [
       'For documenting frequently asked questions or common inquiries to provide quick, standardized answers for future reference.',
   },
 ]
+
+const glossaryEntries = ref<GlossaryEntry[] | null>(null)
+const selectedGlossaryEntries = ref<GlossaryEntry[]>([])
+const glossaryEntriesLoading = ref<boolean>(true)
+
+// Fetch glossary terms
+const fetchGlossaryEntries = async () => {
+  try {
+    glossaryEntries.value = (await api.glossaryGet()).data
+  } catch (error) {
+    console.error('Error fetching glossary terms', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Error Fetching Glossary',
+      detail: 'There was an error fetching glossary terms\n' + (error as AxiosError).message,
+      life: 3000,
+    })
+  } finally {
+    glossaryEntriesLoading.value = false
+  }
+}
+
+const addGlossaryTermDialogVisible = ref(false)
+const newGlossaryTerm = ref('')
+const newGlossaryTermLoading = ref(false)
+const newGlossaryTermError = ref('')
+const saveNewTerm = async () => {
+  newGlossaryTermLoading.value = true
+  try {
+    newGlossaryTermError.value = ''
+    // Save new term
+    const { data: entry } = await api.glossaryPost({ term: newGlossaryTerm.value })
+    glossaryEntries.value = glossaryEntries.value ? [...glossaryEntries.value, entry] : [entry]
+    // Hide dialog
+    addGlossaryTermDialogVisible.value = false
+  } catch (error) {
+    newGlossaryTermError.value = 'There was an error saving the new term'
+    console.error('Error saving new term', error)
+  } finally {
+    newGlossaryTermLoading.value = false
+  }
+}
 
 // Form validation setup
 const {
@@ -247,6 +255,7 @@ const onSubmit = handleSubmit(async (_values) => {
       // team: fields.selectedTeam.value.value,
       description: fields.description.value.value,
       solution: fields.solution.value.value || undefined,
+      glossary: selectedGlossaryEntries.value.map((entry) => entry.term),
       priority: fields.priority.value.value || undefined,
       status: fields.status.value.value,
       userOptions: userOptions as User[],
@@ -319,6 +328,10 @@ const dialogPT = {
     class: 'pt-5',
   },
 }
+
+onMounted(() => {
+  fetchGlossaryEntries()
+})
 </script>
 
 <template>
@@ -566,46 +579,87 @@ const dialogPT = {
                 <Label
                   for="glossary"
                   label="Glossary Terms"
-                  description="Select relevant glossary terms to include in the solution"
+                  description="Select glossary terms relevant to this case"
                   icon="pi-book"
                   class="mb-3"
                 />
                 <MultiSelect
-                  v-model="selectedGlossaryTerms"
-                  :options="glossaryTerms"
+                  v-model="selectedGlossaryEntries"
+                  :options="glossaryEntries ?? undefined"
                   :filter="true"
-                  optionLabel="name"
+                  optionLabel="term"
                   class="w-full"
+                  display="chip"
                   placeholder="Select glossary terms"
-                  panelClass="max-h-60 overflow-auto"
-                />
-
-                <Chips
-                  v-if="selectedGlossaryTerms.length"
-                  :value="selectedGlossaryTerms"
-                  class="mt-4"
-                  separator=", "
-                  removable
-                  @remove="
-                    (event) => {
-                      const removedTerm = event.value as GlossaryTerm // Type cast to GlossaryTerm
-                      removeGlossaryTerm(removedTerm)
+                  :loading="glossaryEntriesLoading"
+                  @click="
+                    () => {
+                      if (!glossaryEntries && !glossaryEntriesLoading) {
+                        fetchGlossaryEntries()
+                      }
                     }
                   "
-                />
-
-                <div class="mt-2 text-sm text-gray-600">
-                  Token count: {{ currentTokenCount }} / {{ tokenLimit }}
-                </div>
-                <Message
-                  v-if="currentTokenCount > tokenLimit"
-                  severity="warn"
-                  variant="simple"
-                  size="small"
-                  class="mt-2"
                 >
-                  Token limit exceeded! Remove some terms to proceed.
-                </Message>
+                  <template #header>
+                    <div class="font-medium px-3 py-2">Available Terms</div>
+                  </template>
+                  <template #footer>
+                    <div class="p-3 flex justify-between">
+                      <Button
+                        label="Add New"
+                        severity="secondary"
+                        text
+                        size="small"
+                        icon="pi pi-plus"
+                        @click="addGlossaryTermDialogVisible = true"
+                      />
+                      <Button
+                        label="Remove All"
+                        severity="danger"
+                        text
+                        size="small"
+                        icon="pi pi-times"
+                        @click="selectedGlossaryEntries = []"
+                      />
+                    </div>
+                  </template>
+                </MultiSelect>
+                <Dialog v-model:visible="addGlossaryTermDialogVisible" modal header="Add new Term">
+                  <div class="flex flex-col gap-2 mb-4">
+                    <div class="flex items-center gap-4">
+                      <label for="new-term" class="font-semibold">Term</label>
+                      <InputText
+                        v-model="newGlossaryTerm"
+                        id="new-term"
+                        class="flex-auto"
+                        autocomplete="off"
+                      />
+                    </div>
+                    <Message
+                      v-if="newGlossaryTermError"
+                      severity="error"
+                      variant="simple"
+                      size="small"
+                    >
+                      {{ newGlossaryTermError }}
+                    </Message>
+                  </div>
+                  <div class="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      label="Cancel"
+                      severity="secondary"
+                      @click="addGlossaryTermDialogVisible = false"
+                    ></Button>
+                    <Button
+                      type="button"
+                      label="Save"
+                      @click="saveNewTerm"
+                      :loading="newGlossaryTermLoading"
+                      :disabled="newGlossaryTermLoading || !newGlossaryTerm"
+                    ></Button>
+                  </div>
+                </Dialog>
               </div>
             </div>
           </AccordionContent>

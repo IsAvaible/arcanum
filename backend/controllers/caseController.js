@@ -92,7 +92,6 @@ exports.deleteCase = async (req, res) => {
       return res.status(404).json({ message: "Case not found" });
     }
 
-
     const attachments = caseItemToDelete.attachments;
 
     const deletedAttachmentIds = [];
@@ -101,9 +100,10 @@ exports.deleteCase = async (req, res) => {
       for (const attachment of attachments) {
         // Remove attachment links and delete orphaned attachments.
         await caseItemToDelete.removeAttachment(attachment);
-        const deletedId = await attachmentService.deleteAttachmentIfOrphaned(attachment);
+        const deletedId =
+          await attachmentService.deleteAttachmentIfOrphaned(attachment);
 
-        if(deletedId){
+        if (deletedId) {
           deletedAttachmentIds.push(deletedId);
         }
       }
@@ -118,11 +118,7 @@ exports.deleteCase = async (req, res) => {
       attachmentIds: deletedAttachmentIds,
     };
 
-  
-    console.log(
-      "Sending to LLM: ",
-      JSON.stringify(llmRequestData),
-    );
+    console.log("Sending to LLM: ", JSON.stringify(llmRequestData));
 
     // Send data to the LLM endpoint.
     const llmResponse = axios.post(
@@ -160,6 +156,7 @@ exports.createCase = [
         status,
         case_type,
         priority,
+        glossary,
       } = req.body;
 
       // Process uploaded files and create attachments.
@@ -178,6 +175,18 @@ exports.createCase = [
         createdAt: new Date(),
         updatedAt: new Date(),
       });
+
+      // Add glossary terms to the case.
+      if (Array.isArray(glossary)) {
+        for (const glossaryTerm of glossary) {
+          // findOrCreate => [instanz, created]
+          const [glossaryInstance] = await Glossary.findOrCreate({
+            where: { term: glossaryTerm },
+            defaults: { term: glossaryTerm },
+          });
+          await newCase.addGlossary(glossaryInstance);
+        }
+      }
 
       // Link attachments to the newly created case.
       if (attachmentInstances.length > 0) {
