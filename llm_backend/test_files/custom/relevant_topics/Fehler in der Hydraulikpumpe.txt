@@ -1,0 +1,14 @@
+Datum: 15. Januar 2025
+Autor: Lisa Müller
+
+Problem:
+Die Hydraulikpumpe der Stanze X200 zeigte während des Betriebs wiederholt Druckabfälle, was zu unpräzisen Schnitten führte.
+
+Analyse:
+Sichtprüfung der Hydraulikleitungen ergab keine sichtbaren Lecks.
+Der Hydraulikölstand war im normalen Bereich.
+Filter wurden überprüft – einer war stark verschmutzt.
+Lösung:
+Austausch des verschmutzten Filters.
+Nach dem Austausch keine weiteren Druckabfälle festgestellt.
+Empfehlung: Regelmäßige Wartung der Filter (monatlich).

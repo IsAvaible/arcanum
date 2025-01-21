@@ -7,7 +7,6 @@ from vectorstore import QdrantVectorstore, vector_db_save_cases, delete_entries_
 
 routes = Blueprint("routes", __name__)
 
-
 ### Defining Routes
 
 @app.route("/test", methods=["GET"])

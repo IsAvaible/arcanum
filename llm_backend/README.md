@@ -74,7 +74,7 @@ Generate Case(s) Diagramm
 ![generate case](https://github.com/user-attachments/assets/5fd53c91-312e-4e82-a966-a92ce84a29f3)
 
 ## LLM Chat
-![LLM Chat](https://github.com/user-attachments/assets/086f05c8-755c-4c9f-bfd4-3c2aa5b66f86)
+![IP - query (4)](https://github.com/user-attachments/assets/f0fb4a94-1093-4a6a-8437-ea71e9581be5)
 
 ### Beispiel Request:
 ```
