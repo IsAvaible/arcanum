@@ -2,34 +2,16 @@ import os
 import time
 
 import socketio
+from dotenv import load_dotenv
 from flask import Flask
 from flask_cors import CORS
 
+load_dotenv()
+
 app = Flask(__name__)
-# Add CORS
 CORS(app)
-# init a secret key
 app.secret_key = "super secret key"
 app.config["SECRET_KEY"] = "super secret key"
-# init SocketIO
-
-
-sio = socketio.Client(engineio_logger=True, logger=True, ssl_verify=False)
-connected = False
-while not connected:
-    try:
-        sio.connect("https://node_backend:3000")
-        print("Socket established")
-        connected = True
-    except Exception as ex:
-        print("Failed to establish initial connnection to server:", type(ex).__name__)
-        time.sleep(2)
-# init upload folder
-app.config["UPLOAD_FOLDER"] = "upload"
-@sio.event
-def connect():
-    print('Successfully connected to websocket server.')
-
 
 
 # create directories if not available
@@ -43,3 +25,21 @@ if not os.path.exists(temp_folder):
     os.makedirs(temp_folder)
 if not os.path.exists(qdrant_folder):
     os.makedirs(qdrant_folder)
+
+
+# init socket connection
+sio = socketio.Client(engineio_logger=False, logger=False, ssl_verify=False)
+
+connected = False
+while not connected:
+    try:
+        sio.connect("https://node_backend:3000")
+        print("Socket established")
+        connected = True
+    except Exception as ex:
+        print("Failed to establish initial connnection to server:", type(ex).__name__)
+        time.sleep(2)
+
+@sio.event
+def connect():
+    print('Successfully connected to websocket server.')

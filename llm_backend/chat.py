@@ -1,113 +1,114 @@
-import os
+import json
+import re
 
-from dotenv import load_dotenv
 from flask import jsonify
-from langchain_chroma import Chroma
-from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
-
-from prompts import get_system_prompt
-
-load_dotenv()
-
-AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
-AZURE_DEPLOYMENT_GPT = os.getenv("AZURE_DEPLOYMENT_GPT")
-AZURE_DEPLOYMENT_EMBEDDING = os.getenv("AZURE_DEPLOYMENT_EMBEDDING")
-OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
+from azure import get_llm
+from app import sio
 
 
-def chat(request):
-    if request.method == "POST":
-        prompt = request.form.get("prompt")
+def ask_question(request, vectorstore):
+    json_str = request.get_json(force=True)
+    socket_id = json_str["socketId"]
+    messages = json_str["context"]
+    latest_user_message = json_str["message"]
 
-        if not prompt:
-            return jsonify({"error": "No prompt provided"}), 400
+    messages_only_role_content = transform_messages_for_llm(messages)
 
-        #chat_counter = request.form.get("chat_counter")
+    if not latest_user_message:
+        return jsonify({"error": "No user message found"}), 400
 
-        llm = AzureChatOpenAI(
-            azure_endpoint=AZURE_ENDPOINT,
-            azure_deployment=AZURE_DEPLOYMENT_GPT,
-            openai_api_version=OPENAI_API_VERSION,
-            temperature=0,
-            max_tokens=None,
-            timeout=None,
-            max_retries=2,
-            streaming=True,
-        )
+    standalone_question = transform_to_standalone_question(json.dumps(messages_only_role_content))
+    relevant_vectors = vectorstore.search_from_query(standalone_question)
 
-        embedding_function = AzureOpenAIEmbeddings(
-            azure_endpoint=AZURE_ENDPOINT,
-            azure_deployment=AZURE_DEPLOYMENT_EMBEDDING,
-            api_version=OPENAI_API_VERSION,
-        )
-        vector_store = Chroma(
-            persist_directory=".chromadb/", embedding_function=embedding_function
-        )
-        # GET OLD MSGS
-        old_messages = []  ## from backend
+    replacement_dict = {}
+    context = ""
+    doc_number = 1
+    for vector in relevant_vectors:
+        doc = vector.payload
+        text = doc["text"]
+        metadata = doc["metadata"]
 
-        if old_messages:
-            all_msgs = "\n".join(x[1] for x in old_messages)
-            old_msgs = [
-                ("system", get_system_prompt("old_msgs")),
-                ("human", all_msgs + "That is the latest user query: " + prompt),
-            ]
-            new_prompt = llm.invoke(old_msgs).content
-            embedding_vector = embedding_function.embed_query(new_prompt)
-        else:
-            new_prompt = prompt
-            embedding_vector = embedding_function.embed_query(new_prompt)
-        matched_docs = vector_store.similarity_search_by_vector(embedding_vector)
-        unique_metadata = set()
+        if metadata["inserttype"] == "case":
+            text = f"Case content [doc_number:{doc_number}]:\n" + text
+            replacement_dict[doc_number] = "case:" + str(metadata["case_id"])
+        elif metadata["inserttype"] == "attachment-chunk":
+            text = metadata["filename"] + f" [doc_number:{doc_number}]:\n" + text
+            replacement_dict[doc_number] = "file:" + str(metadata["file_id"])
 
-        for doc in matched_docs:
-            case_id = doc.metadata.get("case_id")
-            filename = doc.metadata.get("filename")
+        doc_number += 1
 
-            # Erstelle ein Tuple aus case_id und filename, um Duplikate zu erkennen
-            metadata_tuple = (case_id, filename)
+        text += "\n\n---\n\n"
 
-            # Wenn diese Kombination noch nicht gesehen wurde, füge das Dokument zur Liste hinzu
-            if metadata_tuple not in unique_metadata:
-                unique_metadata.add(metadata_tuple)
+        context += text
 
-        context = ""
-        for result in matched_docs:
-            context += f"Document Case-ID: {result.metadata.get('case_id')} Filename: {result.metadata.get('filename')} : {result.page_content}\n\n"
+    user_query = f"{latest_user_message}"
 
-        # Alte Nachrichten sammeln und in der Session speichern
+    llm = get_llm()
 
-        human_query_tup_without_context = ("human", new_prompt)
-        human_query_tup_with_context = (
-            "human",
-            "Please take this as input data: " + context,
-        )
+    # Use the history from json_str
+    prompt_messages = [
+        {"role": "system",
+         "content": "You are a helpful assistant. Answer user questions based solely on the provided context. "
+                    "This context includes machine problem cases and their solutions, manuals, notes, transcribed and textualized video, audio, and image content, and other related documents. "
+                    "Always respond in the same language as the user."
+                    "Cite the context in your response using the format '[doc_number:number]', where 'number' is the document number provided in the context and 'doc_number' remaining constant for proper identification. "
+                    "Do not combine citations from multiple documents (e.g., DO NOT write [doc_number:1:2]). Only one number per reference is allowed. Adhere to the specified citing format regardless of previous responses."
+         },
+        *messages_only_role_content,
+        {"role": "system", "content": f"CONTEXT for next query: {context}"},
+        {"role": "user", "content": user_query},
+    ]
+    stream = llm.stream(prompt_messages)
 
-        messages = [
-            ("system", get_system_prompt("chat")),
-        ]
-        # Alle Nachrichten hinzufügen
-        if old_messages:
-            for msg in old_messages:
-                messages.append(msg)
+    concatenated_tokens = ""
+    for stream_token in stream:
+        token = stream_token.content
+        concatenated_tokens += token
+        edited_reponse = replace_doc_number(concatenated_tokens, replacement_dict)
+        sio.emit('llm_message', {'message': edited_reponse, 'socket_id': socket_id})
 
-        messages.append(human_query_tup_with_context)
-        messages.append(human_query_tup_without_context)
+    ai_message = replace_doc_number(edited_reponse, replacement_dict)
+    sio.emit('llm_end', {'message': ai_message, 'socket_id': socket_id})
 
-        # LLM-Response streamen
-        result = ""
-        response_generator = llm.stream(messages)
+    msg = {
+        "message": ai_message
+    }
+    return jsonify(msg), 200
 
-        for response_chunk in response_generator:
-            result_chunk = response_chunk.content
-            result += result_chunk
+def transform_to_standalone_question(chat_history):
+    system_prompt = """
+        You are an AI assistant. Your task is to transform the latest human message in the chat history into a standalone question that can be understood without the previous context and in the same language it is written in.
+        
+        For example, if the AI says "I am feeling tired" and the human says "Why", the question "Why" wouldn't be understandable without the context. It should be transformed to "Why are you feeling tired?".
+        
+        Here is the chat history:
+        {chat_history}
+        
+        Please provide the standalone question based on the latest human message. DO NOT include anything else.
+    """
+
+    llm = get_llm()
+
+    prompt = system_prompt.format(chat_history=chat_history)
+    response = llm([{"role": "system", "content": prompt}]).content
+
+    return response
+
+def transform_messages_for_llm(messages):
+    return [{'role': message['role'], 'content': message['content']} for message in messages[:-1]]
 
 
-        return "", 200
 
+def replace_doc_number(input_string, replacement_dict):
+    # Define the regex pattern to match [doc_number:number]
+    pattern = r'\[doc_number:(\d+)\]'
 
-def chat_message_to_json(message):
-    role, content = message
-    content = content.strip('"')
-    msg = {"role": role, "content": content}
-    return msg
+    # Function to determine the replacement string based on the number
+    def replacement_function(match):
+        number = match.group(1)
+        return f"[{replacement_dict[int(number)]}]"
+
+    # Use re.sub with a function to replace the pattern with the appropriate string
+    result = re.sub(pattern, replacement_function, input_string)
+
+    return result

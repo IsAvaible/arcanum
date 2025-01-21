@@ -2,6 +2,8 @@ const { Request, Response, NextFunction } = require("express");
 const { z, ZodError } = require("zod");
 const { StatusCodes } = require("http-status-codes");
 const { body, validationResult } = require("express-validator");
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 
 /**
  * Middleware to validate request data using a Zod schema.
@@ -27,12 +29,12 @@ function validateData(schema) {
         }));
         res
           .status(StatusCodes.BAD_REQUEST)
-          .json({ message: "Invalid data", details: errorMessages });
+          .json({ error: "Invalid data", details: errorMessages });
       } else {
         // Handle unexpected errors.
         res
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
-          .json({ message: "Internal Server Error" });
+          .json({ error: "Internal Server Error" });
       }
     }
   };
@@ -60,11 +62,41 @@ function escapeData(fields) {
       if (!errors.isEmpty()) {
         return res
           .status(StatusCodes.BAD_REQUEST)
-          .json({ message: errors.array() });
+          .json({ errors: errors.array() });
       }
       next();
     },
   ];
 }
 
-module.exports = { validateData, escapeData };
+/**
+ * Middleware to authenticate a JSON Web Token (JWT).
+ *
+ * This middleware checks for the presence of a JWT in the "x-auth-token" header of the request.
+ * If the token is not provided, it sends a `401 Unauthorized` response.
+ * If the token is provided, it verifies the token using the secret key from the environment variables.
+ * If the token is valid, it attaches the decoded token to the `req.user` property and calls `next()` to proceed.
+ * If the token is invalid, it sends a `400 Bad Request` response.
+ *
+ * @param {Request} req - The Express request object.
+ * @param {Response} res - The Express response object.
+ * @param {NextFunction} next - The next middleware function in the stack.
+ */
+const authenticateJWT = (req, res, next) => {
+  const token = req.cookies["x-auth-token"];
+  console.log(token);
+
+  if (!token) return res.status(401).send("Access denied. No token provided.");
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("Verified jwtToken");
+    req.user = decoded;
+
+    next();
+  } catch (ex) {
+    res.status(401).send("Invalid token.");
+  }
+};
+
+module.exports = { validateData, escapeData, authenticateJWT };

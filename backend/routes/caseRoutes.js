@@ -1,13 +1,16 @@
 const express = require("express");
 const router = express.Router();
 const caseController = require("../controllers/caseController");
+const jwtController = require("../controllers/jwtController");
 const multerMiddleware = require("../middlewares/multerMiddleware");
 const {
   validateData,
   escapeData,
+  authenticateJWT,
 } = require("../middlewares/validationMiddleware");
 const { caseSchema } = require("../schemas/caseSchemas");
 const attachmentController = require("../controllers/attachmentController");
+const { generateJWT } = require("../controllers/jwtController");
 
 /**
  * @route GET /cases/
@@ -15,7 +18,7 @@ const attachmentController = require("../controllers/attachmentController");
  * @returns {Object[]} 200 - An array of case objects.
  * @returns {Error} 500 - Internal server error.
  */
-router.get("/cases/", caseController.showCaseList);
+router.get("/cases/",authenticateJWT, caseController.showCaseList);
 
 /**
  * @route GET /cases/:id
@@ -25,7 +28,7 @@ router.get("/cases/", caseController.showCaseList);
  * @returns {Error} 404 - Case not found.
  * @returns {Error} 500 - Internal server error.
  */
-router.get("/cases/:id", caseController.showCaseDetail);
+router.get("/cases/:id", authenticateJWT, caseController.showCaseDetail);
 
 /**
  * @route POST /cases/
@@ -45,6 +48,7 @@ router.get("/cases/:id", caseController.showCaseDetail);
 router.post(
   "/cases/",
   multerMiddleware,
+  authenticateJWT,
   escapeData([
     "title",
     "description",
@@ -75,7 +79,7 @@ router.post(
  * @returns {Error} 404 - Case not found.
  * @returns {Error} 500 - Internal server error.
  */
-router.put("/cases/:id", multerMiddleware, caseController.updateCase);
+router.put("/cases/:id", authenticateJWT,multerMiddleware, caseController.updateCase);
 
 /**
  * @route DELETE /cases/:id
@@ -85,7 +89,8 @@ router.put("/cases/:id", multerMiddleware, caseController.updateCase);
  * @returns {Error} 404 - Case not found.
  * @returns {Error} 500 - Internal server error.
  */
-router.delete("/cases/:id", caseController.deleteCase);
+router.delete("/cases/:id", authenticateJWT, caseController.deleteCase);
+
 
 /**
  * @route GET /cases/attachments/:attachmentId
@@ -97,6 +102,7 @@ router.delete("/cases/:id", caseController.deleteCase);
  */
 router.get(
   "/cases/attachments/:attachmentId",
+  authenticateJWT,
   attachmentController.getAttachment,
 );
 
@@ -111,6 +117,7 @@ router.get(
  */
 router.get(
   "/cases/:id/attachments/:attachmentId",
+  authenticateJWT,
   attachmentController.getAttachment,
 );
 
@@ -124,6 +131,7 @@ router.get(
  */
 router.get(
   "/cases/attachments/:attachmentId/download",
+  authenticateJWT,
   attachmentController.downloadAttachment,
 );
 
@@ -138,6 +146,7 @@ router.get(
  */
 router.get(
   "/cases/:id/attachments/:attachmentId/download",
+  authenticateJWT,
   attachmentController.downloadAttachment,
 );
 
@@ -152,6 +161,7 @@ router.get(
  */
 router.post(
   "/cases/:id/attachments",
+  authenticateJWT,
   attachmentController.addAttachmentsToCase,
 );
 
@@ -166,6 +176,7 @@ router.post(
  */
 router.delete(
   "/cases/:id/attachments/:attachmentId",
+  authenticateJWT,
   attachmentController.deleteAttachmentFromCase,
 );
 
@@ -181,6 +192,7 @@ router.delete(
  */
 router.post(
   "/createCaseFromFiles",
+  authenticateJWT,
   multerMiddleware,
   escapeData(["socketId"]),
   caseController.createCaseFromFiles,
@@ -201,6 +213,8 @@ router.post(
  * @returns {Error} 404 - Case not found.
  * @returns {Error} 500 - Internal server error.
  */
-router.put("/confirmCase/:id", caseController.confirmCase);
+router.put("/confirmCase/:id",authenticateJWT ,caseController.confirmCase);
+
+router.get("/generateJWT", jwtController.generateJWT);
 
 module.exports = router;
