@@ -37,7 +37,17 @@ app.use(
       "authorization",
       "user-agent",
     ],
-    exposedHeaders: "*",
+    exposedHeaders: [
+      "authorization",
+      "origin",
+      "content-type",
+      "content-disposition",
+      "content-length",
+      "content-range",
+      "date",
+      "connection",
+      "keep-alive",
+    ],
     credentials: true,
   }),
 );
