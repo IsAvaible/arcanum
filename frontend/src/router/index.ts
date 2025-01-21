@@ -41,6 +41,11 @@ const router = createRouter({
       component: CaseListView,
     },
     {
+      path: '/cases/delete',
+      name: 'case-delete-all',
+      component: CaseListView,
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: NotFoundView,

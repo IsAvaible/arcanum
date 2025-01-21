@@ -6,7 +6,9 @@ import Checkbox from 'primevue/checkbox'
 import { WarningTriangleSolid } from '@iconoir/vue'
 import { useVModel } from '@vueuse/core'
 import type { Case } from '@/api'
+import { useToast } from 'primevue'
 
+const toast = useToast()
 const dialog = ref()
 
 interface Props {
@@ -24,7 +26,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits(['update:visible'])
 
 const dialogVisible = useVModel(props, 'visible', emit)
-const titles = ref<string[]>(props.cases.map((c) => c.title))
+const titles = ref<string[]>(props.cases.map((c) => `${c.title} (${c.id})`))
 const confirm = ref(false)
 const confirmMissing = ref(false)
 const deleting = ref(false)
@@ -40,8 +42,25 @@ const deleteCase = async () => {
   try {
     // Call the onDelete function for each case
     await Promise.all(props.cases.map(props.onDelete))
+
+    toast.add({
+      severity: 'success',
+      summary: props.cases.length > 1 ? 'Cases Deleted' : 'Case Deleted',
+      detail:
+        props.cases.length > 1
+          ? 'The cases have been successfully deleted.'
+          : 'The case has been successfully deleted.',
+      life: 3000,
+    })
   } catch (_error) {
     deleting.value = false
+
+    toast.add({
+      severity: 'error',
+      summary: 'Deletion Failed',
+      detail: 'Failed to delete the case.',
+      life: 3000,
+    })
   }
 
   // Close the dialog
@@ -65,18 +84,17 @@ const deleteCase = async () => {
       </div>
     </template>
 
-    <section class="max-w-sm flex flex-col gap-y-6">
+    <section class="max-w-sm flex flex-col gap-y-6 text-center">
       <div>
         <h3 class="font-semibold text-lg text-black">Confirm Deletion</h3>
+        <p>Are you sure you want to delete the case{{ titles.length > 1 ? 's' : '' }}</p>
         <p>
-          Are you sure you want to delete the case(s) <strong>{{ titles.join(', ') }}</strong
-          >?
-          <br />
-          This action is permanent and cannot be undone.
+          <strong>{{ titles.join(' & ') }}?</strong>
         </p>
+        <p>This action is permanent and cannot be undone.</p>
       </div>
 
-      <div class="flex flex-row gap-x-2 items-center">
+      <div class="flex flex-row gap-x-2 items-center justify-center">
         <Checkbox
           @click="confirmMissing = false"
           v-model="confirm"
@@ -98,7 +116,7 @@ const deleteCase = async () => {
           label="Delete"
           @click="deleteCase"
           icon="pi pi-trash"
-          loading-icon="pi pi-trash"
+          loading-icon="pi pi-spin pi-spinner"
           class="bg-red-700 border-red-700 hover:enabled:bg-red-800 hover:enabled:border-red-800"
         />
       </div>
