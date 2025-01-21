@@ -25,7 +25,7 @@ module.exports = {
       await queryInterface.sequelize.query(
         `
         UPDATE "Cases"
-        SET "assignees" = ARRAY["assignee_temp"]
+        SET "assignees" = ARRAY(SELECT jsonb_array_elements_text("assignee_temp")::text)
         WHERE "assignee_temp" IS NOT NULL;
         `,
         { transaction: t },
