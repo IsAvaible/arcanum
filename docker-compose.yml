@@ -45,6 +45,7 @@ services:
       - ./llm_backend/.env
     volumes:
       - ./llm_backend:/llm_backend
+      - qdrant-data:/llm_backend/qdrant-data
     depends_on:
       - node_backend
     working_dir: /llm_backend
@@ -67,6 +68,7 @@ services:
 
 volumes:
   postgres-data:
+  qdrant-data:
 
 networks:
   shared_network:
