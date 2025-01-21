@@ -21,7 +21,7 @@ def unique_contexts(contexts):
     return unique_contexts
 
 def rerank_contexts(contexts, user_query):
-    cross_encoder_model = CrossEncoder('cross-encoder/msmarco-MiniLM-L6-en-de-v1', max_length=4096)
+    cross_encoder_model = CrossEncoder('cross-encoder/msmarco-MiniLM-L6-en-de-v1', max_length=512)
 
     sentence_pairs = [[user_query, hit.payload["text"]] for hit in contexts]
     similarity_scores = cross_encoder_model.predict(sentence_pairs)
@@ -43,7 +43,7 @@ def query_hyde(query, vectorstore):
             "In this case you need to create a hypothetical case. A case is a problem someone had, that already has been solved." \
             f"{format_instructions}" \
             "MAKE THE DOCUMENT AS SHORT AS POSSIBLE" \
-            "ANSWER IN SAME LANGUAGE AS THE QUERY"
+            "USE SAME LANGUAGE AS THE USER QUERY LANGUAGE"
     
 
     messages = [
@@ -108,9 +108,9 @@ def ask_question(request, vectorstore):
     relevant_vectors = []
     start_time_futures = time.time()
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        future_standard = executor.submit(timed(query_standard), standalone_question, vectorstore)
         future_hyde = executor.submit(timed(query_hyde), standalone_question, vectorstore)
         future_multiple = executor.submit(timed(query_multiple), standalone_question, vectorstore)
+        future_standard = executor.submit(timed(query_standard), standalone_question, vectorstore)        
 
         time_standard, relevant_vectors_standard = future_standard.result()
         time_hyde, relevant_vectors_hyde = future_hyde.result()
