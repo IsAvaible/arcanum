@@ -282,11 +282,14 @@ const handleSave = handleSubmit(
         caseDetails.value = (
           await api.confirmCaseIdPut({
             id: Number(caseId.value),
+            caseType: values.case_type,
             ...values,
           })
         ).data
       } else {
-        caseDetails.value = (await api.casesIdPut({ id: Number(caseId.value), ...values })).data
+        caseDetails.value = (
+          await api.casesIdPut({ id: Number(caseId.value), caseType: values.case_type, ...values })
+        ).data
       }
       resetForm({ values: values })
       await nextTick(() => {
