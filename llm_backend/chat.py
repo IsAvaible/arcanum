@@ -30,7 +30,6 @@ def rerank_contexts(contexts, user_query, cross_encoder_model):
     similarity_scores = cross_encoder_model.predict(sentence_pairs)
     
     for idx in range(len(contexts)):
-        # Convert the similarity score to a float to avoid ambiguity during sorting
         contexts[idx].score = float(similarity_scores[idx])
 
     # Sort list by CrossEncoder scores in descending order
@@ -44,10 +43,11 @@ def query_hyde(query, vectorstore):
     case_parser_json = JsonOutputParser(pydantic_object=Case)
     format_instructions = case_parser_json.get_format_instructions()
     prompt = "Generate a hypothetical document that thoroughly addresses or explains the following query or problem. The document should include relevant details, examples, and potential solutions to provide a comprehensive response:" \
-            "If the answer is not known or clear, confidently create a plausible and logical response based on the context. The document must always provide an answer. Do not include any additional information, commentary, or explanations outside of the hypothetical document. Ensure the document is precise, well-structured, and complete." \
-            "In this case you need to create a hypothetical case. A case is a problem someone had, that already has been solved." \
+            "If the answer is not known or clear, confidently create a plausible and logical response based on the context. The document must always provide an answer." \
+            "Do not include any additional information, commentary, or explanations outside of the hypothetical document. Ensure the document is precise, well-structured, and complete." \
+            "In the follwing user example you need to create a hypothetical case. A case is a problem someone had, that already has been solved." \
             f"{format_instructions}" \
-            "MAKE THE DOCUMENT AS SHORT AS POSSIBLE" \
+            "MAKE YOUR ANSWER AS SHORT AS POSSIBLE" \
             "USE SAME LANGUAGE AS THE USER QUERY LANGUAGE"
     
 
@@ -73,7 +73,7 @@ def query_hyde(query, vectorstore):
 
     thread = threading.Thread(target=stream_response)
     thread.start()
-    thread.join(timeout=TIMEOUT_QUERY_HYDE)  # Warte maximal 4 Sekunden auf den Thread
+    thread.join(timeout=TIMEOUT_QUERY_HYDE)  # Warte maximal TIMEOUT_QUERY_HYDE Sekunden auf den Thread # Wird verwendet, um den user nicht zu lange auf eine antwort warten zu lassen
 
     if thread.is_alive():
         stop_event.set()  # Signalisiert dem Thread, dass er stoppen soll
@@ -159,7 +159,7 @@ def ask_question(request, vectorstore, cross_encoder):
     end_time_rerank = time.time()
     print(f"Time for reranking: {end_time_rerank - start_time_rerank} seconds")
     
-    # only get the top 5 reranked vectors
+    # only get the specified amount of documents
     contexts_for_llm = reranked_vectors[:AMOUNT_DOCUMENTS_LLM]
 
     replacement_dict = {}
@@ -189,7 +189,6 @@ def ask_question(request, vectorstore, cross_encoder):
 
     llm = get_llm()
 
-    # Use the history from json_str
     prompt_messages = [
         {"role": "system",
          "content": "You are a helpful assistant. Answer user questions based solely on the provided context. "
@@ -198,7 +197,7 @@ def ask_question(request, vectorstore, cross_encoder):
                     "Cite the context in your response using the format '[doc_number:number]', where 'number' is the document number provided in the context and 'doc_number' remaining constant for proper identification. "
                     "Do not combine citations from multiple documents (e.g., DO NOT write [doc_number:1:2]). Only one number per reference is allowed. Adhere to the specified citing format regardless of previous responses."
                     "Your primary goal is to provide the user the most relevant files so they can solve their problem."
-                    "prefer to give the user relevant cases instead of attachments. But even better is to give the user both the case and the attachment."
+                    "Prefer providing the user with relevant cases instead of attachments. If there are no relevant cases, provide the user with the relevant attachment(s)."
          },
         *messages_only_role_content,
         {"role": "system", "content": f"CONTEXT for next query: {context}"},
