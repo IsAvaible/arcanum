@@ -334,9 +334,38 @@ const formatDate = (date: Date, ago: boolean = false) => {
 
 // Computed Properties for KPI Metrics
 const totalCases = computed(() => cases.length)
-const resolvedCases = computed(() => cases.filter((c) => c.status === 'Closed').length)
-const totalCasesTrend = ref(15) // Example: 15% increase
-const resolvedCasesTrend = ref(10) // Example: 10% increase
+const resolvedCases = computed(
+  () => cases.filter((c) => c.status === 'Closed' || c.status === 'Solved').length,
+)
+const totalCasesTrend = computed(() => {
+  const previousPeriodCases = cases.filter((caseItem) => {
+    const updatedAt = new Date(caseItem.updatedAt)
+    const now = new Date()
+    const oneWeekAgo = new Date(now.setDate(now.getDate() - 7))
+    return updatedAt >= oneWeekAgo && updatedAt < now
+  }).length
+  const currentPeriodCases = cases.length
+  return Math.min(((currentPeriodCases - previousPeriodCases) / previousPeriodCases) * 100, 100)
+})
+const resolvedCasesTrend = computed(() => {
+  const previousPeriodResolved = cases.filter((caseItem) => {
+    const updatedAt = new Date(caseItem.updatedAt)
+    const now = new Date()
+    const oneWeekAgo = new Date(now.setDate(now.getDate() - 7))
+    return (
+      (caseItem.status === 'Closed' || caseItem.status === 'Solved') &&
+      updatedAt >= oneWeekAgo &&
+      updatedAt < now
+    )
+  }).length
+  const currentPeriodResolved = cases.filter(
+    (caseItem) => caseItem.status === 'Closed' || caseItem.status === 'Solved',
+  ).length
+  return Math.min(
+    ((currentPeriodResolved - previousPeriodResolved) / previousPeriodResolved) * 100,
+    100,
+  )
+})
 const averageResolutionTime = ref(24) // Example: 24 hours
 const resolutionTimeTrend = ref(-5) // Example: 5% decrease
 
@@ -371,7 +400,7 @@ watch(path, (newPath, oldPath) => {
           title="Total Cases"
           :value="totalCases"
           :trend="totalCasesTrend"
-          trend-description="from last month"
+          trend-description="from last week"
           icon="pi pi-file"
         />
 
@@ -379,7 +408,7 @@ watch(path, (newPath, oldPath) => {
           title="Resolved Cases"
           :value="resolvedCases"
           :trend="resolvedCasesTrend"
-          trend-description="resolution rate this month"
+          trend-description="resolution rate this week"
           icon="pi pi-check-circle"
         />
 
