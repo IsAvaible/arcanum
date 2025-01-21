@@ -2,12 +2,11 @@ from flask import request, Blueprint, jsonify
 
 from app import app, sio
 from generate import generate
-from chat import ask_question, get_cross_encoder
+from chat import ask_question
 from vectorstore import QdrantVectorstore, vector_db_save_cases, delete_entries_from_vector_db
 
 routes = Blueprint("routes", __name__)
 
-cross_encoder = get_cross_encoder()
 ### Defining Routes
 
 @app.route("/test", methods=["GET"])
@@ -35,7 +34,7 @@ def generate_case():
 def ask_question_():
     if request.method == "POST":
         with QdrantVectorstore() as vectorstore:
-            return ask_question(request, vectorstore, cross_encoder)
+            return ask_question(request, vectorstore)
 
 
 @app.route("/save_to_vector_db", methods=["POST"])

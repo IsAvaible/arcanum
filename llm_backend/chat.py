@@ -13,8 +13,10 @@ import threading
 from case import Case
 from langchain_core.output_parsers import JsonOutputParser
 
+cross_encoder = CrossEncoder('cross-encoder/msmarco-MiniLM-L6-en-de-v1', max_length=512)
+
 def get_cross_encoder():
-    return CrossEncoder('cross-encoder/msmarco-MiniLM-L6-en-de-v1', max_length=512)
+    return cross_encoder
 
 def unique_contexts(contexts):
     unique_contexts = []
@@ -116,13 +118,16 @@ def timed(func):
         return elapsed, res
     return _w
 
-def ask_question(request, vectorstore, cross_encoder):
+def ask_question(request, vectorstore):
+    cross_encoder = get_cross_encoder()
     AMOUNT_DOCUMENTS_LLM = int(os.environ.get("AMOUNT_DOCUMENTS_LLM"))
 
     json_str = request.get_json(force=True)
     socket_id = json_str["socketId"]
     messages = json_str["context"]
     latest_user_message = json_str["message"]
+
+    sio.emit('llm_message', {'message': 'Searching for relevant files...', 'socket_id': socket_id})
 
     messages.append({'role': 'user', 'content': latest_user_message})
 
