@@ -224,7 +224,7 @@ import Skeleton from 'primevue/skeleton'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 
-import type { GlossaryEntry } from '@/api'
+import type { GlossaryEntry, ModelError } from '@/api'
 import type { AxiosError } from 'axios'
 
 import { normalize as removeDiacritics } from 'normalize-diacritics'
@@ -471,7 +471,10 @@ const deleteEntry = async (entry: GlossaryEntry) => {
     toast.add({
       severity: 'error',
       summary: 'Error',
-      detail: 'An error occurred while deleting the entry\n' + (error as AxiosError).message,
+      detail:
+        'An error occurred while deleting the entry\n' +
+        (((error as AxiosError).response?.data as ModelError)?.message ??
+          (error as AxiosError).message),
       life: 3000,
     })
 
