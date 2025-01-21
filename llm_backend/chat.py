@@ -23,13 +23,8 @@ def unique_contexts(contexts):
 def rerank_contexts(contexts, user_query):
     cross_encoder_model = CrossEncoder('cross-encoder/msmarco-MiniLM-L6-en-de-v1', max_length=4096)
 
-    # Prepare sentence pairs for prediction
     sentence_pairs = [[user_query, hit.payload["text"]] for hit in contexts]
-    #pprint.pprint(sentence_pairs)
-
-    # Predict similarity scores with CrossEncoder (this automatically handles truncation)
     similarity_scores = cross_encoder_model.predict(sentence_pairs)
-    
     
     for idx in range(len(contexts)):
         # Convert the similarity score to a float to avoid ambiguity during sorting
@@ -37,11 +32,6 @@ def rerank_contexts(contexts, user_query):
 
     # Sort list by CrossEncoder scores in descending order
     contexts = sorted(contexts, key=lambda x: x.score, reverse=True)
-
-    # Print top hits with CrossEncoder scores
-    # print("Top 5 hits with CrossEncoder:")
-    # for hit in hits[:5]:  # Limit to top 5 hits
-    #     print("\t{:.3f}\t{}".format(hit["cross-encoder_score"], hit["_id"]))
 
     return contexts
 
@@ -224,8 +214,6 @@ def transform_to_standalone_question(chat_history):
 
 def transform_messages_for_llm(messages):
     return [{'role': message['role'], 'content': message['content']} for message in messages]
-
-
 
 def replace_doc_number(input_string, replacement_dict):
     # Define the regex pattern to match [doc_number:number]
