@@ -3,6 +3,7 @@ import os
 import subprocess
 
 import cv2
+from flask import abort
 
 from app import app, sio
 from image import encode_image, image_to_openai
@@ -53,7 +54,7 @@ def cut_video_segments(input_file, filehash, segment_duration=split_secs):
         subprocess.run(command, check=True)
         return output_path
     except subprocess.CalledProcessError as e:
-        print(f"Error occurred while splitting the video: {e}")
+        abort(500, description=f"Error occurred while splitting the video: {e}")
 
 
 def extract_data_from_video(video_path, filehash):
@@ -81,9 +82,9 @@ def extract_data_from_video(video_path, filehash):
     # get one frame each 2 seconds if video is under 10 minutes
     # get one frame each 5 seconds if video is over 10 minutes
     if duration < 600:
-        vf_filter = "fps=1/2 ,scale=320:-1"
+        vf_filter = "fps=1/12 ,scale=320:-1"
     else:
-        vf_filter = "fps=1/10 ,scale=320:-1"
+        vf_filter = "fps=1/20 ,scale=320:-1"
 
     output_pattern = os.path.join(frames_path, "frame_%04d.jpg")
 
@@ -101,7 +102,7 @@ def extract_data_from_video(video_path, filehash):
         subprocess.run(command, check=True)
         print(f"Saved frames: {output_pattern} ")
     except subprocess.CalledProcessError as e:
-        print(f"Error FFMPEG (Frame Extraction): {e}")
+        abort(500, description=f"Error FFMPEG (Frame Extraction): {e}")
 
     # we also need to transcribe the audio in the video
     audio_path = os.path.join(
@@ -125,7 +126,7 @@ def extract_data_from_video(video_path, filehash):
         subprocess.run(command, check=True)
         print(f"Saved Audio in {audio_output}")
     except subprocess.CalledProcessError as e:
-        print(f"Error FFMPEG (Audio Extraction): {e}")
+        abort(500, description=f"Error FFMPEG (Audio Extraction): {e}")
 
     # return path of frames and audio file
     return frames_path, audio_output, duration
@@ -142,7 +143,7 @@ def process_segments(frames, transcription, duration, socket_id):
     seconds = round(duration / len(frames))
     # calculate how many rounds we need to analyze the frames
     # here we are dividing by 49 and rounding that value up
-    frame_segments = math.floor(len(frames) / 25)
+    frame_segments = math.floor(len(frames) / 50)
     data = {
         "video_summary": {
             "segments": []
@@ -167,7 +168,7 @@ def process_segments(frames, transcription, duration, socket_id):
         video_summary = ""
 
         total_iterations = len(frames)
-        max_group_size = 25
+        max_group_size = 50
 
         # Berechnung der Gruppen
         groups = [max_group_size] * (total_iterations // max_group_size)

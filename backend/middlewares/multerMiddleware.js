@@ -72,7 +72,9 @@ module.exports = (req, res, next) => {
       // Handle unknown errors.
       return res
         .status(500)
-        .json({ message: "An unknown error occurred during the upload." });
+        .json({
+          message: "An unknown error occurred during the upload. " + err,
+        });
     }
     // Proceed to the next middleware if uploads are successful.
     next();

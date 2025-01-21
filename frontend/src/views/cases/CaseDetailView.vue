@@ -34,7 +34,7 @@ import ScrollFadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
 
 // Types
 import type { AxiosError } from 'axios'
-import type { Case, Attachment, GlossaryEntry } from '@/api'
+import type { Case, Attachment, GlossaryEntry, ModelError } from '@/api'
 import { CaseCaseTypeEnum } from '@/api'
 
 // Functions
@@ -90,7 +90,9 @@ const fetchCase = async () => {
       inEditMode.value = true
     }
   } catch (err) {
-    error.value = (err as AxiosError).message
+    console.error(err)
+    error.value =
+      ((err as AxiosError).response?.data as ModelError)?.message ?? (err as AxiosError).message
   } finally {
     loading.value = false
   }
@@ -185,7 +187,10 @@ const handleSave = handleSubmit(
       toast.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'An error occurred while saving the case\n' + (error as AxiosError).message,
+        detail:
+          'An error occurred while saving the case\n' +
+          (((error as AxiosError).response?.data as ModelError)?.message ??
+            (error as AxiosError).message),
         life: 3000,
       })
       console.error(error)
@@ -386,7 +391,10 @@ const uploadFiles = async () => {
       toast.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'An error occurred while uploading the files\n' + (error as AxiosError).message,
+        detail:
+          'An error occurred while uploading the files\n' +
+          (((error as AxiosError).response?.data as ModelError)?.message ??
+            (error as AxiosError).message),
         life: 3000,
       })
 
@@ -421,7 +429,10 @@ const deleteAttachment = async (attachment: Attachment) => {
     toast.add({
       severity: 'error',
       summary: 'Error',
-      detail: 'An error occurred while deleting the file\n' + (error as AxiosError).message,
+      detail:
+        'An error occurred while deleting the file\n' +
+        (((error as AxiosError).response?.data as ModelError)?.message ??
+          (error as AxiosError).message),
       life: 3000,
     })
     console.error(error)
@@ -464,7 +475,10 @@ const openAttachmentInDrawer = async (attachment: Attachment) => {
       toast.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'An error occurred while downloading the file\n' + (error as AxiosError).message,
+        detail:
+          'An error occurred while downloading the file\n' +
+          (((error as AxiosError).response?.data as ModelError)?.message ??
+            (error as AxiosError).message),
         life: 3000,
       })
       console.error(error)
