@@ -1,5 +1,6 @@
 import json
 import re
+import os
 
 from flask import jsonify
 from azure import get_llm, get_llm_custom
@@ -38,6 +39,8 @@ def rerank_contexts(contexts, user_query, cross_encoder_model):
     return contexts
 
 def query_hyde(query, vectorstore):
+    TIMEOUT_QUERY_HYDE = int(os.environ.get("TIMEOUT_QUERY_HYDE"))
+    
     case_parser_json = JsonOutputParser(pydantic_object=Case)
     format_instructions = case_parser_json.get_format_instructions()
     prompt = "Generate a hypothetical document that thoroughly addresses or explains the following query or problem. The document should include relevant details, examples, and potential solutions to provide a comprehensive response:" \
@@ -70,7 +73,7 @@ def query_hyde(query, vectorstore):
 
     thread = threading.Thread(target=stream_response)
     thread.start()
-    thread.join(timeout=4)  # Warte maximal 4 Sekunden auf den Thread
+    thread.join(timeout=TIMEOUT_QUERY_HYDE)  # Warte maximal 4 Sekunden auf den Thread
 
     if thread.is_alive():
         stop_event.set()  # Signalisiert dem Thread, dass er stoppen soll
@@ -114,6 +117,8 @@ def timed(func):
     return _w
 
 def ask_question(request, vectorstore, cross_encoder):
+    AMOUNT_DOCUMENTS_LLM = int(os.environ.get("AMOUNT_DOCUMENTS_LLM"))
+
     json_str = request.get_json(force=True)
     socket_id = json_str["socketId"]
     messages = json_str["context"]
@@ -155,7 +160,7 @@ def ask_question(request, vectorstore, cross_encoder):
     print(f"Time for reranking: {end_time_rerank - start_time_rerank} seconds")
     
     # only get the top 5 reranked vectors
-    contexts_for_llm = reranked_vectors[:5]
+    contexts_for_llm = reranked_vectors[:AMOUNT_DOCUMENTS_LLM]
 
     replacement_dict = {}
     context = ""
