@@ -5,6 +5,9 @@ import socketio
 from dotenv import load_dotenv
 from flask import Flask
 from flask_cors import CORS
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 
 load_dotenv()
 

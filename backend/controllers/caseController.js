@@ -92,7 +92,6 @@ exports.deleteCase = async (req, res) => {
       return res.status(404).json({ message: "Case not found" });
     }
 
-
     const attachments = caseItemToDelete.attachments;
 
     const deletedAttachmentIds = [];
@@ -101,9 +100,10 @@ exports.deleteCase = async (req, res) => {
       for (const attachment of attachments) {
         // Remove attachment links and delete orphaned attachments.
         await caseItemToDelete.removeAttachment(attachment);
-        const deletedId = await attachmentService.deleteAttachmentIfOrphaned(attachment);
+        const deletedId =
+          await attachmentService.deleteAttachmentIfOrphaned(attachment);
 
-        if(deletedId){
+        if (deletedId) {
           deletedAttachmentIds.push(deletedId);
         }
       }
@@ -118,11 +118,7 @@ exports.deleteCase = async (req, res) => {
       attachmentIds: deletedAttachmentIds,
     };
 
-  
-    console.log(
-      "Sending to LLM: ",
-      JSON.stringify(llmRequestData),
-    );
+    console.log("Sending to LLM: ", JSON.stringify(llmRequestData));
 
     // Send data to the LLM endpoint.
     const llmResponse = axios.post(
@@ -417,7 +413,9 @@ exports.createCaseFromFiles = [
       }
     } catch (error) {
       console.error("Error in createCaseFromFiles:", error);
-      res.status(500).json({ message: error.message || "Error creating case" });
+      res.status(500).json({
+        message: error.response?.data?.message ?? "Error creating case",
+      });
     }
   },
 ];
