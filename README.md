@@ -140,8 +140,8 @@ The following students contributed to the project:
   - Jason Nicholass: [GitHub](https://github.com/jasonicholass)
   - Emre ...: [GitHub](https://github.com/emre440)
 - **Backend Team**:
-  - Franz Blömer: [GitHub](https://github.com/FlachbandkabelPeter)
-  - Max ...: [GitHub](https://github.com/maxGCode)
+  - Franz Blömer: [GitHub](https://github.com/FlachbandkabelPeter) 
+  - Max Gerdes: [GitHub](https://github.com/maxGCode), [LinkedIn](https://www.linkedin.com/in/max-gerdes-40691020b/)
   - Mario Opatz: [GitHub](https://github.com/MarioOpatz)
   - Oussama ...: [GitHub](https://github.com/oussama8320)
 - **LLM Team**:
