@@ -27,7 +27,7 @@ import CaseDeleteDialog from '@/components/CaseDeleteDialog.vue'
 
 // API imports
 import { useApi } from '@/composables/useApi'
-import type { Case } from '@/api/api'
+import type { Case, ModelError } from '@/api/api'
 import { CaseCaseTypeEnum } from '@/api/api'
 import type { AxiosError } from 'axios'
 import KpiWidget from '@/components/case-list-view/KpiWidget.vue'
@@ -196,8 +196,9 @@ const fetchCases = async () => {
     const response = await api.casesGet()
     cases.splice(0, cases.length, ...response.data) // Replace cases data
   } catch (err) {
-    error.value = (err as AxiosError).message
-    console.error(err)
+    error.value =
+      ((err as AxiosError).response?.data as ModelError)?.message ?? (err as AxiosError).message
+    console.error(error)
   } finally {
     loading.value = false
   }

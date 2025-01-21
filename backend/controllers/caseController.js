@@ -413,13 +413,9 @@ exports.createCaseFromFiles = [
       }
     } catch (error) {
       console.error("Error in createCaseFromFiles:", error);
-      res
-        .status(500)
-        .json({
-          message: (error.response && error.response.data && error.response.data.message)
-            ? error.response.data.message
-            : "Error creating case",
-        });
+      res.status(500).json({
+        message: error.response?.data?.message ?? "Error creating case",
+      });
     }
   },
 ];

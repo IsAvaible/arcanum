@@ -30,7 +30,7 @@ import { useForm } from 'vee-validate'
 import { ref } from 'vue'
 import { useVModel } from '@vueuse/core'
 import { useApi } from '@/composables/useApi'
-import type { Case, CasesPostCaseTypeEnum } from '@/api'
+import type { Case, CasesPostCaseTypeEnum, ModelError } from '@/api'
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
 import { useConfirm } from 'primevue/useconfirm'
@@ -233,7 +233,10 @@ const onSubmit = handleSubmit(async (_values) => {
     toast.add({
       severity: 'error',
       summary: 'Error Creating Case',
-      detail: 'There was an error creating your case\n' + (error as AxiosError).message,
+      detail:
+        'There was an error creating your case\n' +
+        (((error as AxiosError).response?.data as ModelError)?.message ??
+          (error as AxiosError).message),
       life: 3000,
     })
     return

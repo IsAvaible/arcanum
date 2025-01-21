@@ -22,6 +22,7 @@ import {
   type ChatWithMessages,
   type Message,
   MessageRoleEnum,
+  type ModelError,
 } from '@/api'
 import CaseReferenceComponent from '@/components/chat-view/CaseReference.vue'
 import FileReferenceComponent from '@/components/chat-view/FileReference.vue'
@@ -85,7 +86,8 @@ const fetchChats = async () => {
     chatsError.value = null
   } catch (error) {
     console.error(error)
-    chatsError.value = (error as AxiosError).message
+    chatsError.value =
+      ((error as AxiosError).response?.data as ModelError)?.message ?? (error as AxiosError).message
   }
   chatsLoading.value = false
 }
@@ -164,7 +166,9 @@ const deleteChat = async (id: Chat['id']) => {
     toast.add({
       severity: 'error',
       summary: 'Failed to delete chat',
-      detail: (error as AxiosError).message,
+      detail:
+        ((error as AxiosError).response?.data as ModelError)?.message ??
+        (error as AxiosError).message,
       life: 3000,
     })
   }
@@ -219,7 +223,9 @@ const saveChatTitle = async (id: Chat['id'], title: string): Promise<boolean> =>
     toast.add({
       severity: 'error',
       summary: 'Failed to save chat title',
-      detail: (error as AxiosError).message,
+      detail:
+        ((error as AxiosError).response?.data as ModelError)?.message ??
+        (error as AxiosError).message,
       life: 3000,
     })
     return false
@@ -330,7 +336,9 @@ const sendMessage = async () => {
       toast.add({
         severity: 'error',
         summary: 'Failed to edit message',
-        detail: (error as AxiosError).message,
+        detail:
+          ((error as AxiosError).response?.data as ModelError)?.message ??
+          (error as AxiosError).message,
         life: 3000,
       })
       startEditingMessage(editedMessage)
@@ -358,7 +366,9 @@ const sendPendingMessage = async () => {
     toast.add({
       severity: 'error',
       summary: 'Failed to send message',
-      detail: (error as AxiosError).message,
+      detail:
+        ((error as AxiosError).response?.data as ModelError)?.message ??
+        (error as AxiosError).message,
       life: 1500,
     })
     pendingMessage.value!.state = 'failed'
@@ -383,7 +393,9 @@ const deleteMessage = async (id: Message['id']) => {
     toast.add({
       severity: 'error',
       summary: 'Failed to delete message',
-      detail: (error as AxiosError).message,
+      detail:
+        ((error as AxiosError).response?.data as ModelError)?.message ??
+        (error as AxiosError).message,
       life: 1500,
     })
   } finally {
@@ -413,7 +425,9 @@ const createChatWithMessage = async () => {
     toast.add({
       severity: 'error',
       summary: 'Failed to create chat',
-      detail: (error as AxiosError).message,
+      detail:
+        ((error as AxiosError).response?.data as ModelError)?.message ??
+        (error as AxiosError).message,
       life: 3000,
     })
     console.error(error)
@@ -602,7 +616,10 @@ const openFileInDrawer = async (attachment: Attachment) => {
       toast.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'An error occurred while downloading the file\n' + (error as AxiosError).message,
+        detail:
+          'An error occurred while downloading the file\n' +
+          (((error as AxiosError).response?.data as ModelError)?.message ??
+            (error as AxiosError).message),
         life: 3000,
       })
       console.error(error)
