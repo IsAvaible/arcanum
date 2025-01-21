@@ -17,7 +17,7 @@ class QdrantVectorstore:
         Args:
             colletion_name (str): The name of the collection to use in Qdrant.
         """
-        self.client = QdrantClient(path=os.path.join(app.root_path, "qdrantdb"))
+        self.client = QdrantClient(path=os.path.join(app.root_path, "qdrant-data"))
         self.collection_name = colletion_name
         self.llm_embeddings = get_embeddings()
         self.setup_collection(1536)  # 1536 is the default vector size for text-embedding-ada-002 embeddings
