@@ -30,7 +30,13 @@ app.use(
       "http://localhost:5174", // Swagger OpenAPI Editor
       "http://localhost:63342", // PHPStorm
     ],
-    allowedHeaders: "*",
+    allowedHeaders: [
+      "origin",
+      "content-type",
+      "accept",
+      "authorization",
+      "user-agent",
+    ],
     exposedHeaders: "*",
     credentials: true,
   }),
