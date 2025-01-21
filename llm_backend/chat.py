@@ -7,9 +7,13 @@ from app import sio
 from sentence_transformers import CrossEncoder
 import concurrent.futures
 import time
+import threading
 
 from case import Case
 from langchain_core.output_parsers import JsonOutputParser
+
+def get_cross_encoder():
+    return CrossEncoder('cross-encoder/msmarco-MiniLM-L6-en-de-v1', max_length=512)
 
 def unique_contexts(contexts):
     unique_contexts = []
@@ -20,9 +24,7 @@ def unique_contexts(contexts):
             unique_texts.append(context.payload["text"])
     return unique_contexts
 
-def rerank_contexts(contexts, user_query):
-    cross_encoder_model = CrossEncoder('cross-encoder/msmarco-MiniLM-L6-en-de-v1', max_length=512)
-
+def rerank_contexts(contexts, user_query, cross_encoder_model):
     sentence_pairs = [[user_query, hit.payload["text"]] for hit in contexts]
     similarity_scores = cross_encoder_model.predict(sentence_pairs)
     
@@ -51,10 +53,31 @@ def query_hyde(query, vectorstore):
         {"role": "user", "content": query}
     ]
 
-    llm = get_llm_custom(temperature=0, max_tokens=200, timeout=4, max_retries=2, streaming=False)
-    response = llm(messages).content
+    llm = get_llm_custom(temperature=0, max_tokens=300, timeout=4, max_retries=2, streaming=True)
 
-    relevant_vectors = vectorstore.search_from_query(response, limit=5)
+    response_content = []
+    stop_event = threading.Event()
+
+    def stream_response():
+        stream = llm.stream(messages)
+        concatenated_tokens = ""
+        for stream_token in stream:
+            if stop_event.is_set():
+                break  # Beendet den Thread sicher, wenn das Event gesetzt ist
+            token = stream_token.content
+            concatenated_tokens += token
+            response_content.append(token)
+
+    thread = threading.Thread(target=stream_response)
+    thread.start()
+    thread.join(timeout=4)  # Warte maximal 4 Sekunden auf den Thread
+
+    if thread.is_alive():
+        stop_event.set()  # Signalisiert dem Thread, dass er stoppen soll
+        thread.join()  # Warte darauf, dass der Thread sauber beendet wird
+
+    response_text = ''.join(response_content)
+    relevant_vectors = vectorstore.search_from_query(response_text, limit=5)
     return relevant_vectors
 
 def query_multiple(query, vectorstore):
@@ -90,7 +113,7 @@ def timed(func):
         return elapsed, res
     return _w
 
-def ask_question(request, vectorstore):
+def ask_question(request, vectorstore, cross_encoder):
     json_str = request.get_json(force=True)
     socket_id = json_str["socketId"]
     messages = json_str["context"]
@@ -127,7 +150,7 @@ def ask_question(request, vectorstore):
 
     start_time_rerank = time.time()
     relevant_vectors = unique_contexts(relevant_vectors)
-    reranked_vectors = rerank_contexts(relevant_vectors, standalone_question)
+    reranked_vectors = rerank_contexts(relevant_vectors, standalone_question, cross_encoder)
     end_time_rerank = time.time()
     print(f"Time for reranking: {end_time_rerank - start_time_rerank} seconds")
     
