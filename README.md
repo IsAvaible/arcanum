@@ -56,7 +56,7 @@ The project uses the following technologies:
   - **Sanitize-filename**: Utility for cleaning up filenames.
   - **ESLint**: JavaScript linter for identifying and reporting patterns in code. (using `eslint-config-airbnb-base`)
   - **Prettier**: Code formatter for maintaining consistent code style.
-  - **Jest**: Testing framework for writing unit tests.
+  - **Mocha**: Testing framework for writing unit tests.
 
 
 - **LLM Backend**:
@@ -137,16 +137,16 @@ Prof. Dr. rer. nat. Georg Neugebauer supervised and supported the project as the
 The following students contributed to the project:
 - **Frontend Team**:
   - Simon Conrad: [GitHub](https://github.com/IsAvaible), [LinkedIn](https://www.linkedin.com/in/simon-conrad-sfc/)
-  - Alex Djomo (?): [GitHub](https://github.com/Dragnee1Natsu)
-  - Jason Nicholass: [GitHub](https://github.com/jasonicholass)
-  - Emre ...: [GitHub](https://github.com/emre440)
+  - Alex Djomo: [GitHub](https://github.com/Dragnee1Natsu)
+  - Jason Nicholas: [GitHub](https://github.com/jasonicholass)
+  - Emre Dogan: [GitHub](https://github.com/emre440)
 - **Backend Team**:
   - Franz Blömer: [GitHub](https://github.com/FlachbandkabelPeter) 
   - Max Gerdes: [GitHub](https://github.com/maxGCode), [LinkedIn](https://www.linkedin.com/in/max-gerdes-40691020b/)
   - Mario Opatz: [GitHub](https://github.com/MarioOpatz)
-  - Oussama ...: [GitHub](https://github.com/oussama8320)
+  - Oussama Adaha: [GitHub](https://github.com/oussama8320)
 - **LLM Team**:
-  - Timur ...: [GitHub](https://github.com/TimurFHAachen)
-  - Justin ...: [GitHub](https://github.com/justins03)
+  - Timur Can Ugurlu: [GitHub](https://github.com/TimurFHAachen)
+  - Justin Schulz: [GitHub](https://github.com/justins03)
 
 
