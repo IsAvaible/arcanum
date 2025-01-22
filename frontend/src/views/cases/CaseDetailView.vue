@@ -454,7 +454,7 @@ const deletingFileId = ref<number | null>(null)
 // Matches timestamps in the format [filename.ext: HH:MM:SS - ...]
 // Extensions are based on OpenAI Whisper allowed file types
 const timeStampRegex =
-  /\[(.*?\.(?:wav|flac|m4a|mp3|mp4|mpeg|mpga|oga|ogg|webm): \d{2}:\d{2}:\d{2}) - .*?]/g
+  /\[(.*?\.(?:wav|flac|m4a|mp3|mp4|mpeg|mpga|oga|ogg|webm|mov): \d{2}:\d{2}:\d{2}) - .*?]/g
 
 const openAttachmentInDrawer = async (attachment: Attachment) => {
   // Check if the attachment is already in the files array
