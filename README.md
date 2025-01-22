@@ -6,6 +6,8 @@
 - [Tech-Stack](#tech-stack)
 - [Getting Started](#getting-started)
   - [Develop Locally](#develop-locally)
+- [Threat Model](#threat-model)
+
 
 ## Project Overview
 This is the repository for the oculavis ARCANUM project. The project is a web application that provides a platform for users to create and manage cases.
@@ -83,4 +85,5 @@ docker-compose up
 Please consult the respective README files in the [frontend](frontend/README.md), [backend](backend/README.md), and [api](api/README.md) directories for instructions on setting up the frontend, backend, and API projects.
     
 
-
+## Threat Model
+We have developed a comprehensive threat model to identify and analyse potential security risks across all components of our system. This approach looks at Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service and Elevation of Privilege (STRIDE). Our model was built and visualised using [threatdragon](https://www.threatdragon.com), providing a clear overview of identified vulnerabilities (mapped to relevant CWE entries) and recommended mitigation strategies. Saved as ThreatModel.json.
