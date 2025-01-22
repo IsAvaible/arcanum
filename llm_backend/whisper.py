@@ -174,7 +174,7 @@ def convert_timestamp_to_str(ts):
 
 def convert_to_mp3(filehash, path):
     audio_path = os.path.join(
-        app.root_path, os.path.join(f"temp/{filehash}/", "audio")
+        app.root_path, os.path.join(f"temp/{filehash}/", "converted")
     )
     if not os.path.exists(audio_path):
         os.makedirs(audio_path)
