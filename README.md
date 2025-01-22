@@ -28,6 +28,7 @@ The project uses the following technologies:
   - **PrimeVue**: Vue UI component library.
   - **Iconoir**: Icon pack for icons.
   - **Zod**: TypeScript-first schema declaration and validation library.
+  - **VeeValidate**: Lightweight, flexible, and powerful validation library for Vue.js 
   - **Vitest**: Unit testing library. (*)
   - **Playwright**: End-to-end testing library. (*)
   - **Prettier**: Code formatter for maintaining consistent code style.
