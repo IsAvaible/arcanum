@@ -7,7 +7,6 @@ from vectorstore import QdrantVectorstore, vector_db_save_cases, delete_entries_
 
 routes = Blueprint("routes", __name__)
 
-
 ### Defining Routes
 
 @app.route("/test", methods=["GET"])
@@ -57,3 +56,8 @@ def show_all_entries():
         # Convert each entry to a string
         data = [str(entry) for entry in entries]
         return jsonify(data), 200
+
+
+@app.errorhandler(500)
+def handle_bad_request(e):
+    return jsonify(message=str(e)), 500

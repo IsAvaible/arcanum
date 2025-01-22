@@ -1,6 +1,6 @@
 import json
 
-from flask import jsonify
+from flask import jsonify, abort
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
@@ -86,13 +86,15 @@ def generate(request):
             promptLangchainInvoked, llm, case_parser_json, max_tries=3
         )
 
-        cases = response_dict["cases"]
-        attachment_files = json.loads(context)
-        add_glossary(cases, attachment_files)
+        if "cases" in response_dict:
+            cases = response_dict["cases"]
+            attachment_files = json.loads(context)
+            add_glossary(cases, attachment_files)
 
-        print(response_dict)
-        # return case json
-        return jsonify(response_dict), 200
+            # return case json
+            return jsonify(response_dict), 200
+        else:
+            abort(500, description="Couldn't get valid case output. Please add more data before trying again.")
 
 
 

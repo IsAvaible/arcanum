@@ -2,12 +2,12 @@
   <div class="min-h-screen bg-gray-50 flex">
     <!-- Left Sidebar with Alphabet -->
     <div
-      class="w-16 min-h-screen bg-white border-r border-gray-100 flex flex-col items-center py-8 sticky top-0"
+      class="min-w-16 min-h-screen bg-white border-r border-gray-100 flex flex-col items-center py-4 sticky top-0 gap-y-0.5"
     >
-      <div
+      <button
         v-for="letter in alphabet"
         :key="letter"
-        class="w-10 h-10 mb-1 rounded-lg flex items-center justify-center cursor-pointer transition-all text-sm font-medium"
+        class="w-8 h-7 md-h:size-8 lg-h:size-9 xl-h:size-10 rounded-lg flex items-center justify-center cursor-pointer transition-all text-sm font-medium first:mt-auto last:mb-auto"
         :class="[
           activeLetters.includes(letter)
             ? selectedLetter === letter
@@ -16,16 +16,19 @@
             : 'text-gray-300 cursor-not-allowed',
         ]"
         @click="activeLetters.includes(letter) && filterByLetter(letter)"
-        v-tooltip.right="
-          activeLetters.includes(letter) ? `Show terms with ${letter}` : 'No terms available'
-        "
+        v-tooltip.right="{
+          value: activeLetters.includes(letter)
+            ? `Show terms with ${letter}`
+            : 'No terms available',
+          showDelay: 1000,
+        }"
       >
         {{ letter }}
-      </div>
+      </button>
     </div>
 
     <!-- Main Content -->
-    <div class="flex-1 px-8 py-8 max-w-5xl">
+    <div class="flex-1 overflow-auto px-8 py-8 max-w-5xl">
       <!-- Header -->
       <div class="mb-8">
         <h1 class="text-2xl font-semibold text-gray-900">Glossary</h1>
@@ -33,45 +36,64 @@
       </div>
 
       <!-- Search and Filters -->
-      <div class="flex gap-4 mb-8">
-        <span class="p-input-icon-left flex flex-row gap-x-2 items-center flex-1">
-          <i class="pi pi-search" />
+      <div class="flex gap-2 sm:gap-4 mb-8">
+        <IconField class="flex-1">
+          <InputIcon>
+            <i class="pi pi-search" />
+          </InputIcon>
           <InputText v-model="searchTerm" placeholder="Search terms..." class="w-full" />
-        </span>
-        <div class="flex gap-3">
-          <!-- Filter Button with Overlay Panel -->
-          <Button
-            class="filter-button"
-            v-tooltip.bottom="'Filter terms'"
-            @click="toggleFilterOverlay"
-            aria-haspopup="true"
-            aria-controls="filter-overlay"
-          >
-            <i class="pi pi-filter mr-2"></i>
-            Filter
-            <Badge
-              v-if="selectedCategories.length"
-              :value="selectedCategories.length"
-              severity="success"
-            />
-          </Button>
+        </IconField>
+        <!-- Filter Button with Overlay Panel -->
+        <!--          <Button-->
+        <!--            class="filter-button"-->
+        <!--            v-tooltip.bottom="'Filter terms'"-->
+        <!--            @click="toggleFilterOverlay"-->
+        <!--            aria-haspopup="true"-->
+        <!--            aria-controls="filter-overlay"-->
+        <!--          >-->
+        <!--            <i class="pi pi-filter mr-2"></i>-->
+        <!--            Filter-->
+        <!--            <Badge-->
+        <!--              v-if="selectedCategories.length"-->
+        <!--              :value="selectedCategories.length"-->
+        <!--              severity="success"-->
+        <!--            />-->
+        <!--          </Button>-->
 
-          <!-- Sort Button with Overlay Panel -->
-          <Button
-            class="sort-button"
-            v-tooltip.bottom="'Sort terms'"
-            @click="toggleSortOverlay"
-            aria-haspopup="true"
-            aria-controls="sort-overlay"
-          >
-            <i class="pi pi-sort-alt mr-2"></i>
-            Sort
-          </Button>
-        </div>
+        <!-- Sort Button -->
+        <Button
+          class="sort-button"
+          v-tooltip.bottom="'Sort terms'"
+          @click="toggleSortOverlay"
+          aria-haspopup="true"
+          aria-controls="sort-overlay"
+        >
+          <i class="pi pi-sort-alt"></i>
+          <span class="hidden sm:inline ml-2">Sort</span>
+        </Button>
+
+        <!-- Add Button -->
+        <Button class="sort-button" v-tooltip.bottom="'Add Term'" @click="toggleAddTermPopover">
+          <i class="pi pi-plus"></i>
+          <span class="hidden sm:inline ml-2">Add</span>
+        </Button>
+
+        <Popover ref="addTermPopover">
+          <div class="flex flex-col gap-3">
+            <span class="font-medium block">Add Term</span>
+            <div class="flex gap-x-2 justify-center">
+              <InputText id="addTermInput" v-model="newTermName" placeholder="Enter term" />
+            </div>
+            <div class="flex gap-x-3 justify-end">
+              <Button label="Cancel" severity="secondary" outlined @click="toggleAddTermPopover" />
+              <Button label="Add" :disabled="!newTermName" @click="addNewTerm" />
+            </div>
+          </div>
+        </Popover>
       </div>
 
       <!-- Sort Overlay -->
-      <OverlayPanel ref="sortOverlay" class="w-72">
+      <Popover ref="sortOverlay" class="w-72">
         <div class="p-4">
           <h3 class="text-sm font-medium text-gray-700 mb-3">Sorting</h3>
           <div class="space-y-2">
@@ -87,7 +109,7 @@
             </div>
           </div>
         </div>
-      </OverlayPanel>
+      </Popover>
 
       <!-- Active Filters -->
       <div v-if="selectedCategories.length" class="mb-4 flex flex-wrap gap-2">
@@ -109,39 +131,42 @@
       </div>
 
       <!-- Terms List -->
-      <div v-if="filteredAndSortedTerms.length" class="space-y-2">
+      <div v-if="filteredAndSortedEntries.length" class="space-y-2 relative">
         <TransitionGroup name="list">
           <div
-            v-for="term in filteredAndSortedTerms"
-            :key="term.term"
-            class="bg-white rounded-xl border border-gray-200 hover:border-emerald-200 hover:shadow-md transition-all cursor-pointer overflow-hidden"
-            :class="{ 'border-emerald-500 shadow-md': selectedTerm?.term === term.term }"
-            @click="selectTerm(term)"
+            v-for="entry in filteredAndSortedEntries"
+            :key="entry.term"
+            class="bg-white rounded-xl border border-gray-200 hover:border-emerald-200 hover:shadow-md transition-all cursor-pointer overflow-hidden w-full"
+            :class="{ 'border-emerald-500 shadow-md': selectedEntry?.term === entry.term }"
+            @click="selectEntry(entry)"
           >
             <div class="p-4">
               <div class="flex items-center justify-between">
-                <div class="flex-1">
+                <div class="flex-1 truncate">
                   <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
                       <i class="pi pi-book text-emerald-500"></i>
                     </div>
                     <div>
-                      <h3 class="text-lg font-medium text-gray-900">{{ term.term }}</h3>
+                      <h3 class="text-lg font-medium text-gray-900">{{ entry.term }}</h3>
                       <div class="flex items-center gap-2 mt-1 text-sm text-gray-500">
-                        <span v-if="term.usageCount" class="flex items-center">
+                        <span v-if="entry.usageCount" class="flex items-center">
                           <i class="pi pi-chart-bar mr-1"></i>
-                          {{ term.usageCount }} Usages
+                          {{ entry.usageCount }} Usages
                         </span>
-                        <span v-if="term.lastUsed" class="flex items-center">
+                        <span
+                          class="flex items-center"
+                          v-tooltip.bottom="{ value: 'Last Used At', showDelay: 500 }"
+                        >
                           <i class="pi pi-clock mr-1"></i>
-                          {{ formatDate(term.lastUsed) }}
+                          {{ formatDate(entry.updatedAt ?? entry.createdAt) }}
                         </span>
                       </div>
                     </div>
                   </div>
                   <div class="mt-2 flex items-center gap-3">
                     <span class="text-sm text-gray-500">
-                      {{ term.relatedCases?.length || 0 }} References
+                      {{ entry.usageCount || 0 }} References
                     </span>
                   </div>
                 </div>
@@ -150,6 +175,21 @@
             </div>
           </div>
         </TransitionGroup>
+      </div>
+
+      <!-- Loading State -->
+      <div v-else-if="loading" class="space-y-2">
+        <Skeleton v-for="_ in 5" height="7rem" class="w-full" />
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="error" class="text-center py-12 bg-white rounded-xl border border-gray-200">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-50 flex items-center justify-center">
+          <i class="pi pi-exclamation-circle text-red-500 text-xl"></i>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900">An error occurred</h3>
+        <p class="text-gray-500 mt-2">{{ error }}</p>
+        <Button text severity="danger" class="mt-4" @click="fetchGlossary"> Retry </Button>
       </div>
 
       <!-- Empty State -->
@@ -161,151 +201,75 @@
         </div>
         <h3 class="text-lg font-medium text-gray-900">No terms found</h3>
         <p class="text-gray-500 mt-2">Try adjusting your search criteria</p>
-        <Button link class="mt-4 text-emerald-600 hover:text-emerald-700" @click="resetFilters">
-          Reset filters
-        </Button>
+        <Button text severity="success" class="mt-4" @click="resetFilters"> Reset filters </Button>
       </div>
     </div>
 
     <!-- Detail Sidebar -->
-    <Sidebar
-      v-model:visible="sidebarVisible"
-      position="right"
-      :style="{ width: '35rem' }"
-      class="p-sidebar-lg"
-    >
-      <template v-if="selectedTerm">
-        <div class="px-2">
-          <!-- Term Header -->
-          <div class="mb-8">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-                <i class="pi pi-book text-emerald-500 text-lg"></i>
-              </div>
-              <div>
-                <h2 class="text-xl font-semibold text-gray-900">{{ selectedTerm.term }}</h2>
-              </div>
-            </div>
-
-            <!-- Usage Statistics -->
-            <div class="flex gap-4 mt-4">
-              <div class="bg-gray-50 rounded-lg p-3 flex-1">
-                <div class="text-sm text-gray-500">Usages</div>
-                <div class="text-lg font-semibold text-gray-900">
-                  {{ selectedTerm.usageCount || 0 }}
-                </div>
-              </div>
-              <div class="bg-gray-50 rounded-lg p-3 flex-1">
-                <div class="text-sm text-gray-500">Last used</div>
-                <div class="text-lg font-semibold text-gray-900">
-                  {{ formatDate(selectedTerm.lastUsed) || 'Never' }}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Term Content -->
-          <div class="space-y-8">
-            <!-- Related Cases -->
-            <div v-if="selectedTerm.relatedCases?.length">
-              <h3 class="text-sm font-medium text-gray-700 mb-3">Related Cases</h3>
-              <div class="space-y-2">
-                <div
-                  v-for="caseRef in selectedTerm.relatedCases"
-                  :key="caseRef"
-                  class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-emerald-200 hover:shadow-sm transition-all cursor-pointer"
-                >
-                  <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                    <i class="pi pi-file text-emerald-500"></i>
-                  </div>
-                  <span class="text-sm text-gray-600">{{ caseRef }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </template>
-    </Sidebar>
+    <GlossaryEntryDrawer
+      v-model:entry="selectedEntry"
+      v-on:delete:entry="(entry) => displayDeleteEntryDialog(entry)"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
+
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
-import Sidebar from 'primevue/sidebar'
 import Chip from 'primevue/chip'
-import Badge from 'primevue/badge'
-import OverlayPanel from 'primevue/overlaypanel'
+import Popover from 'primevue/popover'
+import Skeleton from 'primevue/skeleton'
+import IconField from 'primevue/iconfield'
+import InputIcon from 'primevue/inputicon'
 
-interface GlossaryTerm {
-  term: string
-  relatedCases?: string[]
-  usageCount?: number
-  lastUsed?: Date
-  dateAdded?: Date
-}
+import type { GlossaryEntry, ModelError } from '@/api'
+import type { AxiosError } from 'axios'
+
+import { normalizeDiacritics as removeDiacritics } from 'normalize-text'
+import { useApi } from '@/composables/useApi'
+import { asyncComputed, computedAsync } from '@vueuse/core'
+import { formatDate } from '@/functions/formatDate'
+import GlossaryEntryDrawer from '@/components/GlossaryEntryDrawer.vue'
+import { useConfirm } from 'primevue/useconfirm'
+import { useToast } from 'primevue'
+
+const api = useApi()
+const confirm = useConfirm()
+const toast = useToast()
 
 // Glossar data
-const glossaryData = ref<GlossaryTerm[]>([
-  {
-    term: 'Schweißgerät MIG4300Pro',
-    relatedCases: ['Case #2', 'Case #4'],
-    usageCount: 245,
-    lastUsed: new Date('2024-01-20'),
-    dateAdded: new Date('2023-06-15'),
-  },
-  {
-    term: 'Motor',
-    relatedCases: ['Case #7'],
-    usageCount: 189,
-    lastUsed: new Date('2024-01-22'),
-    dateAdded: new Date('2023-08-01'),
-  },
-  {
-    term: 'Stromversorgung',
-    relatedCases: ['Case #3', 'Case #12'],
-    usageCount: 150,
-    lastUsed: new Date('2024-01-15'),
-    dateAdded: new Date('2023-07-10'),
-  },
-  {
-    term: 'Lüftungsschlitze',
-    relatedCases: ['Case #9'],
-    usageCount: 85,
-    lastUsed: new Date('2024-01-05'),
-    dateAdded: new Date('2023-09-20'),
-  },
-  {
-    term: 'Drahtzuführung',
-    relatedCases: ['Case #10', 'Case #12'],
-    usageCount: 200,
-    lastUsed: new Date('2024-01-18'),
-    dateAdded: new Date('2023-07-25'),
-  },
-  {
-    term: 'Drahtrolle',
-    relatedCases: ['Case #9', 'Case #14'],
-    usageCount: 120,
-    lastUsed: new Date('2024-01-10'),
-    dateAdded: new Date('2023-10-10'),
-  },
-])
+const glossaryData = ref<GlossaryEntry[]>([])
+
+// Fetch glossary data
+const loading = ref(true)
+const error = ref<string | null>(null)
+const fetchGlossary = async () => {
+  loading.value = true
+  try {
+    const response = await api.glossaryGet()
+    glossaryData.value = response.data
+  } catch (e) {
+    error.value = (e as AxiosError).message
+  } finally {
+    loading.value = false
+  }
+}
 
 // Sort options
 const sortOptions = [
-  { label: 'Meistgenutzte Begriffe', value: 'most-used', icon: 'pi pi-chart-bar' },
-  { label: 'Zuletzt verwendet', value: 'last-used', icon: 'pi pi-clock' },
-  { label: 'Zuletzt hinzugefügt', value: 'recently-added', icon: 'pi pi-plus' },
-  { label: 'Alphabetisch A-Z', value: 'alpha-asc', icon: 'pi pi-sort-alpha-down' },
-  { label: 'Alphabetisch Z-A', value: 'alpha-desc', icon: 'pi pi-sort-alpha-up' },
+  { label: 'Most used', value: 'most-used', icon: 'pi pi-chart-bar' },
+  { label: 'Last used', value: 'last-used', icon: 'pi pi-clock' },
+  { label: 'Recently added', value: 'recently-added', icon: 'pi pi-plus' },
+  { label: 'Alphabetic A-Z', value: 'alpha-asc', icon: 'pi pi-sort-alpha-down' },
+  { label: 'Alphabetic Z-A', value: 'alpha-desc', icon: 'pi pi-sort-alpha-up' },
 ]
 
 // UI state
 const searchTerm = ref('')
 const selectedLetter = ref('')
-const selectedTerm = ref<GlossaryTerm | null>(null)
-const sidebarVisible = ref(false)
+const selectedEntry = ref<GlossaryEntry | null>(null)
 const currentSort = ref('most-used')
 const filterOverlay = ref()
 const sortOverlay = ref()
@@ -313,10 +277,10 @@ const sortOverlay = ref()
 // Categories and filters
 const selectedCategories = ref<string[]>([])
 
-const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('')
 
 // Methods
-const toggleFilterOverlay = (event: Event) => {
+const _toggleFilterOverlay = (event: Event) => {
   filterOverlay.value?.toggle(event)
 }
 
@@ -324,11 +288,26 @@ const toggleSortOverlay = (event: Event) => {
   sortOverlay.value?.toggle(event)
 }
 
-const activeLetters = computed(() => {
-  return alphabet.filter((letter) =>
-    glossaryData.value.some((term) => term.term.toUpperCase().startsWith(letter)),
+const activeLetters = computedAsync(async () => {
+  // Create a set to store active letters
+  const activeLettersSet = new Set<string>()
+
+  // Process all terms once and check their first letter
+  await Promise.all(
+    glossaryData.value.map(async (entry) => {
+      const normalizedTerm = removeDiacritics(entry.term)
+      const firstLetter = normalizedTerm.charAt(0).toUpperCase()
+      if (alphabet.includes(firstLetter)) {
+        activeLettersSet.add(firstLetter)
+      } else {
+        activeLettersSet.add('#')
+      }
+    }),
   )
-})
+
+  // Convert the set to an array and return only the letters that are in the alphabet
+  return Array.from(activeLettersSet).filter((letter) => alphabet.includes(letter))
+}, [])
 
 const filterByLetter = (letter: string) => {
   selectedLetter.value = selectedLetter.value === letter ? '' : letter
@@ -355,52 +334,158 @@ const resetFilters = () => {
   currentSort.value = 'most-used'
 }
 
-const formatDate = (date?: Date) => {
-  if (!date) return ''
-  return new Intl.DateTimeFormat('de-DE', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(new Date(date))
-}
+/**
+ * Filter and sort the glossary entries based on the current search term, selected letter, and sorting option.
+ */
+const filteredAndSortedEntries = asyncComputed(async () => {
+  // Register dependencies
+  const _ = searchTerm.value + selectedLetter.value + currentSort.value + glossaryData.value
 
-// Computed properties
-const filteredAndSortedTerms = computed(() => {
-  let terms = glossaryData.value
+  let entries = glossaryData.value
+  const normalizedSearchTerm = removeDiacritics(searchTerm.value).toUpperCase()
 
-  // Apply search filter
-  if (searchTerm.value) {
-    terms = terms.filter((term) => term.term.toLowerCase().includes(searchTerm.value.toLowerCase()))
-  }
+  const results = await Promise.all(
+    entries.map(async (entry) => {
+      const normalizedTerm = removeDiacritics(entry.term).toUpperCase()
 
-  // Apply letter filter
-  if (selectedLetter.value) {
-    terms = terms.filter((term) => term.term.toUpperCase().startsWith(selectedLetter.value))
-  }
+      const termStartsWithLetter =
+        !selectedLetter.value ||
+        normalizedTerm.startsWith(selectedLetter.value) ||
+        (alphabet.includes(normalizedTerm.charAt(0)) && selectedLetter.value === '#')
+      const termContainsSearch = !searchTerm.value || normalizedTerm.includes(normalizedSearchTerm)
 
-  // Apply sorting
-  return [...terms].sort((a, b) => {
+      return termStartsWithLetter && termContainsSearch
+    }),
+  )
+
+  // Apply filters
+  entries = entries.filter((_, index) => results[index])
+
+  // Apply sorting based on the current sort option with fallback to last-used
+  return [...entries].sort((a, b) => {
+    const compareLastUsed = () =>
+      new Date(b.updatedAt ?? b.createdAt).getTime() -
+      new Date(a.updatedAt ?? a.createdAt).getTime()
+
     switch (currentSort.value) {
-      case 'most-used':
-        return (b.usageCount || 0) - (a.usageCount || 0)
-      case 'last-used':
-        return new Date(b.lastUsed || 0).getTime() - new Date(a.lastUsed || 0).getTime()
-      case 'recently-added':
-        return new Date(b.dateAdded || 0).getTime() - new Date(a.dateAdded || 0).getTime()
-      case 'alpha-asc':
-        return a.term.localeCompare(b.term)
-      case 'alpha-desc':
-        return b.term.localeCompare(a.term)
-      default:
+      case 'most-used': {
+        const usageDiff = (b.usageCount || 0) - (a.usageCount || 0)
+        return usageDiff !== 0 ? usageDiff : compareLastUsed()
+      }
+      case 'last-used': {
+        return compareLastUsed()
+      }
+      case 'recently-added': {
+        const addedDiff = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        return addedDiff !== 0 ? addedDiff : compareLastUsed()
+      }
+      case 'alpha-asc': {
+        const alphaAscDiff = a.term.localeCompare(b.term)
+        return alphaAscDiff !== 0 ? alphaAscDiff : compareLastUsed()
+      }
+      case 'alpha-desc': {
+        const alphaDescDiff = b.term.localeCompare(a.term)
+        return alphaDescDiff !== 0 ? alphaDescDiff : compareLastUsed()
+      }
+      default: {
         return 0
+      }
     }
   })
-})
+}, [])
 
-const selectTerm = (term: GlossaryTerm) => {
-  selectedTerm.value = term
-  sidebarVisible.value = true
+/**
+ * Select a glossary entry and fetch its detailed information.
+ * @param entry The glossary entry to select.
+ */
+const selectEntry = (entry: GlossaryEntry) => {
+  selectedEntry.value = entry
 }
+
+const addTermPopover = ref()
+/**
+ * Toggle the add term popover.
+ */
+const toggleAddTermPopover = (event: Event) => {
+  newTermName.value = ''
+  addTermPopover.value?.toggle(event)
+  nextTick(() => {
+    document.getElementById('addTermInput')?.focus()
+  })
+}
+
+const newTermName = ref('')
+/**
+ * Add a new term to the glossary.
+ */
+const addNewTerm = async () => {
+  if (newTermName.value) {
+    // Add the new term to the glossary
+    const entry = await api.glossaryPost({ term: newTermName.value })
+    glossaryData.value.push(entry.data)
+    // Close the popover
+    addTermPopover.value?.toggle()
+  }
+}
+
+/**
+ * Display a confirmation dialog to delete the selected entry.
+ */
+const displayDeleteEntryDialog = (entry: GlossaryEntry) => {
+  confirm.require({
+    message: `Are you sure you want to permanently delete the term "${entry.term}" from the glossary?`,
+    header: 'Confirm Deletion',
+    icon: 'pi pi-exclamation-triangle',
+    rejectLabel: 'Cancel',
+    rejectProps: {
+      label: 'Cancel',
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: 'Delete',
+      severity: 'danger',
+    },
+    accept: async () => {
+      await deleteEntry(entry)
+    },
+    reject: () => {},
+  })
+}
+
+/**
+ * Delete the selected entry from the glossary.
+ */
+const deleteEntry = async (entry: GlossaryEntry) => {
+  try {
+    await api.glossaryIdDelete({ id: entry.id })
+    selectedEntry.value = null
+    glossaryData.value = glossaryData.value.filter((e) => e.id !== entry.id)
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: 'Entry deleted successfully',
+      life: 3000,
+    })
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail:
+        'An error occurred while deleting the entry\n' +
+        (((error as AxiosError).response?.data as ModelError)?.message ??
+          (error as AxiosError).message),
+      life: 3000,
+    })
+
+    console.error(error)
+  }
+}
+
+// Fetch glossary data on component mount
+onMounted(() => {
+  fetchGlossary()
+})
 </script>
 
 <style scoped>
@@ -426,15 +511,20 @@ const selectTerm = (term: GlossaryTerm) => {
 }
 
 /* List Transitions */
+.list-move,
 .list-enter-active,
 .list-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.5s ease;
 }
 
 .list-enter-from,
 .list-leave-to {
   opacity: 0;
-  transform: translateX(30px);
+}
+
+.list-leave-active {
+  position: absolute;
+  width: 100%;
 }
 </style>
 

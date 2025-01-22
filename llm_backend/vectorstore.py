@@ -17,7 +17,7 @@ class QdrantVectorstore:
         Args:
             colletion_name (str): The name of the collection to use in Qdrant.
         """
-        self.client = QdrantClient(path=os.path.join(app.root_path, "qdrantdb"))
+        self.client = QdrantClient(path=os.path.join(app.root_path, "qdrant-data"))
         self.collection_name = colletion_name
         self.llm_embeddings = get_embeddings()
         self.setup_collection(1536)  # 1536 is the default vector size for text-embedding-ada-002 embeddings
@@ -216,7 +216,7 @@ class QdrantVectorstore:
         return case_string
 
     def show_all_entries(self):
-        return self.client.scroll(collection_name=self.collection_name, scroll_filter=None)[0]
+        return self.client.scroll(collection_name=self.collection_name, limit=10000, scroll_filter=None)[0]
 
     def show_all_collections(self):
         return self.client.list_collections()
@@ -252,7 +252,7 @@ def delete_entries_from_vector_db(request, vectorstore):
 
     if request_json_str.get("caseId"):
         case_id = request_json_str["caseId"]
-        entry = vectorstore.search_by_metadata("case_id", case_id)
+        entry = vectorstore.search_by_metadata("case_id", case_id, limit=10000)
         if entry:
             vectorstore.delete_entry(entry[0].id)
             returnString += f"Case:{case_id} DELETED. "

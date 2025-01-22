@@ -8,6 +8,7 @@ import { useApi } from '@/composables/useApi'
 import { AxiosError } from 'axios'
 import { io, Socket } from 'socket.io-client'
 import { BASE_PATH as BACKEND_API_BASE_PATH } from '@/api/base'
+import { type ModelError } from '@/api'
 
 const props = defineProps<{
   /** The visibility of the dialog */
@@ -264,7 +265,10 @@ const openAICaseCreation = async () => {
     toast.add({
       severity: 'error',
       summary: 'Error',
-      detail: 'An error occurred while creating the case:\n\t' + (error as AxiosError).message,
+      detail:
+        'An error occurred while creating the case:\n\t' +
+        (((error as AxiosError).response?.data as ModelError)?.message ??
+          (error as AxiosError).message),
       life: 3000,
     })
     console.error(error)

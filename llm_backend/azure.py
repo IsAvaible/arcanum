@@ -17,7 +17,7 @@ llm = AzureChatOpenAI(
     azure_endpoint=AZURE_ENDPOINT,
     azure_deployment=AZURE_DEPLOYMENT_GPT,
     openai_api_version=OPENAI_API_VERSION,
-    temperature=0,
+    temperature=0.1,
     max_tokens=None,
     timeout=None,
     max_retries=2,
@@ -37,6 +37,18 @@ embeddings = AzureOpenAI(
 
 def get_llm():
     return llm
+
+def get_llm_custom(temperature, max_tokens, timeout, max_retries, streaming):
+    return AzureChatOpenAI(
+        azure_endpoint=AZURE_ENDPOINT,
+        azure_deployment=AZURE_DEPLOYMENT_GPT,
+        openai_api_version=OPENAI_API_VERSION,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        timeout=timeout,
+        max_retries=max_retries,
+        streaming=streaming,
+    )
 
 def get_embeddings():
     return embeddings

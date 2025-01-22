@@ -1,7 +1,5 @@
-'use strict';
-const {
-  Model
-} = require('sequelize');
+"use strict";
+const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class Glossary extends Model {
     /**
@@ -11,34 +9,48 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       Glossary.belongsToMany(models.Attachments, {
-        through: 'GlossaryAttachments',
-        foreignKey: 'glossaryId',
-        otherKey: 'attachmentId',
-        as: 'attachments'
+        through: "GlossaryAttachments",
+        as: "relatedAttachments",
+        foreignKey: "glossaryId",
+        otherKey: "attachmentId",
       });
 
       Glossary.belongsToMany(models.Cases, {
-        through: 'GlossaryCases',
-        as: 'cases',
-        foreignKey: 'glossaryId',
-        otherKey: 'caseId'
+        through: "GlossaryCases",
+        as: "relatedCases",
+        foreignKey: "glossaryId",
+        otherKey: "caseId",
       });
     }
   }
-  Glossary.init({
-    id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      autoIncrement: true,
-      primaryKey: true,
+  Glossary.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      term: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      usageCount: {
+        type: DataTypes.INTEGER,
+      },
+      createdAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
+      updatedAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
     },
-    term: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    }
-  }, {
-    sequelize,
-    modelName: 'Glossary',
-  });
+    {
+      sequelize,
+      modelName: "Glossary",
+    },
+  );
   return Glossary;
 };

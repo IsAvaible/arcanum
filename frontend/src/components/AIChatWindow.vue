@@ -13,7 +13,6 @@ import {
   ContextMenu,
   Skeleton,
   useToast,
-  type ToastMessageOptions,
 } from 'primevue'
 import { useApi } from '@/composables/useApi'
 import {
@@ -23,6 +22,7 @@ import {
   type ChatWithMessages,
   type Message,
   MessageRoleEnum,
+  type ModelError,
 } from '@/api'
 import CaseReferenceComponent from '@/components/chat-view/CaseReference.vue'
 import FileReferenceComponent from '@/components/chat-view/FileReference.vue'
@@ -35,9 +35,9 @@ import { useRoute, useRouter } from 'vue-router'
 import type { MenuItem } from 'primevue/menuitem'
 import { io, Socket } from 'socket.io-client'
 import { BASE_PATH as BACKEND_API_BASE_PATH } from '@/api/base'
-import { apiBlobToFile } from '@/functions/apiBlobToFile'
-import FilePreview from '@/components/file-handling/FilePreview.vue'
 import { MdPreview } from 'md-editor-v3'
+import FilePreview from '@/components/file-handling/FilePreview.vue'
+import { useAttachmentLoading } from '@/composables/useAttachmentLoading'
 
 /// Reactive State Variables
 const route = useRoute()
@@ -86,7 +86,8 @@ const fetchChats = async () => {
     chatsError.value = null
   } catch (error) {
     console.error(error)
-    chatsError.value = (error as AxiosError).message
+    chatsError.value =
+      ((error as AxiosError).response?.data as ModelError)?.message ?? (error as AxiosError).message
   }
   chatsLoading.value = false
 }
@@ -115,7 +116,7 @@ const registerSocket = async () => {
       })
 
       socket.value!.on('llm_end', (_data: { message: string }) => {
-        pendingLLMMessage.value = null
+        // pendingLLMMessage.value = null
       })
 
       resolve()
@@ -165,7 +166,9 @@ const deleteChat = async (id: Chat['id']) => {
     toast.add({
       severity: 'error',
       summary: 'Failed to delete chat',
-      detail: (error as AxiosError).message,
+      detail:
+        ((error as AxiosError).response?.data as ModelError)?.message ??
+        (error as AxiosError).message,
       life: 3000,
     })
   }
@@ -220,7 +223,9 @@ const saveChatTitle = async (id: Chat['id'], title: string): Promise<boolean> =>
     toast.add({
       severity: 'error',
       summary: 'Failed to save chat title',
-      detail: (error as AxiosError).message,
+      detail:
+        ((error as AxiosError).response?.data as ModelError)?.message ??
+        (error as AxiosError).message,
       life: 3000,
     })
     return false
@@ -331,7 +336,9 @@ const sendMessage = async () => {
       toast.add({
         severity: 'error',
         summary: 'Failed to edit message',
-        detail: (error as AxiosError).message,
+        detail:
+          ((error as AxiosError).response?.data as ModelError)?.message ??
+          (error as AxiosError).message,
         life: 3000,
       })
       startEditingMessage(editedMessage)
@@ -359,7 +366,9 @@ const sendPendingMessage = async () => {
     toast.add({
       severity: 'error',
       summary: 'Failed to send message',
-      detail: (error as AxiosError).message,
+      detail:
+        ((error as AxiosError).response?.data as ModelError)?.message ??
+        (error as AxiosError).message,
       life: 1500,
     })
     pendingMessage.value!.state = 'failed'
@@ -384,7 +393,9 @@ const deleteMessage = async (id: Message['id']) => {
     toast.add({
       severity: 'error',
       summary: 'Failed to delete message',
-      detail: (error as AxiosError).message,
+      detail:
+        ((error as AxiosError).response?.data as ModelError)?.message ??
+        (error as AxiosError).message,
       life: 1500,
     })
   } finally {
@@ -414,7 +425,9 @@ const createChatWithMessage = async () => {
     toast.add({
       severity: 'error',
       summary: 'Failed to create chat',
-      detail: (error as AxiosError).message,
+      detail:
+        ((error as AxiosError).response?.data as ModelError)?.message ??
+        (error as AxiosError).message,
       life: 3000,
     })
     console.error(error)
@@ -577,53 +590,8 @@ const fileReferences = computed<Record<number, FileReference[]>>(() => {
 })
 
 /// File Preview Drawer Logic
-const files = ref<File[]>([])
-const selectedFile = ref<File | null>(null)
-const filePreviewVisible = ref(false)
-const loadingFileId = ref<number | null>(null)
-
-const openFileInDrawer = async (attachment: Attachment) => {
-  // Check if the attachment is already in the files array
-  let file = files.value.find((f) => f.name === attachment.filename)
-  if (!file) {
-    loadingFileId.value = attachment.id
-
-    const loadingToast: ToastMessageOptions = {
-      severity: 'info',
-      summary: 'Loading',
-      detail: `Downloading ${attachment.filename}...`,
-    }
-    toast.add(loadingToast)
-
-    // If not, download the file from the server
-    try {
-      file = await apiBlobToFile(
-        await api.casesAttachmentsAttachmentIdDownloadGet(
-          {
-            attachmentId: attachment.id,
-          },
-          { responseType: 'blob' },
-        ),
-      )
-
-      files.value.push(file)
-    } catch (error) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'An error occurred while downloading the file\n' + (error as AxiosError).message,
-        life: 3000,
-      })
-      console.error(error)
-      return
-    } finally {
-      loadingFileId.value = null
-    }
-  }
-
-  selectedFile.value = file!
-  filePreviewVisible.value = true
-}
+const { selectedFile, filePreviewVisible, loadingAttachmentId, openAttachmentPreview } =
+  useAttachmentLoading()
 
 /// Lifecycle Hooks
 onMounted(async () => {
@@ -662,7 +630,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex h-screen bg-white neutral-primary">
+  <div class="flex h-screen bg-white">
     <!-- Sidebar -->
     <AIChatSidebar
       :active-chat="activeChat"
@@ -753,7 +721,7 @@ onMounted(async () => {
               v-for="caseReference in caseReferences[message.id] || []"
               :key="caseReference.id"
               :reference="caseReference"
-              class="min-w-40"
+              class="min-w-60"
               :class="{
                 'bg-gray-100': message.role === MessageRoleEnum.Assistant,
                 'bg-white': message.role === MessageRoleEnum.User,
@@ -763,9 +731,9 @@ onMounted(async () => {
               v-for="fileReference in fileReferences[message.id] || []"
               :key="fileReference.id"
               :reference="fileReference"
-              :fileLoading="loadingFileId === fileReference.id"
-              @click="openFileInDrawer"
-              class="min-w-40"
+              :fileLoading="loadingAttachmentId === fileReference.id"
+              @click="openAttachmentPreview"
+              class="min-w-60"
               :class="{
                 'bg-gray-100': message.role === MessageRoleEnum.Assistant,
                 'bg-white': message.role === MessageRoleEnum.User,
@@ -985,8 +953,7 @@ onMounted(async () => {
   animation: shake 0.5s ease-in-out;
 }
 
-.pop-in-enter-active,
-.pop-in-leave-active {
+.pop-in-enter-active {
   transition: all 0.3s ease;
 }
 
@@ -995,14 +962,8 @@ onMounted(async () => {
   transform: scale(0.8);
 }
 
-.pop-in-enter-to,
-.pop-in-leave-from {
+.pop-in-enter-to {
   opacity: 1;
   transform: scale(1);
-}
-
-.pop-in-leave-to {
-  opacity: 0;
-  transform: scale(0);
 }
 </style>

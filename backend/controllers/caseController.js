@@ -92,7 +92,6 @@ exports.deleteCase = async (req, res) => {
       return res.status(404).json({ message: "Case not found" });
     }
 
-
     const attachments = caseItemToDelete.attachments;
 
     const deletedAttachmentIds = [];
@@ -101,9 +100,10 @@ exports.deleteCase = async (req, res) => {
       for (const attachment of attachments) {
         // Remove attachment links and delete orphaned attachments.
         await caseItemToDelete.removeAttachment(attachment);
-        const deletedId = await attachmentService.deleteAttachmentIfOrphaned(attachment);
+        const deletedId =
+          await attachmentService.deleteAttachmentIfOrphaned(attachment);
 
-        if(deletedId){
+        if (deletedId) {
           deletedAttachmentIds.push(deletedId);
         }
       }
@@ -118,11 +118,7 @@ exports.deleteCase = async (req, res) => {
       attachmentIds: deletedAttachmentIds,
     };
 
-  
-    console.log(
-      "Sending to LLM: ",
-      JSON.stringify(llmRequestData),
-    );
+    console.log("Sending to LLM: ", JSON.stringify(llmRequestData));
 
     // Send data to the LLM endpoint.
     const llmResponse = axios.post(
@@ -356,6 +352,7 @@ exports.createCaseFromFiles = [
                 where: { term: glossaryTerm },
                 defaults: { term: glossaryTerm },
               });
+              await glossaryInstance.increment('usageCount');
               await newCase.addGlossary(glossaryInstance);
             }
           }
@@ -383,6 +380,7 @@ exports.createCaseFromFiles = [
                     where: { term },
                     defaults: { term },
                   });
+                  await glossaryInstance.increment('usageCount');
                   await attachInst.addGlossary(glossaryInstance);
                 }
               }
@@ -429,7 +427,9 @@ exports.createCaseFromFiles = [
       }
     } catch (error) {
       console.error("Error in createCaseFromFiles:", error);
-      res.status(500).json({ message: error.message || "Error creating case" });
+      res.status(500).json({
+        message: error.response?.data?.message ?? "Error creating case",
+      });
     }
   },
 ];
@@ -484,9 +484,21 @@ exports.confirmCase = [
       const updatedCaseWithAttachments = await Cases.findByPk(caseId, {
         include: [
           {
+            model: Glossary,
+            as: "glossary", // Muss zu den Associations passen
+            through: { attributes: [] },
+          },
+          {
             model: Attachments,
             as: "attachments",
-            through: { attributes: [] }, // Exclude join table attributes.
+            through: { attributes: [] },
+            include: [
+              {
+                model: Glossary,
+                as: "glossary",
+                through: { attributes: [] },
+              },
+            ],
           },
         ],
       });

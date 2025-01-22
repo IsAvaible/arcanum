@@ -1,0 +1,12 @@
+Ticket-ID: #1123
+Datum: 15. Januar 2025
+Erstellt von: Thomas Klein
+
+Beschreibung:
+Das Förderband der Produktionslinie 3 bleibt unregelmäßig stehen, besonders bei höherer Last.
+
+Lösungsvorschläge:
+Motor auf Überhitzung prüfen.
+Sensoren entlang des Förderbands reinigen.
+Sicherstellen, dass keine Fremdkörper die Mechanik blockieren.
+Status: Offen – Techniker angefordert.
