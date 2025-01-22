@@ -84,7 +84,15 @@ exports.uploadFilesAndCreateAttachments = async (files) => {
 exports.deleteAttachmentIfOrphaned = async (attachment) => {
   // Check if the attachment is associated with any other cases
   const otherCases = await attachment.getCases();
+  const otherGlossary = await attachment.getGlossary();
   const id = attachment.id;
+
+  if (otherGlossary.length > 0) {
+    for (const glossary of otherGlossary) {
+      await glossary.decrement('usageCount');
+    }
+  }
+
 
   if (otherCases.length === 0) {
     // Delete the file from NextCloud

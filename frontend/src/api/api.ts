@@ -160,6 +160,12 @@ export interface Case {
      */
     'attachments': Array<Attachment>;
     /**
+     * List of glossary entries linked to the case.
+     * @type {Array<GlossaryEntry>}
+     * @memberof Case
+     */
+    'glossary': Array<GlossaryEntry>;
+    /**
      * List of changes made to the case.
      * @type {Array<CaseChangeHistoryEntry>}
      * @memberof Case
@@ -293,6 +299,86 @@ export interface CaseChangeHistoryEntry {
 /**
  * 
  * @export
+ * @interface CaseWithId
+ */
+export interface CaseWithId {
+    /**
+     * Title of the case.
+     * @type {string}
+     * @memberof CaseWithId
+     */
+    'title': string;
+    /**
+     * Description of the case.
+     * @type {string}
+     * @memberof CaseWithId
+     */
+    'description': string;
+    /**
+     * Solution for the case.
+     * @type {string}
+     * @memberof CaseWithId
+     */
+    'solution'?: string;
+    /**
+     * Person responsible for the case.
+     * @type {Array<string>}
+     * @memberof CaseWithId
+     */
+    'assignee'?: Array<string>;
+    /**
+     * Status of the case.
+     * @type {string}
+     * @memberof CaseWithId
+     */
+    'status'?: CaseWithIdStatusEnum;
+    /**
+     * Type of the case.
+     * @type {string}
+     * @memberof CaseWithId
+     */
+    'case_type'?: CaseWithIdCaseTypeEnum;
+    /**
+     * Priority level of the case.
+     * @type {string}
+     * @memberof CaseWithId
+     */
+    'priority'?: CaseWithIdPriorityEnum;
+    /**
+     * ID of the case.
+     * @type {number}
+     * @memberof CaseWithId
+     */
+    'id': number;
+}
+
+export const CaseWithIdStatusEnum = {
+    Open: 'Open',
+    InProgress: 'In Progress',
+    Solved: 'Solved',
+    Closed: 'Closed'
+} as const;
+
+export type CaseWithIdStatusEnum = typeof CaseWithIdStatusEnum[keyof typeof CaseWithIdStatusEnum];
+export const CaseWithIdCaseTypeEnum = {
+    Problem: 'Problem',
+    Incident: 'Incident',
+    Change: 'Change',
+    Faq: 'FAQ'
+} as const;
+
+export type CaseWithIdCaseTypeEnum = typeof CaseWithIdCaseTypeEnum[keyof typeof CaseWithIdCaseTypeEnum];
+export const CaseWithIdPriorityEnum = {
+    Low: 'Low',
+    Medium: 'Medium',
+    High: 'High'
+} as const;
+
+export type CaseWithIdPriorityEnum = typeof CaseWithIdPriorityEnum[keyof typeof CaseWithIdPriorityEnum];
+
+/**
+ * 
+ * @export
  * @interface Chat
  */
 export interface Chat {
@@ -376,6 +462,92 @@ export interface ChatsIdMessagesPost200Response {
      * @memberof ChatsIdMessagesPost200Response
      */
     'assistantMessage': Message;
+}
+/**
+ * 
+ * @export
+ * @interface GlossaryEntry
+ */
+export interface GlossaryEntry {
+    /**
+     * 
+     * @type {number}
+     * @memberof GlossaryEntry
+     */
+    'id': number;
+    /**
+     * 
+     * @type {string}
+     * @memberof GlossaryEntry
+     */
+    'term': string;
+    /**
+     * 
+     * @type {number}
+     * @memberof GlossaryEntry
+     */
+    'usageCount': number;
+    /**
+     * Timestamp the entry was created at.
+     * @type {string}
+     * @memberof GlossaryEntry
+     */
+    'createdAt': string;
+    /**
+     * Timestamp the entry was last updated at.
+     * @type {string}
+     * @memberof GlossaryEntry
+     */
+    'updatedAt'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface GlossaryEntryDetail
+ */
+export interface GlossaryEntryDetail {
+    /**
+     * 
+     * @type {number}
+     * @memberof GlossaryEntryDetail
+     */
+    'id': number;
+    /**
+     * 
+     * @type {string}
+     * @memberof GlossaryEntryDetail
+     */
+    'term': string;
+    /**
+     * 
+     * @type {number}
+     * @memberof GlossaryEntryDetail
+     */
+    'usageCount': number;
+    /**
+     * Timestamp the entry was created at.
+     * @type {string}
+     * @memberof GlossaryEntryDetail
+     */
+    'createdAt': string;
+    /**
+     * Timestamp the entry was last updated at.
+     * @type {string}
+     * @memberof GlossaryEntryDetail
+     */
+    'updatedAt'?: string;
+    /**
+     * 
+     * @type {Array<Attachment>}
+     * @memberof GlossaryEntryDetail
+     */
+    'relatedAttachments': Array<Attachment>;
+    /**
+     * 
+     * @type {Array<CaseWithId>}
+     * @memberof GlossaryEntryDetail
+     */
+    'relatedCases': Array<CaseWithId>;
 }
 /**
  * 
@@ -1499,6 +1671,444 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Finds glossary entries by the given term substring.
+         * @param {string} term 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryFindGet: async (term: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'term' is not null or undefined
+            assertParamExists('glossaryFindGet', 'term', term)
+            const localVarPath = `/glossary/find`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication cookieAuth required
+
+            if (term !== undefined) {
+                localVarQueryParameter['term'] = term;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Retrieves all glossary entries.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/glossary`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication cookieAuth required
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Removes an attachment from a glossary entry.
+         * @param {number} id 
+         * @param {number} attachmentId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryIdAttachmentsAttachmentIdDelete: async (id: number, attachmentId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('glossaryIdAttachmentsAttachmentIdDelete', 'id', id)
+            // verify required parameter 'attachmentId' is not null or undefined
+            assertParamExists('glossaryIdAttachmentsAttachmentIdDelete', 'attachmentId', attachmentId)
+            const localVarPath = `/glossary/{id}/attachments/{attachmentId}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)))
+                .replace(`{${"attachmentId"}}`, encodeURIComponent(String(attachmentId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication cookieAuth required
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Associates an existing attachment with a glossary entry.
+         * @param {number} id 
+         * @param {number} attachmentId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryIdAttachmentsAttachmentIdPost: async (id: number, attachmentId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('glossaryIdAttachmentsAttachmentIdPost', 'id', id)
+            // verify required parameter 'attachmentId' is not null or undefined
+            assertParamExists('glossaryIdAttachmentsAttachmentIdPost', 'attachmentId', attachmentId)
+            const localVarPath = `/glossary/{id}/attachments/{attachmentId}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)))
+                .replace(`{${"attachmentId"}}`, encodeURIComponent(String(attachmentId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication cookieAuth required
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Removes a case from a glossary entry.
+         * @param {number} id 
+         * @param {number} caseId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryIdCasesCaseIdDelete: async (id: number, caseId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('glossaryIdCasesCaseIdDelete', 'id', id)
+            // verify required parameter 'caseId' is not null or undefined
+            assertParamExists('glossaryIdCasesCaseIdDelete', 'caseId', caseId)
+            const localVarPath = `/glossary/{id}/cases/{caseId}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)))
+                .replace(`{${"caseId"}}`, encodeURIComponent(String(caseId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication cookieAuth required
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Adds a case to a glossary entry.
+         * @param {number} id 
+         * @param {number} caseId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryIdCasesCaseIdPost: async (id: number, caseId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('glossaryIdCasesCaseIdPost', 'id', id)
+            // verify required parameter 'caseId' is not null or undefined
+            assertParamExists('glossaryIdCasesCaseIdPost', 'caseId', caseId)
+            const localVarPath = `/glossary/{id}/cases/{caseId}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)))
+                .replace(`{${"caseId"}}`, encodeURIComponent(String(caseId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication cookieAuth required
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Deletes a glossary entry by ID.
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryIdDelete: async (id: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('glossaryIdDelete', 'id', id)
+            const localVarPath = `/glossary/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication cookieAuth required
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Retrieves a single glossary entry by ID, including linked attachments and cases.
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryIdGet: async (id: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('glossaryIdGet', 'id', id)
+            const localVarPath = `/glossary/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication cookieAuth required
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Updates an existing glossary entry by ID.
+         * @param {number} id 
+         * @param {string} [term] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryIdPut: async (id: number, term?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('glossaryIdPut', 'id', id)
+            const localVarPath = `/glossary/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
+
+            // authentication cookieAuth required
+
+
+            if (term !== undefined) { 
+                localVarFormParams.append('term', term as any);
+            }
+    
+    
+            localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = localVarFormParams;
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Adds an attachment to a glossary entry.
+         * @param {number} id 
+         * @param {Array<File>} [files] Files to be uploaded.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryIdUploadPost: async (id: number, files?: Array<File>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('glossaryIdUploadPost', 'id', id)
+            const localVarPath = `/glossary/{id}/upload`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
+
+            // authentication cookieAuth required
+
+            if (files) {
+                files.forEach((element) => {
+                    localVarFormParams.append('files', element as any);
+                })
+            }
+
+    
+    
+            localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = localVarFormParams;
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Creates a new glossary entry.
+         * @param {string} term 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryPost: async (term: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'term' is not null or undefined
+            assertParamExists('glossaryPost', 'term', term)
+            const localVarPath = `/glossary`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
+
+            // authentication cookieAuth required
+
+
+            if (term !== undefined) { 
+                localVarFormParams.append('term', term as any);
+            }
+    
+    
+            localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = localVarFormParams;
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -1840,6 +2450,154 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.generateJWTGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * 
+         * @summary Finds glossary entries by the given term substring.
+         * @param {string} term 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async glossaryFindGet(term: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<GlossaryEntry>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.glossaryFindGet(term, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.glossaryFindGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Retrieves all glossary entries.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async glossaryGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<GlossaryEntry>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.glossaryGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.glossaryGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Removes an attachment from a glossary entry.
+         * @param {number} id 
+         * @param {number} attachmentId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async glossaryIdAttachmentsAttachmentIdDelete(id: number, attachmentId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.glossaryIdAttachmentsAttachmentIdDelete(id, attachmentId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.glossaryIdAttachmentsAttachmentIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Associates an existing attachment with a glossary entry.
+         * @param {number} id 
+         * @param {number} attachmentId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async glossaryIdAttachmentsAttachmentIdPost(id: number, attachmentId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GlossaryEntryDetail>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.glossaryIdAttachmentsAttachmentIdPost(id, attachmentId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.glossaryIdAttachmentsAttachmentIdPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Removes a case from a glossary entry.
+         * @param {number} id 
+         * @param {number} caseId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async glossaryIdCasesCaseIdDelete(id: number, caseId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.glossaryIdCasesCaseIdDelete(id, caseId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.glossaryIdCasesCaseIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Adds a case to a glossary entry.
+         * @param {number} id 
+         * @param {number} caseId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async glossaryIdCasesCaseIdPost(id: number, caseId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GlossaryEntryDetail>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.glossaryIdCasesCaseIdPost(id, caseId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.glossaryIdCasesCaseIdPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Deletes a glossary entry by ID.
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async glossaryIdDelete(id: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.glossaryIdDelete(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.glossaryIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Retrieves a single glossary entry by ID, including linked attachments and cases.
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async glossaryIdGet(id: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GlossaryEntryDetail>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.glossaryIdGet(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.glossaryIdGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Updates an existing glossary entry by ID.
+         * @param {number} id 
+         * @param {string} [term] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async glossaryIdPut(id: number, term?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.glossaryIdPut(id, term, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.glossaryIdPut']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Adds an attachment to a glossary entry.
+         * @param {number} id 
+         * @param {Array<File>} [files] Files to be uploaded.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async glossaryIdUploadPost(id: number, files?: Array<File>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GlossaryEntryDetail>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.glossaryIdUploadPost(id, files, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.glossaryIdUploadPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Creates a new glossary entry.
+         * @param {string} term 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async glossaryPost(term: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GlossaryEntry>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.glossaryPost(term, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.glossaryPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -2076,6 +2834,115 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          */
         generateJWTGet(options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.generateJWTGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Finds glossary entries by the given term substring.
+         * @param {DefaultApiGlossaryFindGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryFindGet(requestParameters: DefaultApiGlossaryFindGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<GlossaryEntry>> {
+            return localVarFp.glossaryFindGet(requestParameters.term, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Retrieves all glossary entries.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<GlossaryEntry>> {
+            return localVarFp.glossaryGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Removes an attachment from a glossary entry.
+         * @param {DefaultApiGlossaryIdAttachmentsAttachmentIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryIdAttachmentsAttachmentIdDelete(requestParameters: DefaultApiGlossaryIdAttachmentsAttachmentIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.glossaryIdAttachmentsAttachmentIdDelete(requestParameters.id, requestParameters.attachmentId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Associates an existing attachment with a glossary entry.
+         * @param {DefaultApiGlossaryIdAttachmentsAttachmentIdPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryIdAttachmentsAttachmentIdPost(requestParameters: DefaultApiGlossaryIdAttachmentsAttachmentIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<GlossaryEntryDetail> {
+            return localVarFp.glossaryIdAttachmentsAttachmentIdPost(requestParameters.id, requestParameters.attachmentId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Removes a case from a glossary entry.
+         * @param {DefaultApiGlossaryIdCasesCaseIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryIdCasesCaseIdDelete(requestParameters: DefaultApiGlossaryIdCasesCaseIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.glossaryIdCasesCaseIdDelete(requestParameters.id, requestParameters.caseId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Adds a case to a glossary entry.
+         * @param {DefaultApiGlossaryIdCasesCaseIdPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryIdCasesCaseIdPost(requestParameters: DefaultApiGlossaryIdCasesCaseIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<GlossaryEntryDetail> {
+            return localVarFp.glossaryIdCasesCaseIdPost(requestParameters.id, requestParameters.caseId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Deletes a glossary entry by ID.
+         * @param {DefaultApiGlossaryIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryIdDelete(requestParameters: DefaultApiGlossaryIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.glossaryIdDelete(requestParameters.id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Retrieves a single glossary entry by ID, including linked attachments and cases.
+         * @param {DefaultApiGlossaryIdGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryIdGet(requestParameters: DefaultApiGlossaryIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<GlossaryEntryDetail> {
+            return localVarFp.glossaryIdGet(requestParameters.id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Updates an existing glossary entry by ID.
+         * @param {DefaultApiGlossaryIdPutRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryIdPut(requestParameters: DefaultApiGlossaryIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.glossaryIdPut(requestParameters.id, requestParameters.term, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Adds an attachment to a glossary entry.
+         * @param {DefaultApiGlossaryIdUploadPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryIdUploadPost(requestParameters: DefaultApiGlossaryIdUploadPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<GlossaryEntryDetail> {
+            return localVarFp.glossaryIdUploadPost(requestParameters.id, requestParameters.files, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Creates a new glossary entry.
+         * @param {DefaultApiGlossaryPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        glossaryPost(requestParameters: DefaultApiGlossaryPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<GlossaryEntry> {
+            return localVarFp.glossaryPost(requestParameters.term, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -2606,6 +3473,188 @@ export interface DefaultApiCreateCaseFromFilesPostRequest {
 }
 
 /**
+ * Request parameters for glossaryFindGet operation in DefaultApi.
+ * @export
+ * @interface DefaultApiGlossaryFindGetRequest
+ */
+export interface DefaultApiGlossaryFindGetRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof DefaultApiGlossaryFindGet
+     */
+    readonly term: string
+}
+
+/**
+ * Request parameters for glossaryIdAttachmentsAttachmentIdDelete operation in DefaultApi.
+ * @export
+ * @interface DefaultApiGlossaryIdAttachmentsAttachmentIdDeleteRequest
+ */
+export interface DefaultApiGlossaryIdAttachmentsAttachmentIdDeleteRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof DefaultApiGlossaryIdAttachmentsAttachmentIdDelete
+     */
+    readonly id: number
+
+    /**
+     * 
+     * @type {number}
+     * @memberof DefaultApiGlossaryIdAttachmentsAttachmentIdDelete
+     */
+    readonly attachmentId: number
+}
+
+/**
+ * Request parameters for glossaryIdAttachmentsAttachmentIdPost operation in DefaultApi.
+ * @export
+ * @interface DefaultApiGlossaryIdAttachmentsAttachmentIdPostRequest
+ */
+export interface DefaultApiGlossaryIdAttachmentsAttachmentIdPostRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof DefaultApiGlossaryIdAttachmentsAttachmentIdPost
+     */
+    readonly id: number
+
+    /**
+     * 
+     * @type {number}
+     * @memberof DefaultApiGlossaryIdAttachmentsAttachmentIdPost
+     */
+    readonly attachmentId: number
+}
+
+/**
+ * Request parameters for glossaryIdCasesCaseIdDelete operation in DefaultApi.
+ * @export
+ * @interface DefaultApiGlossaryIdCasesCaseIdDeleteRequest
+ */
+export interface DefaultApiGlossaryIdCasesCaseIdDeleteRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof DefaultApiGlossaryIdCasesCaseIdDelete
+     */
+    readonly id: number
+
+    /**
+     * 
+     * @type {number}
+     * @memberof DefaultApiGlossaryIdCasesCaseIdDelete
+     */
+    readonly caseId: number
+}
+
+/**
+ * Request parameters for glossaryIdCasesCaseIdPost operation in DefaultApi.
+ * @export
+ * @interface DefaultApiGlossaryIdCasesCaseIdPostRequest
+ */
+export interface DefaultApiGlossaryIdCasesCaseIdPostRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof DefaultApiGlossaryIdCasesCaseIdPost
+     */
+    readonly id: number
+
+    /**
+     * 
+     * @type {number}
+     * @memberof DefaultApiGlossaryIdCasesCaseIdPost
+     */
+    readonly caseId: number
+}
+
+/**
+ * Request parameters for glossaryIdDelete operation in DefaultApi.
+ * @export
+ * @interface DefaultApiGlossaryIdDeleteRequest
+ */
+export interface DefaultApiGlossaryIdDeleteRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof DefaultApiGlossaryIdDelete
+     */
+    readonly id: number
+}
+
+/**
+ * Request parameters for glossaryIdGet operation in DefaultApi.
+ * @export
+ * @interface DefaultApiGlossaryIdGetRequest
+ */
+export interface DefaultApiGlossaryIdGetRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof DefaultApiGlossaryIdGet
+     */
+    readonly id: number
+}
+
+/**
+ * Request parameters for glossaryIdPut operation in DefaultApi.
+ * @export
+ * @interface DefaultApiGlossaryIdPutRequest
+ */
+export interface DefaultApiGlossaryIdPutRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof DefaultApiGlossaryIdPut
+     */
+    readonly id: number
+
+    /**
+     * 
+     * @type {string}
+     * @memberof DefaultApiGlossaryIdPut
+     */
+    readonly term?: string
+}
+
+/**
+ * Request parameters for glossaryIdUploadPost operation in DefaultApi.
+ * @export
+ * @interface DefaultApiGlossaryIdUploadPostRequest
+ */
+export interface DefaultApiGlossaryIdUploadPostRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof DefaultApiGlossaryIdUploadPost
+     */
+    readonly id: number
+
+    /**
+     * Files to be uploaded.
+     * @type {Array<File>}
+     * @memberof DefaultApiGlossaryIdUploadPost
+     */
+    readonly files?: Array<File>
+}
+
+/**
+ * Request parameters for glossaryPost operation in DefaultApi.
+ * @export
+ * @interface DefaultApiGlossaryPostRequest
+ */
+export interface DefaultApiGlossaryPostRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof DefaultApiGlossaryPost
+     */
+    readonly term: string
+}
+
+/**
  * DefaultApi - object-oriented interface
  * @export
  * @class DefaultApi
@@ -2883,6 +3932,137 @@ export class DefaultApi extends BaseAPI {
      */
     public generateJWTGet(options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).generateJWTGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Finds glossary entries by the given term substring.
+     * @param {DefaultApiGlossaryFindGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public glossaryFindGet(requestParameters: DefaultApiGlossaryFindGetRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).glossaryFindGet(requestParameters.term, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Retrieves all glossary entries.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public glossaryGet(options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).glossaryGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Removes an attachment from a glossary entry.
+     * @param {DefaultApiGlossaryIdAttachmentsAttachmentIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public glossaryIdAttachmentsAttachmentIdDelete(requestParameters: DefaultApiGlossaryIdAttachmentsAttachmentIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).glossaryIdAttachmentsAttachmentIdDelete(requestParameters.id, requestParameters.attachmentId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Associates an existing attachment with a glossary entry.
+     * @param {DefaultApiGlossaryIdAttachmentsAttachmentIdPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public glossaryIdAttachmentsAttachmentIdPost(requestParameters: DefaultApiGlossaryIdAttachmentsAttachmentIdPostRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).glossaryIdAttachmentsAttachmentIdPost(requestParameters.id, requestParameters.attachmentId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Removes a case from a glossary entry.
+     * @param {DefaultApiGlossaryIdCasesCaseIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public glossaryIdCasesCaseIdDelete(requestParameters: DefaultApiGlossaryIdCasesCaseIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).glossaryIdCasesCaseIdDelete(requestParameters.id, requestParameters.caseId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Adds a case to a glossary entry.
+     * @param {DefaultApiGlossaryIdCasesCaseIdPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public glossaryIdCasesCaseIdPost(requestParameters: DefaultApiGlossaryIdCasesCaseIdPostRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).glossaryIdCasesCaseIdPost(requestParameters.id, requestParameters.caseId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Deletes a glossary entry by ID.
+     * @param {DefaultApiGlossaryIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public glossaryIdDelete(requestParameters: DefaultApiGlossaryIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).glossaryIdDelete(requestParameters.id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Retrieves a single glossary entry by ID, including linked attachments and cases.
+     * @param {DefaultApiGlossaryIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public glossaryIdGet(requestParameters: DefaultApiGlossaryIdGetRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).glossaryIdGet(requestParameters.id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Updates an existing glossary entry by ID.
+     * @param {DefaultApiGlossaryIdPutRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public glossaryIdPut(requestParameters: DefaultApiGlossaryIdPutRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).glossaryIdPut(requestParameters.id, requestParameters.term, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Adds an attachment to a glossary entry.
+     * @param {DefaultApiGlossaryIdUploadPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public glossaryIdUploadPost(requestParameters: DefaultApiGlossaryIdUploadPostRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).glossaryIdUploadPost(requestParameters.id, requestParameters.files, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Creates a new glossary entry.
+     * @param {DefaultApiGlossaryPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public glossaryPost(requestParameters: DefaultApiGlossaryPostRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).glossaryPost(requestParameters.term, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

@@ -7,6 +7,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.renameColumn("ChangeHistory", "case_id", "caseId");
+    await queryInterface.renameColumn("ChangeHistory", "caseId", "case_id");
   },
 };
