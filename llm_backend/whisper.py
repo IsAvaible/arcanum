@@ -191,7 +191,6 @@ def convert_to_mp3(filehash, path):
 
     try:
         subprocess.run(command, check=True)
-        print(f"Saved Audio in {audio_output}")
         return audio_output
     except subprocess.CalledProcessError as e:
         abort(500, description=f"Error FFMPEG (Audio Conversion): {e}")
