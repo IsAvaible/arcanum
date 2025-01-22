@@ -712,7 +712,7 @@ onMounted(async () => {
         name="pop-in"
         tag="div"
         id="chat-window"
-        class="flex-1 overflow-y-auto flex flex-col gap-4 py-4 px-6"
+        class="flex-1 overflow-y-auto flex flex-col gap-4 py-4 px-6 @container"
       >
         <!-- We use the index as the key for messages to avoid re-animating on state change. -->
         <div
@@ -732,7 +732,7 @@ onMounted(async () => {
               'bg-primary-500 text-white': message.role === MessageRoleEnum.User,
               'bg-red-700': message.state === 'failed',
             }"
-            class="px-4 py-2 rounded-lg shadow-sm w-fit max-w-xs flex flex-col gap-y-2"
+            class="px-4 py-2 rounded-lg shadow-sm w-fit max-w-xs @lg:max-w-sm @xl:max-w-md flex flex-col gap-y-2"
             @contextmenu.prevent="
               (event) => {
                 if (message.id !== -1) openMessageContextMenu(event, message)
@@ -780,7 +780,10 @@ onMounted(async () => {
         </div>
       </TransitionGroup>
       <!-- Skeleton loader -->
-      <div v-else-if="chatsLoading" class="flex-1 overflow-y-auto flex flex-col gap-4 py-4 px-6">
+      <div
+        v-else-if="chatsLoading"
+        class="flex-1 overflow-y-auto flex flex-col gap-4 py-4 px-6 @container"
+      >
         <div
           class="flex gap-2"
           v-for="i in 6"
@@ -792,7 +795,7 @@ onMounted(async () => {
           <Skeleton
             :height="i % 2 !== 0 ? '2.5rem' : Math.floor(Math.random() * 10) + 5 + 'rem'"
             :width="i % 2 !== 0 ? Math.floor(Math.random() * 10) + 15 + 'rem' : '20rem'"
-            class="h-10 w-20 rounded-lg shadow-sm w-fit max-w-xs"
+            class="rounded-lg shadow-sm max-w-xs @lg:max-w-sm @xl:max-w-md"
           />
         </div>
       </div>
