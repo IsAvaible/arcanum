@@ -340,6 +340,7 @@ exports.createCaseFromFiles = [
                 where: { term: glossaryTerm },
                 defaults: { term: glossaryTerm },
               });
+              await glossaryInstance.increment('usageCount');
               await newCase.addGlossary(glossaryInstance);
             }
           }
@@ -367,6 +368,7 @@ exports.createCaseFromFiles = [
                     where: { term },
                     defaults: { term },
                   });
+                  await glossaryInstance.increment('usageCount');
                   await attachInst.addGlossary(glossaryInstance);
                 }
               }
@@ -464,9 +466,21 @@ exports.confirmCase = [
       const updatedCaseWithAttachments = await Cases.findByPk(caseId, {
         include: [
           {
+            model: Glossary,
+            as: "glossary", // Muss zu den Associations passen
+            through: { attributes: [] },
+          },
+          {
             model: Attachments,
             as: "attachments",
-            through: { attributes: [] }, // Exclude join table attributes.
+            through: { attributes: [] },
+            include: [
+              {
+                model: Glossary,
+                as: "glossary",
+                through: { attributes: [] },
+              },
+            ],
           },
         ],
       });
