@@ -85,6 +85,11 @@ exports.deleteCase = async (req, res) => {
           as: "attachments",
           through: { attributes: [] },
         },
+        {
+          model: Glossary,
+          as: "glossary",
+          through: { attributes: [] },
+        },
       ],
     });
 
@@ -105,6 +110,18 @@ exports.deleteCase = async (req, res) => {
 
         if (deletedId) {
           deletedAttachmentIds.push(deletedId);
+        }
+      }
+    }
+
+    const glossaries = caseItemToDelete.glossary;
+
+    if (glossaries && glossaries.length > 0) {
+      for (const gloss of glossaries) {
+        if(gloss.getRelatedCases().length <= 1 ){
+          await gloss.destroy();
+        } else{
+          await gloss.decrement('usageCount');
         }
       }
     }
