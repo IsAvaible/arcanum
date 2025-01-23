@@ -38,6 +38,9 @@ def upload_file(files, socket_id):
         file_hash = file["filehash"]
 
         delete_temp_folder(file_hash)
+
+
+        sio.emit('llm_message', {'message': f'Getting File: "{file_name}"', 'socket_id': socket_id})
         path = download_file_webdav(file_path, file_name)
         is_cached = check_if_cached(file_hash)
 

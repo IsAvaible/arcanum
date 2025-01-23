@@ -127,7 +127,7 @@ def ask_question(request, vectorstore):
     messages = json_str["context"]
     latest_user_message = json_str["message"]
 
-    sio.emit('llm_message', {'message': 'Searching for relevant files...', 'socket_id': socket_id})
+    sio.emit('llm_message', {'message': 'Searching for relevant information...', 'socket_id': socket_id})
 
     messages.append({'role': 'user', 'content': latest_user_message})
 

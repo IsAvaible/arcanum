@@ -1,5 +1,8 @@
 import os
+import subprocess
 from itertools import islice
+
+from flask import abort
 
 from app import app, sio
 from audio import split_audio_with_overlap
@@ -48,15 +51,18 @@ def transcribe(path, filehash, file_as_dicts, socket_id):
 
         whisper_prompt = list_to_comma(glossary_terms)
 
-        # check file size because only 25Mb/request are allowed for Whisper transcription
-        file_size_mb = os.stat(path).st_size / (1024 * 1024)
-
         # define new dict for transcription
         data = {
             "transcription": {
                 "segments": []
             }
         }
+
+        sio.emit('llm_message', {'message': f'Converting Audio to MP3', 'socket_id': socket_id})
+        path = convert_to_mp3(filehash, path)
+
+        # check file size because only 25Mb/request are allowed for Whisper transcription
+        file_size_mb = os.stat(path).st_size / (1024 * 1024)
 
         # if file greater 24Mb we need to split this file into multiple segments
         if float(file_size_mb) > 24.0:
@@ -165,3 +171,26 @@ def convert_timestamp_to_str(ts):
         (ts % 3600) // 60,  # Minuten
         ts % 60  # Sekunden
     )
+
+def convert_to_mp3(filehash, path):
+    audio_path = os.path.join(
+        app.root_path, os.path.join(f"temp/{filehash}/", "converted")
+    )
+    if not os.path.exists(audio_path):
+        os.makedirs(audio_path)
+    audio_output = os.path.join(audio_path, "audio.mp3")
+    command = [
+        "ffmpeg",
+        "-v", "quiet",  # less logs
+        "-y",  # override file
+        "-i", f'{path}',  # set input file
+        "-b:a", '192k',  # set input file
+        "-acodec", "libmp3lame",  # force mp3
+        audio_output  # define output
+    ]
+
+    try:
+        subprocess.run(command, check=True)
+        return audio_output
+    except subprocess.CalledProcessError as e:
+        abort(500, description=f"Error FFMPEG (Audio Conversion): {e}")
