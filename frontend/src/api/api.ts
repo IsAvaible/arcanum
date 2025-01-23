@@ -325,7 +325,7 @@ export interface CaseWithId {
      * @type {Array<string>}
      * @memberof CaseWithId
      */
-    'assignee'?: Array<string>;
+    'assignees': Array<string>;
     /**
      * Status of the case.
      * @type {string}
@@ -1062,10 +1062,11 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {CasesPostCaseTypeEnum} [caseType] Type of the case.
          * @param {CasesPostPriorityEnum} [priority] Priority level of the case.
          * @param {Array<File>} [files] Attached files on upload.
+         * @param {Array<string>} [glossary] Glossary entries linked to the case (list of term strings).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        casesPost: async (title: string, description: string, assignees: Array<string>, solution?: string, status?: CasesPostStatusEnum, caseType?: CasesPostCaseTypeEnum, priority?: CasesPostPriorityEnum, files?: Array<File>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        casesPost: async (title: string, description: string, assignees: Array<string>, solution?: string, status?: CasesPostStatusEnum, caseType?: CasesPostCaseTypeEnum, priority?: CasesPostPriorityEnum, files?: Array<File>, glossary?: Array<string>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'title' is not null or undefined
             assertParamExists('casesPost', 'title', title)
             // verify required parameter 'description' is not null or undefined
@@ -1119,6 +1120,10 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
                 files.forEach((element) => {
                     localVarFormParams.append('files', element as any);
                 })
+            }
+
+                if (glossary) {
+                localVarFormParams.append('glossary', glossary.join(COLLECTION_FORMATS.csv));
             }
 
     
@@ -2277,11 +2282,12 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {CasesPostCaseTypeEnum} [caseType] Type of the case.
          * @param {CasesPostPriorityEnum} [priority] Priority level of the case.
          * @param {Array<File>} [files] Attached files on upload.
+         * @param {Array<string>} [glossary] Glossary entries linked to the case (list of term strings).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async casesPost(title: string, description: string, assignees: Array<string>, solution?: string, status?: CasesPostStatusEnum, caseType?: CasesPostCaseTypeEnum, priority?: CasesPostPriorityEnum, files?: Array<File>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Case>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.casesPost(title, description, assignees, solution, status, caseType, priority, files, options);
+        async casesPost(title: string, description: string, assignees: Array<string>, solution?: string, status?: CasesPostStatusEnum, caseType?: CasesPostCaseTypeEnum, priority?: CasesPostPriorityEnum, files?: Array<File>, glossary?: Array<string>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Case>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.casesPost(title, description, assignees, solution, status, caseType, priority, files, glossary, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.casesPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -2721,7 +2727,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         casesPost(requestParameters: DefaultApiCasesPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Case> {
-            return localVarFp.casesPost(requestParameters.title, requestParameters.description, requestParameters.assignees, requestParameters.solution, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(axios, basePath));
+            return localVarFp.casesPost(requestParameters.title, requestParameters.description, requestParameters.assignees, requestParameters.solution, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, requestParameters.glossary, options).then((request) => request(axios, basePath));
         },
         /**
          * Deletes a specific message within a given chat.
@@ -3224,6 +3230,13 @@ export interface DefaultApiCasesPostRequest {
      * @memberof DefaultApiCasesPost
      */
     readonly files?: Array<File>
+
+    /**
+     * Glossary entries linked to the case (list of term strings).
+     * @type {Array<string>}
+     * @memberof DefaultApiCasesPost
+     */
+    readonly glossary?: Array<string>
 }
 
 /**
@@ -3795,7 +3808,7 @@ export class DefaultApi extends BaseAPI {
      * @memberof DefaultApi
      */
     public casesPost(requestParameters: DefaultApiCasesPostRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).casesPost(requestParameters.title, requestParameters.description, requestParameters.assignees, requestParameters.solution, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(this.axios, this.basePath));
+        return DefaultApiFp(this.configuration).casesPost(requestParameters.title, requestParameters.description, requestParameters.assignees, requestParameters.solution, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, requestParameters.glossary, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

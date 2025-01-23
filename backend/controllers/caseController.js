@@ -173,6 +173,7 @@ exports.createCase = [
         status,
         case_type,
         priority,
+        glossary,
       } = req.body;
 
       // Process uploaded files and create attachments.
@@ -196,6 +197,18 @@ exports.createCase = [
         createdAt: new Date(),
         updatedAt: new Date(),
       });
+
+      // Add glossary terms to the case.
+      if (Array.isArray(glossary)) {
+        for (const glossaryTerm of glossary) {
+          // findOrCreate => [instanz, created]
+          const [glossaryInstance] = await Glossary.findOrCreate({
+            where: { term: glossaryTerm },
+            defaults: { term: glossaryTerm },
+          });
+          await newCase.addGlossary(glossaryInstance);
+        }
+      }
 
       // Link attachments to the newly created case.
       if (attachmentInstances.length > 0) {

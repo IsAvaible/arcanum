@@ -1004,6 +1004,13 @@ components:
     CasePost:
       allOf:
         - $ref: '#/components/schemas/CasePut'
+        - type: object
+          properties:
+            glossary:
+              type: array
+              items:
+                type: string
+              description: Glossary entries linked to the case (list of term strings).
 
     CasePut:
       allOf:
