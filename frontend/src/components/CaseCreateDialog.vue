@@ -477,7 +477,7 @@ const dialogPT = {
               <div class="flex flex-col relative">
                 <Label
                   for="description"
-                  label="Description"
+                  label="Description (*)"
                   description="Describe the case in detail, e.g. what happened, when, and why"
                   icon="pi-info-circle"
                   class="mb-3"
