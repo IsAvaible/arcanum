@@ -110,7 +110,7 @@ export interface Case {
      * @type {Array<string>}
      * @memberof Case
      */
-    'assignee'?: Array<string>;
+    'assignees': Array<string>;
     /**
      * Status of the case.
      * @type {string}
@@ -226,7 +226,7 @@ export interface CaseBase {
      * @type {Array<string>}
      * @memberof CaseBase
      */
-    'assignee'?: Array<string>;
+    'assignees': Array<string>;
     /**
      * Status of the case.
      * @type {string}
@@ -969,8 +969,8 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {number} id ID of the case to update.
          * @param {string} title Title of the case.
          * @param {string} description Description of the case.
+         * @param {Array<string>} assignees Person responsible for the case.
          * @param {string} [solution] Solution for the case.
-         * @param {Array<string>} [assignee] Person responsible for the case.
          * @param {CasesIdPutStatusEnum} [status] Status of the case.
          * @param {CasesIdPutCaseTypeEnum} [caseType] Type of the case.
          * @param {CasesIdPutPriorityEnum} [priority] Priority level of the case.
@@ -978,13 +978,15 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        casesIdPut: async (id: number, title: string, description: string, solution?: string, assignee?: Array<string>, status?: CasesIdPutStatusEnum, caseType?: CasesIdPutCaseTypeEnum, priority?: CasesIdPutPriorityEnum, files?: Array<File>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        casesIdPut: async (id: number, title: string, description: string, assignees: Array<string>, solution?: string, status?: CasesIdPutStatusEnum, caseType?: CasesIdPutCaseTypeEnum, priority?: CasesIdPutPriorityEnum, files?: Array<File>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
             assertParamExists('casesIdPut', 'id', id)
             // verify required parameter 'title' is not null or undefined
             assertParamExists('casesIdPut', 'title', title)
             // verify required parameter 'description' is not null or undefined
             assertParamExists('casesIdPut', 'description', description)
+            // verify required parameter 'assignees' is not null or undefined
+            assertParamExists('casesIdPut', 'assignees', assignees)
             const localVarPath = `/cases/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -1013,8 +1015,8 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             if (solution !== undefined) { 
                 localVarFormParams.append('solution', solution as any);
             }
-                if (assignee) {
-                localVarFormParams.append('assignee', assignee.join(COLLECTION_FORMATS.csv));
+                if (assignees) {
+                localVarFormParams.append('assignees', assignees.join(COLLECTION_FORMATS.csv));
             }
 
     
@@ -1054,8 +1056,8 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @summary Create a new case
          * @param {string} title Title of the case.
          * @param {string} description Description of the case.
+         * @param {Array<string>} assignees Person responsible for the case.
          * @param {string} [solution] Solution for the case.
-         * @param {Array<string>} [assignee] Person responsible for the case.
          * @param {CasesPostStatusEnum} [status] Status of the case.
          * @param {CasesPostCaseTypeEnum} [caseType] Type of the case.
          * @param {CasesPostPriorityEnum} [priority] Priority level of the case.
@@ -1063,11 +1065,13 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        casesPost: async (title: string, description: string, solution?: string, assignee?: Array<string>, status?: CasesPostStatusEnum, caseType?: CasesPostCaseTypeEnum, priority?: CasesPostPriorityEnum, files?: Array<File>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        casesPost: async (title: string, description: string, assignees: Array<string>, solution?: string, status?: CasesPostStatusEnum, caseType?: CasesPostCaseTypeEnum, priority?: CasesPostPriorityEnum, files?: Array<File>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'title' is not null or undefined
             assertParamExists('casesPost', 'title', title)
             // verify required parameter 'description' is not null or undefined
             assertParamExists('casesPost', 'description', description)
+            // verify required parameter 'assignees' is not null or undefined
+            assertParamExists('casesPost', 'assignees', assignees)
             const localVarPath = `/cases`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1095,8 +1099,8 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             if (solution !== undefined) { 
                 localVarFormParams.append('solution', solution as any);
             }
-                if (assignee) {
-                localVarFormParams.append('assignee', assignee.join(COLLECTION_FORMATS.csv));
+                if (assignees) {
+                localVarFormParams.append('assignees', assignees.join(COLLECTION_FORMATS.csv));
             }
 
     
@@ -1513,8 +1517,8 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {number} id ID of the case to confirm.
          * @param {string} title Title of the case.
          * @param {string} description Description of the case.
+         * @param {Array<string>} assignees Person responsible for the case.
          * @param {string} [solution] Solution for the case.
-         * @param {Array<string>} [assignee] Person responsible for the case.
          * @param {ConfirmCaseIdPutStatusEnum} [status] Status of the case.
          * @param {ConfirmCaseIdPutCaseTypeEnum} [caseType] Type of the case.
          * @param {ConfirmCaseIdPutPriorityEnum} [priority] Priority level of the case.
@@ -1522,13 +1526,15 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        confirmCaseIdPut: async (id: number, title: string, description: string, solution?: string, assignee?: Array<string>, status?: ConfirmCaseIdPutStatusEnum, caseType?: ConfirmCaseIdPutCaseTypeEnum, priority?: ConfirmCaseIdPutPriorityEnum, files?: Array<File>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        confirmCaseIdPut: async (id: number, title: string, description: string, assignees: Array<string>, solution?: string, status?: ConfirmCaseIdPutStatusEnum, caseType?: ConfirmCaseIdPutCaseTypeEnum, priority?: ConfirmCaseIdPutPriorityEnum, files?: Array<File>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
             assertParamExists('confirmCaseIdPut', 'id', id)
             // verify required parameter 'title' is not null or undefined
             assertParamExists('confirmCaseIdPut', 'title', title)
             // verify required parameter 'description' is not null or undefined
             assertParamExists('confirmCaseIdPut', 'description', description)
+            // verify required parameter 'assignees' is not null or undefined
+            assertParamExists('confirmCaseIdPut', 'assignees', assignees)
             const localVarPath = `/confirmCase/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -1557,8 +1563,8 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             if (solution !== undefined) { 
                 localVarFormParams.append('solution', solution as any);
             }
-                if (assignee) {
-                localVarFormParams.append('assignee', assignee.join(COLLECTION_FORMATS.csv));
+                if (assignees) {
+                localVarFormParams.append('assignees', assignees.join(COLLECTION_FORMATS.csv));
             }
 
     
@@ -2245,8 +2251,8 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {number} id ID of the case to update.
          * @param {string} title Title of the case.
          * @param {string} description Description of the case.
+         * @param {Array<string>} assignees Person responsible for the case.
          * @param {string} [solution] Solution for the case.
-         * @param {Array<string>} [assignee] Person responsible for the case.
          * @param {CasesIdPutStatusEnum} [status] Status of the case.
          * @param {CasesIdPutCaseTypeEnum} [caseType] Type of the case.
          * @param {CasesIdPutPriorityEnum} [priority] Priority level of the case.
@@ -2254,8 +2260,8 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async casesIdPut(id: number, title: string, description: string, solution?: string, assignee?: Array<string>, status?: CasesIdPutStatusEnum, caseType?: CasesIdPutCaseTypeEnum, priority?: CasesIdPutPriorityEnum, files?: Array<File>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Case>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.casesIdPut(id, title, description, solution, assignee, status, caseType, priority, files, options);
+        async casesIdPut(id: number, title: string, description: string, assignees: Array<string>, solution?: string, status?: CasesIdPutStatusEnum, caseType?: CasesIdPutCaseTypeEnum, priority?: CasesIdPutPriorityEnum, files?: Array<File>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Case>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.casesIdPut(id, title, description, assignees, solution, status, caseType, priority, files, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.casesIdPut']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -2265,8 +2271,8 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @summary Create a new case
          * @param {string} title Title of the case.
          * @param {string} description Description of the case.
+         * @param {Array<string>} assignees Person responsible for the case.
          * @param {string} [solution] Solution for the case.
-         * @param {Array<string>} [assignee] Person responsible for the case.
          * @param {CasesPostStatusEnum} [status] Status of the case.
          * @param {CasesPostCaseTypeEnum} [caseType] Type of the case.
          * @param {CasesPostPriorityEnum} [priority] Priority level of the case.
@@ -2274,8 +2280,8 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async casesPost(title: string, description: string, solution?: string, assignee?: Array<string>, status?: CasesPostStatusEnum, caseType?: CasesPostCaseTypeEnum, priority?: CasesPostPriorityEnum, files?: Array<File>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Case>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.casesPost(title, description, solution, assignee, status, caseType, priority, files, options);
+        async casesPost(title: string, description: string, assignees: Array<string>, solution?: string, status?: CasesPostStatusEnum, caseType?: CasesPostCaseTypeEnum, priority?: CasesPostPriorityEnum, files?: Array<File>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Case>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.casesPost(title, description, assignees, solution, status, caseType, priority, files, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.casesPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -2409,8 +2415,8 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {number} id ID of the case to confirm.
          * @param {string} title Title of the case.
          * @param {string} description Description of the case.
+         * @param {Array<string>} assignees Person responsible for the case.
          * @param {string} [solution] Solution for the case.
-         * @param {Array<string>} [assignee] Person responsible for the case.
          * @param {ConfirmCaseIdPutStatusEnum} [status] Status of the case.
          * @param {ConfirmCaseIdPutCaseTypeEnum} [caseType] Type of the case.
          * @param {ConfirmCaseIdPutPriorityEnum} [priority] Priority level of the case.
@@ -2418,8 +2424,8 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async confirmCaseIdPut(id: number, title: string, description: string, solution?: string, assignee?: Array<string>, status?: ConfirmCaseIdPutStatusEnum, caseType?: ConfirmCaseIdPutCaseTypeEnum, priority?: ConfirmCaseIdPutPriorityEnum, files?: Array<File>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Case>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.confirmCaseIdPut(id, title, description, solution, assignee, status, caseType, priority, files, options);
+        async confirmCaseIdPut(id: number, title: string, description: string, assignees: Array<string>, solution?: string, status?: ConfirmCaseIdPutStatusEnum, caseType?: ConfirmCaseIdPutCaseTypeEnum, priority?: ConfirmCaseIdPutPriorityEnum, files?: Array<File>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Case>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.confirmCaseIdPut(id, title, description, assignees, solution, status, caseType, priority, files, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.confirmCaseIdPut']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -2705,7 +2711,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         casesIdPut(requestParameters: DefaultApiCasesIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<Case> {
-            return localVarFp.casesIdPut(requestParameters.id, requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(axios, basePath));
+            return localVarFp.casesIdPut(requestParameters.id, requestParameters.title, requestParameters.description, requestParameters.assignees, requestParameters.solution, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(axios, basePath));
         },
         /**
          * Create a new case.
@@ -2715,7 +2721,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         casesPost(requestParameters: DefaultApiCasesPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Case> {
-            return localVarFp.casesPost(requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(axios, basePath));
+            return localVarFp.casesPost(requestParameters.title, requestParameters.description, requestParameters.assignees, requestParameters.solution, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(axios, basePath));
         },
         /**
          * Deletes a specific message within a given chat.
@@ -2814,7 +2820,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         confirmCaseIdPut(requestParameters: DefaultApiConfirmCaseIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<Case> {
-            return localVarFp.confirmCaseIdPut(requestParameters.id, requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(axios, basePath));
+            return localVarFp.confirmCaseIdPut(requestParameters.id, requestParameters.title, requestParameters.description, requestParameters.assignees, requestParameters.solution, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(axios, basePath));
         },
         /**
          * Upload files, process them, and create draft cases.
@@ -3115,18 +3121,18 @@ export interface DefaultApiCasesIdPutRequest {
     readonly description: string
 
     /**
+     * Person responsible for the case.
+     * @type {Array<string>}
+     * @memberof DefaultApiCasesIdPut
+     */
+    readonly assignees: Array<string>
+
+    /**
      * Solution for the case.
      * @type {string}
      * @memberof DefaultApiCasesIdPut
      */
     readonly solution?: string
-
-    /**
-     * Person responsible for the case.
-     * @type {Array<string>}
-     * @memberof DefaultApiCasesIdPut
-     */
-    readonly assignee?: Array<string>
 
     /**
      * Status of the case.
@@ -3178,18 +3184,18 @@ export interface DefaultApiCasesPostRequest {
     readonly description: string
 
     /**
+     * Person responsible for the case.
+     * @type {Array<string>}
+     * @memberof DefaultApiCasesPost
+     */
+    readonly assignees: Array<string>
+
+    /**
      * Solution for the case.
      * @type {string}
      * @memberof DefaultApiCasesPost
      */
     readonly solution?: string
-
-    /**
-     * Person responsible for the case.
-     * @type {Array<string>}
-     * @memberof DefaultApiCasesPost
-     */
-    readonly assignee?: Array<string>
 
     /**
      * Status of the case.
@@ -3409,18 +3415,18 @@ export interface DefaultApiConfirmCaseIdPutRequest {
     readonly description: string
 
     /**
+     * Person responsible for the case.
+     * @type {Array<string>}
+     * @memberof DefaultApiConfirmCaseIdPut
+     */
+    readonly assignees: Array<string>
+
+    /**
      * Solution for the case.
      * @type {string}
      * @memberof DefaultApiConfirmCaseIdPut
      */
     readonly solution?: string
-
-    /**
-     * Person responsible for the case.
-     * @type {Array<string>}
-     * @memberof DefaultApiConfirmCaseIdPut
-     */
-    readonly assignee?: Array<string>
 
     /**
      * Status of the case.
@@ -3777,7 +3783,7 @@ export class DefaultApi extends BaseAPI {
      * @memberof DefaultApi
      */
     public casesIdPut(requestParameters: DefaultApiCasesIdPutRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).casesIdPut(requestParameters.id, requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(this.axios, this.basePath));
+        return DefaultApiFp(this.configuration).casesIdPut(requestParameters.id, requestParameters.title, requestParameters.description, requestParameters.assignees, requestParameters.solution, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -3789,7 +3795,7 @@ export class DefaultApi extends BaseAPI {
      * @memberof DefaultApi
      */
     public casesPost(requestParameters: DefaultApiCasesPostRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).casesPost(requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(this.axios, this.basePath));
+        return DefaultApiFp(this.configuration).casesPost(requestParameters.title, requestParameters.description, requestParameters.assignees, requestParameters.solution, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -3908,7 +3914,7 @@ export class DefaultApi extends BaseAPI {
      * @memberof DefaultApi
      */
     public confirmCaseIdPut(requestParameters: DefaultApiConfirmCaseIdPutRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).confirmCaseIdPut(requestParameters.id, requestParameters.title, requestParameters.description, requestParameters.solution, requestParameters.assignee, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(this.axios, this.basePath));
+        return DefaultApiFp(this.configuration).confirmCaseIdPut(requestParameters.id, requestParameters.title, requestParameters.description, requestParameters.assignees, requestParameters.solution, requestParameters.status, requestParameters.caseType, requestParameters.priority, requestParameters.files, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

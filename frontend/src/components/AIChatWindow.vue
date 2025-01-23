@@ -141,9 +141,15 @@ const setActiveChat = async (chatId: Chat['id'] | null) => {
       activeChat.value = (await api.chatsIdGet({ id: chatId })).data
       selectedFile.value = pendingMessage.value = pendingLLMMessage.value = null
       registerSocket()
+
       if (!route.params.chatId || Number(route.params.chatId) !== chatId) {
         await router.push(`/ai/${chatId}`)
       }
+
+      await nextTick(() => {
+        const messageInput = document.getElementById('message-input')
+        messageInput?.focus()
+      })
     } catch (error) {
       throw error
     } finally {
@@ -597,6 +603,11 @@ const { selectedFile, filePreviewVisible, loadingAttachmentId, openAttachmentPre
 onMounted(async () => {
   if (route.params.chatId) {
     chatLoading.value = true
+  } else {
+    nextTick(() => {
+      const newChatInput = document.getElementById('new-chat-input')
+      newChatInput?.focus()
+    })
   }
   await fetchChats()
 
@@ -622,6 +633,10 @@ onMounted(async () => {
         }
       } else {
         activeChat.value = null
+        await nextTick(() => {
+          const newChatInput = document.getElementById('new-chat-input')
+          newChatInput?.focus()
+        })
       }
     },
     { immediate: true },
@@ -657,6 +672,7 @@ onMounted(async () => {
         <h2 class="text-gray-700 text-2xl font-semibold">What can I help you with?</h2>
         <IconField class="w-full max-w-lg">
           <InputText
+            id="new-chat-input"
             v-model="messageInput"
             placeholder="Type a message"
             class="w-full"
@@ -680,7 +696,7 @@ onMounted(async () => {
         name="pop-in"
         tag="div"
         id="chat-window"
-        class="flex-1 overflow-y-auto flex flex-col gap-4 py-4 px-6"
+        class="flex-1 overflow-y-auto flex flex-col gap-4 py-4 px-6 @container"
       >
         <!-- We use the index as the key for messages to avoid re-animating on state change. -->
         <div
@@ -700,7 +716,7 @@ onMounted(async () => {
               'bg-primary-500 text-white': message.role === MessageRoleEnum.User,
               'bg-red-700': message.state === 'failed',
             }"
-            class="px-4 py-2 rounded-lg shadow-sm w-fit max-w-xs flex flex-col gap-y-2"
+            class="px-4 py-2 rounded-lg shadow-sm w-fit max-w-xs @lg:max-w-sm @xl:max-w-md flex flex-col gap-y-2"
             @contextmenu.prevent="
               (event) => {
                 if (message.id !== -1) openMessageContextMenu(event, message)
@@ -748,7 +764,10 @@ onMounted(async () => {
         </div>
       </TransitionGroup>
       <!-- Skeleton loader -->
-      <div v-else-if="chatsLoading" class="flex-1 overflow-y-auto flex flex-col gap-4 py-4 px-6">
+      <div
+        v-else-if="chatsLoading"
+        class="flex-1 overflow-y-auto flex flex-col gap-4 py-4 px-6 @container"
+      >
         <div
           class="flex gap-2"
           v-for="i in 6"
@@ -760,7 +779,7 @@ onMounted(async () => {
           <Skeleton
             :height="i % 2 !== 0 ? '2.5rem' : Math.floor(Math.random() * 10) + 5 + 'rem'"
             :width="i % 2 !== 0 ? Math.floor(Math.random() * 10) + 15 + 'rem' : '20rem'"
-            class="h-10 w-20 rounded-lg shadow-sm w-fit max-w-xs"
+            class="rounded-lg shadow-sm max-w-xs @lg:max-w-sm @xl:max-w-md"
           />
         </div>
       </div>
@@ -779,6 +798,7 @@ onMounted(async () => {
         </Button>
 
         <Textarea
+          id="message-input"
           v-model="messageInput"
           placeholder="Type a message"
           class="w-full max-h-24"
@@ -854,7 +874,7 @@ onMounted(async () => {
         <Avatar label="AI" class="w-24 h-24 mb-4" shape="circle" />
 
         <div v-if="activeChat" class="text-gray-800 font-medium text-xl">
-          {{ activeChat.title }}
+          {{ activeChat.title || 'Untitled Chat' }}
         </div>
         <div v-else class="text-gray-500 text-center">No chat selected.</div>
       </div>

@@ -15,14 +15,8 @@ const features = ref([
     link: '/ai',
   },
   {
-    title: 'Settings',
-    description: 'Customize the system to your liking',
-    icon: 'pi-cog',
-    link: '/settings',
-  },
-  {
-    title: 'UX Glossar',
-    description: 'Explore essential UX terms and definitions',
+    title: 'Glossary',
+    description: 'Explore the terms used in the system',
     icon: 'pi-book',
     link: '/glossary',
   },
@@ -36,7 +30,7 @@ const features = ref([
     <p class="text-lg text-gray-600 mt-4">The ultimate case management system</p>
 
     <h3 class="text-2xl font-semibold text-primary-800 mt-8">Features</h3>
-    <div class="grid md:grid-cols-2 mx-auto xl:grid-cols-3 justify-between gap-4 mt-4">
+    <div class="grid md:grid-cols-2 mx-auto xl:grid-cols-3 justify-center gap-4 mt-4">
       <!--      Cards-->
       <router-link
         :to="feature.link"

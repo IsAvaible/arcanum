@@ -198,7 +198,7 @@ class QdrantVectorstore:
         """
         case_string = ""
 
-        ordered_keys = ['title', 'description', 'solution', 'assignee', 'status',
+        ordered_keys = ['title', 'description', 'solution', 'assignees', 'status',
                         'attachments']  # Order to save the keys in
 
         # Add the ordered keys first
@@ -256,7 +256,7 @@ def delete_entries_from_vector_db(request, vectorstore):
         if entry:
             vectorstore.delete_entry(entry[0].id)
             returnString += f"Case:{case_id} DELETED. "
-        else: 
+        else:
             returnString += f"Case:{case_id} NOT FOUND. "
 
     if request_json_str.get("attachmentIds"):
@@ -269,7 +269,7 @@ def delete_entries_from_vector_db(request, vectorstore):
                 for entry in entries:
                     vectorstore.delete_entry(entry.id)
                 returnString += f"Attachment:{attachment_id} DELETED. "
-            else: 
+            else:
                 returnString += f"Attachment:{attachment_id} NOT FOUND. "
 
     if not request_json_str.get("attachmentIds") and not request_json_str.get("caseId"):

@@ -84,13 +84,11 @@ function escapeData(fields) {
  */
 const authenticateJWT = (req, res, next) => {
   const token = req.cookies["x-auth-token"];
-  console.log(token);
 
   if (!token) return res.status(401).send("Access denied. No token provided.");
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("Verified jwtToken");
     req.user = decoded;
 
     next();

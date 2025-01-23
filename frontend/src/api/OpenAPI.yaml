@@ -1019,7 +1019,7 @@ components:
 
     CaseBase:
       type: object
-      required: [title, description]
+      required: [title, description, assignees]
       properties:
         title:
           type: string
@@ -1030,7 +1030,7 @@ components:
         solution:
           type: string
           description: Solution for the case.
-        assignee:
+        assignees:
           type: array
           items:
             type: string

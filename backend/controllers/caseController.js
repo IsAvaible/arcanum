@@ -85,6 +85,11 @@ exports.deleteCase = async (req, res) => {
           as: "attachments",
           through: { attributes: [] },
         },
+        {
+          model: Glossary,
+          as: "glossary",
+          through: { attributes: [] },
+        },
       ],
     });
 
@@ -105,6 +110,18 @@ exports.deleteCase = async (req, res) => {
 
         if (deletedId) {
           deletedAttachmentIds.push(deletedId);
+        }
+      }
+    }
+
+    const glossaries = caseItemToDelete.glossary;
+
+    if (glossaries && glossaries.length > 0) {
+      for (const gloss of glossaries) {
+        if(gloss.getRelatedCases().length <= 1 ){
+          await gloss.destroy();
+        } else{
+          await gloss.decrement('usageCount');
         }
       }
     }
@@ -148,11 +165,11 @@ exports.createCase = [
 
   async (req, res) => {
     try {
-      const {
+      let {
         title,
         description,
         solution,
-        assignee,
+        assignees,
         status,
         case_type,
         priority,
@@ -162,12 +179,17 @@ exports.createCase = [
       const attachmentInstances =
         await attachmentService.uploadFilesAndCreateAttachments(req.files);
 
+      // Split assignees string into an array.
+      if (typeof assignees === "string") {
+        assignees = assignees.split(",");
+      }
+
       // Create a new case record in the database.
       const newCase = await Cases.create({
         title,
         description,
         solution,
-        assignee,
+        assignees,
         status,
         case_type,
         priority,
@@ -221,18 +243,25 @@ exports.updateCase = [
         "title",
         "description",
         "solution",
-        "assignee",
+        "assignees",
         "status",
         "case_type",
         "priority",
         "draft",
       ];
 
+      console.log("req.body", req.body);
       // Extract only allowed fields from the request body
       const updateData = {};
       allowedFields.forEach((field) => {
-        if (req.body[field] !== undefined) {
-          updateData[field] = req.body[field];
+        const value = req.body[field];
+        if (value !== undefined) {
+          if (field === "assignees" && typeof value === "string") {
+            // Convert assignees to an array if it is a string
+            updateData[field] = req.body[field].split(",");
+          } else {
+            updateData[field] = req.body[field];
+          }
         }
       });
 
@@ -269,6 +298,11 @@ exports.updateCase = [
           {
             model: Attachments,
             as: "attachments",
+            through: { attributes: [] },
+          },
+          {
+            model: Glossary,
+            as: "glossary",
             through: { attributes: [] },
           },
           {
@@ -327,7 +361,7 @@ exports.createCaseFromFiles = [
             description: caseData.description,
             solution: caseData.solution,
             status: caseData.status,
-            assignee: caseData.assignee,
+            assignees: caseData.assignees,
             case_type: caseData.case_type,
             priority: caseData.priority,
             draft: true,
@@ -340,7 +374,7 @@ exports.createCaseFromFiles = [
                 where: { term: glossaryTerm },
                 defaults: { term: glossaryTerm },
               });
-              await glossaryInstance.increment('usageCount');
+              await glossaryInstance.increment("usageCount");
               await newCase.addGlossary(glossaryInstance);
             }
           }
@@ -368,7 +402,7 @@ exports.createCaseFromFiles = [
                     where: { term },
                     defaults: { term },
                   });
-                  await glossaryInstance.increment('usageCount');
+                  await glossaryInstance.increment("usageCount");
                   await attachInst.addGlossary(glossaryInstance);
                 }
               }
@@ -437,7 +471,7 @@ exports.confirmCase = [
         "title",
         "description",
         "solution",
-        "assignee",
+        "assignees",
         "status",
         "case_type",
         "priority",
@@ -446,8 +480,14 @@ exports.confirmCase = [
       // Extract only allowed fields from the request body.
       const updateData = {};
       allowedFields.forEach((field) => {
-        if (req.body[field] !== undefined) {
-          updateData[field] = req.body[field];
+        const value = req.body[field];
+        if (value !== undefined) {
+          if (field === "assignees" && typeof value === "string") {
+            // Convert assignees to an array if it is a string
+            updateData[field] = req.body[field].split(",");
+          } else {
+            updateData[field] = req.body[field];
+          }
         }
       });
 
