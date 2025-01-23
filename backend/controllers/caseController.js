@@ -284,6 +284,11 @@ exports.updateCase = [
             through: { attributes: [] },
           },
           {
+            model: Glossary,
+            as: "glossary",
+            through: { attributes: [] },
+          },
+          {
             model: ChangeHistory,
             as: "changeHistory",
           },
@@ -352,7 +357,7 @@ exports.createCaseFromFiles = [
                 where: { term: glossaryTerm },
                 defaults: { term: glossaryTerm },
               });
-              await glossaryInstance.increment('usageCount');
+              await glossaryInstance.increment("usageCount");
               await newCase.addGlossary(glossaryInstance);
             }
           }
@@ -380,7 +385,7 @@ exports.createCaseFromFiles = [
                     where: { term },
                     defaults: { term },
                   });
-                  await glossaryInstance.increment('usageCount');
+                  await glossaryInstance.increment("usageCount");
                   await attachInst.addGlossary(glossaryInstance);
                 }
               }
