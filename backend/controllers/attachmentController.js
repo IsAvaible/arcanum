@@ -81,14 +81,6 @@ exports.deleteAttachmentFromCase = async (req, res) => {
     // Find the attachment linked to the case
     const attachment = await Attachments.findOne({
       where: { id: attachmentId },
-      include: [
-        {
-          model: Cases,
-          as: "cases",
-          where: { id: caseId },
-          through: { attributes: [] },
-        },
-      ],
     });
 
     if (!attachment) {

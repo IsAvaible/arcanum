@@ -5,6 +5,9 @@ import socketio
 from dotenv import load_dotenv
 from flask import Flask
 from flask_cors import CORS
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 
 load_dotenv()
 
@@ -17,14 +20,11 @@ app.config["SECRET_KEY"] = "super secret key"
 # create directories if not available
 upload_folder = os.path.join(app.root_path, "upload")
 temp_folder = os.path.join(app.root_path, "temp")
-qdrant_folder = os.path.join(app.root_path, "qdrantdb")
 
 if not os.path.exists(upload_folder):
     os.makedirs(upload_folder)
 if not os.path.exists(temp_folder):
     os.makedirs(temp_folder)
-if not os.path.exists(qdrant_folder):
-    os.makedirs(qdrant_folder)
 
 
 # init socket connection

@@ -1,5 +1,7 @@
 import hashlib
 
+from flask import abort
+
 
 def generate_sha256_hash(file_path):
     """
@@ -15,8 +17,6 @@ def generate_sha256_hash(file_path):
                 sha256_hash.update(block)
         return sha256_hash.hexdigest()
     except FileNotFoundError:
-        print(f"File '{file_path}' not found.")
-        return None
+        abort(500, description=f"File '{file_path}' not found.")
     except Exception as e:
-        print(f"Error occured: {e}")
-        return None
+        abort(500, description=f"SHA256 Hash Generation Error: {e}")

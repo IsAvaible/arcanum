@@ -292,7 +292,7 @@ const caseReferences = computed(() => {
 </script>
 
 <template>
-  <div class="flex h-screen bg-white neutral-primary">
+  <div class="flex h-screen bg-white">
     <!-- Sidebar -->
     <div class="w-4/12 xl:w-3/12 min-w-40 overflow-auto flex flex-col gap-6 border-r">
       <div class="flex flex-col gap-6 pt-3 pb-2 px-5 sticky top-0 bg-white z-10">

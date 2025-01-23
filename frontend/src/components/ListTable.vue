@@ -2,7 +2,6 @@
 // Vue and PrimeVue imports
 import { ref, useTemplateRef, reactive, computed, onMounted, watch } from 'vue'
 import { FilterMatchMode, FilterOperator } from '@primevue/core/api'
-import { useTimeAgo } from '@vueuse/core'
 import { type SelectChangeEvent, useToast } from 'primevue'
 import { useRoute } from 'vue-router'
 import router from '@/router'
@@ -27,11 +26,13 @@ import CaseDeleteDialog from '@/components/CaseDeleteDialog.vue'
 
 // API imports
 import { useApi } from '@/composables/useApi'
-import type { Case } from '@/api/api'
+
+import type { Case, ModelError } from '@/api/api'
 import { CaseCaseTypeEnum } from '@/api/api'
 import type { AxiosError } from 'axios'
 import KpiWidget from '@/components/case-list-view/KpiWidget.vue'
 import type { MenuItem } from 'primevue/menuitem'
+import { formatDate } from '@/functions/formatDate'
 
 // Reactive State and References
 const api = useApi()
@@ -196,8 +197,9 @@ const fetchCases = async () => {
     const response = await api.casesGet()
     cases.splice(0, cases.length, ...response.data) // Replace cases data
   } catch (err) {
-    error.value = (err as AxiosError).message
-    console.error(err)
+    error.value =
+      ((err as AxiosError).response?.data as ModelError)?.message ?? (err as AxiosError).message
+    console.error(error)
   } finally {
     loading.value = false
   }
@@ -338,16 +340,6 @@ const deleteCase = async (caseToDelete: Case) => {
  */
 const clearFilters = () => {
   initFilter()
-}
-
-/**
- * Formats a date.
- * @param date - The date to format.
- * @param ago - Whether to use "time ago" formatting.
- * @returns - The formatted date.
- */
-const formatDate = (date: Date, ago: boolean = false) => {
-  return ago ? useTimeAgo(date) : date.toLocaleDateString()
 }
 
 // Computed Properties for KPI Metrics
