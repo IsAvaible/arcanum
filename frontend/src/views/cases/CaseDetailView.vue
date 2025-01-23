@@ -537,7 +537,9 @@ const menuItems = [
     label: 'Export as CSV',
     icon: 'pi pi-file-excel',
     command: () => {
+      // export as CSV
       console.log('Exporting as CSV')
+      exportCSV()
     },
   },
   {
@@ -545,6 +547,13 @@ const menuItems = [
     icon: 'pi pi-share-alt',
     command: () => {
       console.log('Sharing case')
+      navigator.clipboard.writeText(window.location.href)
+      toast.add({
+        severity: 'success',
+        summary: 'Link Copied',
+        detail: 'The case link has been copied to your clipboard.',
+        life: 3000,
+      })
     },
   },
   {
@@ -552,6 +561,7 @@ const menuItems = [
     icon: 'pi pi-print',
     command: () => {
       console.log('Printing case')
+      window.print()
     },
   },
 ]
@@ -574,6 +584,56 @@ const changeHistoryEvents = computed(() => {
       }))
     : []
 })
+
+/**
+ * Export the case details as a CSV file
+ */
+const exportCSV = () => {
+  // Utility to escape CSV values
+  const escapeCSVValue = (value: unknown) => {
+    if (typeof value === 'string') {
+      return `"${value.replace(/"/g, '""')}"`
+    }
+    if (typeof value === 'object' && value !== null) {
+      return `"${JSON.stringify(value).replace(/"/g, '""')}"`
+    }
+    return value
+  }
+
+  let url: string | null = null
+  try {
+    // Validate input
+    if (!caseDetails?.value || typeof caseDetails.value !== 'object') {
+      throw new Error('Invalid case details.')
+    }
+    if (!caseId?.value) {
+      throw new Error('Case ID is required.')
+    }
+
+    // Generate CSV content
+    const rows = Object.entries(caseDetails.value)
+      .map(([key, value]) => `${key},${escapeCSVValue(value)}`)
+      .join('\n')
+    const csv = `${rows}`
+
+    // Create and download the CSV file
+    const blob = new Blob([csv], { type: 'text/csv' })
+    url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `case-${caseId.value}.csv`
+    document.body.appendChild(a) // Attach to DOM for better compatibility
+    a.click()
+    document.body.removeChild(a) // Clean up
+  } catch (error) {
+    console.error('Error exporting CSV:', (error as Error).message)
+  } finally {
+    // Cleanup URL
+    if (url) {
+      URL.revokeObjectURL(url)
+    }
+  }
+}
 </script>
 
 <template>
@@ -597,11 +657,10 @@ const changeHistoryEvents = computed(() => {
             @click="navigateTo('cases')"
             class="flex-shrink-0"
             icon="pi pi-chevron-left"
-            outlined
             rounded
             v-tooltip.top="{ value: 'Return to Case List', showDelay: 1000 }"
           />
-          <h1 class="text-2xl font-bold text-gray-900 truncate">
+          <h1 class="text-2xl font-bold text-gray-900 truncate -mt-0.5">
             Case #{{ caseId
             }}<span class="font-semibold" v-if="caseDetails?.title">
               - {{ caseDetails?.title }}</span
