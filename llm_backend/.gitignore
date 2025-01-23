@@ -4,3 +4,4 @@ debug
 upload/*
 temp/*
 qdrantdb/*
+qdrant-data/*
