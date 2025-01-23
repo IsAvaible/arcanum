@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import type { AxiosError } from 'axios'
-import type { Attachment } from '@/api'
+import type { Attachment, ModelError } from '@/api'
 import { useToast } from 'primevue'
 import { apiBlobToFile } from '@/functions/apiBlobToFile'
 import { useApi } from '@/composables/useApi'
@@ -54,7 +54,10 @@ export const useAttachmentLoading = () => {
       toast.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'An error occurred while downloading the file\n' + (error as AxiosError).message,
+        detail:
+          'An error occurred while downloading the file\n' +
+          (((error as AxiosError).response?.data as ModelError)?.message ??
+            (error as AxiosError).message),
         life: 3000,
       })
       console.error(error)

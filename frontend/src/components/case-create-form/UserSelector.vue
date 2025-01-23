@@ -141,12 +141,9 @@ const hidePopover = () => {
   </component>
 
   <Popover ref="popover">
-    <div class="flex flex-col gap-y-3 p-2 max-w-40">
+    <div class="flex flex-col gap-y-3 p-2">
       <h3 class="text-base font-semibold">{{ selectedPopoverUser?.name }}</h3>
-      <p>
-        Lorem ipsum dolor sit amet, consectetur adipisicing elit. Consequuntur distinctio explicabo
-        fugiat, hic id illo iste odio pariatur placeat quis!
-      </p>
+      <p>Project Manager, Team D14</p>
       <Button severity="secondary" label="Close" @click.stop="hidePopover" />
     </div>
   </Popover>

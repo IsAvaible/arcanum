@@ -118,8 +118,8 @@ const clearHideTimer = () => {
         </h4>
 
         <div class="grid grid-cols-[auto,1fr,auto,1fr] gap-x-2 gap-y-1">
-          <span class="font-semibold">Assignee:</span>
-          <span>{{ caseData!.assignee?.join(', ') || 'Unassigned' }}</span>
+          <span class="font-semibold">Assignees:</span>
+          <span>{{ caseData!.assignees?.join(', ') || 'Unassigned' }}</span>
 
           <span class="font-semibold">Case Type:</span>
           <span>{{ caseData!.case_type || 'Not specified' }}</span>

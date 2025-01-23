@@ -224,10 +224,10 @@ import Skeleton from 'primevue/skeleton'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 
-import type { GlossaryEntry } from '@/api'
+import type { GlossaryEntry, ModelError } from '@/api'
 import type { AxiosError } from 'axios'
 
-import { normalize as removeDiacritics } from 'normalize-diacritics'
+import { normalizeDiacritics as removeDiacritics } from 'normalize-text'
 import { useApi } from '@/composables/useApi'
 import { asyncComputed, computedAsync } from '@vueuse/core'
 import { formatDate } from '@/functions/formatDate'
@@ -295,7 +295,7 @@ const activeLetters = computedAsync(async () => {
   // Process all terms once and check their first letter
   await Promise.all(
     glossaryData.value.map(async (entry) => {
-      const normalizedTerm = await removeDiacritics(entry.term)
+      const normalizedTerm = removeDiacritics(entry.term)
       const firstLetter = normalizedTerm.charAt(0).toUpperCase()
       if (alphabet.includes(firstLetter)) {
         activeLettersSet.add(firstLetter)
@@ -342,11 +342,11 @@ const filteredAndSortedEntries = asyncComputed(async () => {
   const _ = searchTerm.value + selectedLetter.value + currentSort.value + glossaryData.value
 
   let entries = glossaryData.value
-  const normalizedSearchTerm = (await removeDiacritics(searchTerm.value)).toUpperCase()
+  const normalizedSearchTerm = removeDiacritics(searchTerm.value).toUpperCase()
 
   const results = await Promise.all(
     entries.map(async (entry) => {
-      const normalizedTerm = (await removeDiacritics(entry.term)).toUpperCase()
+      const normalizedTerm = removeDiacritics(entry.term).toUpperCase()
 
       const termStartsWithLetter =
         !selectedLetter.value ||
@@ -471,7 +471,10 @@ const deleteEntry = async (entry: GlossaryEntry) => {
     toast.add({
       severity: 'error',
       summary: 'Error',
-      detail: 'An error occurred while deleting the entry\n' + (error as AxiosError).message,
+      detail:
+        'An error occurred while deleting the entry\n' +
+        (((error as AxiosError).response?.data as ModelError)?.message ??
+          (error as AxiosError).message),
       life: 3000,
     })
 

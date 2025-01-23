@@ -31,7 +31,7 @@ import { useForm } from 'vee-validate'
 import { onMounted, ref } from 'vue'
 import { useVModel } from '@vueuse/core'
 import { useApi } from '@/composables/useApi'
-import type { Case, CasesPostCaseTypeEnum, GlossaryEntry } from '@/api'
+import type { Case, CasesPostCaseTypeEnum, GlossaryEntry, ModelError } from '@/api'
 import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
 import { useConfirm } from 'primevue/useconfirm'
@@ -250,7 +250,7 @@ const onSubmit = handleSubmit(async (_values) => {
     const requestParameters = {
       title: fields.title.value.value,
       caseType: fields.type.value.value as CasesPostCaseTypeEnum,
-      assignee: fields.assignees.value.value,
+      assignees: fields.assignees.value.value,
       // participants: fields.selectedParticipants.value.value,
       // team: fields.selectedTeam.value.value,
       description: fields.description.value.value,
@@ -277,7 +277,10 @@ const onSubmit = handleSubmit(async (_values) => {
     toast.add({
       severity: 'error',
       summary: 'Error Creating Case',
-      detail: 'There was an error creating your case\n' + (error as AxiosError).message,
+      detail:
+        'There was an error creating your case\n' +
+        (((error as AxiosError).response?.data as ModelError)?.message ??
+          (error as AxiosError).message),
       life: 3000,
     })
     return
@@ -522,7 +525,7 @@ onMounted(() => {
               <div class="flex flex-col relative">
                 <Label
                   for="description"
-                  label="Description"
+                  label="Description (*)"
                   description="Describe the case in detail, e.g. what happened, when, and why"
                   icon="pi-info-circle"
                   class="mb-3"

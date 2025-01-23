@@ -27,11 +27,14 @@ import CaseDeleteDialog from '@/components/CaseDeleteDialog.vue'
 // API imports
 import { useApi } from '@/composables/useApi'
 
-import type { Case } from '@/api/api'
+import type { Case, ModelError } from '@/api/api'
 import { CaseCaseTypeEnum } from '@/api/api'
 import type { AxiosError } from 'axios'
 import KpiWidget from '@/components/case-list-view/KpiWidget.vue'
 import type { MenuItem } from 'primevue/menuitem'
+import { userOptions } from '@/api/mockdata'
+import UserSelector from '@/components/case-create-form/UserSelector.vue'
+import CaseStatusSelect from '@/components/case-form-fields/CaseStatusSelect/CaseStatusSelect.vue'
 import { formatDate } from '@/functions/formatDate'
 
 // Reactive State and References
@@ -40,9 +43,11 @@ const menu = useTemplateRef('menu')
 const menuModel = ref<MenuItem[] | undefined>(undefined)
 const toast = useToast()
 const route = useRoute()
+const datatable = ref()
 const filters = ref()
 const cases = reactive<Case[]>([])
-const selectedCase = ref<Case | null>(null)
+const selectedCases = ref<Case[]>([])
+const selectedCasesToDelete = ref<Case[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 const deleteDialogVisible = ref(false)
@@ -54,20 +59,6 @@ const caseTypes = ref(
     value: value,
   })),
 )
-
-// TODO: Replace with actual data from the API
-const statusOptions = ref(
-  ['Open', 'Closed', 'In-Progress'].map((value) => ({
-    label: value,
-    value: value,
-  })),
-)
-
-// TODO: Replace with actual data from the API
-const createdByOptions = ref([
-  { label: 'Unassigned', value: 'Unassigned' },
-  { label: 'Assigned', value: 'Assigned' },
-])
 
 // Date Range Preset Configuration
 const dateRangePresets = ref([
@@ -123,11 +114,10 @@ const initFilter = () => {
       operator: FilterOperator.OR,
       constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
     },
-    assignee: {
+    assignees: {
       operator: FilterOperator.AND,
       constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
     },
-    'createdBy.name': { value: null, matchMode: FilterMatchMode.CONTAINS },
     updatedAt: { value: null, matchMode: FilterMatchMode.BETWEEN },
   }
 }
@@ -166,10 +156,10 @@ const onUpdatedClear = () => {
 }
 
 // Route Initialization for Case Deletion Dialog
-if (route.path.match(/^\/cases\/\d+\/delete\/?$/g)) {
+if (route.name == 'case-delete') {
   ;(async () => {
     try {
-      selectedCase.value = (await api.casesIdGet({ id: Number(route.params.id) })).data
+      selectedCasesToDelete.value = [(await api.casesIdGet({ id: Number(route.params.id) })).data]
       deleteDialogVisible.value = true
     } catch (error) {
       console.error(error)
@@ -181,11 +171,13 @@ if (route.path.match(/^\/cases\/\d+\/delete\/?$/g)) {
         life: 3000,
       })
 
-      await router.push('/cases')
+      await router.push({ name: 'cases' })
     }
   })()
 }
-
+if (route.name == 'case-delete-all') {
+  router.push({ name: 'cases' })
+}
 // Helper Functions
 /**
  * Fetches cases data from the API.
@@ -197,8 +189,9 @@ const fetchCases = async () => {
     const response = await api.casesGet()
     cases.splice(0, cases.length, ...response.data) // Replace cases data
   } catch (err) {
-    error.value = (err as AxiosError).message
-    console.error(err)
+    error.value =
+      ((err as AxiosError).response?.data as ModelError)?.message ?? (err as AxiosError).message
+    console.error(error)
   } finally {
     loading.value = false
   }
@@ -219,11 +212,12 @@ const retryFetch = () => {
 const getStatusSeverity = (status: string) => {
   switch (status) {
     case 'Open':
-      return 'warning'
+      return 'info'
+    case 'Solved':
     case 'Closed':
       return 'success'
-    case 'In-Progress':
-      return 'info'
+    case 'In Progress':
+      return 'warn'
     default:
       return 'secondary'
   }
@@ -248,7 +242,7 @@ const getMenuItems = (caseItem: Case) => [
   {
     label: 'View Case',
     icon: 'pi pi-eye',
-    command: () => router.push(`/cases/${caseItem.id}`),
+    command: () => router.push({ name: 'case-detail', params: { id: caseItem.id.toString() } }),
   },
   {
     label: caseItem.id == 0 ? 'Unarchive Case' : 'Archive Case',
@@ -258,7 +252,7 @@ const getMenuItems = (caseItem: Case) => [
   {
     label: 'Delete Case',
     icon: 'pi pi-trash',
-    command: () => openDeleteDialog(caseItem),
+    command: () => openDeleteDialog([caseItem]),
   },
 ]
 
@@ -278,20 +272,24 @@ const toggleArchive = (id: number) => {
 }
 
 /**
- * Opens the delete dialog for a case.
- * @param caseItem - The case to delete.
+ * Opens the delete dialog for one or more cases.
+ * @param cases - The cases to delete.
  */
-const openDeleteDialog = (caseItem: Case) => {
-  selectedCase.value = caseItem
+const openDeleteDialog = (cases: Case[]) => {
+  selectedCasesToDelete.value = cases
   deleteDialogVisible.value = true
-  router.push(`/cases/${caseItem.id}/delete`)
+  if (cases.length === 1) {
+    router.push({ name: 'case-delete', params: { id: cases[0].id } })
+  } else {
+    router.push({ name: 'case-delete-all' })
+  }
 }
 
 /**
  * Closes the delete dialog and navigates back.
  */
 const onDeleteDialogClose = () => {
-  router.push('/cases')
+  router.push({ name: 'cases' })
 }
 
 /**
@@ -309,28 +307,14 @@ const deleteCase = async (caseToDelete: Case) => {
       cases.findIndex((c) => c.id === caseToDelete.id),
       1,
     )
-
-    toast.add({
-      severity: 'success',
-      summary: 'Case Deleted',
-      detail: 'The case has been successfully deleted.',
-      life: 3000,
-    })
   } catch (error) {
     console.error(error)
-
-    toast.add({
-      severity: 'error',
-      summary: 'Deletion Failed',
-      detail: 'Failed to delete the case.',
-      life: 3000,
-    })
 
     // Rethrow the error to signal failure
     throw error
   } finally {
     deleteDialogVisible.value = false
-    selectedCase.value = null
+    selectedCasesToDelete.value = []
   }
 }
 
@@ -343,21 +327,56 @@ const clearFilters = () => {
 
 // Computed Properties for KPI Metrics
 const totalCases = computed(() => cases.length)
-const resolvedCases = computed(() => cases.filter((c) => c.status === 'Closed').length)
-const totalCasesTrend = ref(15) // Example: 15% increase
-const resolvedCasesTrend = ref(10) // Example: 10% increase
+const resolvedCases = computed(
+  () => cases.filter((c) => c.status === 'Closed' || c.status === 'Solved').length,
+)
+const totalCasesTrend = computed(() => {
+  const previousPeriodCases = cases.filter((caseItem) => {
+    const updatedAt = new Date(caseItem.updatedAt)
+    const now = new Date()
+    const oneWeekAgo = new Date(now.setDate(now.getDate() - 7))
+    return updatedAt >= oneWeekAgo && updatedAt < now
+  }).length
+  const currentPeriodCases = cases.length
+  return Math.min(((currentPeriodCases - previousPeriodCases) / previousPeriodCases) * 100, 100)
+})
+const resolvedCasesTrend = computed(() => {
+  const previousPeriodResolved = cases.filter((caseItem) => {
+    const updatedAt = new Date(caseItem.updatedAt)
+    const now = new Date()
+    const oneWeekAgo = new Date(now.setDate(now.getDate() - 7))
+    return (
+      (caseItem.status === 'Closed' || caseItem.status === 'Solved') &&
+      updatedAt >= oneWeekAgo &&
+      updatedAt < now
+    )
+  }).length
+  const currentPeriodResolved = cases.filter(
+    (caseItem) => caseItem.status === 'Closed' || caseItem.status === 'Solved',
+  ).length
+  return Math.min(
+    ((currentPeriodResolved - previousPeriodResolved) / previousPeriodResolved) * 100,
+    100,
+  )
+})
 const averageResolutionTime = ref(24) // Example: 24 hours
 const resolutionTimeTrend = ref(-5) // Example: 5% decrease
+
+const exportCSV = () => {
+  datatable.value.exportCSV()
+}
 
 // Lifecycle Hooks
 onMounted(fetchCases)
 
-const path = computed(() => route.path)
-watch(path, (newPath, oldPath) => {
-  if (oldPath === '/cases/create' && newPath !== '/cases/create') {
-    fetchCases()
-  }
-})
+watch(
+  () => route.path,
+  (newPath, oldPath) => {
+    if (oldPath === '/cases/create' && newPath !== '/cases/create') {
+      fetchCases()
+    }
+  },
+)
 </script>
 
 <template>
@@ -365,9 +384,13 @@ watch(path, (newPath, oldPath) => {
     <div class="transition-all duration-300 p-6 space-y-6 mx-auto max-w-full">
       <div class="flex items-center justify-between">
         <div class="flex gap-4">
-          <h1 class="text-3xl font-bold">Cases</h1>
+          <h1 class="text-5xl font-bold">Cases</h1>
         </div>
-        <Button label="Create Case" icon="pi pi-pencil" @click="$router.push('/cases/create')" />
+        <Button
+          label="Create Case"
+          icon="pi pi-pencil"
+          @click="router.push({ name: 'case-create' })"
+        />
       </div>
 
       <!-- KPI Widgets Row -->
@@ -376,7 +399,7 @@ watch(path, (newPath, oldPath) => {
           title="Total Cases"
           :value="totalCases"
           :trend="totalCasesTrend"
-          trend-description="from last month"
+          trend-description="from last week"
           icon="pi pi-file"
         />
 
@@ -384,7 +407,7 @@ watch(path, (newPath, oldPath) => {
           title="Resolved Cases"
           :value="resolvedCases"
           :trend="resolvedCasesTrend"
-          trend-description="resolution rate this month"
+          trend-description="resolution rate this week"
           icon="pi pi-check-circle"
         />
 
@@ -398,29 +421,41 @@ watch(path, (newPath, oldPath) => {
       </div>
 
       <DataTable
-        v-model:filters="filters"
+        ref="datatable"
         :value="cases"
+        v-model:filters="filters"
+        v-model:selection="selectedCases"
         :paginator="true"
-        :rows="20"
-        :rowsPerPageOptions="[20, 50, 100]"
+        :rows="8"
+        :rowsPerPageOptions="[8, 20, 50, 100]"
         :rowHover="true"
         scrollable
-        scrollHeight="600px"
         responsiveLayout="scroll"
         @row-click="$router.push({ path: '/cases/' + $event.data.id })"
         dataKey="id"
         filterDisplay="menu"
-        selection-mode="single"
+        class="cursor-pointer"
         :class="{
           '[&_tbody]:animate-pulse': loading && cases.length > 0,
         }"
-        :globalFilterFields="['title', 'assignee', 'case_type', 'status', 'createdBy.name']"
+        :globalFilterFields="['title', 'assignees', 'case_type', 'status', 'assignees']"
+        removableSort
         sortField="updatedAt"
         :sortOrder="-1"
       >
         <template #header>
-          <div class="flex justify-between items-center gap-x-5">
+          <div class="flex justify-between items-center gap-x-5 cursor-auto">
             <div class="flex items-center gap-x-2">
+              <Button
+                class="-ml-2"
+                type="button"
+                icon="pi pi-trash"
+                aria-label="Delete Selected Cases"
+                v-tooltip.top="{ value: 'Delete selected Cases', showDelay: 300 }"
+                severity="secondary"
+                :disabled="!selectedCases.length"
+                @click="openDeleteDialog(selectedCases)"
+              />
               <Button
                 type="button"
                 icon="pi pi-filter-slash"
@@ -435,6 +470,13 @@ watch(path, (newPath, oldPath) => {
                 @click="fetchCases()"
                 :disabled="loading"
               />
+              <Divider layout="vertical" />
+              <Button
+                icon="pi pi-external-link"
+                severity="secondary"
+                label="Export"
+                @click="exportCSV()"
+              />
             </div>
 
             <IconField>
@@ -445,12 +487,18 @@ watch(path, (newPath, oldPath) => {
             </IconField>
           </div>
         </template>
+        <Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
 
         <Column field="id" header="Case ID" :sortable="true" />
 
         <Column field="title" header="Title" :sortable="true">
           <template #filter="{ filterModel }">
             <InputText v-model="filterModel.value" type="text" placeholder="Search Title" />
+          </template>
+          <template #body="{ data }">
+            <div class="flex justify-start">
+              <span class="max-w-[25rem] truncate">{{ data.title }}</span>
+            </div>
           </template>
         </Column>
 
@@ -469,29 +517,41 @@ watch(path, (newPath, oldPath) => {
           </template>
         </Column>
 
-        <Column
-          field="createdBy.name"
-          header="Created by"
-          :showFilterMatchModes="false"
-          :sortable="true"
-        >
+        <Column field="assignees" header="Assignees" :showFilterMatchModes="false" :sortable="true">
           <template #body="{ data }">
-            <div class="flex items-center gap-2">
-              <img
-                alt="Placeholder Image"
-                src="https://placecats.com/50/50"
-                class="rounded-full w-8"
-              />
-              <span>Unknown Cat</span>
-            </div>
+            <template
+              v-for="user in [userOptions.find((u) => u.name === data.assignees[0]) ?? null]"
+            >
+              <div class="flex items-center gap-2">
+                <img
+                  v-if="user"
+                  alt="Placeholder Image"
+                  :src="user!.image"
+                  class="rounded-full w-8"
+                />
+                <span
+                  v-else
+                  class="flex justify-center items-center size-8 rounded-full bg-primary-50"
+                >
+                  <i class="rounded-full pi pi-user text-primary-800"></i>
+                </span>
+
+                <span class="text-nowrap max-w-28 flex gap-x-0.5">
+                  <span class="truncate">{{ data.assignees[0] || 'Unassigned' }}</span>
+                  <span class="flex-shrink-0">{{
+                    data.assignees.length > 1 ? `(+${data.assignees.length - 1} more)` : ''
+                  }}</span>
+                </span>
+              </div>
+            </template>
           </template>
           <template #filter="{ filterModel }">
-            <Select
-              v-model="filterModel.value"
-              :options="createdByOptions"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Select Creator"
+            <UserSelector
+              :selected-users="userOptions.filter((u) => filterModel.value?.includes(u.name))"
+              @update:selected-users="filterModel.value = $event.map((u) => u.name)"
+              assigneeLabel="Assignees"
+              :userOptions="userOptions"
+              multi-select
             />
           </template>
         </Column>
@@ -504,12 +564,11 @@ watch(path, (newPath, oldPath) => {
             />
           </template>
           <template #filter="{ filterModel }">
-            <Select
-              v-model="filterModel.value"
-              :options="statusOptions"
-              optionLabel="label"
-              optionValue="value"
+            <CaseStatusSelect
+              model-value="filterModel.value"
               placeholder="Select Status"
+              display="chip"
+              multi-select
             />
           </template>
         </Column>
@@ -573,12 +632,8 @@ watch(path, (newPath, oldPath) => {
         </Column>
 
         <template #empty>
-          <div v-if="loading" class="space-y-4 relative">
-            <Skeleton width="100%" height="3rem" />
-            <Skeleton width="100%" height="3rem" />
-            <Skeleton width="100%" height="3rem" />
-            <Skeleton width="100%" height="3rem" />
-            <Skeleton width="100%" height="3rem" />
+          <div v-if="loading" class="space-y-4 relative w-[1300px]">
+            <Skeleton v-for="i in 7" :key="i" width="100%" height="3rem" />
 
             <div
               class="absolute text-lg pulse text-gray-700 inset-0 flex items-center justify-center !mt-0"
@@ -591,7 +646,7 @@ watch(path, (newPath, oldPath) => {
           <div v-else-if="error" class="flex flex-col items-center gap-y-3">
             <div class="bg-red-50 p-4 rounded-lg border-x-4 border-red-500 w-full">
               <h2 class="text-lg font-semibold mb-2">Error</h2>
-              <p class="text-red-800">Failed to load cases. Please try again.</p>
+              <p class="text-red-800">{{ error }}. Please try again.</p>
             </div>
             <div>
               <Button
@@ -629,7 +684,7 @@ watch(path, (newPath, oldPath) => {
   <CaseDeleteDialog
     v-if="deleteDialogVisible"
     v-model:visible="deleteDialogVisible"
-    :cases="[selectedCase!]"
+    :cases="selectedCasesToDelete"
     :on-delete="deleteCase"
     @update:visible="onDeleteDialogClose()"
   />

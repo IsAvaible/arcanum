@@ -1,13 +1,16 @@
 const express = require("express");
 const router = express.Router();
 const caseController = require("../controllers/caseController");
+const jwtController = require("../controllers/jwtController");
 const multerMiddleware = require("../middlewares/multerMiddleware");
 const {
   validateData,
   escapeData,
+  authenticateJWT,
 } = require("../middlewares/validationMiddleware");
 const { caseSchema } = require("../schemas/caseSchemas");
 const attachmentController = require("../controllers/attachmentController");
+const { generateJWT } = require("../controllers/jwtController");
 
 /**
  * @route GET /cases/
@@ -15,7 +18,7 @@ const attachmentController = require("../controllers/attachmentController");
  * @returns {Object[]} 200 - An array of case objects.
  * @returns {Error} 500 - Internal server error.
  */
-router.get("/cases/", caseController.showCaseList);
+router.get("/cases/", authenticateJWT, caseController.showCaseList);
 
 /**
  * @route GET /cases/:id
@@ -25,7 +28,7 @@ router.get("/cases/", caseController.showCaseList);
  * @returns {Error} 404 - Case not found.
  * @returns {Error} 500 - Internal server error.
  */
-router.get("/cases/:id", caseController.showCaseDetail);
+router.get("/cases/:id", authenticateJWT, caseController.showCaseDetail);
 
 /**
  * @route POST /cases/
@@ -33,7 +36,7 @@ router.get("/cases/:id", caseController.showCaseDetail);
  * @param {string} title.formData.required - The title of the case.
  * @param {string} description.formData.required - The description of the case.
  * @param {string} solution.formData - A possible solution for the case.
- * @param {string} assignee.formData - The assignee of the case.
+ * @param {string} assignees.formData - The assignees of the case.
  * @param {string} status.formData - The status of the case (e.g. "Open").
  * @param {string} case_type.formData - The type of the case (e.g. "Problem", "Incident", "Change", "FAQ").
  * @param {string} priority.formData - The priority of the case (e.g. "Low", "Medium", "High").
@@ -45,11 +48,12 @@ router.get("/cases/:id", caseController.showCaseDetail);
 router.post(
   "/cases/",
   multerMiddleware,
+  authenticateJWT,
   escapeData([
     "title",
     "description",
     "solution",
-    "assignee",
+    "assignees",
     "status",
     "case_type",
     "priority",
@@ -65,7 +69,7 @@ router.post(
  * @param {string} [title] - Updated title (min. 3 chars).
  * @param {string} [description] - Updated description.
  * @param {string} [solution] - Updated solution text.
- * @param {string} [assignee] - Updated assignee.
+ * @param {string} [assignees] - Updated assignees.
  * @param {string} [status] - Updated status ("Open", "inProgress", "Solved", "Closed").
  * @param {string} [case_type] - Updated case type ("Problem", "Incident", "Change", "FAQ").
  * @param {string} [priority] - Updated priority ("Low", "Medium", "High").
@@ -75,7 +79,12 @@ router.post(
  * @returns {Error} 404 - Case not found.
  * @returns {Error} 500 - Internal server error.
  */
-router.put("/cases/:id", multerMiddleware, caseController.updateCase);
+router.put(
+  "/cases/:id",
+  authenticateJWT,
+  multerMiddleware,
+  caseController.updateCase,
+);
 
 /**
  * @route DELETE /cases/:id
@@ -85,7 +94,7 @@ router.put("/cases/:id", multerMiddleware, caseController.updateCase);
  * @returns {Error} 404 - Case not found.
  * @returns {Error} 500 - Internal server error.
  */
-router.delete("/cases/:id", caseController.deleteCase);
+router.delete("/cases/:id", authenticateJWT, caseController.deleteCase);
 
 /**
  * @route GET /cases/attachments/:attachmentId
@@ -97,6 +106,7 @@ router.delete("/cases/:id", caseController.deleteCase);
  */
 router.get(
   "/cases/attachments/:attachmentId",
+  authenticateJWT,
   attachmentController.getAttachment,
 );
 
@@ -111,6 +121,7 @@ router.get(
  */
 router.get(
   "/cases/:id/attachments/:attachmentId",
+  authenticateJWT,
   attachmentController.getAttachment,
 );
 
@@ -124,6 +135,7 @@ router.get(
  */
 router.get(
   "/cases/attachments/:attachmentId/download",
+  authenticateJWT,
   attachmentController.downloadAttachment,
 );
 
@@ -138,6 +150,7 @@ router.get(
  */
 router.get(
   "/cases/:id/attachments/:attachmentId/download",
+  authenticateJWT,
   attachmentController.downloadAttachment,
 );
 
@@ -152,6 +165,7 @@ router.get(
  */
 router.post(
   "/cases/:id/attachments",
+  authenticateJWT,
   attachmentController.addAttachmentsToCase,
 );
 
@@ -166,6 +180,7 @@ router.post(
  */
 router.delete(
   "/cases/:id/attachments/:attachmentId",
+  authenticateJWT,
   attachmentController.deleteAttachmentFromCase,
 );
 
@@ -181,6 +196,7 @@ router.delete(
  */
 router.post(
   "/createCaseFromFiles",
+  authenticateJWT,
   multerMiddleware,
   escapeData(["socketId"]),
   caseController.createCaseFromFiles,
@@ -193,7 +209,7 @@ router.post(
  * @param {string} [title] - Updated title.
  * @param {string} [description] - Updated description.
  * @param {string} [solution] - Updated solution.
- * @param {string} [assignee] - Updated assignee.
+ * @param {string} [assignees] - Updated assignees.
  * @param {string} [status] - Updated status.
  * @param {string} [case_type] - Updated case type.
  * @param {string} [priority] - Updated priority.
@@ -201,6 +217,23 @@ router.post(
  * @returns {Error} 404 - Case not found.
  * @returns {Error} 500 - Internal server error.
  */
-router.put("/confirmCase/:id", caseController.confirmCase);
+router.put(
+  "/confirmCase/:id",
+  multerMiddleware,
+  authenticateJWT,
+  escapeData([
+    "title",
+    "description",
+    "solution",
+    "assignees",
+    "status",
+    "case_type",
+    "priority",
+  ]),
+  validateData(caseSchema),
+  caseController.confirmCase,
+);
+
+router.get("/generateJWT", jwtController.generateJWT);
 
 module.exports = router;

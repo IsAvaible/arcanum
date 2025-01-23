@@ -14,3 +14,5 @@ pytesseract==0.3.13
 python-dotenv==1.0.1
 python-socketio==5.12.1
 qdrant_client==1.12.2
+sentence-transformers==3.3.1
+debugpy==1.8.12

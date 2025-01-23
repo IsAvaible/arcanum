@@ -1,5 +1,6 @@
 import tailwindcssPrimeui from 'tailwindcss-primeui'
 import tailwindScrollbar from 'tailwind-scrollbar'
+import tailwindContainerQueries from '@tailwindcss/container-queries'
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -39,5 +40,5 @@ export default {
       },
     },
   },
-  plugins: [tailwindcssPrimeui, tailwindScrollbar],
+  plugins: [tailwindcssPrimeui, tailwindScrollbar, tailwindContainerQueries],
 }

@@ -2,26 +2,29 @@ const express = require("express");
 const router = express.Router();
 const glossaryController = require("../controllers/glossaryController");
 const {
-  validateData,
-  escapeData,
-} = require("../middlewares/validationMiddleware");
+    authenticateJWT,
+    validateData,
+    escapeData,
+  } = require("../middlewares/validationMiddleware");
 const { glossarySchema } = require("../schemas/glossarySchemas");
 const multerMiddleware = require("../middlewares/multerMiddleware");
 
 // --- Glossary-Routen ---
-router.get("/glossary", glossaryController.getAllGlossaryEntries);
+router.get("/glossary", authenticateJWT, glossaryController.getAllGlossaryEntries);
 
 // "find" nach Query-Parameter (z. B. /glossary/find?term=MIG4300Pro)
 router.get(
   "/glossary/find",
+  authenticateJWT,
   escapeData(["term"]),
   glossaryController.findGlossaryEntries,
 );
-router.get("/glossary/:id", glossaryController.getGlossaryEntryById);
+router.get("/glossary/:id", authenticateJWT, glossaryController.getGlossaryEntryById);
 
 // Create, Update and delete Glossary
 router.post(
   "/glossary",
+  authenticateJWT,
   multerMiddleware,
   escapeData(["term"]),
   validateData(glossarySchema),
@@ -29,14 +32,16 @@ router.post(
 );
 router.put(
   "/glossary/:id",
+  authenticateJWT,
   multerMiddleware,
   escapeData(["term"]),
   validateData(glossarySchema),
   glossaryController.updateGlossaryEntry,
 );
-router.delete("/glossary/:id", glossaryController.deleteGlossaryEntry);
+router.delete("/glossary/:id", authenticateJWT, glossaryController.deleteGlossaryEntry);
 router.post(
   "/glossary/:id/upload",
+  authenticateJWT,
   multerMiddleware,
   glossaryController.uploadAttachmentToGossary,
 );
@@ -44,20 +49,24 @@ router.post(
 // Add attachments/cases to a glossary
 router.post(
   "/glossary/:id/attachments/:attachmentId",
+  authenticateJWT,
   glossaryController.addAttachmentToGlossary,
 );
 router.post(
   "/glossary/:id/cases/:caseId",
+  authenticateJWT,
   glossaryController.addCaseToGlossary,
 );
 
 // Remove attachments/cases from a glossary
 router.delete(
   "/glossary/:id/attachments/:attachmentId",
+  authenticateJWT,
   glossaryController.deleteAttachmentFromGlossary,
 );
 router.delete(
   "/glossary/:id/cases/:caseId",
+  authenticateJWT,
   glossaryController.deleteCaseFromGlossary,
 );
 

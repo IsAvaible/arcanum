@@ -194,7 +194,7 @@ module.exports = {
       if (!attachment) {
         return res.status(404).json({ message: 'Attachment not found.' });
       }
-
+      await glossaryEntry.increment('usageCount');
       await glossaryEntry.addRelatedAttachments(attachment); 
 
       // Reload to get the updated list of attachments
@@ -234,7 +234,7 @@ module.exports = {
       if (!theCase) {
         return res.status(404).json({ message: 'Case not found.' });
       }
-
+      await glossaryEntry.increment('usageCount');
       await glossaryEntry.addRelatedCases(theCase);
 
       // Reload to get the updated list of cases
@@ -274,7 +274,7 @@ module.exports = {
       if (!attachment) {
         return res.status(404).json({ message: 'Attachment not found.' });
       }
-
+      await glossaryEntry.decrement('usageCount');
       await glossaryEntry.removeRelatedAttachments(attachment);
       await attachmentService.deleteAttachmentIfOrphaned(attachment);
 
@@ -310,7 +310,7 @@ module.exports = {
       if (!theCase) {
         return res.status(404).json({ message: 'Case not found.' });
       }
-
+      await glossaryEntry.decrement('usageCount');
       await glossaryEntry.removeRelatedCases(theCase);
 
 
@@ -336,6 +336,7 @@ module.exports = {
       // Process uploaded files and create attachments.  
       const attachmentInstances = await attachmentService.uploadFilesAndCreateAttachments(req.files);
       if (attachmentInstances.length > 0) {
+        await glossaryEntry.increment('usageCount');
         await glossaryEntry.addRelatedAttachments(attachmentInstances);
       }
 

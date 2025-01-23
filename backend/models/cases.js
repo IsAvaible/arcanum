@@ -50,8 +50,8 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
-      assignee: {
-        type: DataTypes.JSON,
+      assignees: {
+        type: DataTypes.ARRAY(DataTypes.STRING),
         allowNull: true,
       },
       status: {

@@ -31,11 +31,13 @@ import UserSelector, { type User } from '@/components/case-create-form/UserSelec
 import CaseStatusSelect from '@/components/case-form-fields/CaseStatusSelect/CaseStatusSelect.vue'
 import CasePrioritySelect from '@/components/case-form-fields/CaseStatusSelect/CasePrioritySelect.vue'
 import ScrollFadeOverlay from '@/components/misc/ScrollFadeOverlay.vue'
+import GlossaryEntryDrawer from '@/components/GlossaryEntryDrawer.vue'
 
 // Types
 import type { AxiosError } from 'axios'
-import type { Case, Attachment, GlossaryEntry } from '@/api'
+import type { Case, Attachment, GlossaryEntry, ModelError } from '@/api'
 import { CaseCaseTypeEnum } from '@/api'
+import type { ToastMessageOptions } from 'primevue'
 
 // Functions
 import { getFileIcon } from '@/functions/getFileIcon'
@@ -46,7 +48,6 @@ import { caseSchema } from '@/validation/schemas'
 import { useCaseFields } from '@/validation/fields'
 import { until } from '@vueuse/core'
 import { userOptions } from '@/api/mockdata'
-import GlossaryEntryDrawer from '@/components/GlossaryEntryDrawer.vue'
 
 const router = useRouter()
 const api = useApi()
@@ -78,19 +79,23 @@ const fetchCase = async () => {
       resetForm({
         values: {
           ...caseDetails.value,
-          // The API returns assignee instead of assignees
-          assignees: caseDetails.value.assignee as [string, ...string[]],
+          assignees: caseDetails.value.assignees as [string, ...string[]],
         },
       })
       nextTick(() => {
         form.value.dirty = false
       })
     } else {
-      setValues(caseDetails.value)
+      setValues({
+        ...caseDetails.value,
+        assignees: caseDetails.value.assignees as [string, ...string[]],
+      })
       inEditMode.value = true
     }
   } catch (err) {
-    error.value = (err as AxiosError).message
+    console.error(err)
+    error.value =
+      ((err as AxiosError).response?.data as ModelError)?.message ?? (err as AxiosError).message
   } finally {
     loading.value = false
   }
@@ -161,13 +166,13 @@ const handleSave = handleSubmit(
         caseDetails.value = (
           await api.confirmCaseIdPut({
             id: Number(caseId.value),
+            caseType: values.case_type,
             ...values,
-            assignee: values.assignees,
           })
         ).data
       } else {
         caseDetails.value = (
-          await api.casesIdPut({ id: Number(caseId.value), ...values, assignee: values.assignees })
+          await api.casesIdPut({ id: Number(caseId.value), caseType: values.case_type, ...values })
         ).data
       }
       resetForm({ values: values })
@@ -185,7 +190,10 @@ const handleSave = handleSubmit(
       toast.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'An error occurred while saving the case\n' + (error as AxiosError).message,
+        detail:
+          'An error occurred while saving the case\n' +
+          (((error as AxiosError).response?.data as ModelError)?.message ??
+            (error as AxiosError).message),
         life: 3000,
       })
       console.error(error)
@@ -386,7 +394,10 @@ const uploadFiles = async () => {
       toast.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'An error occurred while uploading the files\n' + (error as AxiosError).message,
+        detail:
+          'An error occurred while uploading the files\n' +
+          (((error as AxiosError).response?.data as ModelError)?.message ??
+            (error as AxiosError).message),
         life: 3000,
       })
 
@@ -421,7 +432,10 @@ const deleteAttachment = async (attachment: Attachment) => {
     toast.add({
       severity: 'error',
       summary: 'Error',
-      detail: 'An error occurred while deleting the file\n' + (error as AxiosError).message,
+      detail:
+        'An error occurred while deleting the file\n' +
+        (((error as AxiosError).response?.data as ModelError)?.message ??
+          (error as AxiosError).message),
       life: 3000,
     })
     console.error(error)
@@ -440,13 +454,21 @@ const deletingFileId = ref<number | null>(null)
 // Matches timestamps in the format [filename.ext: HH:MM:SS - ...]
 // Extensions are based on OpenAI Whisper allowed file types
 const timeStampRegex =
-  /\[(.*?\.(?:wav|flac|m4a|mp3|mp4|mpeg|mpga|oga|ogg|webm): \d{2}:\d{2}:\d{2}) - .*?]/g
+  /\[(.*?\.(?:wav|flac|m4a|mp3|mp4|mpeg|mpga|oga|ogg|webm|mov): \d{2}:\d{2}:\d{2}) - .*?]/g
 
 const openAttachmentInDrawer = async (attachment: Attachment) => {
   // Check if the attachment is already in the files array
   let file = files.value.find((f) => f.name === attachment.filename)
   if (!file) {
     loadingFileId.value = attachment.id
+
+    const loadingToast: ToastMessageOptions = {
+      severity: 'info',
+      summary: 'Loading Preview',
+      detail: `Downloading ${attachment.filename}...`,
+    }
+    toast.add(loadingToast)
+
     // If not, download the file from the server
     try {
       file = await apiBlobToFile(
@@ -464,12 +486,16 @@ const openAttachmentInDrawer = async (attachment: Attachment) => {
       toast.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'An error occurred while downloading the file\n' + (error as AxiosError).message,
+        detail:
+          'An error occurred while downloading the file\n' +
+          (((error as AxiosError).response?.data as ModelError)?.message ??
+            (error as AxiosError).message),
         life: 3000,
       })
       console.error(error)
       return
     } finally {
+      toast.remove(loadingToast)
       loadingFileId.value = null
     }
   }
@@ -511,7 +537,9 @@ const menuItems = [
     label: 'Export as CSV',
     icon: 'pi pi-file-excel',
     command: () => {
+      // export as CSV
       console.log('Exporting as CSV')
+      exportCSV()
     },
   },
   {
@@ -519,6 +547,13 @@ const menuItems = [
     icon: 'pi pi-share-alt',
     command: () => {
       console.log('Sharing case')
+      navigator.clipboard.writeText(window.location.href)
+      toast.add({
+        severity: 'success',
+        summary: 'Link Copied',
+        detail: 'The case link has been copied to your clipboard.',
+        life: 3000,
+      })
     },
   },
   {
@@ -526,6 +561,7 @@ const menuItems = [
     icon: 'pi pi-print',
     command: () => {
       console.log('Printing case')
+      window.print()
     },
   },
 ]
@@ -548,6 +584,56 @@ const changeHistoryEvents = computed(() => {
       }))
     : []
 })
+
+/**
+ * Export the case details as a CSV file
+ */
+const exportCSV = () => {
+  // Utility to escape CSV values
+  const escapeCSVValue = (value: unknown) => {
+    if (typeof value === 'string') {
+      return `"${value.replace(/"/g, '""')}"`
+    }
+    if (typeof value === 'object' && value !== null) {
+      return `"${JSON.stringify(value).replace(/"/g, '""')}"`
+    }
+    return value
+  }
+
+  let url: string | null = null
+  try {
+    // Validate input
+    if (!caseDetails?.value || typeof caseDetails.value !== 'object') {
+      throw new Error('Invalid case details.')
+    }
+    if (!caseId?.value) {
+      throw new Error('Case ID is required.')
+    }
+
+    // Generate CSV content
+    const rows = Object.entries(caseDetails.value)
+      .map(([key, value]) => `${key},${escapeCSVValue(value)}`)
+      .join('\n')
+    const csv = `${rows}`
+
+    // Create and download the CSV file
+    const blob = new Blob([csv], { type: 'text/csv' })
+    url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `case-${caseId.value}.csv`
+    document.body.appendChild(a) // Attach to DOM for better compatibility
+    a.click()
+    document.body.removeChild(a) // Clean up
+  } catch (error) {
+    console.error('Error exporting CSV:', (error as Error).message)
+  } finally {
+    // Cleanup URL
+    if (url) {
+      URL.revokeObjectURL(url)
+    }
+  }
+}
 </script>
 
 <template>
@@ -571,11 +657,10 @@ const changeHistoryEvents = computed(() => {
             @click="navigateTo('cases')"
             class="flex-shrink-0"
             icon="pi pi-chevron-left"
-            outlined
             rounded
             v-tooltip.top="{ value: 'Return to Case List', showDelay: 1000 }"
           />
-          <h1 class="text-2xl font-bold text-gray-900 truncate">
+          <h1 class="text-2xl font-bold text-gray-900 truncate -mt-0.5">
             Case #{{ caseId
             }}<span class="font-semibold" v-if="caseDetails?.title">
               - {{ caseDetails?.title }}</span
@@ -956,17 +1041,27 @@ const changeHistoryEvents = computed(() => {
         </template>
         <template #content>
           <ScrollFadeOverlay axis="vertical" content-class="max-h-[190px]">
-            <Timeline :value="changeHistoryEvents" align="left">
+            <div
+              v-if="!changeHistoryEvents.length"
+              class="text-emerald-600 text-center py-4 flex flex-col items-center"
+            >
+              <!-- Dynamisches Icon -->
+              <i class="pi pi-info-circle text-3xl mb-2"></i>
+              <p class="font-semibold">Empty Change History</p>
+              <p class="text-sm text-gray-600 mt-2">
+                There is currently no change history for this case. Start editing the case to
+                populate this section.
+              </p>
+            </div>
+            <Timeline v-else :value="changeHistoryEvents" align="left">
               <template #marker="slotProps">
-                <span
-                  class="flex w-10 h-10 items-center justify-center text-white rounded-full z-10 shadow-sm bg-gray-800"
-                >
-                  <i class="pi pi-file-edit -mr-0.5"></i>
-                </span>
+                <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
+                  <i class="pi pi-file-edit text-emerald-500 -mr-0.5"></i>
+                </div>
               </template>
               <template #content="slotProps">
                 <div class="flex items-center justify-between pt-2">
-                  <p class="font-semibold text-gray-800">
+                  <p class="font-semibold text-gray-900">
                     Case Updated -
                     <span class="text-sm text-gray-600">{{ slotProps.item.date }}</span>
                   </p>
@@ -1087,5 +1182,10 @@ const changeHistoryEvents = computed(() => {
 
 :deep(.p-timeline-event-opposite) {
   @apply flex-initial;
+}
+
+/* Verbindungslinien in grün ändern */
+:deep(.p-timeline .p-timeline-event-connector) {
+  @apply bg-emerald-200;
 }
 </style>
