@@ -43,6 +43,7 @@ const menu = useTemplateRef('menu')
 const menuModel = ref<MenuItem[] | undefined>(undefined)
 const toast = useToast()
 const route = useRoute()
+const datatable = ref()
 const filters = ref()
 const cases = reactive<Case[]>([])
 const selectedCases = ref<Case[]>([])
@@ -361,15 +362,21 @@ const resolvedCasesTrend = computed(() => {
 const averageResolutionTime = ref(24) // Example: 24 hours
 const resolutionTimeTrend = ref(-5) // Example: 5% decrease
 
+const exportCSV = () => {
+  datatable.value.exportCSV()
+}
+
 // Lifecycle Hooks
 onMounted(fetchCases)
 
-const path = computed(() => route.path)
-watch(path, (newPath, oldPath) => {
-  if (oldPath === '/cases/create' && newPath !== '/cases/create') {
-    fetchCases()
-  }
-})
+watch(
+  () => route.path,
+  (newPath, oldPath) => {
+    if (oldPath === '/cases/create' && newPath !== '/cases/create') {
+      fetchCases()
+    }
+  },
+)
 </script>
 
 <template>
@@ -377,7 +384,7 @@ watch(path, (newPath, oldPath) => {
     <div class="transition-all duration-300 p-6 space-y-6 mx-auto max-w-full">
       <div class="flex items-center justify-between">
         <div class="flex gap-4">
-          <h1 class="text-3xl font-bold">Cases</h1>
+          <h1 class="text-5xl font-bold">Cases</h1>
         </div>
         <Button
           label="Create Case"
@@ -414,15 +421,15 @@ watch(path, (newPath, oldPath) => {
       </div>
 
       <DataTable
+        ref="datatable"
         :value="cases"
         v-model:filters="filters"
         v-model:selection="selectedCases"
         :paginator="true"
-        :rows="20"
-        :rowsPerPageOptions="[20, 50, 100]"
+        :rows="8"
+        :rowsPerPageOptions="[8, 20, 50, 100]"
         :rowHover="true"
         scrollable
-        scrollHeight="600px"
         responsiveLayout="scroll"
         @row-click="$router.push({ path: '/cases/' + $event.data.id })"
         dataKey="id"
@@ -432,12 +439,12 @@ watch(path, (newPath, oldPath) => {
           '[&_tbody]:animate-pulse': loading && cases.length > 0,
         }"
         :globalFilterFields="['title', 'assignees', 'case_type', 'status', 'assignees']"
+        removableSort
         sortField="updatedAt"
         :sortOrder="-1"
       >
-        <Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
         <template #header>
-          <div class="flex justify-between items-center gap-x-5">
+          <div class="flex justify-between items-center gap-x-5 cursor-auto">
             <div class="flex items-center gap-x-2">
               <Button
                 class="-ml-2"
@@ -463,6 +470,13 @@ watch(path, (newPath, oldPath) => {
                 @click="fetchCases()"
                 :disabled="loading"
               />
+              <Divider layout="vertical" />
+              <Button
+                icon="pi pi-external-link"
+                severity="secondary"
+                label="Export"
+                @click="exportCSV()"
+              />
             </div>
 
             <IconField>
@@ -473,12 +487,18 @@ watch(path, (newPath, oldPath) => {
             </IconField>
           </div>
         </template>
+        <Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
 
         <Column field="id" header="Case ID" :sortable="true" />
 
         <Column field="title" header="Title" :sortable="true">
           <template #filter="{ filterModel }">
             <InputText v-model="filterModel.value" type="text" placeholder="Search Title" />
+          </template>
+          <template #body="{ data }">
+            <div class="flex justify-start">
+              <span class="max-w-[25rem] truncate">{{ data.title }}</span>
+            </div>
           </template>
         </Column>
 
@@ -612,12 +632,8 @@ watch(path, (newPath, oldPath) => {
         </Column>
 
         <template #empty>
-          <div v-if="loading" class="space-y-4 relative">
-            <Skeleton width="100%" height="3rem" />
-            <Skeleton width="100%" height="3rem" />
-            <Skeleton width="100%" height="3rem" />
-            <Skeleton width="100%" height="3rem" />
-            <Skeleton width="100%" height="3rem" />
+          <div v-if="loading" class="space-y-4 relative w-[1300px]">
+            <Skeleton v-for="i in 7" :key="i" width="100%" height="3rem" />
 
             <div
               class="absolute text-lg pulse text-gray-700 inset-0 flex items-center justify-center !mt-0"
