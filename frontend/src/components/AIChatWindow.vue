@@ -141,9 +141,15 @@ const setActiveChat = async (chatId: Chat['id'] | null) => {
       activeChat.value = (await api.chatsIdGet({ id: chatId })).data
       selectedFile.value = pendingMessage.value = pendingLLMMessage.value = null
       registerSocket()
+
       if (!route.params.chatId || Number(route.params.chatId) !== chatId) {
         await router.push(`/ai/${chatId}`)
       }
+
+      await nextTick(() => {
+        const messageInput = document.getElementById('message-input')
+        messageInput?.focus()
+      })
     } catch (error) {
       throw error
     } finally {
@@ -597,6 +603,11 @@ const { selectedFile, filePreviewVisible, loadingAttachmentId, openAttachmentPre
 onMounted(async () => {
   if (route.params.chatId) {
     chatLoading.value = true
+  } else {
+    nextTick(() => {
+      const newChatInput = document.getElementById('new-chat-input')
+      newChatInput?.focus()
+    })
   }
   await fetchChats()
 
@@ -622,6 +633,10 @@ onMounted(async () => {
         }
       } else {
         activeChat.value = null
+        await nextTick(() => {
+          const newChatInput = document.getElementById('new-chat-input')
+          newChatInput?.focus()
+        })
       }
     },
     { immediate: true },
@@ -657,6 +672,7 @@ onMounted(async () => {
         <h2 class="text-gray-700 text-2xl font-semibold">What can I help you with?</h2>
         <IconField class="w-full max-w-lg">
           <InputText
+            id="new-chat-input"
             v-model="messageInput"
             placeholder="Type a message"
             class="w-full"
@@ -782,6 +798,7 @@ onMounted(async () => {
         </Button>
 
         <Textarea
+          id="message-input"
           v-model="messageInput"
           placeholder="Type a message"
           class="w-full max-h-24"
