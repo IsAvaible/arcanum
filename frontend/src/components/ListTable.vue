@@ -536,7 +536,7 @@ watch(
                   <i class="rounded-full pi pi-user text-primary-800"></i>
                 </span>
 
-                <span class="text-nowrap max-w-28 flex gap-x-0.5">
+                <span class="text-nowrap max-w-32 flex gap-x-0.5">
                   <span class="truncate">{{ data.assignees[0] || 'Unassigned' }}</span>
                   <span class="flex-shrink-0">{{
                     data.assignees.length > 1 ? `(+${data.assignees.length - 1} more)` : ''
