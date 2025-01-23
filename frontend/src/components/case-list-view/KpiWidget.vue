@@ -23,9 +23,10 @@ const _props = defineProps<Props>()
         <i :class="`${icon} text-4xl text-primary-600`"></i>
       </div>
       <div class="mt-2 text-sm text-gray-500">
-        <span :class="trend > 0 ? 'text-green-500' : 'text-red-500'">
-          {{ trend > 0 ? '▲' : '▼' }} {{ Math.abs(trend) }}%
+        <span v-if="!isNaN(trend)" :class="trend >= 0 ? 'text-green-500' : 'text-red-500'">
+          {{ trend >= 0 ? '▲' : '▼' }} {{ Math.abs(trend) }}%
         </span>
+        <span v-else> <i class="pi pi-spin pi-spinner text-xs"></i> 0% </span>
         {{ trendDescription }}
       </div>
     </template>
