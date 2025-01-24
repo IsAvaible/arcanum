@@ -105,14 +105,9 @@ const registerSocket = async () => {
   return new Promise<void>((resolve) => {
     socket.value!.on('connect', () => {
       socket.value!.on('llm_message', (data: { message: string }) => {
-        pendingLLMMessage.value = {
-          content: data.message,
-          state: 'generating',
-          chatId: activeChat.value!.id,
-          role: MessageRoleEnum.Assistant,
-          timestamp: new Date().toISOString(),
-          id: -2,
-        }
+        // do not react to LLM messages if we are not in a generating state
+        if (pendingLLMMessage.value == null) return
+        pendingLLMMessage.value.content = data.message
       })
 
       socket.value!.on('llm_end', (_data: { message: string }) => {
@@ -310,6 +305,14 @@ const sendMessage = async () => {
       id: -1,
     }
     messageInput.value = ''
+    pendingLLMMessage.value = {
+      content: '',
+      state: 'generating',
+      chatId: activeChat.value!.id,
+      role: MessageRoleEnum.Assistant,
+      timestamp: new Date().toISOString(),
+      id: -2,
+    }
     await sendPendingMessage()
   } else {
     // Editing a message
@@ -447,7 +450,7 @@ const displayedMessages = computed<(Message & { state: string })[]>(() => {
   return [
     ...(activeChat.value?.messages ?? []),
     ...(pendingMessage.value ? [pendingMessage.value] : []),
-    ...(pendingLLMMessage.value ? [pendingLLMMessage.value] : []),
+    ...(pendingLLMMessage.value?.content ? [pendingLLMMessage.value] : []),
   ] as (Message & { state: string })[]
 })
 
