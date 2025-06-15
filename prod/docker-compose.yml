@@ -1,0 +1,63 @@
+services:
+  frontend:
+    image: oculavisfhip2024.azurecr.io/ip-oculavis-ws2425-frontend:170125
+    container_name: frontend
+    environment:
+      - HUSKY=0
+    ports:
+      - "8080:80"
+    volumes:
+      - ../frontend:/app
+      - ../frontend/nginx.conf:/etc/nginx/conf.d/default.conf
+    command: >
+      sh -c "
+      cp -rf '/app/dist/.' '/usr/share/nginx/html/' &&
+      nginx -g 'daemon off;'
+      "
+
+  node_backend:
+    image: oculavisfhip2024.azurecr.io/ip-oculavis-ws2425-node_backend:170125
+    container_name: node_backend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    env_file:
+      - ../backend/.env
+    volumes:
+      - ../backend:/node_backend
+      - ../backend/certs:/node_backend/certs
+    networks:
+      - shared_network
+  llm-backend:
+    image: oculavisfhip2024.azurecr.io/python:170125
+    ports:
+      - "5001:5001"
+    env_file:
+      - ../llm_backend/.env
+    volumes:
+      - ../llm_backend:/llm_backend
+    depends_on:
+      - node_backend
+    working_dir: /llm_backend
+    command: >
+      sh -c "apt-get update && apt-get install -y ffmpeg && pip install --no-cache-dir -r ./requirements.txt && python main.py"
+    networks:
+      - shared_network
+  db:
+    image: oculavisfhip2024.azurecr.io/ip-oculavis-ws2425-db:170125
+    container_name: postgres_db
+    env_file: "../backend/.env"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - shared_network
+
+volumes:
+  postgres-data:
+
+networks:
+  shared_network:
+    driver: bridge

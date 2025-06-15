@@ -1,0 +1,8 @@
+cd frontend
+
+echo "Verifying commit message..."
+
+# Verify that commit messages meet the Conventional Commits spec.
+npx commitlint  --edit "$1"
+
+echo "Commit message verified."

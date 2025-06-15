@@ -1,0 +1,1194 @@
+openapi: 3.0.3
+info:
+  title: Oculavis Arcanum API
+  description: |
+    The Oculavis Arcanum API allows you to manage cases by creating, retrieving, updating, and deleting them. It also supports file attachments associated with cases.
+    The API also includes endpoints for managing chat functionality, including creating, retrieving, updating, and exporting chat sessions and messages.
+  version: '1.0.0'
+servers:
+  - url: https://localhost:3000/api
+paths:
+  /generateJWT:
+    get:
+      summary: Logs in and returns the authentication cookie
+      security: [] # disable global for this endpoint
+      responses:
+        '204':
+          description: >
+            Successfully authenticated.
+            The session ID is returned in a cookie named `x-auth-token`. You need to include this cookie in subsequent requests.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: x-auth-token=abcde12345; Path=/; HttpOnly
+
+  /cases:
+    get:
+      summary: Retrieve all cases
+      description: Retrieve a list of all cases.
+      responses:
+        200:
+          description: Successfully retrieved a list of cases.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Case'
+        500:
+          description: Error retrieving cases.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create a new case
+      description: Create a new case.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CasePost'
+      responses:
+        201:
+          description: Case successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        400:
+          description: Validation error or file upload error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error creating the case.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cases/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Unique identifier of the case.
+        schema:
+          type: integer
+    get:
+      summary: Retrieve a case by ID
+      description: Retrieve a specific case by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case to retrieve.
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Successfully retrieved the case.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        404:
+          description: Case not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error retrieving the case.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update a case by ID
+      description: Update an existing case by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case to update.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CasePut'
+      responses:
+        200:
+          description: Case successfully updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        404:
+          description: Case with specified ID not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error updating the case.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            multipart/form-data:
+              schema:
+                type: object
+                properties:
+                  filename:
+                    type: array
+                    items:
+                      type: string
+                      format: binary
+    delete:
+      summary: Delete a case by ID
+      description: Delete a specific case by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case to delete.
+          schema:
+            type: integer
+      responses:
+        204:
+          description: Case successfully deleted.
+        404:
+          description: Case with specified ID not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error deleting the case.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cases/{id}/attachments:
+    post:
+      summary: Upload attachments for a case
+      description: Upload one or more files as attachments for a specific case.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case to which the files will be attached.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Files to upload.
+      responses:
+        200:
+          description: Files successfully uploaded and associated with the case.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        400:
+          description: Validation error or unsupported file type.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error uploading the files.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cases/{id}/attachments/{attachmentId}:
+    get:
+      summary: Retrieve an attachment
+      description: Retrieve an attachment associated with a case.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case.
+          schema:
+            type: integer
+        - name: attachmentId
+          in: path
+          required: true
+          description: ID of the attachment.
+          schema:
+            type: number
+      responses:
+        200:
+          description: Attachment successfully retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attachment'
+        404:
+          description: Case or attachment not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error retrieving the attachment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete an attachment
+      description: Delete an attachment associated with a case.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case.
+          schema:
+            type: integer
+        - name: attachmentId
+          in: path
+          required: true
+          description: ID of the attachment.
+          schema:
+            type: number
+      responses:
+        204:
+          description: Attachment successfully deleted.
+        404:
+          description: Case or attachment not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error deleting the attachment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cases/attachments/{attachmentId}:
+    get:
+      summary: Retrieve an attachment
+      description: Retrieve an attachment by its ID.
+      parameters:
+        - name: attachmentId
+          in: path
+          required: true
+          description: ID of the attachment to retrieve.
+          schema:
+            type: number
+      responses:
+        200:
+          description: Attachment successfully retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attachment'
+        404:
+          description: Attachment not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error retrieving the attachment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cases/{id}/attachments/{attachmentId}/download:
+    get:
+      summary: Download an attachment
+      description: Download an attachment associated with a case.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case.
+          schema:
+            type: integer
+        - name: attachmentId
+          in: path
+          required: true
+          description: ID of the attachment.
+          schema:
+            type: number
+      responses:
+        200:
+          description: Attachment file successfully downloaded.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        404:
+          description: Case or attachment not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error downloading the attachment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cases/attachments/{attachmentId}/download:
+    get:
+      summary: Download an attachment
+      description: Download an attachment by its ID.
+      parameters:
+        - name: attachmentId
+          in: path
+          required: true
+          description: ID of the attachment to download.
+          schema:
+            type: number
+      responses:
+        200:
+          description: Attachment file successfully downloaded.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        404:
+          description: Attachment not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error downloading the attachment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /createCaseFromFiles:
+    post:
+      summary: Create cases from uploaded files.
+      description: Upload files, process them, and create draft cases.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Files to be uploaded.
+                socketId:
+                  type: string
+                  description: Socket ID for real-time communication.
+      responses:
+        '201':
+          description: Cases created successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Case'
+        '400':
+          description: Bad request, invalid file upload or input.
+        '500':
+          description: Server error during file processing or case creation.
+  /confirmCase/{id}:
+    put:
+      summary: Confirm and update a draft case.
+      description: Update a draft case with additional details and mark it as confirmed.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the case to confirm.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CasePut'
+      responses:
+        '200':
+          description: Case updated and confirmed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        '404':
+          description: Case not found.
+        '500':
+          description: Server error during case update.
+
+  /glossary:
+    get:
+      summary: Retrieves all glossary entries.
+      responses:
+        '200':
+          description: An array of all glossary entries.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GlossaryEntry'
+        '500':
+          description: Internal server error.
+    post:
+      summary: Creates a new glossary entry.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - term
+              properties:
+                term:
+                  type: string
+      responses:
+        '201':
+          description: The newly created glossary entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlossaryEntry'
+        '400':
+          description: Field "term" is required.
+        '500':
+          description: Internal server error.
+  /glossary/{id}:
+    get:
+      summary: Retrieves a single glossary entry by ID, including linked attachments and cases.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: The glossary entry with associated attachments and cases.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlossaryEntryDetail'
+        '404':
+          description: Glossary entry not found.
+        '500':
+          description: Internal server error.
+    put:
+      summary: Updates an existing glossary entry by ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                term:
+                  type: string
+      responses:
+        '204':
+          description: The update was successful.
+        '404':
+          description: Glossary entry not found.
+        '500':
+          description: Internal server error.
+    delete:
+      summary: Deletes a glossary entry by ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: The entry was deleted successfully.
+        '404':
+          description: Glossary entry not found.
+        '500':
+          description: Internal server error.
+  /glossary/find:
+    get:
+      summary: Finds glossary entries by the given term substring.
+      parameters:
+        - name: term
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Matching glossary entries.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GlossaryEntry'
+        '400':
+          description: Missing "term" query parameter.
+        '500':
+          description: Internal server error.
+  /glossary/{id}/upload:
+    post:
+      summary: Adds an attachment to a glossary entry.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Files to be uploaded.
+      responses:
+        '200':
+          description: The updated glossary entry with its associated attachments.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlossaryEntryDetail'
+        '404':
+          description: Glossary entry not found.
+        '500':
+          description: Internal server error.
+  /glossary/{id}/attachments/{attachmentId}:
+    post:
+      summary: Associates an existing attachment with a glossary entry.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: attachmentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: The updated glossary entry with its associated attachments.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlossaryEntryDetail'
+        '404':
+          description: Glossary entry or attachment not found.
+        '500':
+          description: Internal server error.
+    delete:
+      summary: Removes an attachment from a glossary entry.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: attachmentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Attachment was removed successfully.
+        '404':
+          description: Glossary entry or attachment not found.
+        '500':
+          description: Internal server error.
+  /glossary/{id}/cases/{caseId}:
+    post:
+      summary: Adds a case to a glossary entry.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: The updated glossary entry with its associated cases.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlossaryEntryDetail'
+        '404':
+          description: Glossary entry or case not found.
+        '500':
+          description: Internal server error.
+    delete:
+      summary: Removes a case from a glossary entry.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Case was removed successfully.
+        '404':
+          description: Glossary entry or case not found.
+        '500':
+          description: Internal server error.
+
+  /chats:
+    post:
+      summary: Create a new chat
+      description: Creates a new chat instance.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: An optional title for the chat.
+      responses:
+        201:
+          description: Chat successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chat'
+        500:
+          description: Error creating chat.
+
+    get:
+      summary: Retrieve all chats
+      description: Retrieves all chats, ordered by creation date in descending order.
+      responses:
+        200:
+          description: Successfully retrieved chats.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Chat'
+        500:
+          description: Error retrieving chats.
+
+  /chats/{id}:
+    get:
+      summary: Retrieve a specific chat and its messages
+      description: Retrieves a chat by ID, including its messages.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Successfully retrieved chat and messages.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatWithMessages'
+        404:
+          description: Chat not found.
+        500:
+          description: Error retrieving chat.
+
+    put:
+      summary: Update chat title
+      description: Updates the title of a specified chat.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+      responses:
+        204:
+          description: Chat updated successfully.
+        404:
+          description: Chat not found.
+        500:
+          description: Error updating chat.
+
+    delete:
+      summary: Delete a specific chat
+      description: Deletes a chat by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        204:
+          description: Chat successfully deleted.
+        404:
+          description: Chat not found.
+        500:
+          description: Error deleting chat.
+
+  /chats/{id}/messages:
+    post:
+      summary: Add a message to a chat
+      description: Adds a user message to the specified chat and sends context to the LLM.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - content
+                - socketId
+              properties:
+                content:
+                  type: string
+                  description: Content of the message.
+                socketId:
+                  type: string
+                  description: ID for tracking responses in real-time.
+      responses:
+        200:
+          description: Message added successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [userMessage, assistantMessage]
+                properties:
+                  userMessage:
+                    $ref: '#/components/schemas/Message'
+                  assistantMessage:
+                    $ref: '#/components/schemas/Message'
+        500:
+          description: Error deleting message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /chats/{chatId}/messages/{messageId}:
+    put:
+      summary: Update message
+      description: Updates a specific message within a given chat.
+      parameters:
+        - name: chatId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the chat containing the message.
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the message to update.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  description: The new content of the message.
+                socketId:
+                  type: string
+                  description: Optional socket ID for sending the updated message to the LLM.
+      responses:
+        200:
+          description: Successfully updated the message.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+        400:
+          description: Missing or invalid message content.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Message or chat not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error updating message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete message
+      description: Deletes a specific message within a given chat.
+      parameters:
+        - name: chatId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the chat containing the message.
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the message to delete.
+      responses:
+        204:
+          description: Successfully deleted the message.
+        404:
+          description: Message or chat not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Error deleting message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /chats/{id}/export:
+    get:
+      summary: Export a chat
+      description: Exports a chat and its messages as a JSON file.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: JSON file successfully exported.
+          content:
+            application/json: {}
+        404:
+          description: Chat not found.
+        500:
+          description: Error exporting chat.
+
+security:
+  - cookieAuth: []
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: x-auth-token
+  schemas:
+    Case:
+      allOf:
+        - $ref: '#/components/schemas/CaseWithId'
+        - type: object
+          required: [draft, createdAt, updatedAt, attachments, glossary, changeHistory]
+          properties:
+            draft:
+              type: boolean
+              description: Indicates whether the case is a draft.
+            createdAt:
+              type: string
+              format: date-time
+              description: Date and time the case was created.
+            updatedAt:
+              type: string
+              format: date-time
+              description: Date and time the case was last updated.
+            attachments:
+              type: array
+              items:
+                $ref: '#/components/schemas/Attachment'
+              description: List of attachments attached to the case.
+            glossary:
+              type: array
+              items:
+                $ref: '#/components/schemas/GlossaryEntry'
+              description: List of glossary entries linked to the case.
+            changeHistory:
+              type: array
+              items:
+                $ref: '#/components/schemas/CaseChangeHistoryEntry'
+              description: List of changes made to the case.
+
+    CaseWithId:
+      allOf:
+        - $ref: '#/components/schemas/CaseBase'
+        - type: object
+          required: [id]
+          properties:
+            id:
+              type: integer
+              description: ID of the case.
+
+    CasePost:
+      allOf:
+        - $ref: '#/components/schemas/CasePut'
+        - type: object
+          properties:
+            glossary:
+              type: array
+              items:
+                type: string
+              description: Glossary entries linked to the case (list of term strings).
+
+    CasePut:
+      allOf:
+        - $ref: '#/components/schemas/CaseBase'
+        - type: object
+          properties:
+            files:
+              type: array
+              items:
+                type: string
+                format: binary
+              description: Attached files on upload.
+
+    CaseBase:
+      type: object
+      required: [title, description, assignees]
+      properties:
+        title:
+          type: string
+          description: Title of the case.
+        description:
+          type: string
+          description: Description of the case.
+        solution:
+          type: string
+          description: Solution for the case.
+        assignees:
+          type: array
+          items:
+            type: string
+          description: Person responsible for the case.
+        status:
+          type: string
+          description: Status of the case.
+          enum: [Open, In Progress, Solved, Closed]
+        case_type:
+          type: string
+          description: Type of the case.
+          enum: [Problem, Incident, Change, FAQ]
+        priority:
+          type: string
+          description: Priority level of the case.
+          enum: [Low, Medium, High]
+
+    Attachment:
+      type: object
+      required: [id, filename, filepath, filehash, mimetype, size, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+          description: ID of the attachment.
+        filename:
+          type: string
+        filepath:
+          type: string
+          description: Path to the attachment file.
+        filehash:
+          type: string
+          description: Hash of the attachment file.
+        mimetype:
+          type: string
+          description: MIME type of the attachment file.
+        size:
+          type: integer
+          description: Size of the attachment file in bytes.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CaseChangeHistoryEntry:
+      type: object
+      required: [id, caseId, updatedAt]
+      properties:
+        id:
+          type: integer
+          description: ID of the change history entry.
+        caseId:
+          type: integer
+          description: ID of the case the change was made to.
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp the change was made at.
+
+    GlossaryEntry:
+      type: object
+      required: [id, term, usageCount, createdAt]
+      properties:
+        id:
+          type: integer
+        term:
+          type: string
+        usageCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp the entry was created at.
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp the entry was last updated at.
+    GlossaryEntryDetail:
+      required: [relatedAttachments, relatedCases]
+      allOf:
+        - $ref: '#/components/schemas/GlossaryEntry'
+        - type: object
+          properties:
+            relatedAttachments:
+              type: array
+              items:
+                $ref: '#/components/schemas/Attachment'
+            relatedCases:
+              type: array
+              items:
+                $ref: '#/components/schemas/CaseWithId'
+
+    Chat:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: integer
+          description: Chat ID.
+        title:
+          type: string
+          description: Title of the chat.
+        createdAt:
+          type: string
+          format: date-time
+          description: Date the chat was created.
+        updatedAt:
+          type: string
+          format: date-time
+          description: Date the chat was last updated.
+
+    ChatWithMessages:
+      required: [messages]
+      allOf:
+        - $ref: '#/components/schemas/Chat'
+        - type: object
+          properties:
+            messages:
+              type: array
+              items:
+                $ref: '#/components/schemas/Message'
+
+    Message:
+      type: object
+      required: [id, chatId, role, content, timestamp]
+      properties:
+        id:
+          type: integer
+          description: Message ID.
+        chatId:
+          type: integer
+          description: ID of the chat the message belongs to.
+        role:
+          type: string
+          enum: [user, assistant]
+          description: Role of the message sender.
+        content:
+          type: string
+          description: Content of the message.
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the message was sent.
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message.
+        code:
+          type: integer
+          description: HTTP status code for the error.

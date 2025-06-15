@@ -1,0 +1,12 @@
+Maschine: CNC-Fräse Modell ZX300
+Symptom: Unregelmäßige Schnittqualität
+
+Stromversorgung prüfen:
+Sicherstellen, dass alle Kabel fest angeschlossen sind.
+Kühlmittelstand überprüfen:
+Kühlmittel nachfüllen, falls unter Mindeststand.
+Spindel reinigen:
+Staub und Späne entfernen.
+Software-Fehler diagnostizieren:
+CNC-Programm auf Fehler überprüfen.
+Hinweis: Nach Abschluss aller Schritte Maschine neu starten.
