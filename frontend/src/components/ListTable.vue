@@ -338,7 +338,10 @@ const totalCasesTrend = computed(() => {
     return updatedAt >= oneWeekAgo && updatedAt < now
   }).length
   const currentPeriodCases = cases.length
-  return Math.min(((currentPeriodCases - previousPeriodCases) / previousPeriodCases) * 100, 100)
+  return Math.min(
+    ((currentPeriodCases - previousPeriodCases) / (1 || previousPeriodCases)) * 100,
+    100,
+  )
 })
 const resolvedCasesTrend = computed(() => {
   const previousPeriodResolved = cases.filter((caseItem) => {
@@ -355,7 +358,7 @@ const resolvedCasesTrend = computed(() => {
     (caseItem) => caseItem.status === 'Closed' || caseItem.status === 'Solved',
   ).length
   return Math.min(
-    ((currentPeriodResolved - previousPeriodResolved) / previousPeriodResolved) * 100,
+    ((currentPeriodResolved - previousPeriodResolved) / (1 || previousPeriodResolved)) * 100,
     100,
   )
 })
