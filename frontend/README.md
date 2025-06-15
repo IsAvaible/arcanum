@@ -11,6 +11,7 @@ This is the README file for the frontend of the oculavis ARCANUM project.
    ```
 
 2. **Install Dependencies**
+
    Run the following command to install all necessary packages and dependencies:
 
    ```bash
@@ -24,14 +25,16 @@ This is the README file for the frontend of the oculavis ARCANUM project.
    - Configure the IDE to use the project's ESLint and Prettier settings.
    - Set up the IDE to use the project's TypeScript version.
 
+
+4. **Configure environment variables**
+   - Duplicate the `.env.**.example` files and rename them to `.env.**`. 
+   - Update the `.env.**` files with any required environment-specific variables.
+
 ## Frontend Development Workflow
 
 ### Running, Hot-Reloading and Changes
 
-To start the development server and view the application in your browser, run:
-`bash
-    npm run dev
-    `
+To start the development server and view the application in your browser, run: `npm run dev`
 
 > The development server will start under the default URL `http://localhost:5173`.
 
@@ -173,4 +176,39 @@ npm run test:e2e -- --project=chromium
 npm run test:e2e -- tests/example.spec.ts
 # Runs the tests in debug mode
 npm run test:e2e -- --debug
+```
+
+```
+backend/
+├── .husky/                      # Git hooks
+├── e2e/                         # End-to-end tests (e.g., with Playwright)
+├── src/                         # Application source code
+│   ├── api/                     # API request logic
+│   ├── assets/                  # Static assets (images, fonts, etc.)
+│   ├── components/              # Reusable Vue components
+│   ├── composables/             # Reusable logic with Vue Composition API
+│   ├── functions/               # Utility functions
+│   ├── plugins/                 # Vue plugins
+│   ├── router/                  # Vue Router configuration
+│   ├── stores/                  # Pinia/Vuex stores
+│   ├── validation/              # Zod schemas for form/input validation
+│   ├── views/                   # Route-level Vue components
+│   ├── App.vue                  # Root component
+│   ├── app.css                  # Global styles
+│   └── main.ts                  # Application entry point
+├── .env.development             # Environment variables for development
+├── .env.production              # Environment variables for production
+├── .lintstagedrc                # Lint-staged configuration
+├── .prettierrc.json             # Prettier configuration
+├── .stylelintrc.json            # Stylelint configuration
+├── commitlint.config.js         # Commitlint rules
+├── eslint.config.js             # ESLint configuration
+├── package.json                 # Project metadata and dependencies
+├── playwright.config.ts         # Playwright testing configuration
+├── postcss.config.js            # PostCSS configuration
+├── tailwind.config.js           # Tailwind CSS configuration
+├── tsconfig.json                # Base TypeScript config
+├── tsconfig.*.json              # Environment-specific TypeScript configs
+├── vite.config.ts               # Vite build tool configuration
+└── vitest.config.ts             # Vitest testing configuration
 ```

@@ -1,4 +1,8 @@
-# oculavis ARCANUM
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="documentation/assets/banner_dark.png">
+    <img src="documentation/assets/banner.png" alt="oculavis ARCANUM" />
+</picture>
+
 
 
 ## Table of Contents
@@ -13,6 +17,8 @@
 ## Project Overview
 This is the repository for the oculavis ARCANUM project. The project is a web application that provides a platform for users to create and manage cases.
 It incorporates a feature-rich AI-powered chatbot that assists users in creating cases from unstructured data, like text, images, and videos.
+
+For a showcase of the key user-facing features please visit [SHOWCASE.md](documentation/SHOWCASE.md).
 
 ## Tech-Stack
 The project uses the following technologies:
@@ -101,9 +107,9 @@ Follow these steps to set up and run the project locally for development.
     - If your IDE integrates a Git client, authorize it to be able to push and pull changes from the repository.
 
 4. **Set Up Environment Variables for a Subproject**
-    - Duplicate the `.env.development.example` file in the respective directory and rename it to `.env.development`.
-    - Update the `.env.development` file with any required environment-specific variables (such as API URLs, keys, etc.).
-   > Note: Ensure you don’t commit any sensitive information to version control by adding `.env.development` to your `.gitignore` file if it’s not already there.
+    - Duplicate the `.env.**.example` file in the respective directory and rename it to `.env.**`.
+    - Update the `.env.**` file with any required environment-specific variables (such as API URLs, keys, etc.).
+   > Note: Ensure you don’t commit any sensitive information to version control by adding `.env.**` to your `.gitignore` file if it’s not already there.
 
 #### Setting up docker 
 1. Install Docker from the Docker Website
