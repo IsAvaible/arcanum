@@ -28,10 +28,12 @@ watch(
 <template>
   <ListTable />
   <CaseFromFileModal
+    v-if="createDialogVisible"
     v-model:visible="createDialogVisible"
     @update:visible="$router.push({ name: 'cases' })"
   />
   <CaseCreateDialog
+    v-if="createManualDialogVisible"
     v-model:visible="createManualDialogVisible"
     @update:visible="$router.push({ name: 'cases' })"
   />
